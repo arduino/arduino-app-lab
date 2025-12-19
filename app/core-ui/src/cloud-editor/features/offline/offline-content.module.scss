@@ -1,0 +1,24 @@
+.container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+}
+
+.content {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    align-items: center;
+    text-align: center;
+    width: 316px;
+}
+
+.title {
+    color: #374146;
+    margin: 20px 10px 10px 10px;
+}
+
+.message {
+    margin: 10px;
+}

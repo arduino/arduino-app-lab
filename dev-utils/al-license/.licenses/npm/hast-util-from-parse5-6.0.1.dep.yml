@@ -1,0 +1,94 @@
+---
+name: hast-util-from-parse5
+version: 6.0.1
+type: npm
+summary: hast utility to transform from Parse5’s AST
+homepage:
+license: mit
+licenses:
+- sources: license
+  text: |
+    (The MIT License)
+
+    Copyright (c) 2016 Titus Wormer <tituswormer@gmail.com>
+
+    Permission is hereby granted, free of charge, to any person obtaining
+    a copy of this software and associated documentation files (the
+    'Software'), to deal in the Software without restriction, including
+    without limitation the rights to use, copy, modify, merge, publish,
+    distribute, sublicense, and/or sell copies of the Software, and to
+    permit persons to whom the Software is furnished to do so, subject to
+    the following conditions:
+
+    The above copyright notice and this permission notice shall be
+    included in all copies or substantial portions of the Software.
+
+    THE SOFTWARE IS PROVIDED 'AS IS', WITHOUT WARRANTY OF ANY KIND,
+    EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+    MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+    IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+    CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+    TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+    SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+- sources: readme.md
+  text: |-
+    [MIT][license] © [Titus Wormer][author]
+
+    <!-- Definitions -->
+
+    [build-badge]: https://img.shields.io/travis/syntax-tree/hast-util-from-parse5.svg
+
+    [build]: https://travis-ci.org/syntax-tree/hast-util-from-parse5
+
+    [coverage-badge]: https://img.shields.io/codecov/c/github/syntax-tree/hast-util-from-parse5.svg
+
+    [coverage]: https://codecov.io/github/syntax-tree/hast-util-from-parse5
+
+    [downloads-badge]: https://img.shields.io/npm/dm/hast-util-from-parse5.svg
+
+    [downloads]: https://www.npmjs.com/package/hast-util-from-parse5
+
+    [size-badge]: https://img.shields.io/bundlephobia/minzip/hast-util-from-parse5.svg
+
+    [size]: https://bundlephobia.com/result?p=hast-util-from-parse5
+
+    [sponsors-badge]: https://opencollective.com/unified/sponsors/badge.svg
+
+    [backers-badge]: https://opencollective.com/unified/backers/badge.svg
+
+    [collective]: https://opencollective.com/unified
+
+    [chat-badge]: https://img.shields.io/badge/chat-discussions-success.svg
+
+    [chat]: https://github.com/syntax-tree/unist/discussions
+
+    [npm]: https://docs.npmjs.com/cli/install
+
+    [license]: license
+
+    [author]: https://wooorm.com
+
+    [contributing]: https://github.com/syntax-tree/.github/blob/HEAD/contributing.md
+
+    [support]: https://github.com/syntax-tree/.github/blob/HEAD/support.md
+
+    [coc]: https://github.com/syntax-tree/.github/blob/HEAD/code-of-conduct.md
+
+    [ast]: https://github.com/inikulin/parse5/blob/HEAD/packages/parse5/docs/tree-adapter/default/interface-list.md
+
+    [vfile]: https://github.com/vfile/vfile
+
+    [tree]: https://github.com/syntax-tree/unist#tree
+
+    [root]: https://github.com/syntax-tree/unist#root
+
+    [positional-information]: https://github.com/syntax-tree/unist#positional-information
+
+    [file]: https://github.com/syntax-tree/unist#file
+
+    [hast]: https://github.com/syntax-tree/hast
+
+    [node]: https://github.com/syntax-tree/hast#nodes
+
+    [xss]: https://en.wikipedia.org/wiki/Cross-site_scripting
+notices: []

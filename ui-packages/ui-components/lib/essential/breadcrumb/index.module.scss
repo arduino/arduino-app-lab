@@ -1,0 +1,151 @@
+// ----------------------------------------------------------------------
+// IMPORTED FILE
+//
+// This code was imported from a external library to handle private
+// dependencies required for the main application to run.
+// ----------------------------------------------------------------------
+
+@use "@cloud-editor-mono/arduino-sass/src/variables" as vars;
+
+.Breadcrumbs {
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+
+  > * {
+    &:not(:last-child) {
+      color: vars.$asbestos;
+    }
+    &:last-child {
+      --font-weight: bold;
+      color: vars.$jet;
+    }
+  }
+}
+
+.BreadcrumbItem {
+  --icon-size: 24px;
+  display: flex;
+  padding: 0px 4px;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  text-decoration: none;
+  border-radius: 4px;
+  height: 28px;
+  color: inherit; // Avoid anchor et similar default styles
+
+  border: 0;
+  background-color: transparent;
+  cursor: pointer;
+  font-weight: inherit;
+
+  transition:
+    background-color 0.2s ease-in-out,
+    color 0.2s ease-in-out;
+
+  &:hover:not([disabled]),
+  &[data-state]:not([data-state="closed"]):not([disabled]) {
+    background-color: vars.$clouds;
+    color: vars.$jet;
+  }
+
+  &_xs {
+    height: 20px;
+    --icon-size: 20px;
+  }
+
+  &_sm {
+    height: 24px;
+  }
+
+  &-icon {
+    display: flex;
+    font-size: var(--icon-size);
+    justify-content: center;
+    align-items: center;
+  }
+
+  &__trigger {
+    &-caret {
+      font-size: var(--icon-size);
+      transition: transform 0.1s ease-in-out;
+      transform: scaleY(1);
+    }
+
+    &[data-state="open"]:not([disabled]) {
+      color: vars.$teal3 !important;
+
+      .BreadcrumbItem__trigger-caret {
+        transform: scaleY(-1);
+      }
+    }
+  }
+}
+
+.BreadcrumbItemInput {
+  height: stretch;
+
+  &:hover:not([disabled]),
+  &[data-state]:not([data-state="closed"]):not([disabled]) {
+    background-color: unset;
+
+    input {
+      background-color: vars.$feather;
+      border-color: vars.$gris;
+      color: vars.$jet;
+    }
+  }
+
+  &--input {
+    display: inline-grid;
+    vertical-align: top;
+    align-items: center;
+    position: relative;
+    padding: 0;
+
+    &::after,
+    input {
+      font-size: inherit;
+      height: stretch;
+      border: none;
+      border-radius: 4px;
+      background-color: unset;
+      font-family: inherit;
+      font-weight: inherit;
+      width: auto;
+      min-width: 1em;
+      grid-area: 1 / 2;
+    }
+
+    input {
+      border: 1px solid transparent;
+
+      transition:
+        color 0.2s ease-in-out,
+        background-color 0.2s ease-in-out,
+        border-color 0.2s ease-in-out;
+      &:focus-visible {
+        outline: none;
+        border-color: vars.$teal0;
+        background-color: unset;
+      }
+    }
+
+    &::after {
+      content: attr(data-value) " ";
+      visibility: hidden;
+      white-space: pre-wrap;
+    }
+  }
+}
+
+.BreadcrumbSeparator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+}

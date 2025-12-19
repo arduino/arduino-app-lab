@@ -1,0 +1,238 @@
+@use "@cloud-editor-mono/ui-components/public/shared.module.scss";
+@use "./sidenav-variables.module.scss";
+
+$sidenav-background: #008184;
+$sidenav-item-color: #ffffff;
+$sidenav-item-active-background: rgba(255, 255, 255, 0.2);
+$sidenav-content-title-color: #374146;
+$sidenav-content-background: #f7f9f9;
+$sidenav-content-border: #c9d2d2;
+
+.sidenav-container {
+  display: grid;
+  grid-template-columns: min-content 1fr;
+  grid-template-rows: 1fr;
+  grid-template-areas: "nav sidenav-split";
+  overflow: hidden;
+  height: 100%;
+}
+
+.sidenav {
+  grid-area: nav;
+  flex: 0 0 60px;
+  height: 100%;
+  transition: 0.5s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  box-sizing: border-box;
+  background-color: #008184;
+
+  ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    svg {
+      pointer-events: none;
+    }
+  }
+}
+
+.sidenav-item {
+  display: flex;
+  width: 60px;
+  height: 60px;
+  box-sizing: border-box;
+
+  &:hover,
+  &.active {
+    background-color: $sidenav-item-active-background;
+  }
+
+  &.active {
+    border-left: 3px solid $sidenav-item-color;
+  }
+
+  &.focus-visible {
+    outline: 2px solid;
+    outline-offset: -2px;
+  }
+
+  [role="tooltip"] {
+    color: white;
+    padding: 3px 8px;
+    display: none;
+    position: absolute;
+    left: 30px;
+    background-color: black;
+    border-radius: 5px;
+    flex: 1;
+    white-space: nowrap;
+  }
+
+  & svg {
+    width: 26px;
+    height: 26px;
+  }
+}
+
+.sidenav-item-icon {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex: 1;
+  outline: none;
+  // IoT app override
+  color: white !important;
+
+  &:hover + [role="tooltip"],
+  &:focus + [role="tooltip"] {
+    display: flex;
+  }
+}
+
+.sidenav-children {
+  display: grid;
+  overflow: hidden;
+}
+
+.sidenav-content {
+  background-color: $sidenav-content-background;
+  border-right: 1px solid $sidenav-content-border;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.sidenav-split {
+  display: grid;
+  grid-template-columns: calc(sidenav-variables.$sidenav-panel-min-width * 1px) 0px 1fr;
+  overflow: hidden;
+
+  &.collapsed {
+    grid-template-columns: 1fr !important;
+  }
+
+  .gutter {
+    cursor: col-resize;
+    height: 100%;
+    z-index: shared.$zIndex5;
+    width: 4px;
+    margin-left: -1px;
+
+    &::after {
+      content: "";
+      transition: background-color 0.1s ease 0.1s;
+    }
+
+    &:active,
+    &:hover {
+      &::after {
+        background-color: shared.theme-var(--editor-background-selection);
+        height: 100%;
+        width: 4px;
+        display: block;
+      }
+    }
+  }
+}
+
+.sidenav-split-initial {
+  grid-template-columns: calc(sidenav-variables.$sidenav-panel-initial-width * 1px) 0px 1fr;
+}
+
+.sidenav-content-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 0 15px;
+  flex: 0 0 60px;
+  color: shared.theme-var(--sidebar-panel-foreground);
+
+  &.gen-ai-legal-disclaimer-visible {
+    flex-direction: row-reverse;
+  }
+
+  & svg {
+    & > path {
+      fill: shared.theme-var(--sidebar-panel-foreground);
+    }
+  }
+}
+
+.sidenav-content-close {
+  width: 28px;
+  height: 28px;
+  display: grid;
+  justify-content: center;
+  align-items: center;
+
+  .tooltip {
+    position: absolute;
+    top: 44px;
+  }
+
+  &:hover {
+    border-radius: 32px;
+    background-color: #dae3e3;
+  }
+
+  & svg {
+    width: 18px;
+    height: 18px;
+  }
+}
+
+.sidenav-content-title {
+  display: grid;
+  grid-auto-flow: column;
+  align-items: center;
+  gap: 10px;
+
+  .labels {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    column-gap: 10px;
+  }
+
+  .title-label {
+    white-space: nowrap;
+  }
+
+  .details-label {
+    width: fit-content;
+    gap: 6px;
+    padding: 2px 4px;
+    background-color: #ecf1f1;
+    border: 1px solid #c9d2d2;
+    border-radius: 2px;
+    line-height: 14px;
+  }
+}
+
+.gen-ai-icon {
+  width: 21px;
+  height: 21px;
+
+  & > path {
+    fill: #b660eb !important;
+  }
+}
+
+.sidenav-gen-ai-badge {
+  position: relative;
+  font-family: Roboto Mono !important;
+  font-size: 10px !important;
+  font-weight: 500 !important;
+  line-height: 17px !important;
+  letter-spacing: 0.1em !important;
+  text-align: left;
+  left: 16px;
+  bottom: 13px;
+  background-color: #c9d2d2;
+  color: #374146;
+  border-radius: 4px;
+  padding: 3px 4px;
+}

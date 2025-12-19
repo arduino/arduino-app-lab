@@ -1,0 +1,1 @@
+Wrapper for auth0 js library

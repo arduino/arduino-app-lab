@@ -1,0 +1,108 @@
+@use "@cloud-editor-mono/ui-components/public/shared.module.scss";
+
+:root {
+    --dropdown-rounded-menu-top: unset;
+}
+
+$dropdownRoundedMenuTop: var(--dropdown-rounded-menu-top);
+$dropdownRoundedItemHeight: 44px;
+
+:export {
+    dropdownRoundedMenuTop: --dropdown-rounded-menu-top;
+    dropdownRoundedItemHeight: $dropdownRoundedItemHeight;
+}
+
+@mixin caret {
+    content: "";
+    display: block;
+    border-left: solid 5px transparent;
+    border-right: solid 5px transparent;
+    height: 0;
+    width: 0;
+    margin-left: 10px;
+    margin-top: 2px;
+}
+
+.dropdown-rounded-wrapper {
+    position: relative;
+
+    .dropdown-rounded-button {
+        min-width: 134px;
+        height: 34px;
+        background: shared.theme-var(--toolbar-background);
+        border-radius: 30px;
+        border: none;
+        padding: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        &:hover {
+            cursor: pointer;
+        }
+
+        & > span {
+            font-size: 0.85rem;
+        }
+
+        &.dropdown-rounded-button-disabled {
+            opacity: 0.5;
+            pointer-events: none;
+        }
+    }
+
+    .dropdown-rounded-button-closed {
+        &::after {
+            @include caret;
+            border-top: solid 6px #000; 
+        }
+    }
+
+    .dropdown-rounded-button-open {
+        &::after {
+            @include caret;
+            border-bottom: solid 6px #000; 
+        }
+    }
+
+    .dropdown-rounded-menu {
+        position: absolute;
+        top: $dropdownRoundedMenuTop;
+        z-index: 100;
+        background-color: shared.theme-var(--dropdown-background);
+        box-shadow: 0px 4px 20px rgb(0 0 0 / 25%);
+        border-radius: 3px;
+        width: 218px;
+
+        & > ul {
+            padding-left: 0;
+            margin: 0;
+            outline: none;
+
+            @for $i from 0 through 100 {
+                li:nth-child(#{$i * 2}) {
+                    button {
+                        background-color: lighten(rgb(236, 241, 241), 1 * $i);
+                    }
+                }
+            }
+
+            li {
+                outline: none;
+                button {
+                    padding: 0 0 0 20px;
+                    height: $dropdownRoundedItemHeight;
+
+                    &:hover {
+                        background-color: rgb(236, 241, 241);
+                        cursor: pointer;
+                    }
+                }
+
+                .dropdown-rounded-item-selected {
+                    font-weight: 700;
+                }
+            }
+        }
+    }
+}

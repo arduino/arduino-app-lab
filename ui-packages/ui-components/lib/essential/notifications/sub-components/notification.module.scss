@@ -1,0 +1,62 @@
+.container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    .messageContainer {
+        display: flex;
+        justify-content: space-between;
+
+        align-items: center;
+        flex: 1;
+        overflow: hidden;
+
+        .text {
+            overflow: hidden;
+        }
+
+        .text-padding {
+            padding-right: 36px;
+        }
+
+        .message-icon-padding {
+            padding-right: 36px;
+        }
+    }
+
+    .messageContainer:has(.text:only-child) {
+        justify-content: center;
+    }
+}
+
+.divider {
+    width: 1px;
+    height: 28px;
+    background: #ffffff;
+}
+
+.action {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    .actionButton {
+        padding-left: 36px;
+        padding-right: 36px;
+        color: white;
+    }
+}
+
+.closeButton {
+    margin-left: 28px;
+
+    & svg {
+        & > path {
+            fill: white;
+        }
+    }
+
+    &:focus-visible {
+        outline: none;
+    }
+}

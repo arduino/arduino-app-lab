@@ -1,0 +1,68 @@
+@use "../../../../public/shared.module.scss";
+
+.header {
+    padding: {
+        top: 28px;
+        left: 64px;
+    }
+}
+
+.list-helper {
+    padding: 16px 64px 12px 64px;
+}
+
+.unknown-board-port-helper {
+    display: flex;
+    align-items: center;
+    margin-top: 28px;
+    align-self: flex-start;
+    padding-left: 72px;
+
+    .unknown-board-port-helper-image {
+        width: 80px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        padding-right: 24px;
+    }
+
+    .unknown-board-port-helper-text {
+        height: 68px;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .unknown-board-port-label {
+        padding-top: 6px;
+        color: shared.theme-var(--associate-dialog-card-port-name);
+        display: flex;
+
+        & > svg {
+            & > path {
+                fill: shared.theme-var(--associate-dialog-card-port-icon);
+            }
+            margin-right: 12px;
+        }
+    }
+}
+
+.plugin-board-prompt {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 28px;
+    align-self: center;
+    width: 522px;
+    border-radius: 8px;
+    background-color: shared.theme-var(--associate-dialog-card-picture-background);
+
+    & > svg {
+        padding-right: 16px;
+    }
+
+    & > span {
+        height: 50px;
+        display: flex;
+        align-items: center;
+    }
+}

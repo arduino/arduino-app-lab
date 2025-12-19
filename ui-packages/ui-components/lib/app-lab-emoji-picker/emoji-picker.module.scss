@@ -1,0 +1,27 @@
+.emoji-picker-container {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  .emoji-picker-button {
+    width: 28px;
+    height: 28px;
+    padding: 4px;
+    font-size: 12px !important;
+    border: 2px solid transparent;
+    background-color: transparent;
+    cursor: pointer;
+
+    em-emoji {
+      & > span {
+        display: flex;
+      }
+    }
+
+    &.open {
+      border: 2px solid var(--border-strong, #7f8c8d);
+      border-radius: 8px;
+    }
+  }
+}

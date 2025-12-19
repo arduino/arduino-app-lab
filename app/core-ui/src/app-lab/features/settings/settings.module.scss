@@ -1,0 +1,13 @@
+@use "@cloud-editor-mono/ui-components/public/shared.module.scss";
+
+.main {
+  background: var(--surface-bg-below-2, #090f11);
+  height: 100%;
+  width: 100%;
+  min-width: 600px;
+  padding: 0 16px 16px 16px;
+  box-sizing: border-box;
+  color: white;
+  display: flex;
+  flex-direction: column;
+}

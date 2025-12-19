@@ -1,0 +1,7 @@
+@use "../../../public/shared.module.scss";
+
+.container {
+    margin-top: 40px;
+    padding: 16px;
+    background-color: shared.theme-var(--editor-background);
+}

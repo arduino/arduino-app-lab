@@ -1,0 +1,295 @@
+@use "sass:meta";
+// * Copyright 2020 ARDUINO AG (http://www.arduino.cc/)
+// * This file is part of arduino-sass.
+// * Copyright (c) 2020
+// * Authors: Sebastian Hunkeler
+// *
+// * This software is released under:
+// * The GNU General Public License, which covers the main part of
+// * arduino-sass
+// * The terms of this license can be found at:
+// * https://www.gnu.org/licenses/gpl-3.0.en.html
+// *
+// * You can be released from the requirements of the above licenses by purchasing
+// * a commercial license. Buying such a license is mandatory if you want to modify or
+// * otherwise use the software for commercial activities involving the Arduino
+// * software without disclosing the source code of your own applications. To purchase
+// * a commercial license, send an email to license@arduino.cc.
+
+@use 'sass:map';
+@use 'sass:list';
+
+$font-weight-light: 300;
+$font-weight-normal: 400;
+$font-weight-medium: 500;
+$font-weight-semibold: 600;
+$font-weight-bold: 700;
+$base-url: 'https://content.arduino.cc/';
+$font-path: 'fonts/';
+$used-fonts: ();
+
+/// Fetch nested keys
+///
+/// @param {Map} $map - Map
+/// @param {Arglist} $keys - Keys to fetch
+/// @return {*}
+@function map-deep-get($map, $keys...) {
+  @each $key in $keys {
+    @if meta.type-of($map) != 'map' {
+      @warn '`#{$map}` is not a map.';
+
+      @return false;
+    }
+    $map: map.get($map, $key);
+  }
+
+  @return $map;
+}
+
+/// Checks if a list contains a value(s).
+///
+/// @param {List} $list - The list to check against.
+/// @param {List} $values - A single value or list of values to check for.
+/// @example
+///   contains($list, $value)
+/// @return {Bool}
+@function contains($list, $values...) {
+  @each $value in $values {
+    @if meta.type-of(list.index($list, $value)) != 'number' {
+      @return false;
+    }
+  }
+
+  @return true;
+}
+
+/// Returns URL to a font based on its path
+///
+/// @param {String} $path - font path
+/// @param {String} $base [$base-url] - base URL
+/// @return {Url}
+/// @require $base-url
+@function font($path, $base: $base-url) {
+  @return url($base + $font-path + $path);
+}
+
+/// Font mixin that allows to include font styls from a pre-defined font stack.
+///
+/// @param {String} $group - The font group to use
+/// @param {String} $variant - The font variant / style to use
+/// @param {Map} $properties - The properties that shall be rendered into the selector
+/// @param {Map} $font-stack (optional) - The font stack to be used as source
+/// @example
+/// h1 { @include font(helvetica, bold); }
+/// h1 .caption { @include font(helvetica, light-italic, weight style); }
+///
+/// @requires {function} font-properties
+@mixin font($group, $variant: regular, $properties: family weight style, $font-stack: $base-font-stack) {
+  $font-properties: map-deep-get($font-stack, $group, $variant);
+
+  @if not $font-properties {
+    @error "Sorry, couldn\'t find variant `#{$variant}` for `#{$group}`.";
+  }
+
+  @if $font-properties {
+    @include track-fonts($group, $variant);
+
+    @each $key, $value in $font-properties {
+      @if contains($properties, $key) {
+        font-#{$key}: $value;
+      }
+    }
+  }
+}
+
+/// Track all fonts and variations used in the stylesheet
+/// Check if this combination already exists in the map.
+/// If not, we add it to the map.
+///
+/// @param {String} $group
+/// @param {String} $variant
+/// @requires {Map} used-fonts
+@mixin track-fonts($group, $variant) {
+  // First check if we already knew this one:
+  @if map.has-key($used-fonts, $group) == false {
+    // Font-family isn't in the map yet, so add it.
+    // The key for the nested map is the font name:
+    $used-fonts: map.merge($used-fonts, ($group: ())) !global;
+  }
+
+  // Now check if the variation is known
+  $font-map: map.get($used-fonts, $group);
+
+  @if not list.index($font-map, $variant) {
+    // Variation isn't in the map yet, so add it:
+    $variations: list.append($font-map, $variant);
+    $used-fonts: map.merge($used-fonts, ($group: $variations)) !global;
+  }
+}
+
+/// Add the font-face rules for all used fonts
+/// @return {String} font-face rules
+/// @requires {function} map-deep-get
+/// @requires {function} font-face
+@mixin import-fonts($font-stack: $base-font-stack) {
+  @each $group, $variations in $used-fonts {
+    @each $variant in $variations {
+      $font-properties: map-deep-get($font-stack, $group, $variant);
+
+      @if $font-properties {
+        // If we have a font-face key we create the font-face rule
+        $font-face: map.get($font-properties, font-face);
+
+        @if $font-face {
+          $font-family: map.get($font-face, family);
+          $file-path: map.get($font-face, path);
+          $file-formats: map.get($font-face, formats);
+          $font-weight: map.get($font-properties, weight);
+          $font-style: map.get($font-properties, style);
+
+          @if $file-formats {
+            @include render-font-face($font-family, $file-path, $font-weight, $font-style, $file-formats);
+          }
+
+          @else {
+            @include render-font-face($font-family, $file-path, $font-weight, $font-style);
+          }
+        }
+      }
+    }
+  }
+}
+
+/// Add a font-face rule
+/// @return {String} font-face rule
+/// @requires {function} font-source-declaration
+@mixin render-font-face(
+  $font-family,
+  $file-path,
+  $font-weight: 400,
+  $font-style: normal,
+  $file-formats: eot woff2 woff ttf svg
+) {
+  @font-face {
+    font-family: $font-family;
+    font-style: $font-style;
+    font-weight: $font-weight;
+    font-display: swap;
+    src: font-source-declaration($font-family, $file-path, $file-formats);
+  }
+}
+
+/// Used for creating the source string for fonts using @font-face
+/// Reference: http://goo.gl/Ru1bKP
+/// @requires {function} font
+@function font-source-declaration($font-family, $file-path, $file-formats) {
+  $src: ();
+
+  $formats-map: (
+    eot:   '#{$file-path}.eot?#iefix' format('embedded-opentype'),
+    woff2: '#{$file-path}.woff2' format('woff2'),
+    woff:  '#{$file-path}.woff' format('woff'),
+    ttf:   '#{$file-path}.ttf' format('truetype'),
+    svg:   '#{$file-path}.svg##{$font-family}' format('svg')
+  );
+
+  @each $key, $values in $formats-map {
+    @if contains($file-formats, $key) {
+      $file-path: list.nth($values, 1);
+      $font-format: list.nth($values, 2);
+      $src: list.append($src, font($file-path) $font-format, comma);
+    }
+  }
+
+  @return $src;
+}
+
+// Open Sans and Roboto font family
+$base-font-stack: (
+  /* Sans-serif*/
+  opensans: (
+    light: (
+      family: ('Open Sans', 'Lucida Grande', lucida, verdana, sans-serif),
+      weight: $font-weight-light,
+      style: normal,
+      font-face: (
+        family: 'Open Sans',
+        path: 'OpenSans-Light-webfont',
+        formats: (woff)
+      )
+    ),
+    regular: (
+      family: ('Open Sans', 'Lucida Grande', lucida, verdana, sans-serif),
+      weight: $font-weight-normal,
+      style: normal,
+      font-face: (
+        family: 'Open Sans',
+        path: 'OpenSans-Regular-webfont',
+        formats: (woff)
+      )
+    ),
+    regular-italic: (
+      family: ('Open Sans', 'Lucida Grande', lucida, verdana, sans-serif),
+      weight: $font-weight-normal,
+      style: italic,
+      font-face: (
+        family: 'Open Sans',
+        path: 'OpenSans-Italic-webfont',
+        formats: (woff)
+      )
+    ),
+    semi-bold: (
+      family: ('Open Sans', 'Lucida Grande', lucida, verdana, sans-serif),
+      weight: $font-weight-semibold,
+      style: normal,
+      font-face: (
+        family: 'Open Sans',
+        path: 'OpenSans-Semibold-webfont',
+        formats: (woff)
+      )
+    ),
+    bold: (
+      family: ('Open Sans', 'Lucida Grande', lucida, verdana, sans-serif),
+      weight: $font-weight-bold,
+      style: normal,
+      font-face: (
+        family: 'Open Sans',
+        path: 'OpenSans-Bold-webfont',
+        formats: (woff)
+      )
+    )
+  ),
+  /* Mono Space*/
+  roboto-mono: (
+    regular: (
+      family: ('Roboto Mono', 'monospace', 'Courier New', 'Lucida Console'),
+      weight: $font-weight-normal,
+      style: normal,
+      font-face: (
+        family: 'Roboto Mono',
+        path: 'Roboto-Mono-Regular-webfont',
+        formats: (woff)
+      )
+    ),
+    medium: (
+      family: ('Roboto Mono', 'monospace', 'Courier New', 'Lucida Console'),
+      weight: $font-weight-medium,
+      style: normal,
+      font-face: (
+        family: 'Roboto Mono',
+        path: 'Roboto-Mono-Medium-webfont',
+        formats: (woff)
+      )
+    ),
+    bold: (
+      family: ('Roboto Mono', 'monospace', 'Courier New', 'Lucida Console'),
+      weight: $font-weight-bold,
+      style: normal,
+      font-face: (
+        family: 'Roboto Mono',
+        path: 'Roboto-Mono-Bold-webfont',
+        formats: (woff)
+      )
+    )
+  )
+);

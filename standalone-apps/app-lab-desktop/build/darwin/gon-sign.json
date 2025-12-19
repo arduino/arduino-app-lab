@@ -1,0 +1,12 @@
+{
+  "source": ["./build/bin/Arduino App Lab.app"],
+  "bundle_id": "cc.arduino.applab",
+  "apple_id": {
+    "username": "apple-developer@arduino.cc",
+    "password": "__APPLE_PASSWORD__",
+    "provider": "__APPLE_USER_ID__"
+  },
+  "sign": {
+    "application_identity": "ARDUINO SA"
+  }
+}

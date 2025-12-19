@@ -1,0 +1,118 @@
+@use "@cloud-editor-mono/ui-components/public/shared.module.scss";
+
+//Skeleton opacity variable
+$skeleton-opacity: 0.1 !default;
+.brick-item {
+  display: flex;
+  height: 75px;
+  align-items: center;
+  gap: 16px;
+  align-self: stretch;
+  border-radius: 16px;
+  width: 100%;
+  background: var(--component-bg-below-1, #171E21);
+  border: 1px solid var(--border-inverted, #232B2E);
+  padding: 16px;
+  cursor: pointer;
+
+  &:hover {
+    background: #AEB8B826;
+  }
+
+  &.disabled {
+    pointer-events: none;
+    opacity: 0.5;
+  }
+
+  &.selected {
+    border: 1px solid var(--border-accent, #25c2c7);
+
+    .brick-item-text .title {
+      color: var(--text-accent, #25c2c7);
+    }
+  }
+
+  .brick-item-icon {
+    background: #15ADDF33;
+    color: var(--text-default, #fff);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    height: 40px;
+    width: 40px;
+    border-radius: 8px;
+
+    &-skeleton {
+      opacity: $skeleton-opacity;
+    }
+  }
+
+  .brick-item-text {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    flex: 1 1 0;
+    min-width: 0;
+
+    .title-container {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+
+      .model-badge {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        background-color: #AEB8B826;
+        border-radius: 4px;
+        padding: 2px 6px;
+
+        svg {
+          width: 12px;
+          height: 12px;
+          fill: var(--text-subtle, #c9d2d2);
+        }
+
+        .model-badge-text {
+          color: var(--text-subtle, #c9d2d2);
+          font-weight: 600;
+          line-height: 140%;
+        }
+      }
+    }
+
+    .title {
+      color: var(--text-default, #fff);
+      font-weight: 700;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 100%;
+      min-width: 0;
+
+      &-skeleton {
+        opacity: $skeleton-opacity;
+        height: 20px;
+        width: 100%;
+      }
+    }
+
+    .description {
+      color: var(--text-subtle, #c9d2d2);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      flex-shrink: 1;
+      max-width: 100%;
+      min-width: 0;
+
+      &-skeleton {
+        opacity: $skeleton-opacity;
+        height: 20px;
+        width: 100%;
+        margin-top: 4px;
+      }
+    }
+  }
+}

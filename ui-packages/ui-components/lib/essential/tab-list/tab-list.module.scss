@@ -1,0 +1,49 @@
+$tabsHeight: 37px;
+
+.tabs {
+  overflow: hidden;
+  height: 100%;
+}
+
+.tab-panel {
+  height: 100%;
+}
+
+.tab-list {
+  display: grid;
+  grid-auto-flow: column;
+  justify-content: center;
+  align-items: end;
+  border-bottom: 1px solid #dae3e3; //correct variable needed
+  height: $tabsHeight;
+
+  &.hidden {
+    display: none;
+  }
+}
+
+.tab {
+  display: grid;
+  grid-auto-flow: row;
+  grid-template-rows: 1fr 2px;
+  border: none;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+}
+
+.tab-text {
+  display: grid;
+  justify-content: center;
+  align-items: center;
+  padding: 8px 12px 4px;
+}
+
+.tab-selected {
+  border-bottom: 2px solid #4e5b61; //correct variable needed
+  height: calc(100% - 4px);
+
+  &:focus-visible {
+    outline: none;
+  }
+}

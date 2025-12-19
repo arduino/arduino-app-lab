@@ -1,0 +1,42 @@
+@use "../../../public/shared.module.scss";
+
+:root {
+    --dialog-height: unset;
+    --dialog-max-height: min(calc(100vh - 24px), 1200px);
+}
+
+$dialogHeight: var(--dialog-height);
+$dialogMaxHeight: var(--dialog-max-height);
+
+:export {
+    dialogHeight: --dialog-height;
+    dialogMaxHeight: $dialogMaxHeight;
+}
+
+.overlay {
+    position: fixed;
+    inset: 0px;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    [class~="ReactModal__Content"] {
+        width: 650px;
+        max-height: $dialogMaxHeight;
+        height: $dialogHeight;
+        border-radius: 5px !important;
+        background-color: shared.theme-var(--associate-dialog-background);
+        display: flex;
+    }
+}
+
+.anchored-dialog {
+    align-items: flex-start;
+    padding-top: 12px;
+}
+
+.container {
+    z-index: shared.$zIndex5;
+    position: relative;
+}

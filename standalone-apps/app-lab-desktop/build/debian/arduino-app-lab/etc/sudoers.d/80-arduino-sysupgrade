@@ -1,0 +1,1 @@
+%sysupgrade ALL=(ALL) NOPASSWD: /usr/bin/hostnamectl set-hostname *

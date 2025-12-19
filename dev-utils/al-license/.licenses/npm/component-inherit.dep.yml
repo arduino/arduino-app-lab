@@ -1,0 +1,11 @@
+---
+name: component-inherit
+version: 0.0.3
+type: npm
+summary: Prototype inheritance utility
+homepage:
+license: mit
+licenses:
+- sources: Readme.md
+  text: MIT
+notices: []

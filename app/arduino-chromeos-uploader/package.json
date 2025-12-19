@@ -1,0 +1,37 @@
+{
+  "name": "@bcmi-labs/arduino-chromeos-uploader",
+  "version": "1.4.1",
+  "type": "module",
+  "types": "dist/types/types.ts",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "buildDev": "tsc && vite build --mode development",
+    "watch": "yarn buildDev --watch"
+  },
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com",
+    "access": "restricted",
+    "module": "./dist/lib/auth.es.js",
+    "types": "./dist/types/types.ts",
+    "exports": {
+      ".": {
+        "import": "./dist/lib/auth.es.js"
+      }
+    }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com:bcmi-labs/cloud-editor-mono.git"
+  },
+  "module": "./lib/index.ts",
+  "exports": {
+    ".": {
+      "import": "./lib/index.ts"
+    }
+  }
+}

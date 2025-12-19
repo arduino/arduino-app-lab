@@ -1,0 +1,98 @@
+---
+name: hast-util-parse-selector
+version: 4.0.0
+type: npm
+summary: hast utility to create an element from a simple CSS selector
+homepage:
+license: mit
+licenses:
+- sources: license
+  text: |
+    (The MIT License)
+
+    Copyright (c) 2016 Titus Wormer <tituswormer@gmail.com>
+
+    Permission is hereby granted, free of charge, to any person obtaining
+    a copy of this software and associated documentation files (the
+    'Software'), to deal in the Software without restriction, including
+    without limitation the rights to use, copy, modify, merge, publish,
+    distribute, sublicense, and/or sell copies of the Software, and to
+    permit persons to whom the Software is furnished to do so, subject to
+    the following conditions:
+
+    The above copyright notice and this permission notice shall be
+    included in all copies or substantial portions of the Software.
+
+    THE SOFTWARE IS PROVIDED 'AS IS', WITHOUT WARRANTY OF ANY KIND,
+    EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+    MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+    IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+    CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+    TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+    SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+- sources: readme.md
+  text: |-
+    [MIT][license] © [Titus Wormer][author]
+
+    <!-- Definitions -->
+
+    [build-badge]: https://github.com/syntax-tree/hast-util-parse-selector/workflows/main/badge.svg
+
+    [build]: https://github.com/syntax-tree/hast-util-parse-selector/actions
+
+    [coverage-badge]: https://img.shields.io/codecov/c/github/syntax-tree/hast-util-parse-selector.svg
+
+    [coverage]: https://codecov.io/github/syntax-tree/hast-util-parse-selector
+
+    [downloads-badge]: https://img.shields.io/npm/dm/hast-util-parse-selector.svg
+
+    [downloads]: https://www.npmjs.com/package/hast-util-parse-selector
+
+    [size-badge]: https://img.shields.io/badge/dynamic/json?label=minzipped%20size&query=$.size.compressedSize&url=https://deno.bundlejs.com/?q=hast-util-parse-selector
+
+    [size]: https://bundlejs.com/?q=hast-util-parse-selector
+
+    [sponsors-badge]: https://opencollective.com/unified/sponsors/badge.svg
+
+    [backers-badge]: https://opencollective.com/unified/backers/badge.svg
+
+    [collective]: https://opencollective.com/unified
+
+    [chat-badge]: https://img.shields.io/badge/chat-discussions-success.svg
+
+    [chat]: https://github.com/syntax-tree/unist/discussions
+
+    [npm]: https://docs.npmjs.com/cli/install
+
+    [esm]: https://gist.github.com/sindresorhus/a39789f98801d908bbc7ff3ecc99d99c
+
+    [esmsh]: https://esm.sh
+
+    [typescript]: https://www.typescriptlang.org
+
+    [license]: license
+
+    [author]: https://wooorm.com
+
+    [health]: https://github.com/syntax-tree/.github
+
+    [contributing]: https://github.com/syntax-tree/.github/blob/main/contributing.md
+
+    [support]: https://github.com/syntax-tree/.github/blob/main/support.md
+
+    [coc]: https://github.com/syntax-tree/.github/blob/main/code-of-conduct.md
+
+    [hast]: https://github.com/syntax-tree/hast
+
+    [hast-util-sanitize]: https://github.com/syntax-tree/hast-util-sanitize
+
+    [hastscript]: https://github.com/syntax-tree/hastscript
+
+    [hast-util-from-selector]: https://github.com/syntax-tree/hast-util-from-selector
+
+    [element]: https://github.com/syntax-tree/hast#element
+
+    [xss]: https://en.wikipedia.org/wiki/Cross-site_scripting
+
+    [api-parse-selector]: #parseselectorselector-defaulttagname
+notices: []

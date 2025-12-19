@@ -1,0 +1,59 @@
+@use "@cloud-editor-mono/ui-components/public/shared.module.scss";
+
+.legal-disclaimer {
+  display: flex;
+  padding: 11px 20px 16px 20px;
+  flex-direction: column;
+  align-items: flex-start;
+  margin-top: 19px;
+  color: shared.theme-var(--sidebar-panel-foreground);
+  gap: 28px;
+  overflow: auto;
+
+  .title {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .content {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 30px;
+
+    .block {
+      display: grid;
+      grid-auto-flow: column;
+      gap: 11px;
+
+      .text {
+        display: flex;
+        flex-direction: column;
+      }
+
+      svg {
+        display: flex;
+        width: 28px;
+        height: 28px;
+        padding: 3.5px 3.5px 2.625px 3.5px;
+        justify-content: center;
+        align-items: center;
+        aspect-ratio: 1/1;
+      }
+    }
+  }
+
+  .footer {
+    display: flex;
+    gap: 3px;
+    flex-wrap: wrap;
+
+    button {
+      span {
+        text-transform: lowercase !important;
+      }
+    }
+  }
+}

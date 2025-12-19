@@ -1,0 +1,13 @@
+{
+  "$schema": "https://wails.io/schemas/config.v2.json",
+  "name": "Arduino App Lab",
+  "outputfilename": "ArduinoAppLab",
+  "frontend:install": "yarn install",
+  "frontend:build": "yarn build",
+  "frontend:dev:watcher": "yarn dev",
+  "frontend:dev:serverUrl": "auto",
+  "info": {
+    "companyName": "Arduino",
+    "copyright": "Copyright © 2025 Arduino SA"
+  }
+}

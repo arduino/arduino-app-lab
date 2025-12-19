@@ -1,0 +1,81 @@
+@use "../../public/shared.module.scss";
+@use "./context-menu-variables.module.scss";
+
+:root {
+  --context-menu-left: 0;
+  --context-menu-top: 0;
+  --context-menu-squashed-height: 0;
+}
+
+$contextMenuLeft: var(--context-menu-left);
+$contextMenuTop: var(--context-menu-top);
+$contextMenuSquashedHeight: var(--context-menu-squashed-height);
+
+:export {
+  contextMenuLeft: --context-menu-left;
+  contextMenuTop: --context-menu-top;
+  contextMenuSquashedHeight: --context-menu-squashed-height;
+}
+
+$contextMenuChevronHeight: 16px;
+
+.context-menu {
+  z-index: shared.$zIndex4;
+  background-color: shared.theme-var(--dropdown-background);
+  box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.25);
+  border-radius: 3px;
+  position: fixed;
+  left: $contextMenuLeft;
+  top: $contextMenuTop;
+  width: context-menu-variables.$contextMenuWidth * 1px;
+  display: flex;
+  flex-direction: column;
+  overflow: scroll;
+  -ms-overflow-style: none; /* Internet Explorer 10+ */
+  scrollbar-width: none; /* Firefox */
+  &::-webkit-scrollbar {
+    display: none; /* Safari and Chrome */
+  }
+}
+
+.context-menu-squashed {
+  height: $contextMenuSquashedHeight;
+  top: 50%;
+  transform: translate(0px, -50%);
+}
+
+.context-menu-list {
+  display: flex;
+  flex-direction: column;
+  list-style: none;
+  padding: 0;
+  margin-block-end: auto;
+  margin-block-start: auto;
+  margin-top: -$contextMenuChevronHeight;
+  margin-bottom: -$contextMenuChevronHeight;
+}
+
+.context-menu-chevron {
+  display: flex;
+  justify-content: center;
+  padding: 5px 0px;
+  max-height: $contextMenuChevronHeight;
+  position: sticky;
+  z-index: shared.$zIndex4;
+}
+
+.context-menu-chevron-top {
+  top: -1px;
+  background: linear-gradient(to bottom, #fff 60%, transparent);
+  cursor: n-resize;
+}
+
+.context-menu-chevron-bottom {
+  bottom: -1px;
+  background: linear-gradient(to top, #fff 60%, transparent);
+  cursor: s-resize;
+}
+
+.hidden {
+  visibility: hidden;
+}

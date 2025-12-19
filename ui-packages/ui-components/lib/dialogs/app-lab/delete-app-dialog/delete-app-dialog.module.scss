@@ -1,0 +1,19 @@
+.body {
+  align-items: center;
+
+  &-icon {
+    color: var(--feedback-error-default, #ff8878);
+    width: 56px;
+    height: 56px;
+  }
+
+  &-title {
+    text-align: center;
+    font-weight: 700 !important;
+    white-space: pre;
+  }
+
+  &-description {
+    text-align: center;
+  }
+}

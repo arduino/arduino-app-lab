@@ -1,0 +1,38 @@
+@use "@cloud-editor-mono/ui-components/public/shared.module.scss";
+
+$tabHeight: 40;
+
+.container {
+  box-sizing: border-box;
+  display: grid;
+  grid-template-rows: min-content 1fr;
+  background-color: shared.theme-var(--toolbar-background);
+  overflow: hidden;
+}
+
+.editor-panel-container {
+  height: 100%;
+  background-color: shared.theme-var(--toolbar-background);
+  overflow: hidden;
+  display: flex;
+  position: relative;
+}
+
+.read-only-editor-panel-container-with-panel {
+  @extend .editor-panel-container;
+  height: calc(100% - 126px);
+}
+
+.read-only-editor-panel-container-no-panel {
+  @extend .editor-panel-container;
+}
+
+.library-editor-panel-container {
+  @extend .editor-panel-container;
+  height: calc(100% - 36px);
+  padding-top: 36px;
+
+  *[class*="editor-controls-container"] {
+    top: calc(($tabHeight * 1px) + 36px);
+  }
+}

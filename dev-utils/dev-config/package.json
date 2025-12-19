@@ -1,0 +1,17 @@
+{
+  "name": "@bcmi-labs/cloud-editor-dev-config",
+  "private": true,
+  "version": "1.4.1",
+  "scripts": {
+    "tokens:pull": "ts-node ./scripts/tokens-pull.ts && yarn themes:generate",
+    "themes:generate": "ts-node ./scripts/tokens-transform.ts && ts-node ./scripts/themes-generate.ts",
+    "openapi-types:generate": "./scripts/openapi-types-generate.sh"
+  },
+  "main": "./index.js",
+  "types": "./index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./lib/index.js"
+    }
+  }
+}

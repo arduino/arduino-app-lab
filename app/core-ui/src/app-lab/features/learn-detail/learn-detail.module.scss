@@ -1,0 +1,105 @@
+@use "@cloud-editor-mono/ui-components/public/shared.module.scss";
+
+@use "../../../../../../ui-packages/ui-components/lib/app-lab-top-bar/top-bar.module.scss" as topBar;
+
+$resource-padding: 0 calc((100% - 900px) / 2); // 900px is the max width
+
+.main {
+  background: var(--surface-bg-below-2, #090f11);
+  height: 100%;
+  height: 100%;
+  width: 100%;
+  min-width: 600px;
+  padding: 0 16px 8px 16px;
+  box-sizing: border-box;
+  color: white;
+  display: flex;
+  flex-direction: column;
+
+  .loading-container {
+    display: flex;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    box-sizing: border-box;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 24px;
+    margin-top: topBar.$topBarHeight;
+    padding: 0 calc((100% - 900px) / 2); // 900px is the max width
+
+    @for $i from 1 through 50 {
+      & :nth-child(#{$i}) {
+        opacity: 0.1;
+        flex: none;
+        height: 20px;
+        width: percentage(calc((random(60) + 40) / 100));
+      }
+    }
+  }
+
+  .resource-container {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    overflow: auto;
+
+    &::-webkit-scrollbar-thumb {
+      border: 4px solid #090f11;
+    }
+    &::-webkit-scrollbar-track {
+      background-color: transparent;
+    }
+
+    .resource-header {
+      padding: $resource-padding;
+
+      .resource-title {
+        display: flex;
+        align-items: center;
+        margin-bottom: 16px;
+
+        & > *:first-child {
+          margin: 0;
+        }
+
+        h1 {
+          font-size: 20px;
+          line-height: 140%;
+          letter-spacing: 0.2px;
+          margin: 0 0 0 16px;
+        }
+      }
+
+      .resource-description {
+        display: flex;
+        justify-content: space-between;
+        font-size: 12px;
+        font-weight: 400;
+        line-height: 160%;
+        letter-spacing: 0.12px;
+        border-top: 1px solid #434F54;
+        border-bottom: 1px solid #434F54;
+        padding: 8px 0;
+      }
+    }
+
+    .markdown-reader {
+      width: 100%;
+      box-sizing: border-box;
+      overflow: visible;
+      padding: $resource-padding;
+      margin-top: 24px;
+    }
+  }
+}
+
+.top-bar {
+  &-container {
+    margin-left: auto;
+    width: calc(55vw - 54px); //Half of the viewport width minus the width of the left sidebar
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+}

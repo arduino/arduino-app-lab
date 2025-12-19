@@ -1,0 +1,42 @@
+.container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+}
+
+.content {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    align-items: center;
+    text-align: center;
+    height: 420px;
+    width: 316px;
+}
+
+.title {
+    color: #374146;
+    margin: 20px 10px 10px 10px;
+}
+
+.message {
+    margin: 10px;
+}
+
+.divider {
+    margin: 20px 0;
+    width: 100%;
+    border: 1px solid #c9d2d2;
+}
+
+.button {
+    margin: 20px;
+}
+
+.iconContainer {
+    svg {
+        height: 100px;
+        width: 100px;
+    }
+}

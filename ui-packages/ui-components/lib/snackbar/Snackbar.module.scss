@@ -1,0 +1,173 @@
+// ----------------------------------------------------------------------
+// IMPORTED FILE
+//
+// This code was imported from a external library to handle private
+// dependencies required for the main application to run.
+// ----------------------------------------------------------------------
+
+@use "@cloud-editor-mono/arduino-sass/src/variables" as vars;
+@use "@cloud-editor-mono/arduino-sass/src/breakpoints" as bp;
+
+.Snackbar {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  width: fit-content;
+  overflow: hidden;
+  min-width: 340px;
+
+  /* Strong Shadow */
+  box-shadow: 0px 4px 20px 0px rgba(0, 0, 0, 0.25);
+
+  color: var(--color, white);
+
+  @include bp.breakpoint(vars.$breakpoint-md) {
+    min-width: 300px;
+  }
+
+  @include bp.breakpoint(vars.$breakpoint-xs) {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  &--info {
+    background-color: vars.$jet;
+    --color: white;
+  }
+
+  &--success {
+    background-color: vars.$notifysuccess;
+    --color: white;
+  }
+
+  &--error {
+    background-color: vars.$notifyerror;
+    --color: white;
+  }
+
+  &--warning {
+    background-color: vars.$sunflower;
+    --color: #{vars.$jet};
+  }
+
+  &--sm {
+    padding: 4px 12px;
+    min-height: 36px;
+    border-radius: 8px;
+    gap: 12px;
+    --icon-size: 14px;
+  }
+
+  &--xl {
+    padding: 8px 24px 8px 20px;
+    min-height: 52px;
+    border-radius: 16px;
+    gap: 16px;
+    --icon-size: 21px;
+  }
+
+  &_content {
+    display: flex;
+    align-items: center;
+    gap: inherit;
+    flex: 1;
+
+    &-text {
+      display: flex;
+      flex-direction: column;
+      justify-self: start;
+      flex: 1;
+      overflow: hidden;
+      width: 100%;
+    }
+
+    &-icon {
+      display: flex;
+      font-size: var(--icon-size);
+      padding: 1px;
+      width: var(--icon-size);
+      height: var(--icon-size);
+      justify-content: center;
+      align-items: center;
+    }
+  }
+
+  &_actions {
+    display: flex;
+    align-items: center;
+    gap: inherit;
+
+    @include bp.breakpoint(vars.$breakpoint-xs) {
+      padding-left: 40px;
+      // Forcefully hide the first item (the separator)
+      :first-child {
+        display: none !important;
+      }
+    }
+  }
+
+  &-close {
+    display: flex;
+    width: var(--icon-size);
+    height: var(--icon-size);
+    font-size: var(--icon-size);
+    justify-content: center;
+    align-items: center;
+
+    // Reset
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    background-color: transparent;
+    color: inherit;
+  }
+
+  &-action {
+    text-transform: uppercase;
+    color: inherit;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    background-color: transparent;
+  }
+
+  &-separator {
+    width: 1px;
+    min-height: 36px;
+    opacity: 0.5;
+    background-color: var(--color);
+  }
+}
+
+.SnackbarProvider {
+  box-sizing: border-box;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 50vw;
+
+  transition: all 0.2s ease-in-out;
+
+  @include bp.breakpoint(vars.$breakpoint-md) {
+    width: 90vw;
+  }
+
+  li {
+    display: flex;
+    justify-content: center;
+    width: stretch;
+
+    transition:
+      transform 0.4s,
+      opacity 0.4s,
+      height 0.4s,
+      box-shadow 0.2s,
+      filter 0.4s;
+
+    // Blur previous snackbars, if not expanded
+    &:not([data-index="0"]):not([data-expanded="true"]) {
+      filter: blur(1px);
+    }
+  }
+}

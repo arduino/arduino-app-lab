@@ -1,0 +1,67 @@
+@use "../../../public/shared.module.scss";
+
+.progress-bar {
+  --segment-width: 290px;
+
+  @keyframes bar-movement-fast {
+    0% {
+      left: calc(-1 * var(--segment-width));
+    }
+
+    60% {
+      left: calc(-1 * var(--segment-width));
+    }
+
+    100% {
+      left: 100%;
+    }
+  }
+
+  @keyframes bar-movement-slow {
+    0% {
+      left: calc(-1 * var(--segment-width));
+    }
+
+    60% {
+      left: 100%;
+    }
+
+    100% {
+      left: 100%;
+    }
+  }
+
+  position: absolute;
+  background-color: shared.theme-var(--console-progress-bar-background);
+  width: 100%;
+  height: 4px;
+  left: 0;
+  z-index: shared.$zIndex3;
+
+  .segment {
+    animation-name: none;
+    animation-duration: 2s;
+    animation-iteration-count: infinite;
+    animation-direction: normal;
+    position: absolute;
+    width: var(--segment-width);
+    height: 100%;
+    background-color: shared.theme-var(--console-progress-bar-foreground);
+  }
+
+  .fast {
+    animation-name: bar-movement-fast;
+    animation-timing-function: linear;
+  }
+
+  .slow {
+    animation-name: bar-movement-slow;
+    animation-timing-function: linear;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background-color: shared.theme-var(--console-progress-bar-foreground);
+    transition: width 0.5s ease;
+  }
+}

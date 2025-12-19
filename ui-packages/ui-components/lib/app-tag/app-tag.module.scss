@@ -1,0 +1,46 @@
+@use "../typography/typography.module.scss";
+
+.container {
+    border-radius: 8px;
+    //TODO: Set the color variable
+    border: 1px solid var(--border-inverted, #232b2e);
+    background: var(--surface-bg-below-1, #171e21);
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: fit-content;
+    padding: 4px 8px 4px 4px;
+    gap: 4px;
+    cursor: pointer;
+}
+
+.icon-container {
+    display: flex;
+    width: 20px;
+    height: 20px;
+    padding: 2px;
+    justify-content: center;
+    align-items: center;
+    border-radius: 4px;
+}
+
+.text {
+    //TODO: Set the color variable
+    color: var(--text-default, #fff);
+    font-size: 12px;
+
+    font-family: typography.$open-sans-font-family;
+    padding: 0px 0px 0px 4px;
+}
+
+.default {
+    path {
+        //TODO: Set the color variable
+        fill: #c9d2d2 !important;
+    }
+}
+
+.selected {
+    background-color: var(--border-inverted, #232b2e);
+}

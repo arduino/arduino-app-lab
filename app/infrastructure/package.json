@@ -1,0 +1,64 @@
+{
+  "name": "@bcmi-labs/cloud-editor-infrastructure",
+  "version": "1.4.1",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "buildDev": "tsc && vite build --mode development",
+    "watch": "yarn buildDev --watch"
+  },
+  "peerDependencies": {
+    "@bcmi-labs/art-auth": "*",
+    "@codemirror/autocomplete": ">= 6.9.1",
+    "@codemirror/commands": ">= 6.1.1",
+    "@codemirror/lang-cpp": ">= 6.0.1",
+    "@codemirror/lang-python": ">= 6.2.1",
+    "@codemirror/lang-yaml": ">= 6.1.2",
+    "@codemirror/language": ">= 6.0.0",
+    "@codemirror/merge": ">= 6.8.0",
+    "@codemirror/search": ">= 6.2.2",
+    "@codemirror/state": ">= 6.1.2",
+    "@codemirror/view": ">= 6.3.0",
+    "@microsoft/fetch-event-source": ">= 2.0.1",
+    "@tanstack/react-location": ">= 3.7.4",
+    "@tanstack/react-query": ">= 4.12.0",
+    "algoliasearch": ">=4.20.0",
+    "clsx": ">= 1.2.1",
+    "react": ">= 18.2.0",
+    "react-dom": ">= 18.2.0",
+    "wretch": ">= 2.1.5"
+  },
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com",
+    "access": "restricted",
+    "module": "./dist/lib/infrastructure.es.js",
+    "types": "./dist/index.d.ts",
+    "exports": {
+      ".": {
+        "import": "./dist/lib/infrastructure.es.js"
+      },
+      "./dist/style.css": {
+        "import": "./dist/style.css"
+      }
+    }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com:bcmi-labs/cloud-editor-mono.git"
+  },
+  "module": "./lib/index.ts",
+  "types": "./index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./lib/index.ts"
+    },
+    "./src/wrappers-by-app/app-lab": {
+      "import": "./src/wrappers-by-app/app-lab/index.ts"
+    }
+  }
+}

@@ -1,0 +1,9 @@
+---
+name: "@bcmi-labs/cloud-sidebar"
+version: 2.1.12
+type: npm
+summary: Allows arduino developers to use the cloud-sidebar in their projects
+homepage: https://github.com/bcmi-labs/cloud-sidebar#readme
+license: other
+licenses: []
+notices: []

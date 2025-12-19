@@ -1,0 +1,77 @@
+.main {
+  background: var(--surface-bg-below-2, #090f11);
+  height: 100%;
+  width: 100%;
+  padding: 0px 16px;
+  box-sizing: border-box;
+	display: flex;
+	flex-direction: column;
+}
+
+.empty-learn-list {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  justify-content: center;
+  align-items: center;
+  color: white;
+	font-weight: 600;
+	size: 14px;
+	padding-bottom: 80px;
+
+  &-icon {
+    display: flex;
+    width: 40px;
+    height: 40px;
+    justify-content: center;
+    align-items: center;
+    border-radius: 8px;
+    //TODO: Set the color variable
+    background: var(--component-bg-flexible, rgba(174, 184, 184, 0.15));
+    margin: 0px 0px 16px 0px;
+  }
+
+	p {
+		margin: 8px;
+	}
+}
+
+.learn-list {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 24px;
+	padding-bottom: 24px;
+  //TODO: This default font color can be moved to a global variable
+  //TODO: Set the color variable
+  color: var(--text-subtle, #c9d2d2);
+}
+
+.learn-resource-link {
+  text-decoration: none;
+  color: inherit;
+}
+
+@media (min-width: calc(430px * 2)) {
+  .learn-list {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: calc(430px * 3)) {
+  .learn-list {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: calc(430px * 4)) {
+  .learn-list {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: calc(430px * 5)) {
+  .learn-list {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+}

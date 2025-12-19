@@ -1,0 +1,227 @@
+@use "../../../../public/shared.module.scss";
+@use "../../../essential/dropdown-menu/dropdown-menu-variables.module.scss";
+@use "../../../essential/tab-list/tab-list.module.scss";
+@use "../../sidenav-variables.module.scss";
+
+$examplesContainerOffset: tab-list.$tabsHeight;
+$examplesContainerHeight: calc(100% - $examplesContainerOffset);
+$skeletonChildren: 11;
+$examplesMenuButtonGradientSpace: 18;
+$examplesMenuButtonWidth: 24;
+$examplesMenuButtonHeight: 24;
+
+:export {
+  skeletonChildren: $skeletonChildren;
+}
+
+.examples-container {
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.examples-header {
+  padding: 5px 15px 15px 15px;
+  display: grid;
+  gap: 5px;
+}
+
+.examples-search-placeholder {
+  height: 30px;
+}
+
+.examples-tab-panel > .examples-list-container > .examples-list > .examples-list-item {
+  padding-left: 12px;
+}
+
+.examples-tabs {
+  height: 100%;
+}
+
+.examples-tab-panel > .examples-list-container {
+  padding-bottom: 20px;
+}
+
+.examples-list-container {
+  overflow-y: auto;
+  overflow-x: hidden;
+  height: calc(100% - 55px);
+}
+
+.examples-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.examples-virtual-list-container {
+  position: relative;
+  height: $examplesContainerHeight;
+}
+
+%summary {
+  summary {
+    min-height: 32px;
+    
+    &::-webkit-details-marker {
+      display: none;
+    }
+
+    &:hover {
+      background-color: #ecf1f1;
+
+      .examples-menu-button-wrapper {
+        background: linear-gradient(270deg, #ecf1f1 49.61%, rgba(255, 255, 255, 0) 84.09%);
+      }
+    }
+  }
+}
+
+.examples-list-item {
+  padding-left: 21px;
+
+  @extend %summary;
+}
+
+.examples-virtual-list-item {
+  display: grid;
+  align-items: center;
+  white-space: nowrap;
+
+  @extend %summary;
+
+  summary {
+    padding-left: 12px;
+    padding-right: 2px;
+  }
+}
+
+.examples-virtual-list-item-summary-label {
+  max-width: calc(sidenav-variables.$current-sidenav-panel-width - 65px);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.examples-link-active {
+  .examples-link-wrapper {
+    background-color: #dae3e3;
+
+    &:hover {
+      background-color: #dae3e3;
+
+      .examples-menu-button-wrapper {
+        background: linear-gradient(270deg, #dae3e3 49.61%, rgba(255, 255, 255, 0) 84.09%);
+      }
+    }
+
+    .examples-menu-button-wrapper {
+      background: linear-gradient(270deg, #dae3e3 49.61%, rgba(255, 255, 255, 0) 84.09%);
+    }
+  }
+}
+
+.examples-link-wrapper {
+  display: grid;
+  grid-auto-flow: column;
+  grid-template-columns: 1fr calc(($examplesMenuButtonWidth + $examplesMenuButtonGradientSpace) * 1px);
+  align-items: center;
+  justify-items: start;
+  min-height: 32px;
+
+  &:hover {
+    background-color: #ecf1f1;
+
+    .examples-menu-button {
+      visibility: visible;
+    }
+
+    .examples-menu-button-wrapper {
+      background: linear-gradient(270deg, #ecf1f1 49.61%, rgba(255, 255, 255, 0) 84.09%);
+    }
+  }
+}
+
+.examples-icon {
+  width: $examplesMenuButtonWidth * 1px;
+  height: $examplesMenuButtonHeight * 1px;
+  display: grid;
+  justify-content: center;
+  align-items: center;
+}
+
+.examples-link {
+  color: shared.theme-var(--header-title-label);
+  text-decoration: none;
+  display: grid;
+  grid-auto-flow: column;
+  grid-template-columns: fit-content(100%) 1fr;
+  grid-row: 1;
+  grid-column: span 3/-1;
+  column-gap: 3px;
+  justify-content: start;
+  align-items: center;
+}
+
+.library-examples-list-item--skeleton {
+  display: flex;
+  width: 100%;
+  overflow: hidden;
+  box-sizing: border-box;
+  flex-direction: column;
+  align-items: flex-start;
+  padding-top: 8px;
+  gap: 12px;
+
+  @for $i from 1 through $skeletonChildren {
+    & :nth-child(#{$i}) {
+      flex: none;
+      height: 20px;
+      width: 80%;
+    }
+  }
+}
+
+.examples-menu-button-wrapper {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(270deg, #f7f9f9 49.61%, rgba(255, 255, 255, 0) 84.09%);
+}
+
+$menuAndButtonWidth: -(dropdown-menu-variables.$dropdownMenuWidth) + $examplesMenuButtonWidth;
+.examples-menu {
+  margin-left: $examplesMenuButtonGradientSpace * 1px;
+  left: $menuAndButtonWidth * 1px;
+}
+
+.examples-menu-button {
+  visibility: hidden;
+  margin-right: 2px;
+
+  &.examples-menu-button-open,
+  &:hover {
+    visibility: visible;
+  }
+}
+
+.no-results-container {
+  padding: 36px;
+}
+
+.examples-filter {
+  height: 40px;
+  display: grid;
+  align-items: center;
+  justify-items: start;
+  gap: 3px;  
+  color: #7F8C8D;
+  overflow: hidden;
+}
+
+.examples-filter-button {
+  overflow: hidden;
+  width: 100%;
+  justify-content: initial;
+  white-space: nowrap;
+}

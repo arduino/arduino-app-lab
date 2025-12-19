@@ -1,0 +1,11 @@
+---
+name: endent
+version: 2.1.0
+type: npm
+summary: "➡️ An ES6 string tag that makes indentation right"
+homepage: https://github.com/ZhouHansen/endent#readme
+license: mit
+licenses:
+- sources: README.md
+  text: MIT
+notices: []

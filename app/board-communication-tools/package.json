@@ -1,0 +1,42 @@
+{
+  "name": "@bcmi-labs/cloud-editor-board-communication-tools",
+  "version": "1.4.1",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "buildDev": "tsc && vite build --mode development",
+    "watch": "yarn buildDev --watch"
+  },
+  "peerDependencies": {
+    "react": ">= 18.2.0",
+    "react-dom": ">= 18.2.0",
+    "type-fest": ">=4.3.1"
+  },
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com",
+    "access": "restricted",
+    "module": "./dist/lib/board-communication-tools.es.js",
+    "types": "./dist/index.d.ts",
+    "exports": {
+      ".": {
+        "import": "./dist/lib/board-communication-tools.es.js"
+      }
+    }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com:bcmi-labs/cloud-editor-mono.git"
+  },
+  "module": "./dist/lib/index.ts",
+  "types": "./index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./lib/index.ts"
+    }
+  }
+}

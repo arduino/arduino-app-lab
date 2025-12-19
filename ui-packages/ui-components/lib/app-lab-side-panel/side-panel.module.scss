@@ -1,0 +1,47 @@
+@use "@cloud-editor-mono/ui-components/public/shared.module.scss";
+
+$sidePanelSize: 54px;
+
+.side-panel {
+  grid-area: side-panel;
+  background-color: var(--surface-bg-below-2, #090f11);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px 8px;
+  width: $sidePanelSize;
+  margin-top: 2px;
+  border-right: 1px solid var(--border-inverted, #232b2e);
+
+  .content {
+    height: 100%;
+
+    .list {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      padding: unset;
+      margin: unset;
+      height: 100%;
+      justify-content: space-between;
+    }
+
+    .section {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .divider {
+      height: 2px;
+      background-color: #232b2e;
+    }
+
+    .bottom-section {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      margin-top: auto;
+    }
+  }
+}

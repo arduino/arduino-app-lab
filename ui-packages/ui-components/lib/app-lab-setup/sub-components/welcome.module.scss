@@ -1,0 +1,149 @@
+.welcome-container {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #ecf1f1;
+  background: #090f11;
+  gap: 16px;
+
+  .welcome-content {
+    display: flex;
+    width: 516px;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .welcome-title {
+    font-size: 32px;
+    font-weight: 600;
+    color: #c9d2d2;
+    margin: 12px;
+  }
+
+  .welcome-description {
+    font-size: 16px;
+    color: #c9d2d2;
+    margin: 12px;
+  }
+
+  .boards {
+    display: flex;
+    flex-wrap: wrap;
+
+    overflow-y: scroll;
+    max-height: 60vh;
+
+    &::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    &::-webkit-scrollbar-thumb {
+      margin: 0;
+      border: none;
+    }
+
+    &::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    gap: 32px;
+    margin-top: 22px;
+  }
+}
+
+.input {
+  border-radius: 8px !important;
+  background: transparent !important;
+  border-color: #434f54;
+
+  &.password {
+    div[role="tooltip"] {
+      color: var(--text-inverted, #171e21) !important;
+      position: absolute;
+      border: 1px solid gray;
+      right: -20px;
+      top: -20px;
+      background: var(--feedback-neutral-default, #aeb8b8);
+    }
+
+    button[class*="input-eye"] {
+      margin-top: -16px;
+    }
+  }
+
+  &.disabled {
+    border-color: #434f54 !important;
+    cursor: not-allowed;
+
+    input {
+      cursor: not-allowed;
+    }
+  }
+}
+
+.spinner {
+  animation: spin 1.5s linear infinite;
+  transform-origin: 50% 50%;
+  display: block;
+  height: 22px;
+  width: 22px;
+
+  & > svg {
+    height: 22px;
+    width: 22px;
+  }
+}
+
+.password-prompt {
+  &-content {
+    width: 500px;
+    min-width: auto;
+    min-height: auto;
+  }
+
+  &-body {
+    padding: 16px !important;
+    gap: 16px;
+
+    *[class*="InputBox"] {
+      background: transparent !important;
+      border-color: #434f54;
+
+      *[class*="label"] {
+        color: #c9d2d2;
+      }
+
+      input {
+        color: #c9d2d2;
+
+        &[type="password"]::-ms-reveal {
+          display: none;
+        }
+      }
+
+      *[class*="InputBox--Icons"] {
+        svg {
+          color: #c9d2d2;
+        }
+      }
+    }
+
+    & > *[class*="InputBox"] {
+      $passwordInputHeight: 58px;
+
+      &:first-child {
+        height: $passwordInputHeight;
+      }
+
+      &:last-child {
+        height: calc(#{$passwordInputHeight} + 16px);
+      }
+    }
+  }
+
+  &-footer {
+    border-top: 3px solid #1e2628;
+  }
+}

@@ -1,0 +1,54 @@
+@use "../../../../../public/shared.module.scss";
+
+.root {
+    display: flex;
+    flex-direction: column;
+}
+
+.container {
+    background: shared.theme-var(--associate-dialog-background);
+    margin-top: 16px;
+    width: 100%;
+    display: inline-flex;
+    align-items: center;
+    flex-direction: column;
+    overflow: visible;
+}
+
+.items-container {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.undetected-container {
+    gap: 0px;
+}
+
+.search-placeholder {
+    height: 36px;
+}
+
+.no-results-container {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.no-results-image {
+    width: 100%;
+}
+
+.no-results-header {
+    text-align: center;
+}
+
+.no-results-title {
+    @extend .no-results-header;
+}
+
+.no-results-subtitle {
+    @extend .no-results-header;
+}

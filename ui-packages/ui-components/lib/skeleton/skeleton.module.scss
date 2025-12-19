@@ -1,0 +1,44 @@
+@use "../../public/shared.module.scss";
+
+.skeleton {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  position: relative;
+  overflow: hidden;
+  z-index: shared.$zIndex1;
+
+  &.rect {
+    border-radius: unset;
+  }
+
+  &.circular {
+    border-radius: 50%;
+  }
+
+  &.rounded {
+    border-radius: 4px;
+  }
+}
+
+.skeleton:after {
+  content: "";
+  width: 100%;
+  height: 100%;
+  background-repeat: no-repeat;
+  background-image: linear-gradient(90deg, #ecf1f1 0%, #c9d2d2 100%);
+  transform: translateX(-100%);
+
+  animation-name: skeleton;
+  animation-direction: normal;
+  animation-duration: 1.5s;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+}
+
+@keyframes skeleton {
+  100% {
+    transform: translateX(100%);
+  }
+}

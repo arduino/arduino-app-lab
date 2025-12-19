@@ -1,0 +1,25 @@
+.details-wrapper {
+  outline: 1px solid #c9d2d2;
+  border-radius: 4px;
+  display: grid;
+  align-items: center;
+}
+
+.details-summary {
+  min-height: 20px;
+  padding: 3px 11px;
+  width: calc(100% - 22px);
+  flex-direction: row-reverse;
+}
+
+.code-block {
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+}
+
+.foldable-node {
+  margin: 4px 0px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}

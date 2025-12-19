@@ -1,0 +1,11 @@
+---
+name: err-code
+version: 2.0.3
+type: npm
+summary: Create an error with a code
+homepage:
+license: mit
+licenses:
+- sources: README.md
+  text: Released under the [MIT License](http://www.opensource.org/licenses/mit-license.php).
+notices: []

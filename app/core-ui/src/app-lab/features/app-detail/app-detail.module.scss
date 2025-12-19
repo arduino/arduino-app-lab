@@ -1,0 +1,237 @@
+@use "@cloud-editor-mono/ui-components/public/shared.module.scss";
+
+.main {
+  background: var(--surface-bg-below-2, #090f11);
+  height: 100%;
+  height: 100%;
+  width: 100%;
+  min-width: 600px;
+  padding: 0 16px 8px 16px;
+  box-sizing: border-box;
+  color: white;
+  display: flex;
+  flex-direction: column;
+}
+
+.top-bar {
+  &-container {
+    margin-left: auto;
+    width: calc(55vw - 54px); //Half of the viewport width minus the width of the left sidebar
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    .actions {
+      display: flex;
+      flex-direction: row;
+      gap: 16px;
+
+      &--duplicate {
+        svg path {
+            fill: var(--text-accent, #25c2c7);
+        }
+      }
+    }
+  }
+}
+
+h1,
+h2,
+h3 {
+  margin: 0;
+}
+
+h1 {
+  font-size: 20px;
+}
+
+h2 {
+  font-size: 14px;
+}
+
+.split {
+  flex: 1;
+  display: flex;
+  height: 100%;
+  overflow: hidden;
+
+  .gutter {
+    height: 100%;
+  }
+  .gutter:hover {
+    cursor: col-resize;
+    border-right: 1px solid #25c2c7 !important;
+    box-sizing: border-box;
+  }
+}
+
+.multiple-console {
+  height: 100%;
+}
+
+.split-item {
+  height: 100%;
+  &-left {
+    display: flex;
+    flex-direction: column;
+  }
+
+  border: 1px solid #232b2e;
+  background: #090f11;
+  box-sizing: border-box;
+  overflow: hidden;
+  border-radius: 12px;
+  padding: 2px;
+
+  ::-webkit-scrollbar-thumb {
+    border: 4px solid shared.theme-var(--editor-background);
+    background-color: rgba(0, 0, 0, 0.5);
+  }
+
+  ::-webkit-scrollbar-track {
+    background-color: transparent;
+  }
+}
+
+.split-item-left {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+
+  &.fullscreen {
+    display: flex;
+    padding: 8px 0;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+    align-self: stretch;
+
+    .app-header {
+      gap: unset;
+    }
+  }
+
+  .app-header {
+    display: grid;
+    grid-auto-flow: column;
+    grid-template-columns: 1fr fit-content(100%);
+    gap: 16px;
+    margin-bottom: 4px;
+    justify-content: start;
+
+    .app-header-icon {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .app-header-title {
+      background: none !important;
+      color: white !important;
+      padding: 0 !important;
+      justify-content: start;
+      width: 100%;
+
+      &-content {
+        display: grid;
+        grid-auto-flow: column;
+        grid-template-columns: 18px 1fr;
+        gap: 8px;
+        align-items: center;
+      }
+
+      &-label {
+        font-size: 12px;
+        font-weight: 700;
+        text-align: start;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      &.collapsed svg {
+        transform: rotate(270deg);
+      }
+    }
+
+    .app-header-button {
+      padding: 0;
+      width: 28px;
+      height: 28px;
+      color: var(--text-default, #ffffff);
+      background-color: #232b2e !important;
+      border-radius: 8px;
+
+      &-menu {
+        top: 32px !important;
+        border-radius: 8px;
+        background-color: #374146 !important;
+        padding: 4px;
+
+        &-item {
+          outline: none;
+          border-radius: 4px;
+          height: 28px;
+          &:hover {
+            background-color: #aeb8b826;
+          }
+
+          span {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            gap: 8px;
+          }
+        }
+      }
+
+      svg {
+        height: 16px;
+        width: 16px;
+      }
+    }
+
+    .app-header-button-wrapper {
+      width: 28px;
+      height: 28px;
+    }
+  }
+
+  .app-files .app-header-icon svg,
+  .app-files .app-header-button svg {
+    height: 16px;
+    width: 16px;
+  }
+  .app-libraries .app-header-icon svg {
+    height: 20px;
+    width: 20px;
+  }
+
+  .app-empty {
+    font-size: 12px;
+    margin: 0 6px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .app-files {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+
+    .app-list {
+      flex: 1;
+      overflow: hidden;
+    }
+  }
+}
+
+.split-item-right {
+  min-width: 50%;
+}
+
+.hidden {
+  display: none;
+}

@@ -1,0 +1,72 @@
+@use "../serial-monitor-variables.module.scss";
+
+:root {
+    --serial-monitor-send-input-padding-right: unset;
+}
+
+$serialMonitorSendInputPaddingRight: var(--serial-monitor-send-input-padding-right);
+$serialMonitorSendButtonGutter: 4px;
+
+:export {
+    serialMonitorSendInputPaddingRight: --serial-monitor-send-input-padding-right;
+    serialMonitorSendButtonGutter: $serialMonitorSendButtonGutter;
+}
+
+.serial-monitor-actions {
+    position: relative;
+    display: flex;
+    align-items: center;
+    height: serial-monitor-variables.$actionsHeight;
+    background-color: serial-monitor-variables.$actionsBackground;
+    padding-left: serial-monitor-variables.$serialMonitorPaddingLeft;
+    padding-right: 24px;
+    border-top: 1px solid serial-monitor-variables.$borderColor;
+    gap: 12px;
+
+    &.serial-monitor-actions-no-border {
+        border-top: none;
+    }
+
+    *[class*="progress-bar"] {
+        top: 0;
+    }
+
+    
+    .serial-monitor-send {
+        display: flex;
+        width: 100%;
+    
+        .serial-monitor-send-input-wrapper {
+            position: relative;
+            width: 100%;
+
+            .serial-monitor-send-input {
+                box-sizing: border-box;
+                padding-right: $serialMonitorSendInputPaddingRight;
+                width: 100%;
+                min-width: 350px;
+                height: 44px;
+                border-radius: 60px;
+                font-weight: 400;
+                font-size: 14px;
+                line-height: 170%;
+                letter-spacing: 0.01em;
+                border: 1px solid #bdc7c7;
+                padding-left: 16px;
+
+                &:focus-visible {
+                    outline: none;
+                    border: 1px solid #7fcbcd;
+                }
+            }
+
+            .serial-monitor-send-button {
+                position: absolute;
+                height: 36px;
+                top: 50%;
+                right: $serialMonitorSendButtonGutter;
+                transform: translateY(-50%);
+            }
+        }
+    }
+}

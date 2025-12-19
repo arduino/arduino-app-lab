@@ -1,0 +1,60 @@
+@use "@cloud-editor-mono/ui-components/public/shared.module.scss";
+@use "../typography/typography.module.scss";
+
+.library-item {
+	position: relative;
+	height: 22px;
+	padding: 4px;
+	width: 100%;
+	box-sizing: border-box;
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	border-radius: 6px;
+
+	&.active {
+		background-color: var(--editor-background);
+
+		.library-item-name {
+			color: white;
+		}
+	}
+}
+
+.library-item-icon {
+	flex-shrink: 0;
+	display: flex;
+	justify-content: center;
+	color: var(--text-subtle, #c9d2d2);
+}
+.library-item-text {
+	color: var(--text-subtle, #c9d2d2);
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+.library-item-name {
+	text-align: left;
+}
+.library-item-version {
+	opacity: 0.6;
+}
+
+.library-item-context-menu {
+	position: absolute;
+	top: calc(100% + 2px);
+	left: calc(100% - 24px);
+	z-index: shared.$zIndex5 !important;
+}
+
+.library-item-delete-button {
+	border: none;
+	background-color: #374146;
+	border-radius: 8px;
+  	color: var(--feedback-error-default, #ff8878);
+	padding: 8px 12px;
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	cursor: pointer;
+}

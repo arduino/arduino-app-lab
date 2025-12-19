@@ -1,0 +1,55 @@
+---
+name: webpack-dev-middleware
+version: 3.7.3
+type: npm
+summary: A development middleware for webpack
+homepage: https://github.com/webpack/webpack-dev-middleware
+license: mit
+licenses:
+- sources: LICENSE
+  text: |
+    Copyright JS Foundation and other contributors
+
+    Permission is hereby granted, free of charge, to any person obtaining
+    a copy of this software and associated documentation files (the
+    'Software'), to deal in the Software without restriction, including
+    without limitation the rights to use, copy, modify, merge, publish,
+    distribute, sublicense, and/or sell copies of the Software, and to
+    permit persons to whom the Software is furnished to do so, subject to
+    the following conditions:
+
+    The above copyright notice and this permission notice shall be
+    included in all copies or substantial portions of the Software.
+
+    THE SOFTWARE IS PROVIDED 'AS IS', WITHOUT WARRANTY OF ANY KIND,
+    EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+    MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+    IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+    CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+    TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+    SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+- sources: README.md
+  text: |-
+    [MIT](./LICENSE)
+
+    [npm]: https://img.shields.io/npm/v/webpack-dev-middleware.svg
+    [npm-url]: https://npmjs.com/package/webpack-dev-middleware
+    [node]: https://img.shields.io/node/v/webpack-dev-middleware.svg
+    [node-url]: https://nodejs.org
+    [deps]: https://david-dm.org/webpack/webpack-dev-middleware.svg
+    [deps-url]: https://david-dm.org/webpack/webpack-dev-middleware
+    [tests]: https://dev.azure.com/webpack/webpack-dev-middleware/_apis/build/status/webpack.webpack-dev-middleware?branchName=master
+    [tests-url]: https://dev.azure.com/webpack/webpack-dev-middleware/_build/latest?definitionId=8&branchName=master
+    [cover]: https://codecov.io/gh/webpack/webpack-dev-middleware/branch/master/graph/badge.svg
+    [cover-url]: https://codecov.io/gh/webpack/webpack-dev-middleware
+    [chat]: https://badges.gitter.im/webpack/webpack.svg
+    [chat-url]: https://gitter.im/webpack/webpack
+    [size]: https://packagephobia.now.sh/badge?p=webpack-dev-middleware
+    [size-url]: https://packagephobia.now.sh/result?p=webpack-dev-middleware
+    [docs-url]: https://webpack.js.org/guides/development/#using-webpack-dev-middleware
+    [hash-url]: https://twitter.com/search?q=webpack
+    [middleware-url]: https://github.com/webpack/webpack-dev-middleware
+    [stack-url]: https://stackoverflow.com/questions/tagged/webpack-dev-middleware
+    [uglify-url]: https://github.com/webpack-contrib/uglifyjs-webpack-plugin
+    [wjo-url]: https://github.com/webpack/webpack.js.org
+notices: []

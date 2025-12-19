@@ -1,0 +1,16 @@
+.no-results {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  height: 100%;
+  text-align: center;
+  box-sizing: border-box;
+}
+
+.ex-no-results-image {
+  width: 200px;
+  height: fit-content;
+  margin-bottom: 12px;
+}

@@ -1,0 +1,11 @@
+---
+name: get-stdin
+version: 4.0.1
+type: npm
+summary: Easier stdin
+homepage:
+license: mit
+licenses:
+- sources: readme.md
+  text: MIT © [Sindre Sorhus](http://sindresorhus.com)
+notices: []

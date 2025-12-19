@@ -1,0 +1,62 @@
+@use "@cloud-editor-mono/ui-components/public/shared.module.scss";
+
+.gen-ai-banner-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  width: 400px;
+  gap: 10px;
+
+  position: fixed;
+  z-index: 1000;
+  right: 31px;
+  bottom: 31px;
+  border-radius: 4px;
+  border: 1px solid #c9d2d2;
+  gap: 14px;
+
+  background: #fff;
+
+  box-shadow: 0px 4px 20px 0px rgba(0, 0, 0, 0.25);
+}
+
+.gen-ai-banner-image-bg {
+  position: relative;
+  display: grid;
+  justify-items: center;
+}
+
+.gen-ai-banner-image {
+  position: absolute;
+  display: grid;
+  bottom: 0;
+}
+
+.gen-ai-banner-text {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+  padding: 0 16px;
+}
+
+.gen-ai-banner-buttons {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  align-self: stretch;
+  padding: 0 16px 16px 16px;
+}
+
+.gen-ai-banner-button {
+  display: flex;
+  padding: 2px 16px !important;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+
+  &.gen-ai-banner-button-hide {
+    color: #7f8c8d;
+  }
+}

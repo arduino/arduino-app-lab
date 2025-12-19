@@ -1,0 +1,60 @@
+@use "@cloud-editor-mono/ui-components/public/shared.module.scss";
+
+.ai-model-card {
+  border-radius: 16px;
+  border: 1px solid var(--border-default, #434f54);
+  padding: 16px;
+  display: flex;
+  flex-direction: row;
+
+  .radio {
+    border-radius: 24px;
+    width: 16px;
+    height: 16px;
+    padding: 2px;
+    border: 1px solid var(--border-strong, #7f8c8d);
+  }
+
+  &.selectable {
+    cursor: pointer;
+  }
+
+  &.selected {
+    border-color: var(--border-accent, #25c2c7);
+    background-color: #25C2C714;
+
+    .radio {
+      border-color: var(--border-accent, #25c2c7);
+      
+      &::after {
+        content: '';
+        display: block;
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        background-color: var(--border-accent, #25c2c7);
+      }
+    }
+  }
+
+  .ai-model-card-container {
+    padding: 0 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .ai-model-name {
+    font-weight: 700;
+    color: var(--text-default, #fff);
+  }
+
+  .ai-model-in-use {
+    padding: 4px;
+    border-radius: 4px;
+    background-color: #AEB8B826;
+    color: var(--text-default, #fff);
+    font-size: 10px;
+    font-weight: 500;
+  }
+}

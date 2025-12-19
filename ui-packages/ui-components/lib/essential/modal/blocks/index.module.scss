@@ -1,0 +1,268 @@
+// ----------------------------------------------------------------------
+// IMPORTED FILE
+//
+// This code was imported from a external library to handle private
+// dependencies required for the main application to run.
+// ----------------------------------------------------------------------
+
+@use "@cloud-editor-mono/arduino-sass/src/variables" as vars;
+@use "@cloud-editor-mono/arduino-sass/src/breakpoints" as bp;
+
+.Modal {
+  --radius: 5px;
+  position: fixed;
+  box-sizing: border-box;
+
+  // Inset: 0 would do the same, but breaks outside interaction on dialog.
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+
+  z-index: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 36px;
+
+  &[data-state="open"] {
+    animation: modal-in 0.25s cubic-bezier(0, 0, 0.4, 1);
+  }
+
+  &[data-state="closed"] {
+    animation: modal-out 0.25s cubic-bezier(0, 0, 0.4, 1);
+  }
+
+  &--overlay {
+    position: fixed;
+    inset: 0;
+    background-color: rgba(0, 0, 0, 0.8);
+
+    &[data-state="open"]:global {
+      animation: fade-in 0.25s cubic-bezier(0, 0, 0.4, 1);
+    }
+
+    &[data-state="closed"]:global {
+      animation: fade-out 0.25s cubic-bezier(0, 0, 0.4, 1);
+      display: none;
+    }
+  }
+}
+
+.ModalContent {
+  --modal-padding-vertical: 28px;
+  --modal-padding-horizontal: 40px;
+  --modal-min-width: 650px;
+
+  z-index: auto;
+  max-height: 90vh; /* fallback for older browsers */
+  max-height: 90dvh;
+  width: 90vw;
+  max-width: 90vw;
+
+  position: relative;
+  display: flex;
+  flex-direction: column;
+
+  background-color: white;
+  border-radius: var(--radius);
+
+  @include bp.breakpoint(vars.$breakpoint-md, "min") {
+    min-width: var(--modal-min-width);
+    width: min-content;
+    --modal-padding-horizontal: 130px;
+  }
+
+  &--cover {
+    background-color: #f7f9f9;
+    justify-content: center;
+    align-items: center;
+    display: flex;
+    border-radius: inherit;
+    height: 170px;
+    flex-shrink: 0;
+
+    img {
+      max-width: 100%; // Ensure image doesn't overflow
+      height: inherit;
+      max-height: 170px;
+      object-fit: contain;
+    }
+
+    &--boxed {
+      img {
+        max-height: 80px;
+      }
+    }
+
+    &--white {
+      background-color: white;
+    }
+
+    &--basegray {
+      background-color: vars.$basegray;
+    }
+
+    &--full {
+      background-color: transparent;
+
+      img {
+        width: 100%;
+        object-fit: cover;
+      }
+    }
+  }
+
+  &--actions {
+    box-sizing: border-box;
+    position: sticky;
+    min-height: 78px;
+    padding: 0 var(--modal-padding-horizontal);
+    background-color: vars.$feather;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    border-radius: 0 0 var(--radius) var(--radius);
+    align-items: center;
+    display: flex;
+    gap: 8px;
+    width: 100%;
+  }
+}
+
+.ModalHeader {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  flex-shrink: 0;
+  display: inline-flex;
+  height: 54px;
+  width: 100%;
+  border-spacing: 1px;
+  align-items: center;
+  justify-content: space-between;
+  border: 0;
+  border-bottom: 1px solid vars.$smoke;
+  border-radius: var(--radius) var(--radius) 0 0;
+  background-color: white;
+
+  &--icon {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 50px;
+    cursor: pointer;
+    color: vars.$jet;
+    border: 0;
+    background-color: transparent;
+
+    svg {
+      height: 24px;
+      width: 24px;
+    }
+  }
+
+  &--back {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 38px;
+    height: 38px;
+    border-radius: 9999px;
+    transition: background-color 0.15s cubic-bezier(0, 0, 0.4, 1);
+    cursor: inherit;
+
+    border: none;
+    padding: 0;
+    background-color: transparent;
+
+    &:hover {
+      background-color: vars.$clouds;
+    }
+  }
+}
+
+.ModalBody {
+  width: 100%;
+  font-family: vars.$font-sans;
+  overflow: auto;
+
+  &--inner {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    box-sizing: border-box;
+    padding: var(--modal-padding-vertical) var(--modal-padding-horizontal);
+    transition: padding 0.25s ease-in-out;
+  }
+}
+
+.ModalWarning {
+  display: inline-flex;
+  padding: 4px 20px 0px 20px;
+  z-index: 1;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  box-sizing: border-box;
+  position: absolute;
+  width: 100%;
+  top: 54px;
+
+  &--inner {
+    display: flex;
+    padding: 20px;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 20px;
+    width: stretch;
+
+    border-radius: 3px;
+    background-color: vars.$notifywarning;
+  }
+
+  &--text {
+    flex: 1;
+  }
+
+  &--close {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    border: none;
+    background-color: transparent;
+    padding: 0;
+    font-size: 16px;
+  }
+}
+
+/**
+* * ====================
+* * ANIMATIONS
+* *
+* * These keyframes are reversed, but different ones are required for radix to understand an exit animation is present, 
+* * so that the DOM node won't be unmounted until the animation is complete.
+* * ====================
+*/
+
+@keyframes modal-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, calc(-50% + 20px));
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%);
+  }
+}
+
+@keyframes modal-out {
+  from {
+    opacity: 1;
+    transform: translate(-50%, -50%);
+  }
+  to {
+    opacity: 0;
+    transform: translate(-50%, calc(-50% + 20px));
+  }
+}

@@ -1,0 +1,111 @@
+@use "@cloud-editor-mono/ui-components/public/shared.module.scss";
+
+.onboarding-window {
+  display: flex;
+  width: 400px;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+
+  position: fixed;
+  z-index: 1000;
+  right: 31px;
+  bottom: 31px;
+
+  box-shadow: 0px 4px 20px 0px rgba(0, 0, 0, 0.25);
+}
+
+.onboarding-content {
+  display: flex;
+  padding: 20px 16px 16px 16px;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 14px;
+  align-self: stretch;
+
+  border-radius: 4px;
+  border: 1px solid #c9d2d2;
+  background: #fff;
+}
+
+.onboarding-text {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+}
+
+.onboarding-buttons {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  align-self: stretch;
+}
+
+.onboarding-button {
+  display: flex;
+  padding: 2px 16px !important;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+
+  &.onboarding-button-hide {
+    color: #7F8C8D;
+  }
+}
+
+.tooltip {
+  display: flex;
+  padding: 16px;
+  flex-direction: column;
+  align-items: center;
+
+  border-radius: 5px;
+  background: var(--Grayscale-Jet, #374146);
+  color: var(--Grayscale-White, #fff);
+}
+
+.tooltip-content {
+  display: flex;
+  width: 320px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 24px;
+}
+
+.tooltip-header {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  align-self: stretch;
+}
+
+.tooltip-footer {
+  display: flex;
+  padding: 0px 1px;
+  justify-content: space-between;
+  align-self: stretch;
+  align-items: flex-start;
+}
+
+.tooltip-skip {
+  display: flex;
+  padding: 2px 0px;
+  align-items: center;
+  gap: 10px;
+}
+
+.tooltip-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.tooltip-buttons {
+  display: flex;
+  align-items: flex-start;
+  gap: 5px;
+}

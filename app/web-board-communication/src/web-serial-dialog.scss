@@ -1,0 +1,37 @@
+
+$associate-dialog-title: #374146;
+$button-primary-label: #ffffff;
+$button-primary-background-hover: #005c5f;
+$button-primary-background: #008184;
+
+.confirm-dialog {
+  font-size: 16px;
+  border: unset;
+
+  .title {
+    color: $associate-dialog-title;
+    font-size: 18px;
+  }
+
+  .question {
+    margin-top: 15px;
+  }
+
+  .button-group {
+    margin-top: 40px !important;
+
+    > button {
+      border: unset;
+      padding: 9px 8px;
+      margin-left: 8px;
+      text-transform: uppercase;
+      border-radius: 30px;
+      background-color: $button-primary-background;
+      color: $button-primary-label;
+
+      &:hover {
+        background-color: $button-primary-background-hover;
+      }
+    }
+  }
+}

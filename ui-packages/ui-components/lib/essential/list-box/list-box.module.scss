@@ -1,0 +1,81 @@
+@use "@cloud-editor-mono/ui-components/public/shared.module.scss";
+
+.list-box {
+  list-style: none;
+  margin-block: 0;
+  padding: 0;
+  flex: 1;
+  overflow-y: auto;
+
+  .heading {
+    color: #7f8c8d;
+    text-transform: uppercase;
+    height: 20px;
+    padding: 8px 20px 4px 12px;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    & > svg:hover {
+      cursor: pointer;
+    }
+  }
+
+  .separator {
+    margin: 4px 12px;
+    padding: 0;
+    height: 1px;
+    background-color: #c9d2d2;
+  }
+
+  *[role="group"] {
+    padding: 0;
+
+    .option {
+      height: 20px;
+      background-color: shared.theme-var(--dropdown-background);
+      color: shared.theme-var(--dropdown-item-label);
+      border: none;
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      padding: 8px 12px;
+      margin: 0;
+
+      &:hover {
+        background-color: #ecf1f1;
+        cursor: pointer;
+      }
+
+      &:focus-visible {
+        outline: none;
+      }
+
+      .checkbox {
+        height: 18px;
+        width: 18px;
+        border: 1px solid #7f8c8f;
+        border-radius: 3px;
+        margin-right: 8px;
+      }
+
+      svg {
+        display: block;
+        height: 19px;
+        width: 19px;
+        margin-right: 8px;
+      }
+    }
+  }
+}
+
+.is-focused {
+  outline: 2px solid #7fcbcd;
+  border-radius: 3px;
+}
+
+.is-disabled {
+  opacity: shared.theme-var(--disabled);
+  background-color: shared.theme-var(--dropdown-background);
+}

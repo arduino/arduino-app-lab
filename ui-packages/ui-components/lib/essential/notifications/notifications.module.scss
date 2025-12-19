@@ -1,0 +1,48 @@
+@use "../../../public/shared.module.scss";
+
+$lateralGutter: 28px;
+$toastifyPadding: 4px;
+
+:root {
+    --toastify-toast-width: 100vw;
+}
+
+.container {
+    width: 60%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    max-width: calc(100vw - $lateralGutter * 2 + $toastifyPadding * 2);
+    z-index: shared.$zIndexMax;
+
+    .toast {
+        width: fit-content;
+        min-width: 700px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 18px;
+        margin: 0 auto 1rem auto;
+        padding: 12px 44px;
+        display: flex;
+        align-items: center;
+        color: white;
+        background: rgba(0, 0, 0, 0.8);
+
+        .toastBody {
+            flex: 0 0 auto;
+            width: 100%;
+            padding: 0;
+        }
+
+        .toastBodySmall {
+            @extend .toastBody;
+
+            text-align: center;
+        }
+    }
+}
+
+.toastSmall {
+    width: 286px;
+    min-width: 286px !important;
+    justify-content: center;
+}

@@ -1,0 +1,27 @@
+@use "../../../public/shared.module.scss";
+
+.icon-button {
+  display: flex;
+  cursor: pointer;
+  background-color: transparent;
+  border: unset;
+  border-radius: 50%;
+  padding: 0px;
+  outline-offset: 4px;
+
+  &.disabled {
+    cursor: auto;
+    opacity: 0.5;
+  }
+
+  &:focus-visible {
+    outline: 2px solid shared.theme-var(--button-secondary-outline-active);
+  }
+
+  &.has-text {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+  }
+}

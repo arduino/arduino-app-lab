@@ -1,0 +1,197 @@
+@use "@cloud-editor-mono/ui-components/public/shared.module.scss";
+@use "@cloud-editor-mono/arduino-sass";
+@use "@cloud-editor-mono/arduino-sass/src/fonts";
+
+$open-sans-font-family: "Open Sans", "Lucida Grande", lucida, verdana, sans-serif;
+$roboto-mono-font-family: "Roboto Mono", "monospace", "Courier New", "Lucida Console";
+
+:export {
+  openSansFontFamily: $open-sans-font-family;
+  robotoMonoFontFamily: $roboto-mono-font-family;
+}
+
+:root {
+  @extend %arduino-typography-small;
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-text-size-adjust: 100%;
+}
+
+.text {
+  &.uppercase {
+    text-transform: uppercase;
+  }
+
+  &.bold {
+    font-weight: 700;
+  }
+
+  &.italic {
+    font-style: italic;
+  }
+
+  &.truncate {
+    display: inline-block;
+    max-width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  &.xxx-small {
+    @extend %arduino-typography-xxx-small;
+
+    line-height: 16px;
+
+    &.monospace {
+      @extend %arduino-typography-xxx-small-monospace;
+    }
+
+    &.bold {
+      @extend %arduino-typography-xxx-small-strong;
+
+      &.monospace {
+        @extend %arduino-typography-xxx-small-strong-monospace;
+      }
+    }
+  }
+
+  &.xx-small {
+    @extend %arduino-typography-xx-small;
+
+    line-height: 20px;
+
+    &.monospace {
+      @extend %arduino-typography-xx-small-monospace;
+    }
+
+    &.bold {
+      @extend %arduino-typography-xx-small-strong;
+
+      &.monospace {
+        @extend %arduino-typography-xx-small-strong-monospace;
+      }
+    }
+  }
+
+  &.x-small {
+    @extend %arduino-typography-x-small;
+
+    line-height: 24px;
+
+    &.monospace {
+      @extend %arduino-typography-x-small-monospace;
+    }
+
+    &.bold {
+      @extend %arduino-typography-x-small-strong;
+
+      &.monospace {
+        @extend %arduino-typography-x-small-strong-monospace;
+      }
+    }
+
+    &.italic {
+      @extend %arduino-typography-x-small-italic;
+    }
+  }
+
+  &.small {
+    @extend %arduino-typography-small;
+
+    line-height: 27px;
+
+    &.monospace {
+      @extend %arduino-typography-small-monospace;
+    }
+
+    &.bold {
+      @extend %arduino-typography-small-strong;
+
+      &.monospace {
+        @extend %arduino-typography-small-strong-monospace;
+      }
+    }
+
+    &.italic {
+      @extend %arduino-typography-small-italic;
+    }
+  }
+
+  &.medium {
+    @extend %arduino-typography-medium;
+
+    line-height: 34px;
+
+    &.monospace {
+      @extend %arduino-typography-medium-monospace;
+    }
+
+    &.bold {
+      @extend %arduino-typography-medium-strong;
+
+      &.monospace {
+        @extend %arduino-typography-medium-strong-monospace;
+      }
+    }
+  }
+
+  &.large {
+    @extend %arduino-typography-large;
+
+    &.monospace {
+      @extend %arduino-typography-large-strong-monospace;
+    }
+
+    &.bold {
+      @extend %arduino-typography-large-strong;
+    }
+  }
+
+  &.x-large {
+    @extend %arduino-typography-x-large;
+
+    &.monospace {
+      @extend %arduino-typography-x-large-strong-monospace;
+    }
+
+    &.bold {
+      @extend %arduino-typography-x-large-strong;
+    }
+  }
+
+  &.xx-large {
+    @extend %arduino-typography-xx-large;
+
+    &.monospace {
+      @extend %arduino-typography-xx-large-strong-monospace;
+    }
+
+    &.bold {
+      @extend %arduino-typography-xx-large-strong;
+    }
+  }
+}
+
+.link {
+  @extend %arduino-typography-x-small-strong;
+
+  color: shared.theme-var(--button-secondary-label);
+  text-decoration: none;
+
+  &:focus,
+  &:active,
+  &:hover {
+    opacity: 0.8;
+  }
+}
+
+.text .link {
+  font-size: inherit;
+  font-family: inherit;
+}
+
+@include fonts.import-fonts;

@@ -1,0 +1,29 @@
+$grey: #dae3e3;
+$darkerGrey: #bdc7c7;
+
+.container {
+    display: flex;
+    background-color: $grey;
+    border-radius: 27px;
+    align-items: center;
+    justify-content: space-between;
+    margin-right: 6px;
+}
+
+.icon-container {
+    border-radius: 27px;
+    background-color: none;
+    height: 21px;
+    width: 21px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2px;
+    border: 1px solid $grey;
+    box-sizing: content-box;
+}
+
+.icon-container-selected {
+    background-color: white;
+    border: 1px solid $darkerGrey;
+}

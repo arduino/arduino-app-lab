@@ -1,0 +1,20 @@
+@use "../../toolbar.module.scss";
+
+.open-serial-monitor-button-wrapper {
+    margin-left: auto;
+    position: relative;
+    white-space: nowrap;
+}
+
+.open-serial-monitor-button {
+    @extend .toolbar-icon-button;
+
+    &.open-serial-monitor-button-disabled {
+        background-color: transparent;
+        opacity: 0.5;
+
+        &:hover {
+            cursor: default;
+        }
+    }
+}

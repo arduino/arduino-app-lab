@@ -1,0 +1,41 @@
+// ----------------------------------------------------------------------
+// IMPORTED FILE
+//
+// This code was imported from a external library to handle private
+// dependencies required for the main application to run.
+// ----------------------------------------------------------------------
+
+@use "@cloud-editor-mono/arduino-sass/src/variables" as vars;
+
+@function derive-rgba-values-from-hex($hex, $opacity) {
+  @return rgba($hex, $opacity);
+}
+
+.__Scrollable {
+  --shadow-color: #{derive-rgba-values-from-hex(vars.$jet, 0.35)};
+  overflow: auto;
+
+  &-content {
+    overflow-y: auto;
+  }
+
+  &-shadow {
+    position: absolute;
+    height: 10px;
+    width: stretch;
+    pointer-events: none;
+
+    &[data-side="top"] {
+      top: 0;
+      background: -webkit-linear-gradient(270deg, var(--shadow-color), transparent);
+      background: linear-gradient(180deg, var(--shadow-color), transparent);
+      opacity: 0;
+    }
+
+    &[data-side="bottom"] {
+      bottom: 0;
+      background: -webkit-linear-gradient(90deg, var(--shadow-color), transparent);
+      background: linear-gradient(0deg, var(--shadow-color), transparent);
+    }
+  }
+}

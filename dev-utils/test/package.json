@@ -1,0 +1,14 @@
+{
+  "name": "@bcmi-labs/cloud-editor-test",
+  "private": true,
+  "version": "1.4.1",
+  "type": "module",
+  "scripts": {
+    "build": "tsc && vite build"
+  },
+  "exports": {
+    ".": {
+      "import": "./lib/index.ts"
+    }
+  }
+}

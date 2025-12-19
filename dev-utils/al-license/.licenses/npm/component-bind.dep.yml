@@ -1,0 +1,11 @@
+---
+name: component-bind
+version: 1.0.0
+type: npm
+summary: function binding utility
+homepage:
+license: mit
+licenses:
+- sources: Readme.md
+  text: MIT
+notices: []

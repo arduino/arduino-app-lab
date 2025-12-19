@@ -1,0 +1,50 @@
+.terminal-button {
+  height: 28px;
+  width: 28px;
+  padding: 7px;
+  background-color: var(--component-bg-baseline, rgba(35, 43, 46, 1));
+  border-radius: 8px;
+  &:hover {
+    background:
+      linear-gradient(0deg, rgba(174, 184, 184, 0.15) 0%, rgba(174, 184, 184, 0.15) 100%),
+      var(--surface-bg-below-1, #171e21);
+  }
+}
+
+.tooltip {
+  position: relative;
+}
+
+.tooltip-content {
+  background-color: #AEB8B8;
+  border-radius: 3px;
+  color: #171E21;
+  font-size: 12px;
+  font-weight: 400;
+  padding: 2px 8px;
+  left: 24px;
+  bottom: 32px
+}
+
+.terminal-error-container {
+  position: relative;
+  top: -40px;
+  left: -40px;
+
+  .terminal-error {
+    position: absolute;
+    display: inline-block;
+    width: 400px;
+    max-width: 400px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    padding: 4px 14px;
+    background-color: var(--editor-background);
+    opacity: 0.9;
+    background-color: #2e2220; // rgba(255, 136, 120, 0.15);
+    color: var(--feedback-error-default, #ff8878);
+    z-index: 1;
+    border-radius: 3px;
+  }
+}

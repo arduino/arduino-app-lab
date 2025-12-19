@@ -1,0 +1,33 @@
+.copy-to-clipboard {
+  position: relative;
+
+  .default-trigger {
+    svg {
+      color: #374146;
+    }
+  }
+
+  .tooltip {
+    top: -6px;
+    left: 50%;
+    right: 0;
+    transform: translate(-50%, -100%);
+    padding: 2.5px 7px;
+    color: #C9D2D2;
+    background: #4E5B61;
+    border: 1px solid #C9D2D2;
+  }
+
+  .tooltip-success {
+    color: white;
+    background: #1DA086;
+  }
+  
+  .tooltip-success-content {
+    svg {
+      display: inline-block;
+      margin-left: 4px;
+      width: 12px;
+    }
+  }
+}

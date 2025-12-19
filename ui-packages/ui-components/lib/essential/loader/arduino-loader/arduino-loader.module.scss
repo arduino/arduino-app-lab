@@ -1,0 +1,138 @@
+
+@use "@cloud-editor-mono/arduino-sass";
+
+.arduino-loader {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &.secondary {
+    --color: #{arduino-sass.$fog};
+  }
+
+  svg :global {
+    $timing: 2s;
+    $size: 100px;
+    $angle: 45deg;
+    $move: 100px;
+    $delay: calc(0.13 * #{$timing});
+
+    --color: #{arduino-sass.$teal3};
+
+    width: $size;
+    display: initial;
+
+    .plus,
+    .minus {
+      fill: var(--color);
+      :local {
+        transition: fill 0.25s ease-in-out;
+      }
+    }
+
+    .plus :local {
+      opacity: 1;
+      transform-origin: 75% 35%;
+      animation: plus $timing $delay ease-in-out infinite;
+    }
+
+    .minus :local {
+      opacity: 1;
+      transform-origin: 25% 35%;
+      animation: minus $timing ease-in-out infinite;
+    }
+
+    .loop :local {
+      fill: none;
+      stroke: var(--color);
+      stroke-miterlimit: 10;
+      stroke-width: 72.11px;
+      stroke-dasharray: 1;
+      stroke-dashoffset: 0;
+      animation: dash $timing ease-in-out infinite;
+      transition: stroke 0.25s ease-in-out;
+    }
+
+
+    @keyframes minus {
+      15% {
+        opacity: 1;
+        transform: translateY(0) rotate(0deg);
+      }
+    
+      35% {
+        opacity: 0;
+        transform: translateY(calc(1 * #{$move})) rotate(calc(-1 * #{$angle}));
+      }
+    
+      40% {
+        transform: translateY(0) rotate(calc(-1 * #{$angle}));
+        opacity: 0;
+      }
+    
+      55% {
+        opacity: 0;
+        transform: translateY(calc(-1 * #{$move})) rotate(calc(-1 * #{$angle}));
+      }
+    
+      75%,
+      100% {
+        opacity: 1;
+        transform: translateY(0) rotate(0deg);
+      }
+    }
+    
+    @keyframes plus {
+      15% {
+        opacity: 1;
+        transform: translateY(0) rotate(0deg);
+      }
+    
+      35% {
+        opacity: 0;
+        transform: translateY(calc(-1 * #{$move})) rotate(calc(1 * #{$angle}));
+      }
+    
+      40% {
+        transform: translateY(0) rotate(0deg);
+        opacity: 0;
+      }
+    
+      55% {
+        opacity: 0;
+        transform: translateY(calc(1 * #{$move})) rotate(calc(1 * #{$angle}));
+      }
+    
+      75%,
+      100% {
+        opacity: 1;
+        transform: translateY(0) rotate(0deg);
+      }
+    }
+    
+    @keyframes dash {
+      0% {
+        stroke-dashoffset: 2;
+      }
+    
+      45% {
+        stroke-dashoffset: 1.01;
+      }
+    
+      95% {
+        stroke-dashoffset: 0;
+      }
+    
+      100% {
+        stroke-dashoffset: 0;
+      }
+    }
+
+  }
+}
+

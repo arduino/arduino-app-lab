@@ -1,0 +1,162 @@
+@use "../../public/shared.module.scss";
+@use "../code-editor/code-editor-variables.module.scss";
+@use "./editor-tabs-bar-variables.module.scss";
+@use "../essential/dropdown-menu/dropdown-menu-variables.module.scss";
+
+:root {
+  --tabs-size: 0;
+  --rename-tab-index: 0;
+}
+
+$tabsSize: var(--tabs-size);
+$renameTabIndex: var(--rename-tab-index);
+$tabsBarPaddingLeft: calc(
+  (#{code-editor-variables.$sharedGutterWidthVar} + #{code-editor-variables.$sharedFoldGutterWidthVar}) * 1px
+);
+
+:export {
+  tabsSize: --tabs-size;
+  renameTabIndex: --rename-tab-index;
+}
+
+.tabs-bar {
+  display: grid;
+  grid-auto-flow: column;
+  grid-template-columns: 1fr editor-tabs-bar-variables.$newTabMenuButtonWidth * 1px editor-tabs-bar-variables.$newTabMenuButtonWidth * 1px;
+  column-gap: 4px;
+  position: absolute;
+  height: editor-tabs-bar-variables.$tabHeight * 1px;
+  min-width: editor-tabs-bar-variables.$tabWidth * 1px;
+  padding-left: $tabsBarPaddingLeft;
+  padding-right: 12px;
+  z-index: shared.$zIndex2;
+  background-color: shared.theme-var(--toolbar-background); //correct variable needed
+}
+
+.tabs-bar-markdown-file {
+  padding-left: 0px !important;
+
+  & > ul:first-child {
+    border-top-left-radius: 8px;
+  }
+}
+
+.tabs-list {
+  display: grid;
+  grid-template-columns: repeat(
+    $tabsSize,
+    minmax(editor-tabs-bar-variables.$tabMinWidth * 1px, editor-tabs-bar-variables.$tabWidth * 1px)
+  );
+  grid-auto-flow: column;
+  column-gap: 4px;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  margin: unset;
+  padding: unset;
+  list-style: none;
+  touch-action: pan-x;
+  &.tabs-list-scrollable:hover {
+    overflow: overlay;
+  }
+
+  &.tabs-list-height-exception:hover {
+    height: calc(100% + 12px);
+  }
+  &::-webkit-scrollbar {
+    height: 12px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    border: 4px solid shared.theme-var(--editor-background);
+  }
+
+  &::-webkit-scrollbar-track {
+    background-color: transparent;
+  }
+
+  &.first-tab-renaming {
+    grid-template-columns:
+      editor-tabs-bar-variables.$tabWidth * 1px
+      repeat(
+        calc($tabsSize - 1),
+        minmax(editor-tabs-bar-variables.$tabMinWidth * 1px, editor-tabs-bar-variables.$tabWidth * 1px)
+      );
+  }
+
+  &.other-tabs-renaming {
+    grid-template-columns:
+      repeat(
+        $renameTabIndex,
+        minmax(editor-tabs-bar-variables.$tabMinWidth * 1px, editor-tabs-bar-variables.$tabWidth * 1px)
+      )
+      editor-tabs-bar-variables.$tabWidth * 1px
+      repeat(
+        calc($tabsSize - $renameTabIndex - 1),
+        minmax(editor-tabs-bar-variables.$tabMinWidth * 1px, editor-tabs-bar-variables.$tabWidth * 1px)
+      );
+  }
+
+  &.last-tab-renaming {
+    grid-template-columns:
+      repeat(
+        calc($tabsSize - 1),
+        minmax(editor-tabs-bar-variables.$tabMinWidth * 1px, editor-tabs-bar-variables.$tabWidth * 1px)
+      )
+      editor-tabs-bar-variables.$tabWidth * 1px;
+  }
+
+  &.new-tab-renaming {
+    grid-template-columns:
+      repeat($tabsSize, minmax(editor-tabs-bar-variables.$tabMinWidth * 1px, editor-tabs-bar-variables.$tabWidth * 1px))
+      editor-tabs-bar-variables.$tabWidth * 1px;
+  }
+}
+
+$filterableListWidth: 250;
+$filterableListButtonWidth: 36;
+$filterableListButtonHeight: 36;
+
+.filterable-list-container {
+  top: 20px;
+  left: calc((#{$filterableListWidth} - #{$filterableListButtonWidth}) * -1px);
+}
+
+.filterable-list-button-wrapper,
+.new-tab-menu-button-wrapper {
+  width: 100% !important;
+  height: 100% !important;
+
+  &.filterable-list-button-wrapper-visible {
+    grid-column: span 1/4;
+  }
+}
+
+.new-tab-menu-button {
+  color: shared.theme-var(--editor-tabs-foreground);
+  background-color: shared.theme-var(--toolbar-background);
+  width: editor-tabs-bar-variables.$newTabMenuButtonWidth * 1px;
+  height: editor-tabs-bar-variables.$newTabMenuButtonHeight * 1px;
+
+  svg {
+    path {
+      fill: shared.theme-var(--editor-tabs-foreground);
+    }
+  }
+}
+
+$menuAndButtonWidth: -(dropdown-menu-variables.$dropdownMenuWidth) + editor-tabs-bar-variables.$newTabMenuButtonWidth;
+.new-tab-menu {
+  top: calc((editor-tabs-bar-variables.$newTabMenuButtonHeight / 2 + 4) * 1px);
+  left: calc((#{$menuAndButtonWidth} * #{dropdown-menu-variables.$dropdownMenuOrientation}) * 1px);
+}
+
+.new-tab-menu-item {
+  justify-content: flex-start;
+  padding: 0 20px;
+  gap: 5px;
+}
+
+.import-file-input {
+  display: none;
+}

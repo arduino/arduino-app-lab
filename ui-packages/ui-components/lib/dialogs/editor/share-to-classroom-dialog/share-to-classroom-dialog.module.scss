@@ -1,0 +1,24 @@
+@use "../../../../public/shared.module.scss";
+
+.body-container {
+  text-align: left;
+  padding: 28px 80px 0px 100px;
+}
+
+.share-to-classroom-button {
+  color: shared.theme-var(--button-secondary-label);
+  display: flex;
+  align-items: center;
+  margin: 32px auto 0 auto;
+  border-radius: 32px;
+  border: 2px solid shared.theme-var(--button-secondary-border);
+  padding: 8px 16px;
+
+  &:focus {
+    outline: none;
+  }
+
+  svg {
+    margin-right: 8px;
+  }
+}

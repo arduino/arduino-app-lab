@@ -1,0 +1,161 @@
+@use "../../../images/public/css-images.module.scss";
+
+.setup-container {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: row;
+  color: #ecf1f1;
+  background: #171e21;
+  position: fixed;
+  z-index: 52;
+
+  .setup-side-panel {
+    width: 365px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+
+    .side-panel-content {
+      width: calc(100% - 128px);
+      padding: 160px 64px 0;
+      display: flex;
+      flex-direction: column;
+
+      .arduino-logo {
+        width: 65px;
+        height: 65px;
+      }
+
+      .title {
+        color: #ecf1f1;
+      }
+    }
+
+    .footer-board-section {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      position: absolute;
+      left: 16px;
+      bottom: 16px;
+    }
+  }
+
+  .items-list {
+    padding: 0;
+    margin: 0;
+    list-style: none;
+    counter-reset: counter;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    color: #c9d2d2;
+    margin-top: 24px;
+
+    .item {
+      counter-increment: counter;
+      display: grid;
+      grid-template-columns: 24px 1fr;
+      grid-auto-flow: column;
+      gap: 12px;
+      white-space: nowrap;
+      align-items: center;
+      height: 24px;
+      line-height: 24px;
+
+      .info-icon {
+        width: 16px;
+        height: 16px;
+        border-radius: 32px;
+        background: #374146;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+
+        svg {
+          path {
+            fill: #ffffff;
+          }
+        }
+      }
+
+      .tooltip-content {
+        width: 240px;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+        padding: 16px 24px;
+        align-items: flex-start;
+        border-radius: 3px;
+        background: var(--surface-bg-above, #374146);
+        color: #ffffff;
+
+        box-shadow: 0px 4px 20px 0px rgba(0, 0, 0, 0.25);
+        top: unset;
+        right: unset;
+        margin-top: 4px;
+      }
+
+      &.selected {
+        color: #ffffff;
+        font-weight: 700;
+
+        &::before {
+          outline: 2px solid #005c5f;
+        }
+      }
+
+      &.completed {
+        color: #ffffff;
+        font-weight: 700;
+
+        &::before {
+          content: url(css-images.$check);
+          background: #25c2c7;
+          outline: none;
+          width: 22px;
+          height: 22px;
+        }
+      }
+    }
+
+    .item::before {
+      content: counter(counter);
+      display: flex;
+      width: 20px;
+      height: 20px;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      border-radius: 30px;
+      outline: 2px solid #434f54;
+    }
+  }
+
+  .setup-content {
+    height: calc(100% - 32px);
+    width: calc(100% - 397px);
+    padding: 16px;
+  }
+
+  .input-container {
+    height: 80px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+
+    .message {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+
+      &.error {
+        color: #ff8878;
+      }
+      &.success {
+        color: #16a588;
+      }
+    }
+  }
+}

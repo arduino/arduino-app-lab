@@ -1,0 +1,67 @@
+@use "@cloud-editor-mono/ui-components/public/shared.module.scss";
+@use "../typography/typography.module.scss";
+
+.brick-item {
+	position: relative;
+	height: 22px;
+	padding: 4px;
+	width: 100%;
+	box-sizing: border-box;
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	border-radius: 6px;
+	margin: 0 1px;
+	cursor: pointer;
+	&:hover {
+		background-color: var(--dropdown-item-background-hover);
+	}
+	&-selected {
+		background-color: var(--editor-background);
+		.brick-item-name {
+			color: white;
+		}
+	}
+}
+
+.brick-item-context-menu-trigger[data-state="open"] .brick-item {
+  outline: 1px solid #25C2C7;
+}
+
+.brick-item-name {
+	color: var(--text-subtle, #c9d2d2);
+	flex: 1;
+	text-align: left;
+
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+
+
+}
+
+.brick-item-context-menu {
+	background: #374146;
+	border-radius: 8px;
+	min-width: 180px;
+	padding: 4px;
+	z-index: shared.$zIndex5 !important;
+}
+
+.brick-item-context-menu-delete-item {
+	border: none;
+	border-radius: 4px;
+	color: var(--feedback-error-default, #ff8878);
+	padding: 4px 8px;
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	cursor: pointer;
+	svg {
+		height: 12px;
+		width: 12px;
+	}
+	&:hover {
+    background-color: #aeb8b826;
+  }
+}

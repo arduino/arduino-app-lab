@@ -1,0 +1,79 @@
+@use "@cloud-editor-mono/ui-components/public/shared.module.scss";
+
+$sidePanelItemActiveColor: var(--text-accent, #25c2c7);
+$sidePanelItemColor: var(--text-default, #ffffff);
+
+.side-panel-item {
+  list-style: none;
+
+  .button,
+  .link {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    color: $sidePanelItemColor;
+    text-decoration: none;
+    background: transparent;
+    border: unset;
+    cursor: pointer;
+    width: 100%;
+    height: 54px;
+    white-space: nowrap;
+    padding: unset;
+
+    .icon {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      background-color: var(--component-bg-baseline, rgba(35, 43, 46, 1));
+
+      img {
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+      }
+
+      svg {
+        width: 12px;
+        height: 12px;
+
+        path {
+          fill: $sidePanelItemColor;
+        }
+      }
+    }
+
+    span {
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+  }
+
+  &:hover {
+    .link .icon {
+      background-color: var(--component-bg-flexible, rgba(174, 184, 184, 0.15));
+    }
+  }
+
+  &.active {
+    .link {
+      color: $sidePanelItemActiveColor;
+
+      .icon {
+        background-color: rgb(35, 55, 58);
+        outline: 1px solid $sidePanelItemActiveColor;
+      }
+
+      svg {
+        path {
+          fill: $sidePanelItemActiveColor;
+        }
+      }
+    }
+  }
+}

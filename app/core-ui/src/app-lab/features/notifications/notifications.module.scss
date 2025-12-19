@@ -1,0 +1,59 @@
+//TODO: Remove this file once the dark mode is supporter
+
+$text-inverted: var(--text-inverted, #171e21);
+$text-success: var(--global-snackbar-success-text, #171e21);
+$text-warning: var(--global-snackbar-warning-text, #fff);
+
+.snackbar {
+    &[class*="Snackbar--info"] {
+        background-color: var(--feedback-neutral-default, #aeb8b8) !important;
+        color: $text-inverted !important;
+
+        svg {
+            fill: $text-inverted !important;
+        }
+
+        [class*="Snackbar-separator"] {
+            background-color: $text-inverted !important;
+        }
+    }
+
+    &[class*="Snackbar--success"] {
+        background-color: var(--feedback-success-default, #16a588) !important;
+        color: $text-success !important;
+
+        svg {
+            fill: $text-success !important;
+        }
+
+        [class*="Snackbar-separator"] {
+            background-color: $text-success !important;
+        }
+    }
+
+    &[class*="Snackbar--error"] {
+        background-color: var(--feedback-error-default, #ff8878) !important;
+        color: $text-inverted !important;
+
+        svg {
+            fill: $text-inverted !important;
+        }
+
+        [class*="Snackbar-separator"] {
+            background-color: $text-inverted !important;
+        }
+    }
+
+    &[class*="Snackbar--warning"] {
+        background-color: var(--feedback-warning-default, #c1ab15) !important;
+        color: $text-warning !important;
+
+        svg {
+            fill: $text-warning !important;
+        }
+
+        [class*="Snackbar-separator"] {
+            background-color: $text-warning !important;
+        }
+    }
+}

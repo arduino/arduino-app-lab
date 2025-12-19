@@ -1,0 +1,38 @@
+
+.board-update {
+  color: white;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px;
+}
+
+button {
+  width: fit-content;
+}
+
+.board-update-list-container {
+  font-size: 14px;
+  margin-top: 12px;
+
+  ul {
+    font-family: "Roboto Mono";
+    padding: 0 16px;
+    font-size: 14px;
+    li span {
+      font-weight: bold;
+    }
+  }
+}
+
+.board-update-logs {
+  font-family: "Roboto Mono";
+  font-size: 14px;
+  padding: 16px;
+  width: 100%;
+  background-color: var(--component-bg-below-2, #090f11);
+  border-radius: 8px;
+  height: 100%;
+  max-height: 400px;
+  overflow-y: scroll;
+}

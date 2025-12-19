@@ -1,0 +1,31 @@
+$skeletonChildren: 6;
+
+$defaultLineNumbersGutterWidth: 30;
+$defaultFoldGutterWidth: 10;
+$defaultFontSize: 14;
+$defaultEditorPaddingBottom: 0;
+
+$sharedGutterWidthVar: var(--line-numbers-gutter-width);
+$sharedFoldGutterWidthVar: var(--fold-gutter-width);
+$editorFontSizeVar: var(--editor-font-size);
+$editorPaddingBottomVar: var(--editor-padding-bottom);
+
+:root {
+    --line-numbers-gutter-width: calc(#{$defaultLineNumbersGutterWidth} + var(--editor-font-size) - #{$defaultFontSize});
+    --fold-gutter-width: calc(#{$defaultFoldGutterWidth} + var(--editor-font-size) - #{$defaultFontSize});
+    --editor-font-size: #{$defaultFontSize};
+    --editor-padding-bottom: #{$defaultEditorPaddingBottom};
+}
+
+:export {
+    skeletonChildren: $skeletonChildren;
+    defaultLineNumbersGutterWidth: $defaultLineNumbersGutterWidth;
+    defaultFoldGutterWidth: $defaultFoldGutterWidth;
+    lineNumbersGutterWidth: --line-numbers-gutter-width;
+    foldGutterWidth: --fold-gutter-width;
+    editorFontSize: --editor-font-size;
+    editorFontSizeVar: $editorFontSizeVar;
+    defaultFontSize: $defaultFontSize;
+    editorPaddingBottom: --editor-padding-bottom;
+    editorPaddingBottomVar: $editorPaddingBottomVar;
+}

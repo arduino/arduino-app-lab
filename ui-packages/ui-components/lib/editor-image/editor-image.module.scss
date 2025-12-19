@@ -1,0 +1,43 @@
+@use "../editor-tabs-bar/editor-tabs-bar-variables.module.scss";
+@use "../editor-tabs-bar/tabs-bar.module.scss";
+@use "../../public/shared.module.scss";
+
+.container {
+    margin-top: editor-tabs-bar-variables.$tabHeight * 1px;
+    margin-left: tabs-bar.$tabsBarPaddingLeft;
+    width: 100%;
+    overflow: auto;
+    text-align: center;
+    background-color: shared.theme-var(--editor-background);
+
+    border-bottom-right-radius: 8px;
+}
+
+.container-scaled {
+    display: flex;
+    justify-content: center;
+}
+
+.image {
+    margin: 12px;
+    cursor: zoom-in;
+}
+
+.image-zoomed {
+    cursor: zoom-out;
+}
+
+.image-scaled {
+    cursor: zoom-in;
+    max-width: 100%;
+    max-height: 100%;
+    min-height: 200px;
+    display: block;
+    height: fit-content;
+}
+
+.loaderContainer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}

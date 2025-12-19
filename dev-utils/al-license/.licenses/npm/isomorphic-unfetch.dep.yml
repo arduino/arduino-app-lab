@@ -1,0 +1,11 @@
+---
+name: isomorphic-unfetch
+version: 3.1.0
+type: npm
+summary: Switches between unfetch & node-fetch for client & server.
+homepage:
+license: mit
+licenses:
+- sources: readme.md
+  text: "[MIT License](LICENSE.md) © [Jason Miller](https://jasonformat.com/)"
+notices: []

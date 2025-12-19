@@ -1,0 +1,26 @@
+@use "../../../public/shared.module.scss";
+
+// TODO: Use correct variables when available
+$buttonOffHover: #95a5a6;
+
+.button {
+  background: transparent;
+
+  &:hover > svg {
+    & > rect {
+      fill: $buttonOffHover;
+    }
+  }
+
+  &.isSelected {
+    & svg > rect {
+      fill: shared.theme-var(--button-primary-background);
+    }
+
+    &:hover > svg {
+      & > rect {
+        fill: shared.theme-var(--button-primary-background-hover);
+      }
+    }
+  }
+}

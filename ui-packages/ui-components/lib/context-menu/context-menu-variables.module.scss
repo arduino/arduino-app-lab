@@ -1,0 +1,7 @@
+$contextMenuWidth: 242;
+$maxContextMenuHeight: 403;
+
+:export {
+    maxContextMenuHeight: $maxContextMenuHeight;
+    contextMenuWidth: $contextMenuWidth;
+}

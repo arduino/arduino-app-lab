@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en" style="background-color: #090F11;">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Arduino App Lab</title>
+</head>
+
+<body id="al-body">
+    <div id="root"></div>
+    <script type="module">
+        import { Buffer } from 'buffer';
+        window.Buffer = Buffer;
+        import process from 'process';
+        window.process = process;
+    </script>
+    <script src="./src/main.tsx" type="module"></script>
+</body>
+
+</html>

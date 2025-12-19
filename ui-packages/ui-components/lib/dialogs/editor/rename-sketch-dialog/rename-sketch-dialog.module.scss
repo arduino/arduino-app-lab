@@ -1,0 +1,22 @@
+@use "../../../../public/shared.module.scss";
+
+.title {
+  display: block;
+  margin-block: 16px;
+  color: shared.theme-var(--associate-dialog-title);
+}
+
+.relative {
+  position: relative;
+  padding-bottom: 20px;
+}
+
+.invalid-format {
+  position: absolute;
+  bottom: -10px;
+  color: #7f8c8d;
+
+  &.overlap {
+    bottom: -20px;
+  }
+}

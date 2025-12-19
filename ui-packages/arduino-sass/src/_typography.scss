@@ -1,0 +1,183 @@
+@use 'fonts';
+
+//Font sizes
+$font-size-default: 16px;
+$font-size-xxx-small: 0.625rem;
+$font-size-xx-small: 0.75rem;
+$font-size-x-small: 0.875rem;
+$font-size-small: 1rem;
+$font-size-medium: 1.25rem;
+$font-size-large: 1.75rem;
+$font-size-x-large: 2.25rem;
+$font-size-xx-large: 3rem;
+
+//Font spacing
+$letter-spacing-default: 0.01em;
+$line-height-default: 170%;
+$line-height-smaller: 150%;
+
+@mixin text-config($font-size, $letter-spacing, $line-height) {
+  font-size: $font-size;
+  letter-spacing: $letter-spacing;
+
+  &.multiline {
+    line-height: $line-height;
+  }
+}
+
+//Sans Typography placeholders
+%arduino-typography-xxx-small {
+  @include text-config($font-size-xxx-small, $letter-spacing-default, $line-height-default);
+  @include fonts.font(opensans, regular);
+}
+
+%arduino-typography-xx-small {
+  @include text-config($font-size-xx-small, $letter-spacing-default, $line-height-default);
+  @include fonts.font(opensans, regular);
+}
+
+%arduino-typography-xxx-small-strong {
+  @include text-config($font-size-xxx-small, $letter-spacing-default, $line-height-default);
+  @include fonts.font(opensans, bold, weight);
+}
+
+%arduino-typography-xx-small-strong {
+  @include text-config($font-size-xx-small, $letter-spacing-default, $line-height-default);
+  @include fonts.font(opensans, bold, weight);
+}
+
+%arduino-typography-x-small {
+  @include text-config($font-size-x-small, $letter-spacing-default, $line-height-default);
+  @include fonts.font(opensans, regular);
+}
+
+%arduino-typography-x-small-strong {
+  @include text-config($font-size-x-small, $letter-spacing-default, $line-height-default);
+  @include fonts.font(opensans, bold, weight);
+}
+
+%arduino-typography-x-small-italic {
+  @include text-config($font-size-x-small, $letter-spacing-default, $line-height-default);
+  @include fonts.font(opensans, regular-italic, style);
+}
+
+%arduino-typography-small {
+  @include text-config($font-size-small, $letter-spacing-default, $line-height-default);
+  @include fonts.font(opensans, regular);
+}
+
+%arduino-typography-small-strong {
+  @include text-config($font-size-small, $letter-spacing-default, $line-height-default);
+  @include fonts.font(opensans, bold, weight);
+}
+
+%arduino-typography-small-italic {
+  @include text-config($font-size-small, $letter-spacing-default, $line-height-default);
+  @include fonts.font(opensans, regular-italic, style);
+}
+
+%arduino-typography-medium {
+  @include text-config($font-size-medium, $letter-spacing-default, $line-height-default);
+  @include fonts.font(opensans, regular);
+}
+
+%arduino-typography-medium-strong {
+  @include text-config($font-size-medium, $letter-spacing-default, $line-height-default);
+  @include fonts.font(opensans, bold, weight);
+}
+
+%arduino-typography-large {
+  @include text-config($font-size-large, $letter-spacing-default, $line-height-default);
+  @include fonts.font(opensans, regular);
+}
+
+%arduino-typography-large-strong {
+  @include text-config($font-size-large, $letter-spacing-default, $line-height-default);
+  @include fonts.font(opensans, bold, weight);
+}
+
+%arduino-typography-x-large {
+  @include text-config($font-size-x-large, $letter-spacing-default, $line-height-smaller);
+  @include fonts.font(opensans, regular);
+}
+
+%arduino-typography-x-large-strong {
+  @include text-config($font-size-x-large, $letter-spacing-default, $line-height-smaller);
+  @include fonts.font(opensans, bold, weight);
+}
+
+%arduino-typography-xx-large {
+  @include text-config($font-size-xx-large, $letter-spacing-default, $line-height-smaller);
+  @include fonts.font(opensans, regular);
+}
+
+%arduino-typography-xx-large-strong {
+  @include text-config($font-size-xx-large, $letter-spacing-default, $line-height-smaller);
+  @include fonts.font(opensans, bold, weight);
+}
+
+//Monospace Typography placeholders
+%arduino-typography-xxx-small-monospace {
+  @include text-config($font-size-xxx-small, $letter-spacing-default, $line-height-default);
+  @include fonts.font(roboto-mono, regular);
+}
+
+%arduino-typography-xxx-small-strong-monospace {
+  @include text-config($font-size-xxx-small, $letter-spacing-default, $line-height-default);
+  @include fonts.font(roboto-mono, bold, weight);
+}
+
+%arduino-typography-xx-small-monospace {
+  @include text-config($font-size-xx-small, $letter-spacing-default, $line-height-default);
+  @include fonts.font(roboto-mono, regular);
+}
+
+%arduino-typography-xx-small-strong-monospace {
+  @include text-config($font-size-xx-small, $letter-spacing-default, $line-height-default);
+  @include fonts.font(roboto-mono, bold, weight);
+}
+
+%arduino-typography-x-small-monospace {
+  @include text-config($font-size-x-small, $letter-spacing-default, $line-height-default);
+  @include fonts.font(roboto-mono, regular);
+}
+
+%arduino-typography-x-small-strong-monospace {
+  @include text-config($font-size-x-small, $letter-spacing-default, $line-height-default);
+  @include fonts.font(roboto-mono, bold, weight);
+}
+
+%arduino-typography-small-monospace {
+  @include text-config($font-size-small, $letter-spacing-default, $line-height-default);
+  @include fonts.font(roboto-mono, regular);
+}
+
+%arduino-typography-small-strong-monospace {
+  @include text-config($font-size-small, $letter-spacing-default, $line-height-default);
+  @include fonts.font(roboto-mono, bold, weight);
+}
+
+%arduino-typography-medium-monospace {
+  @include text-config($font-size-medium, $letter-spacing-default, $line-height-default);
+  @include fonts.font(roboto-mono, regular);
+}
+
+%arduino-typography-medium-strong-monospace {
+  @include text-config($font-size-medium, $letter-spacing-default, $line-height-default);
+  @include fonts.font(roboto-mono, bold, weight);
+}
+
+%arduino-typography-large-strong-monospace {
+  @include text-config($font-size-large, $letter-spacing-default, $line-height-default);
+  @include fonts.font(roboto-mono, bold);
+}
+
+%arduino-typography-x-large-strong-monospace {
+  @include text-config($font-size-x-large, $letter-spacing-default, $line-height-smaller);
+  @include fonts.font(roboto-mono, bold);
+}
+
+%arduino-typography-xx-large-strong-monospace {
+  @include text-config($font-size-xx-large, $letter-spacing-default, $line-height-smaller);
+  @include fonts.font(roboto-mono, bold);
+}

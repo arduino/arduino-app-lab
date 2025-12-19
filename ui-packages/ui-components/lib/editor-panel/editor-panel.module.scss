@@ -1,0 +1,53 @@
+@use "@cloud-editor-mono/ui-components/public/shared.module.scss";
+@use "../code-editor/code-editor-variables.module.scss";
+
+$tabsBarPaddingLeft: calc(
+    (#{code-editor-variables.$sharedGutterWidthVar} + #{code-editor-variables.$sharedFoldGutterWidthVar}) * 1px
+);
+
+.markdown-container {
+    padding: 0 16px 16px 16px;
+    background-color: shared.theme-var(--editor-background);
+    overflow: auto;
+    width: 100%;
+    box-sizing: border-box;
+
+    border-bottom-left-radius: 8px;
+    border-bottom-right-radius: 8px;
+}
+
+.brick-detail-container {
+    margin-top: 40px;
+    padding: 16px;
+    background-color: shared.theme-var(--editor-background);
+    overflow: auto;
+    width: 100%;
+
+    border-bottom-left-radius: 8px;
+    border-bottom-right-radius: 8px;
+}
+
+.toolbar-and-content-rendered {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    width: 100%;
+
+    & > :last-child {
+        width: 100%;
+        height: 100%;
+        margin-top: 0px !important;
+    }
+}
+
+.toolbar-and-content-code {
+    @extend .toolbar-and-content-rendered;
+
+    & .container {
+        padding-left: $tabsBarPaddingLeft;
+    }
+}
+
+.editor-md-toolbar-disabled {
+    pointer-events: none;
+}

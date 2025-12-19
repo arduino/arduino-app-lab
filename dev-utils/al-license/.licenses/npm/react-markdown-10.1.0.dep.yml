@@ -1,0 +1,153 @@
+---
+name: react-markdown
+version: 10.1.0
+type: npm
+summary: React component to render markdown
+homepage:
+license: mit
+licenses:
+- sources: license
+  text: |
+    The MIT License (MIT)
+
+    Copyright (c) Espen Hovlandsdal
+
+    Permission is hereby granted, free of charge, to any person obtaining a copy
+    of this software and associated documentation files (the "Software"), to deal
+    in the Software without restriction, including without limitation the rights
+    to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+    copies of the Software, and to permit persons to whom the Software is
+    furnished to do so, subject to the following conditions:
+
+    The above copyright notice and this permission notice shall be included in all
+    copies or substantial portions of the Software.
+
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+    SOFTWARE.
+- sources: readme.md
+  text: |-
+    [MIT][file-license] © [Espen Hovlandsdal][author]
+
+    [api-allow-element]: #allowelement
+
+    [api-components]: #components
+
+    [api-default-url-transform]: #defaulturltransformurl
+
+    [api-extra-props]: #extraprops
+
+    [api-hooks-options]: #hooksoptions
+
+    [api-markdown]: #markdown
+
+    [api-markdown-async]: #markdownasync
+
+    [api-markdown-hooks]: #markdownhooks
+
+    [api-options]: #options
+
+    [api-url-transform]: #urltransform
+
+    [author]: https://espen.codes/
+
+    [badge-build-image]: https://github.com/remarkjs/react-markdown/workflows/main/badge.svg
+
+    [badge-build-url]: https://github.com/remarkjs/react-markdown/actions
+
+    [badge-coverage-image]: https://img.shields.io/codecov/c/github/remarkjs/react-markdown.svg
+
+    [badge-coverage-url]: https://codecov.io/github/remarkjs/react-markdown
+
+    [badge-downloads-image]: https://img.shields.io/npm/dm/react-markdown.svg
+
+    [badge-downloads-url]: https://www.npmjs.com/package/react-markdown
+
+    [badge-size-image]: https://img.shields.io/bundlejs/size/react-markdown
+
+    [badge-size-url]: https://bundlejs.com/?q=react-markdown
+
+    [commonmark-help]: https://commonmark.org/help/
+
+    [commonmark-html]: https://spec.commonmark.org/0.31.2/#html-blocks
+
+    [esm]: https://gist.github.com/sindresorhus/a39789f98801d908bbc7ff3ecc99d99c
+
+    [esmsh]: https://esm.sh
+
+    [file-license]: license
+
+    [github-awesome-rehype]: https://github.com/rehypejs/awesome-rehype
+
+    [github-awesome-remark]: https://github.com/remarkjs/awesome-remark
+
+    [github-conorhastings]: https://github.com/conorhastings
+
+    [github-hast-element]: https://github.com/syntax-tree/hast#element
+
+    [github-hast-nodes]: https://github.com/syntax-tree/hast#nodes
+
+    [github-io-react-markdown]: https://remarkjs.github.io/react-markdown/
+
+    [github-mdx]: https://github.com/mdx-js/mdx/
+
+    [github-micromark]: https://github.com/micromark/micromark
+
+    [github-react-remark]: https://github.com/remarkjs/react-remark
+
+    [github-react-syntax-highlighter]: https://github.com/react-syntax-highlighter/react-syntax-highlighter
+
+    [github-rehype]: https://github.com/rehypejs/rehype
+
+    [github-rehype-katex]: https://github.com/remarkjs/remark-math/tree/main/packages/rehype-katex
+
+    [github-rehype-plugins]: https://github.com/rehypejs/rehype/blob/main/doc/plugins.md#list-of-plugins
+
+    [github-rehype-raw]: https://github.com/rehypejs/rehype-raw
+
+    [github-rehype-react]: https://github.com/rehypejs/rehype-react
+
+    [github-rehype-sanitize]: https://github.com/rehypejs/rehype-sanitize
+
+    [github-remark]: https://github.com/remarkjs/remark
+
+    [github-remark-gfm]: https://github.com/remarkjs/remark-gfm
+
+    [github-remark-math]: https://github.com/remarkjs/remark-math
+
+    [github-remark-plugins]: https://github.com/remarkjs/remark/blob/main/doc/plugins.md#list-of-plugins
+
+    [github-remark-rehype-options]: https://github.com/remarkjs/remark-rehype#options
+
+    [github-topic-rehype-plugin]: https://github.com/topics/rehype-plugin
+
+    [github-topic-remark-plugin]: https://github.com/topics/remark-plugin
+
+    [github-unified]: https://github.com/unifiedjs/unified
+
+    [health]: https://github.com/remarkjs/.github
+
+    [health-coc]: https://github.com/remarkjs/.github/blob/main/code-of-conduct.md
+
+    [health-contributing]: https://github.com/remarkjs/.github/blob/main/contributing.md
+
+    [health-support]: https://github.com/remarkjs/.github/blob/main/support.md
+
+    [npm-install]: https://docs.npmjs.com/cli/install
+
+    [react]: http://reactjs.org
+
+    [section-components]: #appendix-b-components
+
+    [section-plugins]: #plugins
+
+    [section-security]: #security
+
+    [section-syntax]: #syntax
+
+    [typescript]: https://www.typescriptlang.org
+notices: []

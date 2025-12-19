@@ -1,0 +1,7 @@
+Package: arduino-app-lab
+Version: $VERSION
+Architecture: $ARCH
+Maintainer: arduino <support@arduino.cc>
+Description: Arduino App Lab
+Depends: libwebkit2gtk-4.1-0, fonts-noto-color-emoji
+

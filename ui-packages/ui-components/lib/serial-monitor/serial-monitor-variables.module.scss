@@ -1,0 +1,13 @@
+$serialMonitorPaddingLeft: 20px;
+$toolbarHeight: 66px;
+$actionsHeight: 70px;
+$actionsBackground: #fff;
+$borderColor: #c9d2d2;
+
+:export {
+    serialMonitorPaddingLeft: $serialMonitorPaddingLeft;
+    toolbarHeight: $toolbarHeight;
+    actionsHeight: $actionsHeight;
+    actionsBackground: $actionsBackground;
+    borderColor: $borderColor;
+}

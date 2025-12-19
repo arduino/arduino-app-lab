@@ -1,0 +1,35 @@
+@use "../../../../../public/shared.module.scss";
+
+.container {
+    display: flex;
+    height: 80px;
+    background-color: shared.theme-var(--associate-dialog-card-device-type-background);
+    border: 1px solid #{shared.theme-var(--associate-dialog-card-border)};
+    color: shared.theme-var(--associate-dialog-foreground);
+    border-radius: 3px;
+}
+
+.content {
+    padding: 20px;
+    display: grid;
+    grid-template-columns: auto auto 250px auto;
+    column-gap: 20px;
+    align-items: center;
+}
+
+.icon-container {
+    display: flex;
+    flex-direction: column;
+    & svg {
+        & > path {
+            fill: shared.theme-var(--associate-dialog-foreground);
+        }
+    }
+}
+
+.divider {
+    height: 40px;
+    margin: 0;
+    border: 0;
+    border-left: 1px solid #{shared.theme-var(--associate-dialog-divider)};
+}

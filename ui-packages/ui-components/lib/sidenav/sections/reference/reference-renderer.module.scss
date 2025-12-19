@@ -1,0 +1,77 @@
+@use '../../../typography/typography.module.scss';
+
+.renderer :global {
+  font-size: 12px;
+
+  .ar-openblock,
+  .ar-subcategory {
+    margin: 20px 0;
+  }
+
+  h1 {
+    font-family: typography.$roboto-mono-font-family;
+    font-size: 16px;
+    font-weight: 700;
+    color: #374146;
+    margin-bottom: 20px;
+  }
+  h2,
+  h3,
+  h5 {
+    font-size: 12px;
+    color: #4e5b61;
+    margin-bottom: 4px;
+  }
+
+  p {
+    margin: 5px 0;
+  }
+  button,
+  a {
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    color: #008184;
+  }
+  ul {
+    // list-style: none;
+    padding-left: 20px;
+    > li:not(:first-of-type) {
+      margin-top: 4px;
+    }
+  }
+  code {
+    font-family: typography.$roboto-mono-font-family;
+    color: #374146;
+    font-weight: 700;
+  }
+  pre {
+    padding: 5px 6px;
+    background-color: #ecf1f1;
+    > code {
+      font-size: 11px;
+      text-wrap: wrap;
+      font-weight: 400;
+      color: black;
+    }
+  }
+  table {
+    display: block;
+    overflow-x: auto;
+    margin: 15px 0;
+    border: 1px solid #d5e9e9;
+    th,
+    td {
+      padding: 4px 8px;
+      text-align: left;
+    }
+    tr:nth-child(odd) {
+      background-color: #ecf1f1;
+    }
+  }
+  hr,
+  mark {
+    display: none;
+  }
+}

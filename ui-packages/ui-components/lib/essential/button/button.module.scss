@@ -1,0 +1,98 @@
+@use "../../../public/shared.module.scss";
+@use "@cloud-editor-mono/arduino-sass";
+
+.button {
+    padding: 5px 20px;
+    border: unset;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    &.x-small {
+        padding: 2px 16px;
+    }
+
+    &.primary,
+    &.secondary,
+    &.warning {
+        border-radius: 32px;
+        background: #fff;
+    }
+
+    &.primary {
+        $color: shared.theme-var(--button-primary-label);
+        $bg: shared.theme-var(--button-primary-background);
+
+        color: $color;
+        background-color: $bg;
+
+        &:hover {
+            background-color: shared.theme-var(--button-primary-background-hover);
+        }
+
+        &:focus {
+            outline: 2px solid shared.theme-var(--button-primary-border-active);
+        }
+
+        .loader-spinner {
+            @include arduino-sass.spinner($color, $bg, 64px);
+        }
+    }
+
+    &.secondary {
+        color: shared.theme-var(--button-secondary-label);
+        // TODO: change with --button-secondary-background
+        background-color: shared.theme-var(--dropdown-background);
+        border: 2px solid shared.theme-var(--button-secondary-border);
+
+        &:hover {
+            background-color: shared.theme-var(--button-secondary-background-hover);
+        }
+
+        &:focus {
+            outline: 2px solid shared.theme-var(--button-secondary-outline-active);
+        }
+    }
+
+    &.tertiary {
+        color: shared.theme-var(--button-tertiary-label);
+        padding: 0;
+        background-color: transparent;
+
+        &:hover {
+            opacity: 0.8;
+        }
+    }
+
+    &.warning {
+        color: #ffffff; // TODO: change with shared.theme-var(--button-warning-label);
+        background-color: #aa4335; // TODO: change with shared.theme-var(--button-warning-background);
+
+        &:hover {
+            background-color: #611005; // TODO: change with shared.theme-var(--button-warning-background-hover);
+        }
+
+        &:focus {
+            outline: #ffbdb4 2px solid; // TODO: change with shared.theme-var(--button-warning-outline);
+        }
+    }
+
+    &.disabled {
+        pointer-events: none;
+        opacity: 0.5;
+    }
+}
+
+.button-icon-left > svg {
+    padding-right: 12px;
+}
+
+.button-icon-right > svg {
+    padding-left: 12px;
+}
+
+.loader {
+    margin-right: 12px;
+    display: block;
+}

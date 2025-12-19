@@ -1,0 +1,5 @@
+@use "../../../public/shared.module.scss";
+
+.title {
+    color: shared.theme-var(--associate-dialog-foreground); // TODO: use the right variable
+}

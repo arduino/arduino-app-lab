@@ -1,0 +1,144 @@
+---
+name: remark-rehype
+version: 11.1.2
+type: npm
+summary: remark plugin that turns markdown into HTML to support rehype
+homepage:
+license: mit
+licenses:
+- sources: license
+  text: |
+    (The MIT License)
+
+    Copyright (c) Titus Wormer <tituswormer@gmail.com>
+
+    Permission is hereby granted, free of charge, to any person obtaining
+    a copy of this software and associated documentation files (the
+    'Software'), to deal in the Software without restriction, including
+    without limitation the rights to use, copy, modify, merge, publish,
+    distribute, sublicense, and/or sell copies of the Software, and to
+    permit persons to whom the Software is furnished to do so, subject to
+    the following conditions:
+
+    The above copyright notice and this permission notice shall be
+    included in all copies or substantial portions of the Software.
+
+    THE SOFTWARE IS PROVIDED 'AS IS', WITHOUT WARRANTY OF ANY KIND,
+    EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+    MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+    IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+    CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+    TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+    SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+- sources: readme.md
+  text: |-
+    [MIT][file-license] © [Titus Wormer][wooorm]
+
+    <!-- Definitions -->
+
+    [api-default-footnote-back-content]: #defaultfootnotebackcontentreferenceindex-rereferenceindex
+
+    [api-default-footnote-back-label]: #defaultfootnotebacklabelreferenceindex-rereferenceindex
+
+    [api-default-handlers]: #defaulthandlers
+
+    [api-options]: #options
+
+    [api-remark-rehype]: #unifieduseremarkrehype-destination-options
+
+    [badge-build-image]: https://github.com/remarkjs/remark-rehype/workflows/main/badge.svg
+
+    [badge-build-url]: https://github.com/remarkjs/remark-rehype/actions
+
+    [badge-coverage-image]: https://img.shields.io/codecov/c/github/remarkjs/remark-rehype.svg
+
+    [badge-coverage-url]: https://codecov.io/github/remarkjs/remark-rehype
+
+    [badge-downloads-image]: https://img.shields.io/npm/dm/remark-rehype.svg
+
+    [badge-downloads-url]: https://www.npmjs.com/package/remark-rehype
+
+    [badge-size-image]: https://img.shields.io/bundlejs/size/remark-rehype
+
+    [badge-size-url]: https://bundlejs.com/?q=remark-rehype
+
+    [esmsh]: https://esm.sh
+
+    [file-license]: license
+
+    [github-gist-esm]: https://gist.github.com/sindresorhus/a39789f98801d908bbc7ff3ecc99d99c
+
+    [github-hast]: https://github.com/syntax-tree/hast
+
+    [github-hast-properties]: https://github.com/syntax-tree/hast#properties
+
+    [github-markdown-css]: https://github.com/sindresorhus/github-markdown-css
+
+    [github-mdast]: https://github.com/syntax-tree/mdast
+
+    [github-mdast-html]: https://github.com/syntax-tree/mdast#html
+
+    [github-mdast-util-to-hast]: https://github.com/syntax-tree/mdast-util-to-hast
+
+    [github-mdast-util-to-hast-back-content-template]: https://github.com/syntax-tree/mdast-util-to-hast#footnotebackcontenttemplate
+
+    [github-mdast-util-to-hast-back-label-template]: https://github.com/syntax-tree/mdast-util-to-hast#footnotebacklabeltemplate
+
+    [github-mdast-util-to-hast-default-back-content]: https://github.com/syntax-tree/mdast-util-to-hast#defaultfootnotebackcontentreferenceindex-rereferenceindex
+
+    [github-mdast-util-to-hast-default-back-label]: https://github.com/syntax-tree/mdast-util-to-hast#defaultfootnotebacklabelreferenceindex-rereferenceindex
+
+    [github-mdast-util-to-hast-default-handlers]: https://github.com/syntax-tree/mdast-util-to-hast#defaulthandlers
+
+    [github-mdast-util-to-hast-handler]: https://github.com/syntax-tree/mdast-util-to-hast#handler
+
+    [github-mdast-util-to-hast-handlers]: https://github.com/syntax-tree/mdast-util-to-hast#handlers
+
+    [github-rehype]: https://github.com/rehypejs/rehype
+
+    [github-rehype-format]: https://github.com/rehypejs/rehype-format
+
+    [github-rehype-meta]: https://github.com/rehypejs/rehype-meta
+
+    [github-rehype-minify]: https://github.com/rehypejs/rehype-minify
+
+    [github-rehype-raw]: https://github.com/rehypejs/rehype-raw
+
+    [github-rehype-remark]: https://github.com/rehypejs/rehype-remark
+
+    [github-rehype-sanitize]: https://github.com/rehypejs/rehype-sanitize
+
+    [github-rehype-sanitize-clobber]: https://github.com/rehypejs/rehype-sanitize#example-headings-dom-clobbering
+
+    [github-rehype-starry-night]: https://github.com/rehypejs/rehype-starry-night
+
+    [github-rehype-stringify]: https://github.com/rehypejs/rehype/tree/main/packages/rehype-stringify
+
+    [github-remark]: https://github.com/remarkjs/remark
+
+    [github-remark-gfm]: https://github.com/remarkjs/remark-gfm
+
+    [github-unified]: https://github.com/unifiedjs/unified
+
+    [github-unified-mode]: https://github.com/unifiedjs/unified#transforming-between-ecosystems
+
+    [github-unified-processor]: https://github.com/unifiedjs/unified#processor
+
+    [github-unified-transformer]: https://github.com/unifiedjs/unified#transformer
+
+    [health]: https://github.com/remarkjs/.github
+
+    [health-coc]: https://github.com/remarkjs/.github/blob/main/code-of-conduct.md
+
+    [health-contributing]: https://github.com/remarkjs/.github/blob/main/contributing.md
+
+    [health-support]: https://github.com/remarkjs/.github/blob/main/support.md
+
+    [npmjs-install]: https://docs.npmjs.com/cli/install
+
+    [typescript]: https://www.typescriptlang.org
+
+    [wikipedia-xss]: https://en.wikipedia.org/wiki/Cross-site_scripting
+
+    [wooorm]: https://wooorm.com
+notices: []

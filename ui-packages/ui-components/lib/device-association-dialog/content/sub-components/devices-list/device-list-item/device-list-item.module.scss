@@ -1,0 +1,181 @@
+@use "../../../device-association-dialog-content-variables.module.scss";
+@use "../../../../../../public/shared.module.scss";
+
+.hover-focus-detected {
+    background-color: shared.theme-var(--associate-dialog-card-background-hover);
+    box-shadow: 0px 0px 20px shared.theme-var(--associate-dialog-card-border-hover);
+
+    .selected-tick-hidden {
+        @extend .hidden;
+    }
+
+    .detach-button-show {
+        @extend .shown-display-flex;
+    }
+}
+
+.hover-focus-undetected {
+    background-color: rgba(0, 92, 95, 0.1);
+
+    .selected-tick-hidden {
+        @extend .hidden;
+    }
+
+    .detach-button-show {
+        @extend .shown-display-flex;
+    }
+}
+
+.container {
+    background-color: shared.theme-var(--associate-dialog-card-background);
+    height: fit-content;
+    border: 1px solid shared.theme-var(--associate-dialog-card-border);
+    display: flex;
+    align-items: center;
+    width: device-association-dialog-content-variables.$list-content-width;
+    cursor: pointer;
+}
+
+.no-pointer {
+    cursor: unset;
+}
+
+.container-detected {
+    &:hover {
+        @extend .hover-focus-detected;
+    }
+
+    &:focus {
+        @extend .hover-focus-detected;
+    }
+}
+
+.container-undetected-device {
+    height: 50px;
+    border-top: 0px;
+    border-left: 0px;
+    border-right: 0px;
+
+    &:hover {
+        @extend .hover-focus-undetected;
+    }
+
+    &:focus {
+        @extend .hover-focus-undetected;
+    }
+}
+
+.container-loading-device {
+    height: 50px;
+    border-top: 0px;
+    border-left: 0px;
+    border-right: 0px;
+}
+
+.device-info-container {
+    display: flex;
+    flex-direction: column;
+    padding-left: 14px;
+    height: 100%;
+    width: 100%;
+    justify-content: center;
+    gap: 4px;
+}
+
+.device-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 320px;
+}
+
+.port-label {
+    color: shared.theme-var(--associate-dialog-card-port-name);
+    display: flex;
+    align-items: center;
+
+    & > svg {
+        & > path {
+            fill: shared.theme-var(--associate-dialog-card-port-icon);
+        }
+        margin-right: 12px;
+    }
+}
+
+.associated-detach-container {
+    display: flex;
+    justify-content: flex-end;
+    flex: 1;
+}
+
+.selected-tick {
+    padding-right: 24px;
+}
+
+.detach-button {
+    display: none;
+    margin-right: 14px;
+}
+
+.hidden {
+    display: none;
+}
+
+.shown-display-flex {
+    display: flex;
+}
+
+.image {
+    background-color: shared.theme-var(--associate-dialog-card-picture-background);
+}
+
+.device-image-skeleton {
+    width: 90%;
+    height: 34px;
+}
+
+.device-name-skeleton {
+    width: 60%;
+    height: 20px;
+}
+
+.device-image-skeleton > div {
+    background-image: linear-gradient(
+        90deg,
+        shared.theme-var(--associate-dialog-card-picture-background) 0%,
+        #c9d2d2 100%
+    );
+}
+
+$ellipsisSize: 18px;
+$animationWidth: $ellipsisSize * 1.1;
+
+.ellipsis-placeholder:after {
+    display: inline-block;
+    vertical-align: bottom;
+    overflow: hidden;
+    width: 0px;
+    content: "\2026";
+    -webkit-animation: ellipsis steps(4, end) 1.5s infinite;
+    animation: ellipsis steps(4, end) 1.5s infinite;
+    font-weight: 900;
+    font-size: $ellipsisSize;
+}
+
+@keyframes ellipsis {
+    to {
+        width: $animationWidth;
+    }
+}
+
+@-webkit-keyframes ellipsis {
+    to {
+        width: $animationWidth;
+    }
+}
+
+.device-verify-only {
+ color: #7f8c8d;
+ text-wrap: nowrap;
+ margin-right: 12px;
+}

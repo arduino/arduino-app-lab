@@ -1,0 +1,18 @@
+@use "../../../images/public/css-images.module.scss";
+
+.serial-monitor-wrapper {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.serial-monitor-contents-message-sent {
+    color: #00979d;
+
+    &::before {
+        content: url(css-images.$monitorInputIconData);
+        width: 12px;
+        margin-right: 6px;
+    }
+}

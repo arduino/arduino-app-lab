@@ -1,0 +1,87 @@
+@use "../../../public/shared.module.scss";
+@use "@cloud-editor-mono/arduino-sass";
+
+$dialogHeight: var(--dialog-height);
+$dialogMaxHeight: var(--dialog-max-height);
+$dialogContentHeaderHeight: 54;
+
+.overlay {
+  position: fixed;
+  inset: 0px;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  [class~="ReactModal__Content"] {
+    width: 650px;
+    max-height: $dialogMaxHeight;
+    height: $dialogHeight;
+    border-radius: 5px !important;
+    background-color: shared.theme-var(--associate-dialog-background); // TODO: use the correct color
+    margin: 28px;
+
+    @include arduino-sass.breakpoint(768) {
+      width: 382px;
+    }
+  }
+}
+
+.container {
+  z-index: shared.$zIndex5;
+  position: relative;
+  display: grid;
+  grid-template-rows: 54px 1fr 78px;
+  background-color: white;
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+.header {
+  display: grid;
+  grid-template-columns: 72px 1fr 72px;
+  justify-items: center;
+  align-items: center;
+  height: $dialogContentHeaderHeight * 1px;
+  border-bottom: 1px solid #{shared.theme-var(--associate-dialog-divider)}; // TODO: use the correct color
+
+  span {
+    grid-column-start: 2;
+  }
+
+  .close-button {
+    margin-left: auto;
+    margin-right: 19px;
+
+    & svg {
+      width: 26px;
+      height: 26px;
+    }
+  }
+
+  .back-button {
+    margin-top: 1px;
+    margin-right: auto;
+    margin-left: 24px;
+  }
+}
+
+.dialog-body {
+  display: grid;
+  padding: 28px 130px 36px 130px;
+  @include arduino-sass.breakpoint(768) {
+    padding: 28px 30px 36px 30px;
+  }
+}
+
+.dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 20px;
+  background-color: arduino-sass.$feather;
+  padding: 28px 130px 28px 130px;
+  @include arduino-sass.breakpoint(768) {
+    padding: 28px 30px 28px 30px;
+  }
+}

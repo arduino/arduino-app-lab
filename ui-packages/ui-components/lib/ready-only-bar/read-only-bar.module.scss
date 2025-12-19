@@ -1,0 +1,189 @@
+@use "../../public/shared.module.scss";
+
+.container {
+    height: 70px;
+    background-color: shared.theme-var(--toolbar-background);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 28px 54px 28px 54px;
+}
+
+.item-info-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.item-info {
+    white-space: nowrap;
+}
+
+.item-data-container {
+    display: flex;
+}
+
+.name-skeleton {
+    height: 36px;
+    width: 200px;
+}
+
+.item-icon-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 22px;
+
+    svg {
+        width: 36px;
+        height: 36px;
+    }
+}
+
+.logo-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    svg {
+        width: 52px;
+        height: 52px;
+    }
+}
+
+.action-buttons-container {
+    display: flex;
+    height: 40px;
+    white-space: nowrap;
+}
+
+.secondary-action-button {
+    margin-left: 16px;
+    height: 100%;
+    width: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border: 2px solid shared.theme-var(--button-secondary-border);
+    border-radius: 20px;
+
+    & > svg > path {
+        fill: shared.theme-var(--button-secondary-border);
+    }
+}
+
+.primary-button-skeleton {
+    height: 36px;
+    width: 100px;
+    margin-right: 16px;
+}
+
+.secondary-button-skeleton {
+    height: 36px;
+    width: 52px;
+}
+
+.item-name-owner-info-container {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+
+    .owner-link {
+        margin-left: 8px;
+        font-weight: 400;
+        font-size: 1.25rem;
+        line-height: 34px;
+    }
+
+    .owner-link-disabled {
+        color: shared.theme-var(--header-title-label);
+    }
+
+    .sketch-attr-show {
+        display: flex;
+        overflow: hidden;
+    }
+
+    .attr-container {
+        position: relative;
+        .info-icon-container {
+            margin-left: 8px;
+            border-radius: 50%;
+            background-color: #dae3e3;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            height: 24px;
+            width: 24px;
+
+            svg {
+                width: 14px;
+                height: 14px;
+            }
+
+            &:hover {
+                cursor: help;
+                background-color: #374146;
+
+                svg > path {
+                    fill: #ffffff;
+                }
+            }
+        }
+
+        .sketch-attr {
+            position: absolute;
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: flex-start;
+            top: 28px;
+            left: 8px;
+            z-index: shared.$zIndex3;
+            padding: 16px;
+            background: #fff;
+            box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.25);
+            border-radius: 3px;
+            width: 250px;
+            white-space: nowrap;
+
+            .sketch-attr-label {
+                width: 100%;
+                display: flex;
+                flex-direction: row;
+                justify-content: space-between;
+            }
+        }
+
+        &:hover {
+            .sketch-attr {
+                @extend .sketch-attr-show;
+            }
+        }
+    }
+}
+
+.item-name-and-owner-container {
+    overflow: hidden;
+}
+
+@media (max-width: 1024px) {
+    .logo-container {
+        display: none;
+    }
+
+    .owner-link {
+        display: none;
+    }
+}
+
+@media (max-width: 650px) {
+    .item-name-and-owner-container {
+        max-width: 260px;
+        text-overflow: ellipsis;
+        padding-right: 8px;
+    }
+}

@@ -1,0 +1,84 @@
+@use "../../../../public/shared.module.scss";
+@use "../../sidenav-variables.module.scss";
+
+.header-container {
+  margin-right: 12px;
+  margin-left: auto;
+
+  .sidenav-content-clear-chat {
+    width: 28px;
+    height: 28px;
+    display: grid;
+    justify-content: center;
+    align-items: center;
+
+    &:hover {
+      border-radius: 32px;
+      background-color: #dae3e3;
+    }
+  }
+
+  svg {
+    width: 18px;
+    height: 18px;
+  }
+}
+
+.container {
+  z-index: shared.$zIndexMax;
+  width: sidenav-variables.$current-sidenav-panel-width;
+  margin-top: 35px;
+  position: absolute;
+  left: 60px;
+
+  .notification {
+    display: flex;
+    justify-content: space-between;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    padding: 8px 16px;
+    color: white;
+    background: #374146;
+    margin: 0 16px;
+    box-shadow: 0px 4px 20px 0px #00000040;
+  }
+
+  .messageContainer {
+    display: flex;
+    gap: 8px;
+    flex: 1;
+    overflow: hidden;
+
+    .text {
+      overflow: hidden;
+    }
+
+    .text-padding {
+      padding-right: 36px;
+    }
+
+    .message-icon-padding {
+      padding-right: 36px;
+    }
+  }
+
+  & svg {
+    & > path {
+      fill: white !important;
+    }
+  }
+}
+
+.action {
+  margin: 0 12px;
+
+  .actionButton {
+    color: white;
+  }
+}
+
+.closeButton {
+  &:focus-visible {
+    outline: none;
+  }
+}

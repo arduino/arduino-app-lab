@@ -1,0 +1,57 @@
+@use "../../../public/shared.module.scss";
+
+.section-container {
+  width: 100%;
+  height: 100%;
+  border-radius: 16px;
+  display: flex;
+  border: 1px solid #232b2e;
+  background-color: #090f11;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  overflow: auto;
+
+  .content-container {
+    width: 100%;
+
+    .section-header {
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+    }
+
+    .section-content {
+      max-width: 436px;
+      margin: 100px auto 0;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+
+      .title {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .content {
+        width: 100%;
+      }
+    }
+  }
+
+  .action-container {
+    width: 100%;
+    height: 72px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-top: 1px solid #232b2e;
+
+    .connect-button {
+      height: 36px;
+    }
+  }
+}

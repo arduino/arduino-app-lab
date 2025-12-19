@@ -1,0 +1,40 @@
+.main {
+  background: var(--surface-bg-below-2, #090f11);
+  height: 100%;
+  width: 100%;
+  padding: 0px 16px;
+  box-sizing: border-box;
+	display: flex;
+	flex-direction: column;
+
+  .container {
+    padding-bottom: 16px;
+    height: calc(100% - 102px);
+
+    .split {
+      flex: 1;
+      display: flex;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    .split-item {
+      height: 100%;
+
+      &-left {
+        width: calc(50% + 8px) !important;
+      };
+
+      &-right {
+        margin-left: 8px;
+        width: calc(50% - 8px) !important;
+
+        & > div {
+          background: var(--surface-bg-baseline, #232b2e);
+          border-radius: 16px;
+          padding: 16px;
+        }
+      };
+    }
+  }
+}

@@ -1,0 +1,38 @@
+@use "../../../public/shared.module.scss";
+
+:root {
+    --focused-popover-top: 0;
+    --focused-popover-left: 0;
+}
+
+$focusedPopoverTop: var(--focused-popover-top);
+$focusedPopoverLeft: var(--focused-popover-left);
+
+:export {
+    focusedPopoverTop: --focused-popover-top;
+    focusedPopoverLeft: --focused-popover-left;
+}
+
+.overlay {
+    inset: 0px;
+    position: fixed;
+
+    [class~="ReactModal__Content"] {
+        position: fixed;
+        top: $focusedPopoverTop;
+        left: $focusedPopoverLeft;
+        margin: 44px 10px 44px 10px;
+
+        width: 300px;
+        min-height: 120px;
+        max-height: 50vh;
+        overflow-y: auto;
+        overflow-x: hidden;
+        padding: 16px;
+
+        border-radius: 5px !important;
+        box-shadow: 0px 4px 20px rgb(0 0 0 / 25%);
+
+        background-color: shared.theme-var(--associate-dialog-background);
+    }
+}

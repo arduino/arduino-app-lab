@@ -1,0 +1,18 @@
+{
+  "notarize": [
+    {
+      "path": "./build/bin/Arduino App Lab.pkg",
+      "bundle_id": "cc.arduino.applab",
+      "staple": true
+    },
+    {
+      "path": "./build/bin/Arduino App Lab.app.zip",
+      "bundle_id": "cc.arduino.applab",
+      "staple": false
+    }
+  ],
+  "apple_id": {
+    "username": "apple-developer@arduino.cc",
+    "password": "__APPLE_PASSWORD__"
+  }
+}

@@ -1,0 +1,39 @@
+@use "../../public/shared.module.scss";
+
+.tooltip {
+    display: none;
+    position: absolute;
+    max-width: 210px;
+    width: max-content;
+    top: 40px;
+    right: 8px;
+    padding: 12px 16px;
+    background: #fff;
+    box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.25);
+    border-radius: 4px;
+    white-space: wrap;
+    z-index: 99999;
+
+    &--title {
+        padding: 2.5px 7px;
+        border-radius: 3px;
+        top: unset;
+        right: unset;
+
+        border: 1px solid shared.theme-var(--editor-lines-background-selected);
+        background: shared.theme-var(--tooltip-background);
+        color: shared.theme-var(--tooltip-foreground);
+
+        //Make the title not interactive
+        pointer-events: none;
+    }
+}
+
+.tooltip-show {
+    display: unset;
+}
+
+.tooltip-up {
+    top: auto;
+    bottom: 40px;
+}

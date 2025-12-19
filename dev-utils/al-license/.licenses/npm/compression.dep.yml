@@ -1,0 +1,48 @@
+---
+name: compression
+version: 1.8.0
+type: npm
+summary: Node.js compression middleware
+homepage:
+license: mit
+licenses:
+- sources: LICENSE
+  text: |
+    (The MIT License)
+
+    Copyright (c) 2014 Jonathan Ong <me@jongleberry.com>
+    Copyright (c) 2014-2015 Douglas Christopher Wilson <doug@somethingdoug.com>
+
+    Permission is hereby granted, free of charge, to any person obtaining
+    a copy of this software and associated documentation files (the
+    'Software'), to deal in the Software without restriction, including
+    without limitation the rights to use, copy, modify, merge, publish,
+    distribute, sublicense, and/or sell copies of the Software, and to
+    permit persons to whom the Software is furnished to do so, subject to
+    the following conditions:
+
+    The above copyright notice and this permission notice shall be
+    included in all copies or substantial portions of the Software.
+
+    THE SOFTWARE IS PROVIDED 'AS IS', WITHOUT WARRANTY OF ANY KIND,
+    EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+    MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+    IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+    CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+    TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+    SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+- sources: README.md
+  text: |-
+    [MIT](LICENSE)
+
+    [npm-image]: https://badgen.net/npm/v/compression
+    [npm-url]: https://npmjs.org/package/compression
+    [downloads-image]: https://badgen.net/npm/dm/compression
+    [downloads-url]: https://npmcharts.com/compare/compression?minimal=true
+    [github-actions-ci-image]: https://badgen.net/github/checks/expressjs/compression/master?label=CI
+    [github-actions-ci-url]: https://github.com/expressjs/compression/actions?query=workflow%3Aci
+    [ossf-scorecard-badge]: https://api.scorecard.dev/projects/github.com/expressjs/compression/badge
+    [ossf-scorecard-visualizer]: https://ossf.github.io/scorecard-visualizer/#/projects/github.com/expressjs/compression
+    [funding-url]: https://opencollective.com/express
+    [funding-image]: https://badgen.net/badge/icon/sponsor/pink?icon=github&label=Open%20Collective
+notices: []

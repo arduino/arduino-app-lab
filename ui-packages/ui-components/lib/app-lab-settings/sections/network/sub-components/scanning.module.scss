@@ -1,0 +1,42 @@
+.scanning {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+
+  .content {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    overflow: hidden;
+
+    .title {
+      display: flex;
+      flex-direction: column;
+    }
+  }
+
+  .progress-bar {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .add-network {
+    display: flex;
+    height: 46px;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start;
+    align-self: stretch;
+    color: #ffffff;
+    cursor: pointer;
+
+    border: none;
+    border-bottom: 1px solid #434f54;
+    background: transparent;
+
+    &:hover {
+      background: rgba(37, 194, 199, 0.08);
+    }
+  }
+}

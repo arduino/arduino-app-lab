@@ -1,0 +1,245 @@
+@use "../../../public/shared.module.scss";
+
+@use "@cloud-editor-mono/arduino-sass";
+
+.button {
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    border: 2px solid transparent;
+    transition: all 0.1s;
+
+    & > svg {
+        width: 14px;
+    }
+
+    &.action {
+        &.primary {
+            $bg-color: var(--component-bg-accent, #25c2c7);
+            $color: var(--text-inverted, #171e21);
+            $hover-color: var(--component-bg-accent-strong, #7fcbcd);
+            $focus-color: var(--border-selected, #005c5f);
+
+            color: $color;
+            background-color: $bg-color;
+
+            &:hover {
+                background-color: $hover-color;
+            }
+
+            &:focus {
+                border: 2px solid $focus-color;
+                outline: unset;
+            }
+
+            .loader-spinner {
+                @include arduino-sass.spinner($color, $bg-color, 64px);
+            }
+        }
+
+        &.secondary {
+            $bg-color: var(--component-bg-selected, rgba(37, 194, 199, 0.2));
+            $color: var(--text-accent, #25c2c7);
+            $hover-color: var(--component-bg-hover, #aeb8b826);
+            $focus-color: var(--border-accent-strong, #7fcbcd);
+
+            color: $color;
+            background-color: $bg-color;
+
+            &:hover {
+                background-color: $hover-color;
+            }
+
+            &:focus {
+                border: 2px solid $focus-color;
+                outline: unset;
+            }
+
+            .loader-spinner {
+                @include arduino-sass.spinner($color, $bg-color, 64px);
+            }
+        }
+
+        &.tertiary {
+            $color: var(--text-accent, #25c2c7);
+            $hover-color: var(--component-bg-hover, rgba(37, 194, 199, 0.08));
+            $focus-color: var(--border-accent-strong, #7fcbcd);
+
+            color: $color;
+            background-color: unset;
+
+            &:hover {
+                background-color: $hover-color;
+                color: var(--text-accent-strong, #7fcbcd);
+            }
+
+            &:focus {
+                border: 2px solid $focus-color;
+                outline: unset;
+            }
+
+            .loader-spinner {
+                @include arduino-sass.spinner($color, unset, 64px);
+            }
+        }
+    }
+
+    &.destructive {
+        &.primary {
+            $bg-color: var(--feedback-error-default, #ff8878);
+            $color: var(--text-inverted, #171e21);
+            $hover-color: #ffbdb4;
+            $focus-color: var(--feedback-error-selected, #aa4335);
+
+            color: $color;
+            background-color: $bg-color;
+
+            &:hover {
+                background-color: $hover-color;
+            }
+
+            &:focus {
+                border: 2px solid $focus-color;
+                outline: unset;
+            }
+
+            .loader-spinner {
+                @include arduino-sass.spinner($color, $bg-color, 64px);
+            }
+        }
+
+        &.secondary {
+            $bg-color: rgba(255, 136, 120, 0.15);
+            $color: var(--feedback-error-default, #ff8878);
+            $hover-color:
+                linear-gradient(
+                    0deg,
+                    var(--component-bg-flexible, rgba(174, 184, 184, 0.15)) 0%,
+                    var(--component-bg-flexible, rgba(174, 184, 184, 0.15)) 100%
+                ),
+                rgba(255, 136, 120, 0.15);
+            $focus-color: var(--feedback-error-strong, #ffbdb4);
+
+            color: $color;
+            background-color: $bg-color;
+
+            &:hover {
+                background-color: $hover-color;
+            }
+
+            &:focus {
+                border: 2px solid $focus-color;
+                outline: unset;
+            }
+
+            .loader-spinner {
+                @include arduino-sass.spinner($color, $bg-color, 64px);
+            }
+        }
+
+        &.tertiary {
+            $color: var(--feedback-error-default, #ff8878);
+            $hover-color: rgba(255, 136, 120, 0.15);
+            $focus-color: var(--feedback-error-strong, #ffbdb4);
+
+            color: $color;
+            background-color: unset;
+
+            &:hover {
+                background-color: $hover-color;
+                color: var(--feedback-error-strong, #ffbdb4);
+            }
+
+            &:focus {
+                border: 2px solid $focus-color;
+                outline: unset;
+            }
+
+            .loader-spinner {
+                @include arduino-sass.spinner($color, unset, 64px);
+            }
+        }
+    }
+
+    &.low-contrast {
+        &.secondary {
+            $bg-color: var(--component-bg-above, #374146);
+            $color: var(--text-default, #fff);
+            $hover-color: var(--component-bg-flexible, rgba(174, 184, 184, 0.15));
+            $focus-color: var(--border-strong, #7f8c8d);
+
+            color: $color;
+            background-color: $bg-color;
+
+            &:hover {
+                background-color: $hover-color;
+            }
+
+            &:focus {
+                border: 2px solid $focus-color;
+                outline: unset;
+            }
+
+            .loader-spinner {
+                @include arduino-sass.spinner($color, $bg-color, 64px);
+            }
+        }
+
+        &.tertiary {
+            $color: var(--text-default, #fff);
+            $hover-color: var(--component-bg-flexible, rgba(174, 184, 184, 0.15));
+            $focus-color: var(--border-strong, #7f8c8d);
+
+            color: $color;
+            background-color: unset;
+
+            &:hover {
+                background-color: $hover-color;
+            }
+
+            &:focus {
+                border: 2px solid $focus-color;
+                outline: unset;
+            }
+
+            .loader-spinner {
+                @include arduino-sass.spinner($color, unset, 64px);
+            }
+        }
+    }
+
+    &.x-small,
+    &.xx-small {
+        border-radius: 8px;
+        padding: 0 12px;
+        height: 28px;
+    }
+
+    &.small {
+        padding: 7px 16px;
+        border-radius: 10px;
+        height: 36px;
+    }
+
+    &.large {
+        border-radius: 12px;
+        padding: 13px 16px;
+        height: 48px;
+    }
+}
+
+.loader {
+    margin-right: 12px;
+    display: block;
+}
+
+.disabled {
+    pointer-events: none;
+    opacity: 0.5;
+}
+
+.text-button-text {
+    font-weight: 600 !important;
+}

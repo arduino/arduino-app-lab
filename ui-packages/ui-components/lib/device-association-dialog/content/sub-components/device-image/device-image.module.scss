@@ -1,0 +1,49 @@
+@use "../../../../../public/shared.module.scss";
+
+.device {
+    background-color: shared.theme-var(--associate-dialog-card-picture-background);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+%device-large-image-sizing {
+    max-width: 180px;
+}
+
+.device-large {
+    @extend .device;
+    border-radius: 28px;
+    height: 112px;
+    width: 100%;
+    & > svg {
+        @extend %device-large-image-sizing;
+    }
+    & > img {
+        @extend %device-large-image-sizing;
+    }
+}
+
+%device-medium-image-sizing {
+    max-width: 80px;
+    max-height: 80px;
+}
+
+.device-medium {
+    @extend .device;
+    height: 80px;
+    width: 85px;
+    padding: 0px 20px 0px 20px;
+    & > svg {
+        @extend %device-medium-image-sizing;
+    }
+    & > img {
+        @extend %device-medium-image-sizing;
+    }
+}
+
+.device-small {
+    @extend .device-medium;
+    height: 66px;
+}

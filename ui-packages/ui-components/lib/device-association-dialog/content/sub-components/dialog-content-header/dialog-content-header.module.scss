@@ -1,0 +1,23 @@
+@use "../../../../../public/shared.module.scss";
+
+.container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.header {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    color: shared.theme-var(--associate-dialog-foreground);
+}
+
+.title {
+    text-align: left;
+}
+
+.subtitle {
+    display: flex;
+}

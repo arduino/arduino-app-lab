@@ -1,0 +1,17 @@
+@use "../../../public/shared.module.scss";
+
+// TODO: Use correct variables when available
+$buttonHover: #00979d;
+
+.button {
+  &:hover > svg {
+    & > rect {
+      fill: $buttonHover;
+      fill-opacity: unset;
+    }
+  
+    & > path {
+      fill: shared.theme-var(--button-primary-label);   
+    }
+  }
+}

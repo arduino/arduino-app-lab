@@ -1,0 +1,7 @@
+{
+  "compilerOptions": {
+    "isolatedModules": false
+  },
+  "exclude": ["dist"],
+  "include": ["**/*.ts", "**/*.tsx"]
+}

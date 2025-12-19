@@ -1,0 +1,22 @@
+.body {
+  align-items: center;
+
+  &-icon {
+    color: #C1AB15;
+    width: 50px;
+    height: 50  px;
+  }
+
+  &-title {
+    text-align: center;
+    white-space: wrap;
+    line-height: 30px !important;
+  }
+
+  .button-link {
+    all: unset;
+    color: var(--component-bg-accent, #25c2c7);
+    text-decoration: underline;
+    cursor: pointer;
+  }
+}

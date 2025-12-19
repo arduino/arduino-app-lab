@@ -1,0 +1,39 @@
+.details {
+  width: 100%;
+
+  &.open > .details-summary > .details-chevron {
+    transform: rotate(90deg);
+  }
+}
+
+.details-summary {
+  user-select: none;
+  list-style: none;
+  display: flex;
+  width: 100%;
+  align-items: center;
+  cursor: pointer;
+}
+
+.details-summary-icon {
+  padding: 3px;
+  margin-right: 7px;
+}
+
+.details-summary-label {
+  flex: 1;
+  margin-left: 4px;
+}
+
+.details-chevron {
+  transition: transform 0.05s;
+  justify-self: flex-end;
+
+  &.left {
+    justify-self: flex-start;
+  }
+
+  &.open {
+    transform: rotate(90deg);
+  }
+}

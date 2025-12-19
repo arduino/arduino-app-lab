@@ -1,0 +1,62 @@
+@use "../../public/shared.module.scss";
+
+.device-number-badge {
+    height: 5px;
+    width: 5px;
+    border-radius: 50%;
+    position: absolute;
+    top: -3px;
+    right: 0%;
+    left: 14px;
+    bottom: 70%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(218, 91, 74, 1);
+    color: #fff;
+    font-size: 12px;
+    font-weight: bold;
+    padding: 8px;
+    z-index: shared.$zIndex1;
+}
+
+$popoverW: 280;
+$popoverH: 172;
+$popoverReachPadding: 16;
+
+$popoverHCalculated: $popoverH - $popoverReachPadding;
+$popoverWCalculated: $popoverW - $popoverReachPadding;
+
+$popoverHCalculatedSmaller: $popoverHCalculated - 32;
+$popoverHCalculatedSmallest: $popoverHCalculated - 82;
+
+.popover-container {
+    display: none;
+    position: absolute;
+    top: 31px;
+    left: 72px;
+    z-index: shared.$zIndex5;
+    padding: 16px;
+    width: $popoverWCalculated * 1px;
+    height: $popoverHCalculated * 1px;
+}
+
+.popover {
+    background: #fff;
+    box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.25);
+    border-radius: 3px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    height: 100%;
+    width: 100%;
+}
+
+.popover-container-smaller {
+    height: $popoverHCalculatedSmaller * 1px;
+}
+
+.popover-container-smallest {
+    height: $popoverHCalculatedSmallest * 1px;
+}

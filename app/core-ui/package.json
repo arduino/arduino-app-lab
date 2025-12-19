@@ -1,0 +1,92 @@
+{
+  "name": "@bcmi-labs/cloud-editor-core-ui",
+  "version": "1.4.1",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "buildDev": "tsc && vite build --mode development",
+    "watch": "yarn buildDev --watch",
+    "test": "vitest",
+    "test:watch": "vitest watch",
+    "test:ui": "vitest --ui",
+    "coverage": "vitest run --coverage"
+  },
+  "peerDependencies": {
+    "@arduino/react-icons": ">= 0.1.1",
+    "@bcmi-labs/art-auth": "*",
+    "@bcmi-labs/cloud-sidebar": "*",
+    "@codemirror/autocomplete": ">= 6.9.1",
+    "@codemirror/commands": ">= 6.1.1",
+    "@codemirror/lang-cpp": ">= 6.0.1",
+    "@codemirror/lang-python": ">= 6.2.1",
+    "@codemirror/lang-yaml": ">= 6.1.2",
+    "@codemirror/language": ">= 6.0.0",
+    "@codemirror/merge": ">= 6.8.0",
+    "@codemirror/search": ">= 6.2.2",
+    "@codemirror/state": ">= 6.1.2",
+    "@codemirror/view": ">= 6.3.0",
+    "@tanstack/react-location": ">= 3.7.4",
+    "@tanstack/react-query": ">= 4.12.0",
+    "clsx": ">= 1.2.1",
+    "react": ">= 18.2.0",
+    "react-aria": ">= 3.20.0",
+    "react-dom": ">= 18.2.0",
+    "react-helmet-async": ">= 2.4.0",
+    "react-stately": ">= 3.20.0",
+    "react-use": ">= 17.4.0",
+    "use-debounce": ">= 8.0.4"
+  },
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com",
+    "access": "restricted",
+    "module": "./dist/lib/core-ui.es.js",
+    "types": "./dist/index.d.ts",
+    "exports": {
+      ".": {
+        "import": "./dist/lib/core-ui.es.js"
+      },
+      "./dist/style.css": {
+        "import": "./dist/style.css"
+      }
+    }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com:bcmi-labs/cloud-editor-mono.git"
+  },
+  "exports": {
+    "./cloud-editor": {
+      "import": "./lib/app-components/cloud-editor/CloudEditor.tsx"
+    },
+    "./serial-monitor": {
+      "import": "./lib/app-components/serial-monitor/SerialMonitor.tsx"
+    },
+    "./offline": {
+      "import": "./lib/app-components/offline/Offline.tsx"
+    },
+    "./app-lab": {
+      "import": "./lib/app-components/app-lab/AppLab.tsx"
+    }
+  },
+  "typesVersions": {
+    "*": {
+      "cloud-editor": [
+        "./lib/app-components/cloud-editor/index.d.ts"
+      ],
+      "serial-monitor": [
+        "./lib/app-components/serial-monitor/index.d.ts"
+      ],
+      "offline": [
+        "./lib/app-components/offline/index.d.ts"
+      ],
+      "app-lab": [
+        "./lib/app-components/app-lab/index.d.ts"
+      ]
+    }
+  }
+}

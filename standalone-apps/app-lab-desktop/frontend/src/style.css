@@ -1,0 +1,19 @@
+:root {
+    --text-inverted-subtle: #5d6a6b;
+    --border-default: #434F54;
+}
+
+#al-body {
+  margin: 0;
+  height: 100vh;
+  overflow: hidden;
+
+  [class*="Modal--overlay"] {
+    z-index: 10004;
+  }
+}
+
+#app {
+    height: 100vh;
+    text-align: center;
+}

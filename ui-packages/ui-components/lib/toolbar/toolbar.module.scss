@@ -1,0 +1,301 @@
+@use "../../public/shared.module.scss";
+@use "../code-editor/code-editor-variables.module.scss";
+@use "./toolbar-common.module.scss";
+
+$toolbarPaddingLeft: calc(
+    (#{code-editor-variables.$sharedGutterWidthVar} + #{code-editor-variables.$sharedFoldGutterWidthVar}) * 1px
+);
+
+.toolbar {
+    padding-left: $toolbarPaddingLeft;
+    padding-top: 14px;
+    padding-bottom: 14px;
+    padding-right: 14px;
+    display: flex;
+    align-items: center;
+    background: shared.theme-var(--toolbar-background);
+    position: relative;
+}
+
+.toolbar-buttons-container {
+    display: flex;
+}
+
+.toolbar-items {
+    display: flex;
+    padding-left: 10px;
+    color: transparent;
+    align-items: center;
+}
+
+$toolbarButtonWidth: 48px;
+$busyButtonWidth: $toolbarButtonWidth * 2;
+
+.toolbar-button {
+    cursor: pointer;
+    overflow: hidden;
+}
+
+.toolbar-button-icon {
+    display: flex;
+    padding-left: 5px;
+    background-color: transparent;
+    border: unset;
+    width: $toolbarButtonWidth;
+    svg {
+        pointer-events: none;
+    }
+}
+
+.toolbar-flavour-button {
+    @extend .toolbar-button-icon;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 20px;
+    padding: 4px;
+
+    margin-left: 12px;
+
+    & > svg > path {
+        fill: black;
+    }
+
+    width: 40px;
+    height: 40px;
+
+    &:hover {
+        background-color: white;
+    }
+}
+
+.toolbar-button-disabled {
+    & > svg {
+        & > rect {
+            fill: shared.theme-var(--button-secondary-outline-active);
+        }
+    }
+
+    cursor: unset;
+}
+
+.shimmer-effect {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -120%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+        to right,
+        rgba(255, 255, 255, 0) 0%,
+        rgba(255, 255, 255, 0.5) 50%,
+        rgba(255, 255, 255, 0) 100%
+    );
+    transform: skewX(-30deg);
+    animation: shimmer 2.5s infinite;
+}
+
+.toolbar-button-icon-busy {
+    display: flex;
+    background-color: shared.theme-var(--toolbar-button-primary-background);
+    width: $busyButtonWidth;
+    height: 38px;
+    border-radius: 30px;
+    border: unset;
+    align-items: center;
+    justify-content: space-evenly;
+    color: white;
+    position: relative;
+    overflow: hidden;
+
+    &::before {
+        @extend .shimmer-effect;
+    }
+}
+
+.toolbar-verify-button-busy {
+    &:hover span:first-of-type {
+        display: none;
+    }
+
+    &:hover .interrupt-icon,
+    &:hover .interrupt-icon-label {
+        display: unset;
+    }
+
+    &::before {
+        @extend .shimmer-effect;
+    }
+}
+
+@keyframes shimmer {
+    0% {
+        left: -120%;
+    }
+    50% {
+        left: 120%;
+    }
+    100% {
+        left: 120%;
+    }
+}
+
+.toolbar-button-icon:not([disabled]) > svg:hover {
+    & rect {
+        fill: #00979d; //correct variable needed
+    }
+}
+
+.toolbar-text-button,
+.toolbar-text {
+    margin-left: 22px;
+}
+
+.toolbar-text-button {
+    height: 38px;
+    background-color: transparent !important;
+
+    & :hover {
+        opacity: 1 !important;
+    }
+}
+
+.toolbar-text-button-icon {
+    & svg {
+        height: 16px;
+
+        & path {
+            fill: shared.theme-var(--toolbar-button-primary-background);
+        }
+    }
+}
+
+.toolbar-icon-button {
+    background-color: transparent;
+    display: grid;
+    grid-auto-flow: column;
+    gap: 8px;
+    align-items: center;
+    justify-content: center;
+    padding: 0 10px;
+    height: 40px;
+    border-radius: 32px;
+    font-size: small;
+
+    & > svg {
+        width: 24px;
+        height: 24px;
+    }
+
+    &:hover {
+        background-color: #fff;
+    }
+}
+
+.interrupt-icon-label {
+    display: none;
+}
+
+.interrupt-icon {
+    display: none;
+}
+
+.associated-device-info-button {
+    margin-left: 15px;
+    margin-right: 4px;
+}
+
+.association-node-container {
+    position: relative;
+}
+
+.association-node-container:hover {
+    .board-bubble-icon-button {
+        background-color: transparent;
+    }
+
+    .toolbar-text-button {
+        opacity: 0.8;
+    }
+
+    .board-bubble-popover-container {
+        display: unset;
+    }
+}
+
+.upload-info-popover {
+    @extend .popover;
+}
+
+.upload-info-popover-container {
+    box-sizing: content-box !important;
+    @extend .popover-container;
+}
+
+.upload-info-popover-container-smaller {
+    @extend .popover-container-smaller;
+}
+
+.upload-info-popover-container-smallest {
+    @extend .popover-container-smallest;
+}
+
+.upload-info-popover-container:hover {
+    display: unset;
+}
+
+.upload-button[disabled]:hover ~ .upload-info-popover-container {
+    display: unset;
+}
+
+.upload-button-container {
+    height: auto;
+}
+
+.verify-button[disabled]:hover ~ .upload-button-container {
+    .upload-info-popover-container {
+        display: unset;
+    }
+}
+
+.upload-info-popover-link {
+    text-transform: uppercase;
+}
+
+.board-bubble-popover {
+    @extend .popover;
+    overflow: auto;
+}
+
+.board-bubble-popover-container {
+    @extend .popover-container;
+}
+
+.board-bubble-popover-container-smaller {
+    @extend .popover-container-smaller;
+}
+
+.board-bubble-popover-container-smallest {
+    @extend .popover-container-smallest;
+}
+
+.associated-device-info-button-container:hover > .board-bubble-popover-container {
+    display: unset;
+}
+
+.board-bubble-popover-list {
+    margin: 0;
+}
+
+.badge {
+    @extend .device-number-badge;
+}
+
+.divider {
+    width: 1px;
+    height: 100%;
+    background-color: #c9d2d2;
+    margin: 12px;
+}

@@ -1,0 +1,76 @@
+@use "@cloud-editor-mono/ui-components/public/shared.module.scss";
+
+$topBarHeight: 74px !default;
+
+.top-bar {
+  height: $topBarHeight;
+  display: grid;
+  grid-template-columns: min-content 1fr;
+  align-items: center;
+  background-color: #090f11;
+  gap: 16px;
+  flex-shrink: 0;
+
+  .breadcrumbs {
+    display: flex;
+    color: #5d6a6b;
+    height: 36px;
+    overflow: visible;
+
+    .wrapper {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      height: 100%;
+    }
+  }
+}
+
+[class*="BreadcrumbItem"] {
+  &:hover {
+    color: inherit !important;
+    background-color: inherit !important;
+  }
+}
+
+.item {
+  border: unset;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 100%;
+  white-space: nowrap;
+  cursor: pointer;
+
+  &.item-active {
+    cursor: default;
+  }
+
+  .label {
+    color: #ffffff;
+    text-decoration: none;
+    max-width: 25vw;
+    display: flex;
+    flex-direction: row;
+    gap: 8px;
+    align-items: center;
+    overflow: hidden;
+    text-overflow: ellipsis;
+
+    .back-button {
+      transform: rotate(90deg);
+      outline: none;
+      margin-right: 4px;
+      margin-left: 4px;
+    }
+
+    span {
+      font-weight: 700;
+    }
+
+    &[aria-disabled="true"] {
+      cursor: default;
+    }
+  }
+}

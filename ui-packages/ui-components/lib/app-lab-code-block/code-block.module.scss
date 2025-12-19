@@ -1,0 +1,92 @@
+@use "@cloud-editor-mono/ui-components/public/shared.module.scss";
+
+.container {
+  color: #dae3e3;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+  box-sizing: border-box;
+
+  display: flex;
+  padding: 0px 16px;
+  flex-direction: column;
+  align-items: flex-start;
+
+  border-radius: 16px;
+  border: 1px solid var(--border-inverted, #232b2e);
+  background: var(--surface-bg-below-1, #171e21);
+
+  .header {
+    display: flex;
+    height: 54px;
+    align-items: center;
+    gap: 16px;
+    align-self: stretch;
+    border-radius: 16px;
+
+    .title {
+      display: flex;
+      padding: 16px 0px;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 4px;
+      flex: 1 0 0;
+      color: var(--text-subtle, #c9d2d2);
+    }
+
+    .open-external-button {
+      display: flex;
+      flex-direction: row;
+
+      span {
+        text-transform: none;
+        font-size: 14px;
+        font-weight: 600;
+        line-height: 160%;
+      }
+
+      svg {
+        width: 16px;
+        height: 16px;
+        padding: unset;
+
+        path {
+          fill: #25c2c7;
+        }
+      }
+    }
+
+    .close-button {
+      svg {
+        width: 20px;
+        height: 20px;
+        background: #ff887833;
+        border-radius: 4px;
+
+        path {
+          fill: #ff8878;
+        }
+      }
+    }
+  }
+
+  .image {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+
+  .code-block {
+    height: 100%;
+    width: 100%;
+    overflow: auto;
+
+    &::-webkit-scrollbar-thumb {
+      border: 4px solid #171e21;
+    }
+
+    &::-webkit-scrollbar-track {
+      background-color: transparent;
+    }
+  }
+}

@@ -1,0 +1,230 @@
+@use "@cloud-editor-mono/ui-components/public/shared.module.scss";
+
+.app-title {
+  display: flex;
+  gap: 1px;
+  height: 28px;
+  align-items: center;
+
+  &:hover:not(.active):not(.example):not(.footer) {
+    .app-name,
+    .app-icon,
+    .app-actions {
+      background-color: #aeb8b826;
+    }
+    .app-icon {
+      border-radius: 8px 0 0 8px;
+    }
+    .app-actions {
+      border-radius: 0 8px 8px 0;
+    }
+  }
+
+  .app-icon {
+    height: 100%;
+    width: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+  }
+
+  .default-badge {
+    background: #aeb8b826;
+    color: var(--text-default, #fff);
+    font-weight: 600;
+    text-transform: uppercase;
+    margin-left: 16px;
+    box-sizing: border-box;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2px 10px 2px 10px;
+    border-radius: 4px;
+    overflow: hidden;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    user-select: none;
+  }
+
+  .app-name {
+    position: relative;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    padding: 0 5px;
+
+    &-text {
+      color: var(--text-default, #fff);
+      display: block;
+      max-width: 300px;
+      font-weight: 700;
+      white-space: pre;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      
+      &-container.hidden {
+        position: absolute;
+        
+        .app-name-text {
+          color: transparent;
+        }
+      }
+    }
+
+    &-input {
+      padding: 0px 4px;
+      font-size: 14px;
+        border: 2px solid #25c2c7 !important;
+        background-color: #15addf33 !important;
+      input {
+        font-size: 14px;
+        font-weight: 700;
+      }
+
+      &-error {
+        border-color: var(--feedback-error-default, #ff8878) !important;
+      }
+    }
+
+    .error-message {
+      background-color: rgba(255, 136, 120, 0.15);
+      color: var(--feedback-error-default, #ff8878);
+      z-index: 1;
+      position: fixed;
+      padding: 2px 6px;
+      border-radius: 3px;
+      left: 0;
+      top: 52px;
+    }
+  }
+
+  .app-default {
+    background-color: var(--feedback-neutral-subtle, #aeb8b826);
+    color: var(--text-default, #fff);
+    border-radius: 4px;
+    padding: 4px 10px 2px;
+    height: 24px;
+    text-transform: uppercase;
+  }
+
+  .app-actions {
+    display: flex;
+    justify-content: center;
+    width: 28px;
+    height: 100%;
+    border-radius: 8px;
+    background-color: #232B2E;
+
+    .dropdown-menu-button {
+      background-color: transparent;
+      color: white !important;
+      width: 28px;
+
+      &-open {
+        width: 100%;
+        height: 100%;
+        border: 2px solid var(--border-strong, #7f8c8d);
+        border-radius: 8px;
+
+        svg {
+          transform: rotate(180deg);
+        }
+      }
+    }
+  }
+
+  .dropdown-menu {
+    background: var(--component-bg-above, #374146);
+    margin-top: 4px;
+    border-radius: 8px;
+    padding: 4px;
+    left: -14px;
+
+    .dropdown-menu-item {
+      color: white;
+      height: 28px;
+      padding: 4px 8px;
+      border-radius: 4px;
+
+      background-color: transparent;
+      &:hover {
+        background-color: #aeb8b826;
+      }
+
+      &.danger {
+        color: var(--feedback-error-default, #ff8878);
+      }
+
+      span {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+
+        svg {
+          width: 16px;
+          height: 16px;
+        }
+      }
+    }
+  }
+}
+
+.default:hover:not(.active) {
+  .app-name,
+  .app-icon,
+  .app-actions {
+    background-color: #aeb8b826;
+  }
+
+  .app-icon {
+    border-radius: 8px 0 0 8px;
+  }
+
+  .app-actions {
+    border-radius: 0 8px 8px 0;
+  }
+}
+
+.footer:not(.active) {
+  .app-actions {
+    background-color: #aeb8b826;
+    border-radius: 8px;
+  }
+}
+
+.loading {
+  svg {
+    height: 14px;
+    animation: spin 1.5s linear infinite;
+    pointer-events: none;
+
+    path {
+      stroke: #ffffff;
+      opacity: 0.5;
+    }
+  }
+}
+
+//TODO: Remove this once the dropdown menu is set in the footer
+.dropdown-menu-button-footer {
+  opacity: 0;
+  pointer-events: none;
+  :hover {
+    cursor: default;
+  }
+}
+
+.disabled {
+  opacity: 0.8;
+  pointer-events: none;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}

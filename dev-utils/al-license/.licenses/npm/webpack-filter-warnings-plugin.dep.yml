@@ -1,0 +1,50 @@
+---
+name: webpack-filter-warnings-plugin
+version: 1.2.1
+type: npm
+summary: Allows you to hide certain warnings from webpack compilations
+homepage: https://github.com/mattlewis92/webpack-filter-warnings-plugin#readme
+license: mit
+licenses:
+- sources: LICENSE
+  text: |
+    MIT License
+
+    Copyright (c) 2017 Matt Lewis
+
+    Permission is hereby granted, free of charge, to any person obtaining a copy
+    of this software and associated documentation files (the "Software"), to deal
+    in the Software without restriction, including without limitation the rights
+    to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+    copies of the Software, and to permit persons to whom the Software is
+    furnished to do so, subject to the following conditions:
+
+    The above copyright notice and this permission notice shall be included in all
+    copies or substantial portions of the Software.
+
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+    SOFTWARE.
+- sources: README.md
+  text: |-
+    MIT
+
+    [npm]: https://img.shields.io/npm/v/webpack-filter-warnings-plugin.svg
+    [npm-url]: https://npmjs.com/package/webpack-filter-warnings-plugin
+
+    [node]: https://img.shields.io/node/v/webpack-filter-warnings-plugin.svg
+    [node-url]: https://nodejs.org
+
+    [deps]: https://david-dm.org/mattlewis92/webpack-filter-warnings-plugin.svg
+    [deps-url]: https://david-dm.org/mattlewis92/webpack-filter-warnings-plugin
+
+    [tests]: http://img.shields.io/travis/mattlewis92/webpack-filter-warnings-plugin.svg
+    [tests-url]: https://travis-ci.org/mattlewis92/webpack-filter-warnings-plugin
+
+    [cover]: https://codecov.io/gh/mattlewis92/webpack-filter-warnings-plugin/branch/master/graph/badge.svg
+    [cover-url]: https://codecov.io/gh/mattlewis92/webpack-filter-warnings-plugin
+notices: []

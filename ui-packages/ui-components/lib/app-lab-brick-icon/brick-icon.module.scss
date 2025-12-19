@@ -1,0 +1,54 @@
+.brick-icon {
+	height: 40px;
+	width: 40px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background-color: #37414626;
+	border-radius: 8px;
+	
+	&.api {
+		background-color: #E05A0033;
+	}
+	&.audio {
+		background-color: #219C2233;
+	}
+	&.iot {
+		background-color: #00818433;
+	}
+	&.storage {
+		background-color: #E6195E33;
+	}
+	&.text {
+		background-color: #93821033;
+	}
+	&.ui {
+		background-color: #961CC133;
+	}
+	&.video {
+		background-color: #118AB233;
+	}
+
+	&.small {
+		height: 20px;
+		width: 20px;
+		border-radius: 4px;
+	}
+
+	&.xsmall {
+		height: 16px;
+		width: 16px;
+		border-radius: 4px;
+		box-sizing: border-box;
+		svg {
+			height: 12px;
+			width: 12px;
+		}
+	}
+
+	&.medium {
+		height: 32px;
+		width: 32px;
+		border-radius: 8px;
+	}
+}

@@ -1,0 +1,72 @@
+// * Copyright 2018 ARDUINO AG (http://www.arduino.cc/)
+// * This file is part of arduino-sass.
+// * Copyright (c) 2018
+// * Authors: Stefania Mellai, Gabriele Marchi, Gabriele Destefanis
+// *
+// * This software is released under:
+// * The GNU General Public License, which covers the main part of
+// * arduino-sass
+// * The terms of this license can be found at:
+// * https://www.gnu.org/licenses/gpl-3.0.en.html
+// *
+// * You can be released from the requirements of the above licenses by purchasing
+// * a commercial license. Buying such a license is mandatory if you want to modify or
+// * otherwise use the software for commercial activities involving the Arduino
+// * software without disclosing the source code of your own applications. To purchase
+// * a commercial license, send an email to license@arduino.cc.
+
+@use 'sass:math';
+
+@mixin spinner($color, $background, $size, $border: math.div($size, 6), $duration: 2s) {
+  width: $size - 2 * $border;
+  height: $size - 2 * $border;
+  box-shadow: inset 0 0 0 math.div($size, 12);
+  color: $color;
+  font-size: 6px;
+  margin: $border;
+  position: relative;
+  text-indent: -99999em;
+  transform: translateZ(0);
+  z-index: auto;
+
+  &,
+  &::before,
+  &::after {
+    border-radius: 50%;
+  }
+
+  &::before,
+  &::after {
+    position: absolute;
+    top: -$border;
+    width: math.div($size, 2);
+    height: $size;
+    animation: spinner-animation $duration infinite ease;
+    background: $background;
+    content: '';
+    z-index: -1;
+  }
+
+  &::before {
+    animation-delay: $duration * .75;
+    border-radius: $size 0 0 $size;
+    left: -$border;
+    transform-origin: math.div($size, 2) math.div($size, 2);
+  }
+
+  &::after {
+    border-radius: 0 $size $size 0;
+    left: math.div($size, 2) - $border;
+    transform-origin: 0 math.div($size, 2);
+  }
+
+  @keyframes spinner-animation {
+    0% {
+      transform: rotate(0deg);
+    }
+
+    100% {
+      transform: rotate(360deg);
+    }
+  }
+}

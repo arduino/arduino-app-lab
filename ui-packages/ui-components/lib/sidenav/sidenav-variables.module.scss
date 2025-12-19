@@ -1,0 +1,17 @@
+$sidenav-panel-min-width: 285;
+$sidenav-panel-max-width: 560;
+
+$sidenav-panel-initial-width: var(--initial-sidenav-panel-width);
+$current-sidenav-panel-width: var(--current-sidenav-panel-width);
+
+:root {
+  --current-sidenav-panel-width: #{$sidenav-panel-min-width}px;
+  --initial-sidenav-panel-width: 285;
+}
+
+:export {
+  sidenavPanelMinWidth: $sidenav-panel-min-width;
+  sidenavPanelMaxWidth: $sidenav-panel-max-width;
+  currentSidenavPanelWidth: --current-sidenav-panel-width;
+  initialSidenavPanelWidth: --initial-sidenav-panel-width;
+}

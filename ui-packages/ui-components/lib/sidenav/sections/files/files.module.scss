@@ -1,0 +1,202 @@
+@use "../../../../public/shared.module.scss";
+@use "../../sidenav-variables.module.scss";
+
+$skeletonChildren: 8;
+:export {
+  skeletonChildren: $skeletonChildren;
+}
+
+.files-container {
+  overflow-y: hidden;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.files-header {
+  padding: 5px 15px 15px 15px;
+  display: grid;
+  gap: 5px;
+}
+
+.files-list-container {
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 4px 0 48px 0;
+  max-height: calc(100% - 55px);
+}
+
+.files-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.files-action {
+  padding: 20px 0 20px 16px;
+  border-top: 1px solid #c9d2d2;
+}
+
+.files-action-button-wrapper {
+  display: block;
+  height: auto;
+  width: auto;
+}
+.files-action-button {
+  padding: 5px 20px;
+  border: unset;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  $color: shared.theme-var(--button-primary-label);
+  $bg: shared.theme-var(--button-primary-background) !important;
+  color: $color;
+  background-color: $bg;
+  border-radius: 32px;
+
+  &:hover, &.dropdown-menu-button-open {
+    background-color: shared.theme-var(--button-primary-background-hover);
+  }
+  &:focus {
+    outline: 2px solid shared.theme-var(--button-primary-border-active);
+  }
+}
+.files-action-button-content {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  svg {
+   height: 14px;
+   width: 14px; 
+  }
+}
+
+.files-list-item {
+  display: flex;
+  align-items: center;
+  padding-right: 6px;
+  height: 32px;
+  
+  &:hover {
+    background-color: #ecf1f1;
+  }
+
+  &.file-selected {
+    background-color: #dae3e3;
+  }
+
+  .unsaved-badge {
+    margin-right: 6px;
+  }
+}
+
+.file-button {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding-left: 16px;
+  overflow: hidden;
+  position: relative;
+
+  &.file-button-with-input {
+    overflow: unset;
+  }
+}
+
+.file-label {
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.file-tag {
+  background: #434F54;
+  color: white;
+  padding: 1px 8px 2px 8px;
+  border-radius: 4px; 
+  .file-tag-text {
+    line-height: 1;
+  }
+}
+
+.file-input-wrapper {
+  flex: 1;
+  display: flex;
+  align-items: center;
+
+  .file-input {
+    flex: 1;
+    margin-right: 6px;
+    outline-color: #7fcBcD;
+    font-size: 0.875rem;
+    
+    &.error {
+      outline-color: #df7365;
+    }
+  }
+}
+
+.file-validation {
+  position: absolute;
+  padding: 2px 6px;
+  color: #7f8c8d;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid #bdc7c7;
+  border-radius: 3px;
+  bottom: 4px;
+  left: 37px;
+  transform: translateY(100%);
+  text-align: left;
+  z-index: 9999;
+
+  .error {
+    color: #da5b4a;
+  }
+}
+
+
+.file-icon {
+  width: 24px;
+  height: 24px;
+  display: grid;
+  justify-content: center;
+  align-items: center;
+  flex-basis: 0;
+}
+
+.files-list-item--skeleton {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  box-sizing: border-box;
+  align-items: flex-start;
+  padding: 8px 0 0 16px;
+  gap: 12px;
+
+  @for $i from 1 through $skeletonChildren {
+    & :nth-child(#{$i}) {
+      flex: none;
+      height: 20px;
+      width: 80%;
+    }
+  }
+}
+
+.files-no-result {
+  padding: 20px 0;
+}
+
+.item-dropdown-menu-popover {
+  margin: -5px;
+}

@@ -1,0 +1,58 @@
+.input-container {
+  display: flex;
+  align-items: center;
+  position: relative;
+
+  &.rounded {
+    .input {
+      border-radius: 100px;
+      height: 36px;
+      padding: 0 44px;
+    }
+
+    .search-icon {
+      width: 17px;
+      height: 17px;
+      margin-left: 16px;
+    }
+
+    .clear-icon {
+      margin-right: 16px;
+    }
+  }
+}
+
+.input {
+  border: 1px solid #bdc7c7;
+  border-radius: 3px;
+  height: 30px;
+  padding: 0 28px;
+  flex: 1;
+
+  &:focus-visible {
+    outline: 2px solid #7fcbcd;
+  }
+
+  &.disabled {
+    opacity: 0.5;
+  }
+
+  &::-webkit-search-cancel-button {
+    -webkit-appearance: none;
+  }
+}
+
+.search-icon {
+  position: absolute;
+  margin: 9px 8px;
+  width: 12px;
+  height: 12px;
+}
+
+.clear-icon {
+  position: absolute;
+  right: 0px;
+  padding: inherit;
+  margin: 7px;
+  cursor: pointer;
+}

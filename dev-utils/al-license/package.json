@@ -1,0 +1,7 @@
+{
+  "name": "@bcmi-labs/al-license",
+  "version": "1.4.1",
+  "scripts": {
+    "licensed": "./licensed.sh"
+  }
+}

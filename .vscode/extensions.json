@@ -1,0 +1,13 @@
+{
+    "recommendations": [
+        "dbaeumer.vscode-eslint",
+        "aaron-bond.better-comments",
+        "streetsidesoftware.code-spell-checker",
+        "sibiraj-s.vscode-scss-formatter",
+        "mrmlnc.vscode-scss",
+        "vitest.explorer",
+        "MS-vsliveshare.vsliveshare",
+        "GitHub.vscode-pull-request-github",
+        "esbenp.prettier-vscode",
+    ]
+}

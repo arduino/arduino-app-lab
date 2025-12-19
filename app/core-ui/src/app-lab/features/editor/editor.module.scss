@@ -1,0 +1,69 @@
+@use "@cloud-editor-mono/ui-components/public/shared.module.scss";
+
+.editor-panel-container {
+    height: 100%;
+    display: flex;
+    position: relative;
+    border-radius: 10px;
+    overflow: hidden;
+    background-color: shared.theme-var(--toolbar-background);
+}
+
+.editor-tabs-bar {
+    background: transparent;
+    padding-left: 0;
+}
+
+.editor-tab {
+    border-top: 2px solid transparent;
+}
+
+.editor-selected-tab {
+    border-top: 2px solid var(--text-subtle, #c9d2d2);
+}
+
+.editor-readonly {
+    margin-left: 0;
+}
+
+.editor-read-only-banner {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    margin: 0px 16px;
+
+    padding: 8px 8px 8px 12px;
+    border-radius: 12px;
+    background:
+        linear-gradient(
+            0deg,
+            var(--component-bg-flexible, rgba(174, 184, 184, 0.15)) 0%,
+            var(--component-bg-flexible, rgba(174, 184, 184, 0.15)) 100%
+        ),
+        var(--component-bg-inverted, #ecf1f1);
+    box-shadow: 0 4px 20px 0 rgba(0, 0, 0, 0.25);
+
+    color: var(--text-inverted, #171e21);
+    font-weight: 600;
+
+    svg {
+        width: 16px;
+        height: 16px;
+    }
+}
+
+.editor-empty-state {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    svg {
+        width: 128px;
+        height: 128px;
+
+        path {
+            fill: #aeb8b826;
+        }
+    }
+}

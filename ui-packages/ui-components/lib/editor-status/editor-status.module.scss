@@ -1,0 +1,57 @@
+@use "../../public/shared.module.scss";
+
+$warning--color: #ffa500;
+$cm-gutters-width: calc((var(--editor-font-size) + var(--line-numbers-gutter-width) - 4) * 1px);
+
+.notifications-border {
+    content: "";
+    z-index: shared.$zIndex2;
+    position: absolute;
+    bottom: 0px;
+    right: 0px;
+    height: 100%;
+    width: 100%; /* Declared at the start will be used by browsers which ignore both*/
+    width: -moz-available; /* WebKit-based browsers will ignore this. */
+    width: -webkit-fill-available; /* Mozilla-based browsers will ignore this. */
+    margin-left: $cm-gutters-width;
+    box-sizing: border-box;
+    pointer-events: none;
+}
+
+.editor-notifications {
+    &-wrapper {
+        &--warning:after {
+            @extend .notifications-border;
+            border: 2px solid $warning--color; /* Define the border properties */
+        }
+    }
+
+    &-container {
+        z-index: shared.$zIndex3;
+        position: absolute;
+        bottom: 0px;
+        right: 24px;
+        cursor: pointer;
+    }
+
+    &-tooltip {
+        top: unset;
+        right: unset;
+        width: auto;
+        max-width: unset;
+
+        //Correct with position origin
+        bottom: 36px;
+        left: 0px;
+    }
+
+    &--warning {
+        background: $warning--color;
+    }
+
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 16px;
+    border-radius: 6px;
+}

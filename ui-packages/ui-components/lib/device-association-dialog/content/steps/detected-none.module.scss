@@ -1,0 +1,45 @@
+@use "../../../../public/shared.module.scss";
+
+.body {
+    padding: 36px 64px 36px 64px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-evenly;
+}
+
+.title {
+    text-align: center;
+    padding: 20px 0px 16px 0px;
+}
+
+.message {
+    color: shared.theme-var(--associate-dialog-foreground);
+    padding-top: 20px;
+    width: 100%;
+}
+
+.agent-not-found-message {
+    color: shared.theme-var(--associate-dialog-foreground);
+
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.agent-not-found-leading-message {
+    display: flex;
+    text-align: center;
+    width: 320px;
+}
+
+.agent-not-found-download-button {
+    width: fit-content;
+    margin: 25px;
+}
+
+.manual-select-block-container {
+    padding-top: 16px;
+}

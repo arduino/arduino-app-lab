@@ -1,0 +1,39 @@
+@use "@cloud-editor-mono/ui-components/public/shared.module.scss";
+
+$console-status-bar-height: 52;
+$console-gutter-height: 20;
+
+:export {
+  consoleStatusBarHeight: $console-status-bar-height;
+  consoleGutterHeight: $console-gutter-height;
+}
+
+.split-console {
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+
+  .gutter {
+    cursor: row-resize;
+    width: 100%;
+    z-index: shared.$zIndex1;
+    position: absolute;
+    margin-top: calc(-0.5px * $console-gutter-height);
+    display: flex;
+    align-items: center;
+
+    &::after {
+      content: "";
+      transition: background-color 0.1s ease 0.1s;
+    }
+
+    &:hover {
+      &::after {
+        background-color: shared.theme-var(--console-divider-drag);
+        position: absolute;
+        width: 100%;
+        height: 3px;
+      }
+    }
+  }
+}

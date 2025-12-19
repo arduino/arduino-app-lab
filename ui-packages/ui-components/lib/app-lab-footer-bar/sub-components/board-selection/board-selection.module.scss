@@ -1,0 +1,24 @@
+.container {
+    color: var(--text-subtle, #c9d2d2);
+    font-size: 10px;
+    font-weight: 600;
+    gap: 4px;
+
+    display: flex;
+    align-items: center;
+
+    span {
+        text-transform: capitalize;
+    }
+
+    svg {
+        height: 15px;
+        path {
+            fill: var(--text-subtle, #c9d2d2);
+        }
+    }
+}
+
+.inactive {
+    opacity: 0.6;
+}

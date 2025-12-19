@@ -1,0 +1,3 @@
+#!/bin/sh
+
+rm -rf /home/arduino/Desktop/ArduinoAppLab.desktop

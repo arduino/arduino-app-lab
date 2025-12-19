@@ -1,0 +1,31 @@
+$tabWidth: 250;
+$tabMinWidth: 120;
+$tabHeight: 40;
+$tabLabelHeight: 24;
+$tabIconWidth: 24;
+$tabIconHeight: 24;
+$newTabMenuButtonWidth: 36;
+$newTabMenuButtonHeight: 36;
+$tabMenuButtonWidth: 24;
+$tabMenuButtonHeight: 24;
+$tabMenuButtonGradientSpace: 18;
+$tabsBarListScrollLeft: var(--tabs-bar-list-scroll-left);
+
+:root {
+  --tabs-bar-list-scroll-left: 0;
+}
+
+:export {
+  tabWidth: $tabWidth;
+  tabMinWidth: $tabMinWidth;
+  tabHeight: $tabHeight;
+  tabLabelHeight: $tabLabelHeight;
+  tabIconWidth: $tabIconWidth;
+  tabIconHeight: $tabIconHeight;
+  newTabMenuButtonWidth: $newTabMenuButtonWidth;
+  newTabMenuButtonHeight: $newTabMenuButtonHeight;
+  tabMenuButtonWidth: $tabMenuButtonWidth;
+  tabMenuButtonHeight: $tabMenuButtonHeight;
+  tabMenuButtonGradientSpace: $tabMenuButtonGradientSpace;
+  tabsBarListScrollLeft: --tabs-bar-list-scroll-left;
+}

@@ -1,0 +1,14 @@
+{
+  "extends": [
+    "stylelint-config-standard",
+    "stylelint-config-recommended-scss"
+  ],
+  "rules": {
+    "block-no-empty": null,
+    "number-leading-zero": null,
+    "no-descending-specificity": null,
+    "string-quotes": "single",
+    "declaration-block-no-redundant-longhand-properties": null,
+    "annotation-no-unknown": null
+  }
+}

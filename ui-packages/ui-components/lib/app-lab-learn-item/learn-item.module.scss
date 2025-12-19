@@ -1,0 +1,132 @@
+@use "../typography/typography.module.scss";
+
+$skeleton-opacity: 0.1 !default;
+
+.container {
+    border-radius: 16px;
+    height: 240px;
+    box-sizing: border-box;
+    border: 1px solid var(--border-default, #434f54);
+    background: var(--component-bg-below-1, #171E21);
+
+    &:hover {
+        background: #AEB8B826;
+    }
+}
+
+.tutorial-header-icon {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: #25c2c733;
+    width: 48px;
+    height: 48px;
+    border-radius: 8px;
+    margin-top: 16px;
+    margin-left: 16px;
+
+    &-skeleton {
+        margin-bottom: 16px;
+
+        svg {
+            opacity: $skeleton-opacity;
+        }
+    }
+
+    &-self-aligned {
+        margin-left: 0;
+    }
+
+    svg {
+        width: 24px;
+        height: 24px;
+
+        path {
+            fill: var(--text-default, #fff);
+        }
+    }
+}
+
+.content {
+    padding: 16px;
+
+    &-title {
+        font-family: typography.$roboto-mono-font-family;
+        color: var(--text-default, #fff);
+        font-size: 16px;
+        font-weight: 700;
+        line-height: 170%;
+        margin-bottom: 4px;
+        max-width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+
+        &-skeleton {
+            opacity: $skeleton-opacity;
+            margin-bottom: 8px;
+
+            width: 124px;
+            height: 20px;
+        }
+    }
+
+    &-description {
+        $lines: 1;
+        font-family: typography.$open-sans-font-family;
+        line-height: 140%;
+        font-size: 14px;
+        min-height: calc(3 * 1.4 * 14px);
+        margin-bottom: 22px;
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        line-clamp: 3;
+        -webkit-line-clamp: 3;
+        overflow: hidden;
+        white-space: normal;
+        overflow-wrap: anywhere;
+        text-overflow: ellipsis;
+
+        &-skeleton {
+            width: 100%;
+            opacity: $skeleton-opacity;
+            flex: 1;
+            display: flex;
+            height: 48px;
+            flex-direction: column;
+            gap: 12px;
+        }
+    }
+
+    &-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 8px;
+
+        .category {
+            font-family: typography.$open-sans-font-family;
+            font-size: 12px;
+            color: var(--text-subtle, #c9d2d2);
+            background: var(--component-bg-below-1, #171e21);
+            border-radius: 8px;
+            padding: 4px 8px;
+
+            &:not(:last-child) {
+                margin-right: 8px;
+            }
+        }
+
+        .category-others {
+            @extend .category;
+            border: 1px solid var(--border-strong, #7f8c8d);
+            background: var(--component-bg-below-1, #aeb8b826);
+        }
+
+        .date {
+            font-family: typography.$open-sans-font-family;
+            font-size: 12px;
+            color: var(--text-subtle, #c9d2d2);
+        }
+    }
+}

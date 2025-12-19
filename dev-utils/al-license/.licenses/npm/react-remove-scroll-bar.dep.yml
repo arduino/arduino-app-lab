@@ -1,0 +1,11 @@
+---
+name: react-remove-scroll-bar
+version: 2.3.8
+type: npm
+summary: Removes body scroll without content _shake_
+homepage:
+license: mit
+licenses:
+- sources: README.md
+  text: MIT
+notices: []

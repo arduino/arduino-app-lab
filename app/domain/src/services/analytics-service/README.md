@@ -1,0 +1,1 @@
+This logic in this directory has been copied from https://github.com/bcmi-labs/cloud-website, with minimal changes for the sake of normalization (e.g. imports, code formatting), in the future we (front-enders @ Arduino) should put this logic in a shared package.

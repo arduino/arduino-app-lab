@@ -1,0 +1,11 @@
+---
+name: backo2
+version: 1.0.2
+type: npm
+summary: simple backoff based on segmentio/backo
+homepage:
+license: mit
+licenses:
+- sources: Readme.md
+  text: MIT
+notices: []

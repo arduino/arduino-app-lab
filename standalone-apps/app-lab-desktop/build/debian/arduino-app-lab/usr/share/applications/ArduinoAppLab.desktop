@@ -1,0 +1,9 @@
+[Desktop Entry]
+Version=$VERSION
+Type=Application
+Name=Arduino App Lab
+Comment=Program your Arduino® UNO Q board with Python and C++
+Exec=$BINARY_PATH
+Icon=arduino-app-lab
+Terminal=false
+Categories=Development;Utility;

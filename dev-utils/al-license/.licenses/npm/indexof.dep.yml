@@ -1,0 +1,11 @@
+---
+name: indexof
+version: 0.0.1
+type: npm
+summary: Microsoft sucks
+homepage:
+license: mit
+licenses:
+- sources: Readme.md
+  text: MIT
+notices: []

@@ -1,0 +1,24 @@
+@use "../../../../../public/shared.module.scss";
+
+.container {
+    padding: 16px 16px 0px 16px;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.divider {
+    width: 100%;
+    border: 1px solid #{shared.theme-var(--associate-dialog-divider)};
+}
+
+.label {
+    color: shared.theme-var(--associate-dialog-foreground);
+    text-transform: uppercase;
+
+    padding: {
+        left: 24px;
+        right: 24px;
+    }
+}

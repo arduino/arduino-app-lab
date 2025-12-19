@@ -1,0 +1,48 @@
+.label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  user-select: none;
+  cursor: pointer;
+
+  &.checked {
+    .icon {
+      display: block;
+    }
+
+    .input {
+      background: #008184;
+      border: none;
+    }
+  }
+
+  &.disabled {
+    opacity: 0.5;
+  }
+}
+
+.input {
+  width: 14px;
+  height: 14px;
+  border: 1px solid #7f8c8d;
+  border-radius: 2px;
+  background: #ffffff;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-sizing: border-box;
+
+  &.focus-visible {
+    outline: 2px solid #7fcbcd;
+  }
+}
+
+.icon {
+  display: none;
+  width: 12px;
+  height: 8px;
+
+  * {
+    fill: #ffffff;
+  }
+}

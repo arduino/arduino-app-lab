@@ -1,0 +1,18 @@
+---
+name: "@bcmi-labs/arduino-chromeos-uploader"
+version: 1.2.12
+type: npm
+summary: Web Serial API flasher for Arduino
+homepage:
+license: other
+licenses:
+- sources: LICENSE.md
+  text: |
+    This sofware is UNLICENSED as of time of writing (early 2022).
+
+    This software includes some code adapted from [avrgirl-arduino](https://github.com/noopkat/avrgirl-arduino), originally developed by [Suz Hinton](https://github.com/noopkat), and some code adapted from the [avrgirl-arduino's fork](https://github.com/duinoapp/avrgirl-arduino/tree/browser-port-forwarding) by [DuinoApp](https://github.com/duinoapp/)
+
+    `avrgirl-arduino` is licenced under the MIT licence.
+
+    Copyright (c) 2022 Arduino SA. All rights reserved.
+notices: []

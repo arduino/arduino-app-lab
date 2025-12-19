@@ -1,0 +1,76 @@
+{
+  "name": "@bcmi-labs/cloud-editor-domain",
+  "version": "1.4.1",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "buildDev": "tsc && vite build --mode development",
+    "watch": "yarn buildDev --watch",
+    "test": "vitest"
+  },
+  "peerDependencies": {
+    "@bcmi-labs/art-auth": "*",
+    "@bcmi-labs/cloud-sidebar": "*",
+    "@codemirror/autocomplete": ">= 6.9.1",
+    "@codemirror/commands": ">= 6.1.1",
+    "@codemirror/lang-cpp": ">= 6.0.1",
+    "@codemirror/lang-python": ">= 6.2.1",
+    "@codemirror/lang-yaml": ">= 6.1.2",
+    "@codemirror/language": ">= 6.0.0",
+    "@codemirror/merge": ">= 6.8.0",
+    "@codemirror/search": ">= 6.2.2",
+    "@codemirror/state": ">= 6.1.2",
+    "@codemirror/view": ">= 6.3.0",
+    "@tanstack/react-location": ">= 3.7.4",
+    "@tanstack/react-query": ">= 4.12.0",
+    "clsx": ">= 1.2.1",
+    "dotenv": ">= 16.0.3",
+    "file-saver": ">= 2.0.5",
+    "idb-keyval": ">= 6.2.1",
+    "jszip": ">= 3.10.1",
+    "object-hash": ">= 3.0.0",
+    "react": ">= 18.2.0",
+    "react-dom": ">= 18.2.0",
+    "rxjs": ">= 7.5.7",
+    "semver": ">= 7.3.8"
+  },
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com",
+    "access": "restricted",
+    "module": "./dist/lib/domain.es.js",
+    "types": "./dist/index.d.ts",
+    "exports": {
+      ".": {
+        "import": "./dist/lib/domain.es.js"
+      },
+      "./dist/style.css": {
+        "import": "./dist/style.css"
+      }
+    }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com:bcmi-labs/cloud-editor-mono.git"
+  },
+  "module": "./lib/index.ts",
+  "types": "./index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./lib/index.ts"
+    },
+    "./src/services/preferences-service": {
+      "import": "./src/services/preferences-service/index.ts"
+    },
+    "./src/services/services-by-app/app-lab": {
+      "import": "./src/services/services-by-app/app-lab/index.ts"
+    },
+    "./src/services/services-by-app/shared": {
+      "import": "./src/services/services-by-app/shared/index.ts"
+    }
+  }
+}

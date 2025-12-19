@@ -1,0 +1,92 @@
+@use "@cloud-editor-mono/ui-components/public/shared.module.scss";
+@use "../serial-monitor-variables.module.scss";
+
+@mixin toolbarButton($svg-side) {
+    border: unset;
+    height: 40px;
+    width: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+
+    & > svg {
+        width: $svg-side;
+        height: $svg-side;
+    }
+
+    &:focus-visible {
+        outline: unset;
+    }
+
+    margin-right: 12px;
+
+    &:hover {
+        background-color: #fff;
+    }
+}
+
+.serial-monitor-toolbar {
+    height: serial-monitor-variables.$toolbarHeight;
+    background-color: shared.theme-var(--toolbar-background);
+    padding-left: calc(serial-monitor-variables.$serialMonitorPaddingLeft + 6px);
+    padding-right: 24px;
+    border: 1px solid serial-monitor-variables.$borderColor;
+    display: flex;
+    align-items: center;
+
+    .play-pause-button {
+        background-color: #fff;
+        @include toolbarButton(15px);
+        min-width: 40px;
+
+        &:focus-visible {
+            outline: none;
+        }
+
+        &:not([class*="disabled"]) {
+            &:hover {
+                background-color: #dae3e3;
+            }
+        }
+
+        &.play-pause-button-disabled {
+            pointer-events: none;
+        }
+    }
+
+    .serial-monitor-toolbar-right {
+        display: flex;
+        margin-left: auto;
+
+        .export-file-button {
+            @include toolbarButton(19px);
+        }
+
+        .toggle-timestamps-button {
+            @include toolbarButton(24px);
+        }
+
+        .clear-log-button {
+            @include toolbarButton(18px);
+        }
+
+        .search-button-wrapper {
+            position: relative;
+
+            .search-button {
+                @include toolbarButton(19px);
+                margin-right: 0;
+
+                &.search-button-inactive {
+                    opacity: 0.5;
+
+                    &:hover {
+                        background-color: inherit;
+                        cursor: default;
+                    }
+                }
+            }
+        }
+    }
+}

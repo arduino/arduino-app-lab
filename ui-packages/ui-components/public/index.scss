@@ -1,0 +1,51 @@
+@use "./theme-classes.module.scss";
+@use "./shared.module.scss";
+
+:root {
+  color: shared.theme-var(--editor-syntax-highlight-neutral);
+  background-color: shared.theme-var(--editor-background);
+}
+
+//TODO tokens needed for scrollbar styling
+::-webkit-scrollbar {
+  background-color: transparent;
+  width: 16px;
+}
+
+::-webkit-scrollbar-track {
+  background: shared.theme-var(--editor-lines-background);
+}
+
+::-webkit-scrollbar-thumb {
+  border: 4px solid shared.theme-var(--editor-lines-background);
+  border-radius: 10px;
+  background-color: rgba(127, 140, 141, 1);
+}
+
+@supports not selector(::-webkit-scrollbar) {
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(127, 140, 141, 1) transparent;
+  }
+}
+
+#ce-body {
+  margin: 0;
+  height: 100vh;
+  overflow: hidden;
+}
+
+#root {
+  height: 100%;
+  width: 100%;
+}
+
+.visually-hidden:not(:focus):not(:active) {
+  clip: rect(0 0 0 0);
+  clip-path: inset(100%);
+  height: 1px;
+  overflow: hidden;
+  position: absolute;
+  white-space: nowrap;
+  width: 1px;
+}

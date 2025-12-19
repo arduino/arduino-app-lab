@@ -1,0 +1,88 @@
+.sketch-plan-container {
+  height: fit-content;
+  border-radius: 6px;
+  border: 1px solid #c9d2d2;
+  box-sizing: border-box;
+  overflow: hidden;
+  margin: 10px 18px 16px 18px;
+}
+
+.sketch-plan-body {
+  padding: 8px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+
+  .component-libraries-flex {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    column-gap: 8px;
+    row-gap: 2px;
+  }
+
+  .sketch-plan-components {
+    @extend .component-libraries-flex;
+  }
+  
+  .sketch-plan-board {
+    display: flex;
+    align-items: center;
+    padding: 2px 4px;
+    gap: 6px;
+    border-radius: 2px;
+    background-color: #E9ECF5;
+    border: 1px solid #c9d2d2;
+  }
+  
+  .sketch-plan-libraries {
+    @extend .component-libraries-flex;
+  
+    svg {
+      color: black;
+    }
+  }
+  
+  .sketch-plan-instructions {
+    padding: 8px 0;
+    ul {
+      margin: 0;
+      padding: 0 16px;
+      list-style: decimal;
+    }
+  }
+}
+
+.sketch-plan-actions {
+  background: white;
+  padding: 8px 10px;
+  display: flex;
+  gap: 12px;
+
+  .sketch-plan-icon-button {
+    height: 28px;
+    width: 28px;
+    border-radius: 50%;
+    background-color: #ECF1F1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    svg {
+      color: #374146;
+      height: 12px;
+      width: 12px;
+    }
+    &:first-of-type svg {
+      height: 16px;
+      width: 16px;
+    }
+  }
+
+  .sketch-plan-main-button {
+    margin-left: auto;
+  }
+}
+
+.hidden {
+  display: none;
+}

@@ -1,0 +1,76 @@
+@use "../../../../public/shared.module.scss";
+@use "@cloud-editor-mono/arduino-sass";
+
+.body-container {
+  text-align: left;
+  padding: 28px 80px 0px 100px;
+}
+
+.body-title {
+  word-break: break-all;
+  color: shared.theme-var(--associate-dialog-title);
+}
+
+.radio-group {
+  display: flex;
+  flex-direction: column;
+  margin-top: 28px;
+
+  .radio {
+    margin-bottom: 12px;
+  }
+}
+
+.url-item-container {
+  display: flex;
+  flex-direction: column;
+  margin-top: 18px;
+}
+
+.url-item {
+  display: flex;
+  align-items: flex-start;
+}
+
+.input {
+  > div {
+    background-color: unset !important;
+  }
+}
+
+.url-input {
+  @extend .input;
+  > div {
+    padding: 12px 20px !important;
+    height: 52px !important;
+  }
+}
+
+.textarea-embed {
+  height: 144px !important;
+  width: 100% !important;
+  resize: none;
+  border: 1px solid arduino-sass.$smoke;
+  border-radius: 2px;
+  background-color: unset !important;
+  padding: 12px 20px;
+  font-size: 14px;
+  color: inherit;
+  font: inherit;
+  word-break: break-all;
+
+  &:active,
+  &:focus,
+  &:focus-visible {
+    outline: none;
+  }
+}
+
+.copy-button-container {
+  margin-top: 12px;
+  margin-left: 16px;
+  button {
+    width: 26px;
+    height: 26px;
+  }
+}

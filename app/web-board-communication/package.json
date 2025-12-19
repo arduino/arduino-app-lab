@@ -1,0 +1,45 @@
+{
+  "name": "@bcmi-labs/cloud-editor-web-board-communication",
+  "version": "1.4.1",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "buildDev": "tsc && vite build --mode development",
+    "watch": "yarn buildDev --watch"
+  },
+  "peerDependencies": {
+    "@bcmi-labs/arduino-chromeos-uploader": "1.2.12",
+    "lodash": ">= 4.17.21",
+    "rxjs": ">= 7.5.7",
+    "semver": ">= 7.3.8",
+    "socket.io-client": ">= 2.4.0",
+    "ua-parser-js": ">= 1.0.33"
+  },
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com",
+    "access": "restricted",
+    "module": "./dist/lib/web-board-communication.es.js",
+    "types": "./dist/index.d.ts",
+    "exports": {
+      ".": {
+        "import": "./dist/lib/web-board-communication.es.js"
+      }
+    }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com:bcmi-labs/cloud-editor-mono.git"
+  },
+  "module": "./lib/index.ts",
+  "types": "./index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./lib/index.ts"
+    }
+  }
+}

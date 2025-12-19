@@ -1,0 +1,11 @@
+@use "../../../../public/shared.module.scss";
+
+.message-title {
+  display: flex;
+  gap: 5px;
+}
+
+.message-title-file-name {
+  word-break: break-all;
+  color: shared.theme-var(--associate-dialog-title);
+}

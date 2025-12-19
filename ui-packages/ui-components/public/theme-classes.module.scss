@@ -1,0 +1,24 @@
+@use "../themes/dark-theme";
+@use "../themes/light-theme";
+
+@mixin spread-map($map: ()) {
+    @each $key, $value in $map {
+        #{$key}: $value;
+    }
+}
+
+$light-theme-key: light-theme;
+$dark-theme-key: dark-theme;
+
+.#{$light-theme-key} {
+    @include spread-map(light-theme.$map-light-theme);
+}
+
+.#{$dark-theme-key} {
+    @include spread-map(dark-theme.$map-dark-theme);
+}
+
+:export {
+    lightThemeKey: $light-theme-key;
+    darkThemeKey: $dark-theme-key;
+}

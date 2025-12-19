@@ -1,0 +1,93 @@
+// * Copyright 2018 ARDUINO AG (http://www.arduino.cc/)
+// * This file is part of arduino-sass.
+// * Copyright (c) 2018
+// * Authors: Stefania Mellai, Gabriele Marchi, Gabriele Destefanis
+// *
+// * This software is released under:
+// * The GNU General Public License, which covers the main part of
+// * arduino-sass
+// * The terms of this license can be found at:
+// * https://www.gnu.org/licenses/gpl-3.0.en.html
+// *
+// * You can be released from the requirements of the above licenses by purchasing
+// * a commercial license. Buying such a license is mandatory if you want to modify or
+// * otherwise use the software for commercial activities involving the Arduino
+// * software without disclosing the source code of your own applications. To purchase
+// * a commercial license, send an email to license@arduino.cc.
+
+$animation-timing-base: .6s;
+$animation-timing-quick: .3s;
+
+$animation-easing-base: cubic-bezier(1, 0, 0, 1);
+
+$header-z-index: 1000;
+
+// Breakpoints
+$medium: 1024; // legacy
+
+$font-sans: "Open Sans", sans-serif;
+$font-roboto: "Roboto Mono", monospace;
+$breakpoint-2xl: 1535;
+$breakpoint-xl: 1280;
+$breakpoint-lg: 1024;
+$breakpoint-md: 768;
+$breakpoint-sm: 640;
+$breakpoint-xs: 480;
+
+
+// Arduino Colors
+$teal0:               #7fcbcd;
+$teal1:               #0ca1a6;
+$teal2:               #00979d;
+$teal3:               #008184;
+$teal4:               #006d70;
+$teal5:               #005c5f;
+$teal6:               #80cbcd;
+$teal7:               #a5f2ee;
+$basegray:            #f4f4f4;
+$feather:             #f7f9f9;
+$clouds:              #ecf1f1;
+$fog:                 #dae3e3;
+$smoke:               #c9d2d2;
+$silver:              #bdc7c7;
+$concrete:            #95a5a6;
+$asbestos:            #7f8c8d;
+$gris:                #4e5b61;
+$dust:                #434f54;
+$jet:                 #374146;
+$charcoal:            #2c353a;
+$onyx:                #171e21;
+$sunflower:           #f1c40f;
+$carrot:              #f39c12;
+$orange:              #e67e22;
+$pumpkin:             #d35400;
+$gold:                #9e846d;
+$lightgold:           #e5ded7;
+$lightbronze:         #bcac99;
+$notifysuccess:       #1da086;
+$notifysuccesslight:  rgb(29 160 134 / 85%);
+$notifyerror:         #da5b4a;
+$darknotifyerror:     #c11f09;
+$notifyerrorlight:    rgb(218 91 74 / 85%);
+$notifywarning:       #f1c40f;
+$notifyinfo:          #95a5a6;
+$black:               #000;
+$white:               #fff;
+
+$facebook:           #3f65b6;
+$twitter:            #54c1f2;
+$instagram:          #db3075;
+$flickr:             #ff47a4;
+$youtube:            #ec1e12;
+
+// Arduino Pro Colors
+$electriclime:       #def154;
+$pro-black:          #111;
+$pro-charcoal:       #2f2f2f;
+$pro-concrete:       #b2b2b2;
+$pro-dust:           #58585a;
+$pro-onyx:           #202020;
+$pro-gradient:       linear-gradient(rgb(17 17 17 / 80%) 0%, rgb(47 47 47 / 0%) 100%);
+
+// Arduin Edu Colors
+$tangerine:          #f26727;

@@ -1,0 +1,37 @@
+.bell-icon-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    position: relative;
+    padding: 3px;
+    cursor: pointer;
+
+    &:is(.active,:hover) {
+        background-color: #AEB8B826;
+        border-radius: 2px;
+
+        svg {
+            path {
+                fill: var(--text-subtle, #c9d2d2);
+            }
+        }
+    }
+
+    &:not(.empty) {
+        svg {
+            path {
+                fill: var(--text-subtle, #c9d2d2);
+            }
+        }
+    }
+
+    .notification-label {
+        user-select: none;
+        -webkit-user-select: none;
+        font-size: 12px;
+        color: var(--text-subtle, #c9d2d2);
+        padding-left: 4px;
+        padding-right: 4px;
+    }
+}

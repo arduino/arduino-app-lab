@@ -1,0 +1,45 @@
+{
+  "name": "@bcmi-labs/app-lab-desktop",
+  "private": true,
+  "version": "1.4.1",
+  "type": "module",
+  "scripts": {
+    "wails-dev": "./scripts/dev.sh",
+    "wails-build": "./scripts/build.sh",
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@bcmi-labs/art-auth": "npm:@bcmi-labs/auth@1.4.1",
+    "@tanstack/react-location": "3.7.4",
+    "@tanstack/react-query": "4.12.0",
+    "clsx": "1.2.1",
+    "dotenv": "16.0.3",
+    "file-saver": "2.0.5",
+    "idb-keyval": "6.2.1",
+    "jszip": "3.10.1",
+    "lodash": "4.17.21",
+    "object-hash": "3.0.0",
+    "react": "18.2.0",
+    "react-aria": "3.25.0",
+    "react-dom": "18.2.0",
+    "react-helmet-async": "2.0.4",
+    "react-modal": "3.16.1",
+    "react-split": "2.0.14",
+    "react-split-grid": "1.0.4",
+    "react-stately": "3.20.0",
+    "react-use": "17.4.0",
+    "react-virtualized": "9.22.5",
+    "rxjs": "7.5.7",
+    "semver": "7.5.2",
+    "socket.io-client": "2.4.0",
+    "ua-parser-js": "1.0.33",
+    "use-debounce": "8.0.4",
+    "wretch": "2.1.5"
+  },
+  "devDependencies": {
+    "typescript": "5.2.2",
+    "vite": "5.2.8"
+  }
+}

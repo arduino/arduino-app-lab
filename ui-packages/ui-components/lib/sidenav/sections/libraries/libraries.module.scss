@@ -1,0 +1,463 @@
+@use "../../../../public/shared.module.scss";
+@use "../../../essential/tab-list/tab-list.module.scss";
+
+$skeletonChildren: 3;
+$librariesContainerOffset: tab-list.$tabsHeight;
+$librariesContainerHeight: calc(100% - $librariesContainerOffset);
+$librariesFiltersOverflow: var(--libraries-filters-overflow);
+$librariesFiltersHeight: 60px; // WIP, it will be 200px
+$librariesLateralPadding: 15px;
+$itemBorder: 4px solid white;
+
+:root {
+  --libraries-filters-overflow: hidden;
+}
+
+:export {
+  librariesFiltersOverflow: --libraries-filters-overflow;
+}
+
+.libraries-container {
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.libraries-header {
+  & > div:first-child {
+    padding: 5px 16px;
+  }
+
+  .libraries-filters-container {
+    &:hover,
+    &.expanded {
+      background: #ecf1f1;
+    }
+
+    margin-bottom: 8px;
+
+    .libraries-filters-button {
+      padding: 8px 16px;
+      background: transparent;
+      border: none;
+      color: #7f8c8d;
+      display: flex;
+      align-items: center;
+      width: 100%;
+
+      & > svg {
+        &:first-child {
+          width: 12.5px;
+          height: 14px;
+          margin-right: 8px;
+        }
+
+        &:last-child {
+          width: auto;
+          height: auto;
+          margin-left: auto;
+          margin-right: 12px;
+        }
+      }
+
+      &:hover {
+        cursor: pointer;
+      }
+    }
+
+    .filters {
+      box-sizing: content-box;
+      height: 0;
+      transition: height 0.3s ease-in-out;
+      padding: 0 16px;
+      overflow: $librariesFiltersOverflow;
+
+      &.expanded {
+        height: $librariesFiltersHeight;
+      }
+    }
+  }
+}
+
+.libraries-virtual-list-container {
+  position: relative;
+  height: $librariesContainerHeight;
+
+  *[class*="ReactVirtualized__Grid__innerScrollContainer"] {
+    overflow: visible !important;
+  }
+}
+
+.libraries-list-container {
+  overflow-y: auto;
+  height: $librariesContainerHeight;
+}
+
+.libraries-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.libraries-list-item-container {
+  &:first-child > li {
+    padding-top: 20px;
+  }
+
+  &:not(:last-child) > li {
+    border-bottom: 1px solid #dae3e3;
+  }
+}
+
+.libraries-list-item {
+  display: flex;
+  flex-direction: column;
+  padding: 24px $librariesLateralPadding 18px;
+  align-items: flex-start;
+  position: relative;
+
+  .library-title-container {
+    display: flex;
+    width: 100%;
+    justify-content: end;
+    vertical-align: middle;
+
+    .library-name-container {
+      overflow-wrap: anywhere;
+      display: flex;
+      align-items: center;
+      margin-right: auto;
+    }
+
+    .library-option-button-wrapper {
+      margin-left: 6px;
+
+      $optionWidth: 200px;
+
+      *[class*="dropdown-menu-popover"] {
+        right: calc($optionWidth + $librariesLateralPadding);
+
+        *[class*="dropdown-menu"] {
+          width: $optionWidth;
+
+          li {
+            &:first-child {
+              border-top: $itemBorder;
+            }
+            .library-option {
+              border-top: 0;
+              border-left: $itemBorder;
+              border-right: $itemBorder;
+              border-bottom: $itemBorder;
+            }
+          }
+        }
+      }
+
+      &.library-option-button-wrapper-disabled {
+        opacity: 0.5;
+        button {
+          pointer-events: none;
+        }
+      }
+    }
+  }
+
+  .library-name {
+    vertical-align: top;
+  }
+
+  .library-favorite-icon {
+    width: 22px;
+    height: 22px;
+    margin-top: 0.5px;
+  }
+
+  .library-options-container {
+    display: flex;
+    visibility: hidden;
+  }
+
+  &:hover {
+    .library-options-container {
+      visibility: visible;
+    }
+  }
+
+  .library-options {
+    display: flex;
+    align-items: baseline;
+  }
+
+  .library-maintainer {
+    color: #7f8c8d;
+  }
+
+  .library-maintainer-icon {
+    margin-right: 5px;
+  }
+
+  .library-description {
+    margin: 14px 0 4px;
+  }
+}
+
+.include-button-wrapper {
+  margin: 20px 8px 16px 0px;
+  position: relative;
+
+  .include-button {
+    margin-bottom: 0 !important;
+  }
+
+  .include-button-disabled {
+    @extend .include-button;
+    opacity: 0.5;
+    &:hover {
+      cursor: default;
+      background-color: var(--button-primary-background) !important;
+    }
+  }
+}
+
+.library-examples-list-item > span {
+  vertical-align: middle;
+}
+
+.library-examples-list-item--skeleton {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 5px;
+
+  > div {
+    height: 15px;
+    width: 80%;
+  }
+}
+
+.libraries-list-item-skeleton {
+  .library-name-container {
+    :not(.library-maintainer-icon) {
+      flex: 0 1 80%;
+    }
+  }
+
+  .library-maintainer-icon {
+    margin-right: 5px;
+    height: 22px;
+    width: 22px;
+  }
+
+  .library-maintainer {
+    flex: 1 1 60%;
+    width: 150px;
+    margin-top: 5px;
+
+    & > div {
+      height: 10px;
+    }
+  }
+
+  .library-description {
+    width: 100%;
+
+    & > div {
+      height: 15px;
+    }
+
+    // set the margin to all children except the last one
+    :not(:last-child)::after {
+      margin-bottom: 5px;
+    }
+
+    @for $i from 1 through $skeletonChildren {
+      & :nth-child(#{$i}) {
+        $base-width: 0.6;
+        $random-width: calc(random(20) / 100);
+        width: percentage($base-width + $random-width);
+      }
+    }
+  }
+
+  .library-more-info-skeleton {
+    width: 50px;
+
+    & > div {
+      height: 12px;
+    }
+  }
+
+  .include-button {
+    width: 80px;
+
+    & > div {
+      height: 22px;
+    }
+  }
+
+  .library-examples-summary-skeleton {
+    width: 100px;
+
+    & > div {
+      height: 22px;
+    }
+  }
+}
+
+.item-buttons-container {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+
+  &.item-buttons-container-custom {
+    padding-left: 132px;
+
+    button {
+      margin-bottom: 8px;
+    }
+  }
+}
+
+.item-version-button-wrapper {
+  width: 100%;
+  height: 100%;
+}
+
+.item-version-button {
+  display: flex;
+  justify-content: space-between;
+  width: 124px;
+  height: 28px;
+  background: white;
+  border-radius: 32px;
+  border: 1px solid #bdc7c7;
+  margin: 20px 8px 16px 0px;
+  padding: 0px 4px 0px 12px;
+  & > span {
+    max-width: 80px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+  }
+}
+.item-version-button-pinned {
+  background-color: #ecf1f1;
+}
+
+.item-version-button-disabled {
+  pointer-events: none;
+  & > svg {
+    display: none;
+  }
+}
+
+.item-version-menu {
+  width: 200px;
+  max-height: 300px;
+  top: initial;
+  overflow-y: auto;
+
+  &::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    border: 4px solid transparent;
+  }
+}
+
+.item-version {
+  border-left: $itemBorder;
+  border-right: $itemBorder;
+  border-bottom: $itemBorder;
+  border-top: 0;
+  & > span {
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+  }
+}
+
+.item-default-version {
+  background-color: #ecf1f1;
+  border-top: $itemBorder;
+  border-left: $itemBorder;
+  border-right: $itemBorder;
+  border-bottom: 0;
+  & span {
+    font-weight: bold !important;
+  }
+}
+
+.item-solo-default-version {
+  border-bottom: $itemBorder;
+}
+
+.item-included-version {
+  & span {
+    font-weight: bold !important;
+  }
+}
+
+.item-selected-version {
+  background-color: shared.theme-var(--dropdown-item-background-hover);
+}
+
+.item-selected-icon {
+  padding-right: 8px;
+}
+
+.color-primary {
+  color: #008184;
+}
+
+.no-results-container {
+  padding: 36px;
+}
+
+.no-overflow {
+  overflow: hidden;
+}
+
+:export {
+  skeletonChildren: $skeletonChildren;
+}
+
+.libraries-board-filter-toggle {
+  margin: 0px 16px 16px 16px;
+  height: 40px;
+  display: grid;
+  align-items: center;
+  justify-items: start;
+  gap: 3px;
+  color: #7f8c8d;
+  overflow: hidden;
+}
+
+.libraries-filter-button {
+  overflow: hidden;
+  width: 100%;
+  justify-content: initial;
+  white-space: nowrap;
+}
+
+.libraries-header-cta {
+  margin-right: auto;
+  margin-left: 24px;
+
+  *[class*="loader"] {
+    height: 20px;
+    width: 20px;
+  }
+}
+
+.library-skeleton-lower-portion-container {
+  display: flex;
+  justify-content: space-between;
+  align-content: center;
+  margin-top: 8px;
+}

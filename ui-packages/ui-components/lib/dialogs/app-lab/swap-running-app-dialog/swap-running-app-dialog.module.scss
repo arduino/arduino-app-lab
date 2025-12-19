@@ -1,0 +1,54 @@
+@use "../../../typography/typography.module.scss";
+
+.container {
+    border-radius: 16px;
+    background: var(--surface-bg-baseline, #232b2e);
+    display: flex;
+    flex-direction: column;
+    color: var(--text-default, #fff);
+    header {
+        display: flex;
+        justify-content: space-between;
+        padding: 16px;
+        height: unset;
+        span {
+            font-family: typography.$roboto-mono-font-family !important;
+            font-size: 14px !important;
+        }
+
+        button {
+            margin: 0px !important;
+            border-radius: 4px;
+            background: rgba(255, 136, 120, 0.2);
+            svg {
+                path {
+                    fill: #ff8878;
+                }
+            }
+        }
+    }
+}
+
+.actions-container {
+    background: unset;
+    padding: 16px;
+}
+
+.overlay {
+    background: rgba(9, 15, 17, 0.5);
+    backdrop-filter: blur(12px);
+}
+
+.body {
+    &-icon {
+        margin: auto;
+    }
+
+    &-title {
+        text-align: center;
+        font-weight: 700 !important;
+    }
+    &-description {
+        text-align: center;
+    }
+}

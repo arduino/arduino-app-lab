@@ -1,0 +1,129 @@
+@use "../../../../ui-packages/ui-components/lib/app-lab-top-bar/top-bar.module.scss" as topBar;
+
+$actionsHeight: 44px;
+$footerHeight: 45px;
+$tabHeight: 40px;
+
+$consolePanelHeight: calc(100vh - $footerHeight - topBar.$topBarHeight - $tabHeight) !important;
+$consolePanelWithActionsHeight: calc(
+    100vh - $footerHeight - topBar.$topBarHeight - $tabHeight - $actionsHeight
+) !important;
+
+.console-panel {
+    border-radius: 8px;
+    border: 1px solid var(--component-bg-flexible, rgba(174, 184, 184, 0.15));
+    display: flex;
+    flex-direction: column;
+
+    &-monitor {
+        border: 2px solid var(--surface-bg-below-2, #090f11);
+        border-top: none;
+    }
+}
+
+.serial-monitor-wrapper {
+    background: var(--component-bg-flexible, rgba(174, 184, 184, 0.15));
+    border-radius: 0 0 6px 6px;
+    flex-direction: column-reverse !important;
+}
+
+.serial-monitor-contents-wrapper {
+    height: $consolePanelHeight;
+    [class~="cm-editor"] {
+        height: $consolePanelHeight;
+    }
+    &.has-actions {
+        height: $consolePanelWithActionsHeight;
+        [class~="cm-editor"] {
+            height: $consolePanelWithActionsHeight;
+        }
+    }
+}
+
+.serial-monitor-actions {
+    &-wrapper {
+        background-color: transparent !important;
+        border: none !important;
+        flex-direction: row-reverse;
+        padding: 16px 16px 0 !important;
+        height: 28px !important;
+    }
+
+    &-selector {
+        button {
+            background: var(--surface-bg-below-2, #090f11);
+            border-radius: 8px !important;
+            color: var(--text-default, #fff);
+            height: 28px !important;
+            padding: 4px 8px !important;
+            min-width: none !important;
+            white-space: pre;
+            &::after {
+                border-bottom-color: var(--text-default, #fff) !important;
+                border-top-color: var(--text-default, #fff) !important;
+            }
+        }
+
+        &-menu {
+            top: 4px !important;
+            right: -134px;
+            border-radius: 8px !important;
+            background-color: #374146;
+            padding: 4px;
+
+            li {
+                button {
+                    border-radius: 4px !important;
+                    background-color: transparent !important;
+                    outline: none !important;
+                }
+                &:hover {
+                    button {
+                        background-color: var(--component-bg-flexible, rgba(174, 184, 184, 0.05)) !important;
+                    }
+                }
+            }
+        }
+    }
+
+    &-input {
+        background: var(--surface-bg-below-2, #090f11);
+        border-radius: 8px !important;
+        border: none !important;
+        color: var(--text-default, #fff);
+        height: 28px !important;
+        padding: 6px 12px !important;
+
+        &-button {
+            display: none;
+        }
+    }
+}
+
+.hidden {
+    display: none;
+}
+
+.empty-apps-icon {
+    display: flex;
+    padding: 12px;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    border-radius: 8px;
+    background: var(--component-bg-flexible, rgba(174, 184, 184, 0.15));
+}
+
+.empty-apps {
+    color: var(--text-default, #fff);
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    span {
+        font-size: 14px;
+        font-style: normal;
+        font-weight: 600;
+    }
+}

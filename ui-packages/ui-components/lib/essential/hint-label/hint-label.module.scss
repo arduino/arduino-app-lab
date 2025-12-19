@@ -1,0 +1,24 @@
+@use "@cloud-editor-mono/ui-components/public/shared.module.scss";
+
+.container {
+  outline: 1px solid #dae3e3;
+  border-radius: 6px;
+  padding: 6px 4px 12px 4px;
+  flex-direction: column-reverse;
+  justify-content: flex-end !important;
+  align-items: flex-start !important;
+  color: shared.theme-var(--sidebar-panel-item-label);
+  outline-offset: unset;
+  min-width: 110px;
+  min-height: 88px;
+  text-align: left;
+
+  & > svg {
+    width: 16px;
+    height: 16px;
+
+    & > path {
+      fill: shared.theme-var(--button-primary-background);
+    }
+  }
+}

@@ -1,0 +1,175 @@
+@use "../../../../public/shared.module.scss";
+
+.container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+
+  .spinner {
+    animation: spin 1.5s linear infinite;
+    transform-origin: 50% 50%;
+    display: block;
+    height: 22px;
+    width: 22px;
+
+    & > svg {
+      height: 22px;
+      width: 22px;
+    }
+  }
+}
+
+.associated-device-info {
+  display: flex;
+  padding-left: 15px;
+  flex-direction: column;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.associated-device-board {
+  padding-bottom: 4px;
+  white-space: nowrap;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+
+  &.associated-device-board-no-padding {
+    padding-bottom: 0;
+  }
+}
+
+.associated-device-port-text {
+  display: flex;
+  color: #4e5b61;
+  align-items: center;
+
+  & > svg {
+    margin-right: 12px;
+  }
+}
+
+.divider {
+  height: 100%;
+  width: 1px;
+  background: rgba(201, 210, 210, 1);
+  margin: 0px 20px;
+}
+
+.small-divider {
+  height: calc(100% - 24px);
+  width: 1px;
+  background: rgba(201, 210, 210, 1);
+  margin: 0px 20px;
+}
+
+.info-container {
+  position: relative;
+}
+
+.info-icon-container {
+  height: 16px;
+  width: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  margin-left: 10px;
+}
+
+.info-tooltip {
+  display: none;
+  position: absolute;
+  top: 24px;
+  left: 8px;
+  z-index: shared.$zIndex3;
+  padding: 16px;
+  background: #fff;
+  box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.25);
+  border-radius: 3px;
+}
+
+.info-tooltip-show {
+  display: unset;
+  overflow: hidden;
+}
+
+.info-hover {
+  .manual-selection-info-tooltip-show {
+    @extend .info-tooltip-show;
+  }
+
+  .unknown-selection-info-tooltip-show {
+    @extend .info-tooltip-show;
+  }
+}
+
+.manual-selection-info-container {
+  @extend .info-container;
+
+  &:hover {
+    @extend .info-hover;
+  }
+
+  &:focus {
+    @extend .info-hover;
+  }
+}
+
+.manual-selection-info-tooltip {
+  @extend .info-tooltip;
+  width: 174px;
+  height: 320px;
+
+  .manual-selection-info-tooltip-list {
+    padding-inline-start: 16px;
+
+    & > li {
+      margin-top: 6px;
+    }
+  }
+}
+
+.manual-selection-info-icon-container {
+  @extend .info-icon-container;
+  background: #fff;
+
+  &:hover {
+    background-color: rgba(55, 65, 70, 1);
+
+    & > svg {
+      & > path {
+        fill: #fff;
+      }
+    }
+  }
+}
+
+.unknown-selection-info-container {
+  @extend .info-container;
+
+  &:hover {
+    @extend .info-hover;
+  }
+
+  &:focus {
+    @extend .info-hover;
+  }
+}
+
+.unknown-selection-info-tooltip {
+  @extend .info-tooltip;
+  width: 174px;
+  height: 76px;
+}
+
+.unknown-selection-info-icon-container {
+  @extend .info-icon-container;
+}
+
+.port-switch-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}

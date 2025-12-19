@@ -1,0 +1,50 @@
+@use "../../../public/shared.module.scss";
+
+$dialogContentHeaderHeight: 54;
+
+.container {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+}
+
+%header-icon {
+    & svg {
+        & > path {
+            fill: shared.theme-var(--associate-dialog-foreground);
+        }
+    }
+}
+
+.header {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    justify-items: center;
+    align-items: center;
+    height: $dialogContentHeaderHeight * 1px;
+    border-bottom: 1px solid #{shared.theme-var(--associate-dialog-divider)};
+
+    span {
+        white-space: nowrap;
+        grid-column-start: 2;
+    }
+
+    .close-button {
+        @extend %header-icon;
+        margin-left: auto;
+        margin-right: 19px;
+
+        & svg {
+            width: 26px;
+            height: 26px;
+        }
+    }
+
+    .back-button {
+        @extend %header-icon;
+        margin-top: 1px;
+        margin-right: auto;
+        margin-left: 24px;
+    }
+}

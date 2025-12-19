@@ -1,0 +1,106 @@
+@use "../../../../../public/shared.module.scss";
+@use "../../device-association-dialog-content-variables.module.scss";
+
+.body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    height: 100%;
+    overflow: overlay;
+    border-radius: 5px;
+}
+
+.body-overflowing {
+    padding-bottom: 114px;
+}
+
+.body-undetected {
+    padding-bottom: 36px;
+}
+
+.header-container {
+    align-items: flex-start;
+    width: 100%;
+}
+
+.devices-content {
+    text-align: left;
+    display: flex;
+    flex-direction: column;
+    margin: 0;
+    width: 100%;
+    color: shared.theme-var(--associate-dialog-foreground);
+}
+
+.devices-content-in-tab {
+    padding-top: 20px;
+}
+
+.devices-content-flex-one {
+    flex: 1;
+}
+
+.info-span-padding {
+    padding: 28px 64px 12px 64px;
+}
+
+.devices-list-root-flex-one {
+    flex: 1;
+}
+
+.search-bar {
+    top: -1px;
+    position: sticky;
+    position: -webkit-sticky;
+    width: device-association-dialog-content-variables.$list-content-width;
+    align-self: center;
+    padding: 16px calc(calc(100% - device-association-dialog-content-variables.$list-content-width) / 2);
+}
+
+.devices-list-container-flex-one {
+    flex: 1;
+}
+
+.search-bar-pinned {
+    background: shared.theme-var(--associate-dialog-background);
+    border-bottom: 1px solid #{shared.theme-var(--associate-dialog-divider)};
+}
+
+.linked-message {
+    padding-top: 20px;
+    width: device-association-dialog-content-variables.$list-content-width;
+}
+
+.linked-message-flex-one {
+    flex: 1;
+    visibility: hidden;
+}
+
+.labeled-divider {
+    width: device-association-dialog-content-variables.$list-content-width;
+}
+
+.footer-container {
+    background: shared.theme-var(--associate-dialog-background);
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+    position: sticky;
+    position: -webkit-sticky;
+    bottom: -1px;
+    width: 100%;
+
+    padding: {
+        top: 16px;
+        bottom: 16px;
+    }
+}
+
+.footer-container-pinned {
+    box-shadow: 0px 0px 20px #{shared.theme-var(--associate-dialog-card-border-hover)};
+}
+
+.bottom-pad {
+    padding-top: 20px;
+}

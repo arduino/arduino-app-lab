@@ -1,0 +1,112 @@
+@use "@cloud-editor-mono/ui-components/public/shared.module.scss";
+
+$fontColor: #434f54; // use correct variable when available
+
+.share-sketch-button-wrapper {
+  display: block;
+  width: 40px;
+  height: 40px;
+}
+
+.share-sketch-button {
+  width: 100%;
+  height: 100%;
+}
+
+.share-sketch-panel {
+  position: absolute;
+  z-index: shared.$zIndex4;
+  border-radius: 3px;
+  width: 260px;
+  top: 6px;
+  left: -260px;
+  background-color: shared.theme-var(--dropdown-background);
+  box-shadow: 0px 4px 20px rgb(0 0 0 / 25%);
+  pointer-events: auto;
+  display: grid;
+  padding: 12px 20px 24px 20px;
+  gap: 20px;
+}
+
+.share-sketch-header {
+  display: grid;
+  grid-auto-flow: column;
+  justify-content: space-between;
+  color: shared.theme-var(--header-title-label);
+}
+
+.share-sketch-toggle-button-container {
+  display: grid;
+  grid-auto-flow: column;
+  gap: 12px;
+  align-items: center;
+  color: $fontColor;
+}
+
+.share-sketch-toggle-button {
+  border: none;
+  width: 37px;
+  height: 20px;
+  box-sizing: unset;
+  padding: unset;
+}
+
+.url-item-container {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.url-item {
+  display: flex;
+  align-items: flex-start;
+}
+
+.url-input {
+  padding: unset;
+
+  > div {
+    background-color: unset !important;
+    padding: 0 12px !important;
+    align-items: center !important;
+    gap: 10px;
+  }
+}
+
+.copy-button-container {
+  svg {
+    width: 24px;
+    height: 24px;
+  }
+}
+
+.share-to-classroom {
+  background-color: transparent;
+  display: grid;
+  grid-auto-flow: column;
+  align-items: center;
+  justify-content: start;
+  gap: 4px;
+  cursor: pointer;
+  height: 28px;
+  padding: unset;
+  border: none;
+
+  > * {
+    height: 20px;
+  }
+}
+
+.google-classroom-icon {
+  width: 25px;
+  height: 20px;
+}
+
+.open-in-new-tab {
+  width: 18px;
+  height: 18px;
+
+  path {
+    fill: shared.theme-var(--texts-icons-links);
+  }
+}

@@ -1,0 +1,173 @@
+@use "@cloud-editor-mono/ui-components/public/shared.module.scss";
+
+$borderColor: #232b2e;
+.tree-container {
+  width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.tree {
+  width: 100%;
+  overflow: unset;
+  box-sizing: border-box;
+  color: var(--text-subtle, #c9d2d2);
+  &::-webkit-scrollbar-thumb {
+    border: 4px solid #171e21;
+  }
+  &::-webkit-scrollbar-track {
+    background-color: transparent;
+  }
+}
+
+.tree-row-container {
+  margin-top: 1px; // small correction not to hide the border top of selected items
+  padding: 0px;
+  box-sizing: border-box;
+}
+.tree-container,
+.tree-container * {
+  box-sizing: border-box;
+}
+
+.tree-row {
+  user-select: none; /* standard syntax */
+  -webkit-user-select: none; /* webkit (safari, chrome) browsers */
+  -moz-user-select: none; /* mozilla browsers */
+
+  cursor: pointer;
+  border-radius: 6px;
+  margin: 0 1px;
+
+  .tree-row-file {
+    display: flex;
+  }
+
+  > div {
+    display: flex;
+    align-items: center;
+    height: 100%;
+    padding: 0 16px;
+
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &:hover {
+    background: rgba(174, 184, 184, 0.15);
+  }
+
+  &-selected {
+    background: rgba(35, 43, 46, 1);
+    .tree-node {
+      color: white;
+    }
+  }
+}
+
+.tree-node {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  color: var(--text-subtle, #c9d2d2);
+  font-size: 12px;
+
+  &-closed {
+    transform: rotate(270deg);
+  }
+
+  &-icon {
+    display: flex;
+    margin-left: 2px;
+  }
+
+  &-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .tree-node-input {
+    background: transparent;
+    border: none;
+    color: white;
+    font-size: inherit;
+    font-family: inherit;
+    width: 100%;
+    height: 100%;
+    padding: 2px 4px;
+    box-sizing: border-box;
+
+    &:focus {
+      outline: 1px solid #25c2c7;
+      border-radius: 4px;
+    }
+  }
+}
+
+.tree-row-context-menu-trigger {
+  display: block;
+  height: 100%;
+}
+
+.tree-row-context-menu-trigger[data-state="open"] .tree-row {
+  outline: 1px solid #25c2c7;
+}
+.tree-row-context-menu {
+  background: #374146;
+  border-radius: 1px;
+  min-width: 180px;
+  padding: 4px;
+}
+.tree-row-context-menu-item {
+  display: flex;
+  align-items: center;
+  color: white;
+  height: 28px;
+  gap: 4px;
+  border-radius: 4px;
+  padding: 0 12px;
+  background-color: transparent;
+  font-size: 12px;
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  &:hover {
+    background-color: #aeb8b826;
+  }
+
+  &.danger {
+    color: var(--feedback-error-default, #ff8878);
+  }
+}
+
+.tree-row-context-icon-container {
+  width: 18px;
+  text-align: center;
+  margin-top: 4px;
+}
+
+.code-editor-skeleton {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  z-index: shared.$zIndex1;
+  box-sizing: border-box;
+  flex: 1;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 12px 0px 0px 0px;
+  gap: 20px;
+
+  @for $i from 1 through 5 {
+    & :nth-child(#{$i}) {
+      opacity: 0.1;
+      flex: none;
+      height: 20px;
+      width: percentage(calc((random(60) + 8) / 100));
+    }
+  }
+}

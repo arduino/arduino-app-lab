@@ -1,0 +1,20 @@
+.overlay {
+  [class~="ReactModal__Content"] {
+    display: flex;
+  }
+}
+
+.container {
+  grid-template-rows: 54px 1fr;
+}
+
+.body-container {
+  padding: 30px;
+  overflow: overlay;
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}

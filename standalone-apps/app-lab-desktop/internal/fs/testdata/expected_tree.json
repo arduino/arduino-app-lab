@@ -1,0 +1,70 @@
+{
+  "name": ".",
+  "path": ".",
+  "size": 160,
+  "isDir": true,
+  "createdAt": "2025-05-29T12:23:09+02:00",
+  "modifiedAt": "2025-05-29T12:23:09+02:00",
+  "children": [
+    {
+      "name": "python",
+      "path": "python",
+      "size": 128,
+      "isDir": true,
+      "createdAt": "2025-05-29T12:22:23+02:00",
+      "modifiedAt": "2025-05-29T12:22:23+02:00",
+      "children": [
+        {
+          "name": "main.py",
+          "path": "python/main.py",
+          "size": 23,
+          "isDir": false,
+          "createdAt": "2025-05-29T12:27:16+02:00",
+          "modifiedAt": "2025-05-29T12:27:16+02:00",
+          "extension": ".py",
+          "mimeType": "application/octet-stream"
+        },
+        {
+          "name": "requirements.txt",
+          "path": "python/requirements.txt",
+          "size": 0,
+          "isDir": false,
+          "createdAt": "2025-05-29T12:22:23+02:00",
+          "modifiedAt": "2025-05-29T12:22:23+02:00",
+          "extension": ".txt",
+          "mimeType": "text/plain; charset=utf-8"
+        }
+      ]
+    },
+    {
+      "name": "sketch",
+      "path": "sketch",
+      "size": 96,
+      "isDir": true,
+      "createdAt": "2025-05-29T12:24:26+02:00",
+      "modifiedAt": "2025-05-29T12:24:26+02:00",
+      "children": [
+        {
+          "name": "sketch.ino",
+          "path": "sketch/sketch.ino",
+          "size": 232,
+          "isDir": false,
+          "createdAt": "2025-05-29T12:24:15+02:00",
+          "modifiedAt": "2025-05-29T12:24:15+02:00",
+          "extension": ".ino",
+          "mimeType": "application/octet-stream"
+        }
+      ]
+    },
+    {
+      "name": "app.yaml",
+      "path": "app.yaml",
+      "size": 58,
+      "isDir": false,
+      "createdAt": "2025-05-29T12:26:15+02:00",
+      "modifiedAt": "2025-05-29T12:26:15+02:00",
+      "extension": ".yaml",
+      "mimeType": "application/octet-stream"
+    }
+  ]
+}

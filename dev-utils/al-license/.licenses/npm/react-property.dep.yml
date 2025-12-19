@@ -1,0 +1,12 @@
+---
+name: react-property
+version: 2.0.0
+type: npm
+summary: HTML and SVG DOM property configs used by React.
+homepage:
+license: mit
+licenses:
+- sources: README.md
+  text: MIT. See [license](https://github.com/facebook/react/blob/main/LICENSE) from
+    original project.
+notices: []

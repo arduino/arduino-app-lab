@@ -1,0 +1,322 @@
+@use "@cloud-editor-mono/ui-components/public/shared.module.scss";
+@use "../serial-monitor-variables.module.scss";
+@use "../serial-monitor.module.scss";
+@use "../../../../../ui-packages/images/public/css-images.module.scss";
+
+$contentsWidth: 100%;
+$contentsHeight: calc(100vh - serial-monitor-variables.$toolbarHeight - serial-monitor-variables.$actionsHeight);
+$searchPanelHeight: 56px;
+$searchPanelHorizontalPadding: 20px;
+$serialMonitorUnavailableMargin: 20px;
+
+@mixin search-highlight {
+    [class~="cm-searchMatch"] {
+        background: rgba(241, 196, 15, 0.4);
+
+        &[class~="cm-searchMatch-selected"] {
+            background: rgba(243, 156, 18, 0.7);
+        }
+    }
+}
+
+@mixin arrow {
+    border: none;
+    height: 40px;
+    width: 40px;
+    background-color: transparent;
+    background-image: url(css-images.$arrowUp);
+    background-repeat: no-repeat;
+    background-position: center;
+    border-radius: 50%;
+
+    &:hover {
+        cursor: pointer;
+        background-color: #ecf1f1;
+    }
+}
+
+@mixin caret {
+    content: "";
+    display: block;
+    border-left: solid 5px transparent;
+    border-right: solid 5px transparent;
+    height: 0;
+    width: 0;
+    margin-left: 10px;
+    margin-top: 2px;
+}
+
+.serial-monitor-contents {
+    width: $contentsWidth;
+    height: $contentsHeight;
+    position: relative;
+
+    & > span {
+        display: block;
+        padding-top: 20px;
+        padding-left: serial-monitor-variables.$serialMonitorPaddingLeft;
+    }
+
+    .serial-monitor-error {
+        position: absolute;
+        top: 0;
+        z-index: 999;
+        width: calc(100% - $serialMonitorUnavailableMargin * 2);
+        box-sizing: border-box;
+        display: flex;
+        padding: 8px 12px 8px 8px;
+        margin: $serialMonitorUnavailableMargin;
+        justify-content: space-between;
+        align-items: center;
+        background: #f1c40f;
+        box-shadow: 0px 4px 20px 0px rgba(0, 0, 0, 0.25);
+        white-space: pre-wrap;
+        border-radius: 3px;
+
+        & > svg {
+            width: 18px;
+            height: 18px;
+            margin-left: 16px;
+
+            &:hover {
+                cursor: pointer;
+            }
+        }
+    }
+
+    [class~="cm-editor"] {
+        height: $contentsHeight;
+
+        @include search-highlight;
+
+        &[class*="sent-contents-search-active"] {
+            [class~="cm-searchMatch"] {
+                background: none;
+            }
+
+            [class*="serial-monitor-contents-message-sent"] {
+                @include search-highlight;
+            }
+        }
+
+        [id~="content-filter-dropdown"] {
+            display: none;
+            position: fixed !important;
+            top: calc(serial-monitor-variables.$toolbarHeight + $searchPanelHeight - 12px) !important;
+            left: auto !important;
+            right: $searchPanelHorizontalPadding;
+            border: none;
+            background-color: #fff;
+            width: 124px;
+            padding: 4px;
+            box-shadow: 0 4px 20px 0 rgba(0, 0, 0, 0.25);
+
+            button {
+                background-color: transparent;
+                border: none;
+                height: 36px;
+                width: 100%;
+                color: #000;
+                font-size: 14px;
+                text-align: left;
+                padding: 8px 16px;
+                text-decoration: none;
+                display: block;
+
+                &[class~="selected"] {
+                    background-color: #ecf1f1;
+                }
+
+                &:hover {
+                    cursor: pointer;
+                }
+
+                &:not([class~="selected"]):hover {
+                    background-color: #f7f9f9;
+                }
+            }
+        }
+
+        [class~="cm-panels"] {
+            display: flex;
+            padding: 0;
+            background-color: #fff;
+            border-top: none;
+            border-bottom: 1px solid #dae3e3;
+            color: #4e5b61;
+            font-size: 12px;
+            height: 0;
+            overflow: hidden;
+            transition: all 0.3s;
+
+            &[class~="expanded"] {
+                height: $searchPanelHeight;
+            }
+
+            [class~="cm-panel"] {
+                display: flex;
+                justify-content: flex-end;
+                align-items: center;
+                padding: 8px $searchPanelHorizontalPadding;
+                width: 100%;
+                white-space: pre;
+
+                [class~="search-icon"] {
+                    height: 16px;
+                    width: 16px;
+                    background-image: url(css-images.$search);
+                    margin-right: 8px;
+                }
+
+                input {
+                    height: 38px;
+                    border: none;
+                    font-size: 14px;
+                    margin-right: 8px;
+                    flex-grow: 1;
+
+                    &:focus-visible {
+                        outline: none;
+                    }
+                }
+
+                [class~="navigation"] {
+                    display: none;
+                    align-items: center;
+
+                    [class~="counter"] {
+                        font-weight: bold;
+
+                        &:last-of-type {
+                            margin-right: 20px;
+                        }
+                    }
+
+                    [class~="prev"] {
+                        @include arrow;
+                        margin-right: 12px;
+                    }
+
+                    [class~="next"] {
+                        @include arrow;
+                        margin-right: 20px;
+                        transform: rotate(180deg);
+                    }
+                }
+
+                [id~="content-filter-btn"] {
+                    background-color: transparent;
+                    height: 30px;
+                    width: 124px;
+                    color: #000;
+                    font-size: 12px;
+                    border: 1px solid #c9d2d2;
+                    border-radius: 4px;
+                    padding-left: 12px;
+                    padding-right: 12px;
+                    cursor: pointer;
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+
+                    &:not([class~="dropdown-opened"]) {
+                        &::after {
+                            @include caret;
+                            border-top: solid 6px #58646b;
+                        }
+                    }
+
+                    &[class~="dropdown-opened"] {
+                        &::after {
+                            @include caret;
+                            border-bottom: solid 6px #58646b;
+                        }
+                    }
+                }
+            }
+        }
+
+        [class~="cm-scroller"] {
+            [class~="cm-gutters"] {
+                background: #fff;
+                padding-left: serial-monitor-variables.$serialMonitorPaddingLeft;
+                padding-right: 8px;
+                border-right: none;
+
+                [class~="cm-gutterElement"] {
+                    font-size: 12px;
+                    line-height: 18px;
+                }
+
+                & + [class~="cm-content"] {
+                    [class~="cm-line"] {
+                        padding-left: 0;
+                    }
+                }
+            }
+
+            &::-webkit-scrollbar {
+                width: 8px;
+                height: 8px;
+            }
+            &::-webkit-scrollbar-track {
+                background-color: transparent;
+            }
+            &::-webkit-scrollbar-thumb {
+                background-color: #7f8c8d; // @TODO: To be exported
+                border-width: 0;
+                border-radius: 5px;
+            }
+
+            [class~="cm-content"] {
+                padding-top: 20px;
+                padding-bottom: 8px;
+
+                [class~="cm-line"] {
+                    line-height: 18px;
+                    padding-left: serial-monitor-variables.$serialMonitorPaddingLeft;
+
+                    span[class~="cm-specialChar"] {
+                        opacity: 0;
+                        color: transparent;
+                        display: inline-block;
+                        width: 0;
+                    }
+
+                    span[class~="error"] {
+                        color: var(--feedback-error-default, #ff8878);
+                    }
+
+                    span[class~="success"] {
+                        color: var(--feedback-success-default, #16a588);
+                    }
+                }
+            }
+        }
+    }
+
+    .serial-monitor-scroll-down {
+        position: absolute;
+        height: 40px;
+        width: 168px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        color: #fff;
+        background: linear-gradient(0deg, rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0.8)), rgba(255, 255, 255, 0.8);
+        border: none;
+        border-radius: 12px;
+        left: 50%;
+        bottom: 12px;
+        margin-left: calc((168px / 2) * -1);
+        cursor: pointer;
+
+        & > *:first-child {
+            margin-right: 14px;
+        }
+
+        &:hover {
+            background: shared.theme-var(--button-primary-background);
+        }
+    }
+}

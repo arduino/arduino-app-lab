@@ -1,0 +1,49 @@
+@use "@cloud-editor-mono/ui-components/public/shared.module.scss";
+
+.main {
+  background: var(--surface-bg-below-2, #090f11);
+  height: 100%;
+  width: 100%;
+  min-width: 600px;
+  padding: 0 16px 16px 16px;
+  box-sizing: border-box;
+  color: white;
+  display: flex;
+  flex-direction: column;
+}
+
+.split {
+  flex: 1;
+  display: flex;
+  height: 100%;
+  padding-bottom: 20px;
+
+  .settings-list {
+    width: 100%;
+    height: 100%;
+    box-sizing: border-box;
+    padding: none;
+    margin: none;
+
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start;
+    gap: 16px;
+    align-self: stretch;
+  }
+
+  .gutter {
+    height: 100%;
+  }
+
+  .gutter:hover {
+    cursor: col-resize;
+    border-right: 1px solid #25c2c7 !important;
+    box-sizing: border-box;
+  }
+}
+
+.split-item {
+  height: 100%;
+}

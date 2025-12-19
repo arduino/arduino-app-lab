@@ -1,0 +1,47 @@
+@use "@cloud-editor-mono/arduino-sass";
+
+.title-skeleton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 150px;
+  height: 100%;
+
+  & div {
+    height: 60%;
+  }
+}
+
+.warning {
+  color: arduino-sass.$notifyerror;
+}
+
+.read-only-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 60px;
+  padding-left: 40px;
+  padding-right: 40px;
+  border: 1px solid rgb(218 227 227);
+}
+
+.logo-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  svg {
+    width: 52px;
+    height: 52px;
+  }
+}
+
+.right-item-container {
+  display: flex;
+  align-items: center;
+}
+
+.user-avatar {
+  border-radius: 50%;
+}

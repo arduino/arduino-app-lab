@@ -1,0 +1,40 @@
+@use "../../toolbar.module.scss";
+@use "../../../../public/shared.module.scss";
+
+.container {
+    position: relative;
+
+    &:hover .badge {
+        display: none;
+    }
+}
+
+.device-link-button {
+    @extend .toolbar-icon-button;
+}
+
+.device-link-button-with-badge {
+    border: 1px solid shared.theme-var(--tooltip-border);
+    height: 46px;
+    width: 46px;
+    border-radius: 100%;
+    padding: 0px;
+}
+
+.badge {
+    border-radius: 50%;
+    position: absolute;
+    top: 0%;
+    right: 0%;
+    left: 75%;
+    bottom: 70%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(218, 91, 74, 1);
+    color: #fff;
+    font-size: 12px;
+    font-weight: bold;
+    padding: 8px;
+    z-index: shared.$zIndex1;
+}
