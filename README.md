@@ -4,6 +4,10 @@ This is the Arduino App Lab desktop application. It's a cross-platform applicati
 
 <img src="docs/app-lab-screenshot.png" alt="Arduino App Lab" width="600">
 
+## Issues
+
+GitHub issue reports for both user and contributor facing bugs of App Lab are welcome. 
+
 ## Setup
 
 Required:
@@ -59,5 +63,4 @@ to this in your browser, and you can call your Go code from devtools.
 
 ## A note for Linux users
 Some users have reported issues selecting the Arduino Q board in App Lab on Linux. A solution can be found in this [post on the Arduino forum](https://forum.arduino.cc/t/solution-arduino-app-lab-ubuntu-does-nothing-when-selecting-the-board/1411373)
-
 
