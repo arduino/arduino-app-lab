@@ -42,7 +42,7 @@ You should receive paths inside the project and respectively the version of node
 To build a redistributable, production mode package:
 
 1. Install Yarn with `sudo npm install --global yarn`
-1. Setup npm package by running `yarn` in the project's root directory.
+1. Setup npm packages by running `yarn` in the project's root directory.
 1. Install Wails with `go install github.com/wailsapp/wails/v2/cmd/wails@latest`.
 1. Install `wget` and `jq` globally on your machine, using the right procedure for your operating system. 
     
@@ -54,7 +54,7 @@ To build a redistributable, production mode package:
 1. `cd ../..`
 1. Run `wails build` to make the final build.
 
-To correctly build the app on Linux, the webkit library is required. At the time of writing, on Ubuntu 24.04, `libwebkit2gtk-4.1-dev` package is available; and Fedora, `webkit2gtk4.1-devel` is available. The corresponding wails app should be built with the command `wails build -tags webkit2_41`. You may adjust these values as needed for your OS version.
+To correctly build the app on Linux, the webkit library is required. At the time of writing, on Ubuntu 24.04, `libwebkit2gtk-4.1-dev` package is available; and on Fedora, `webkit2gtk4.1-devel` is available. The corresponding wails app should be built with the command `wails build -tags webkit2_41`. You may adjust these values as needed for your OS version.
 
 ## Live Development
 
