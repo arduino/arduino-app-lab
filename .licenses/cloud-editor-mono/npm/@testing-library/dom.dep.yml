@@ -1,0 +1,69 @@
+---
+name: "@testing-library/dom"
+version: 8.20.1
+type: npm
+summary: Simple and complete DOM testing utilities that encourage good testing practices.
+homepage: https://github.com/testing-library/dom-testing-library#readme
+license: mit
+licenses:
+- sources: LICENSE
+  text: |
+    The MIT License (MIT)
+    Copyright (c) 2017 Kent C. Dodds
+
+    Permission is hereby granted, free of charge, to any person obtaining a copy
+    of this software and associated documentation files (the "Software"), to deal
+    in the Software without restriction, including without limitation the rights
+    to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+    copies of the Software, and to permit persons to whom the Software is
+    furnished to do so, subject to the following conditions:
+
+    The above copyright notice and this permission notice shall be included in all
+    copies or substantial portions of the Software.
+
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+    SOFTWARE.
+- sources: README.md
+  text: |-
+    [MIT](LICENSE)
+
+    <!-- prettier-ignore-start -->
+
+    [npm]: https://www.npmjs.com/
+    [node]: https://nodejs.org
+    [build-badge]: https://img.shields.io/github/workflow/status/testing-library/dom-testing-library/validate?logo=github&style=flat-square
+    [build]: https://github.com/testing-library/dom-testing-library/actions?query=workflow%3Avalidate
+    [coverage-badge]: https://img.shields.io/codecov/c/github/testing-library/dom-testing-library.svg?style=flat-square
+    [coverage]: https://codecov.io/github/testing-library/dom-testing-library
+    [version-badge]: https://img.shields.io/npm/v/@testing-library/dom.svg?style=flat-square
+    [package]: https://www.npmjs.com/package/@testing-library/dom
+    [downloads-badge]: https://img.shields.io/npm/dm/@testing-library/dom.svg?style=flat-square
+    [npmtrends]: http://www.npmtrends.com/@testing-library/dom
+    [license-badge]: https://img.shields.io/npm/l/@testing-library/dom.svg?style=flat-square
+    [license]: https://github.com/testing-library/dom-testing-library/blob/main/LICENSE
+    [prs-badge]: https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square
+    [prs]: http://makeapullrequest.com
+    [coc-badge]: https://img.shields.io/badge/code%20of-conduct-ff69b4.svg?style=flat-square
+    [coc]: https://github.com/testing-library/dom-testing-library/blob/main/CODE_OF_CONDUCT.md
+    [github-watch-badge]: https://img.shields.io/github/watchers/testing-library/dom-testing-library.svg?style=social
+    [github-watch]: https://github.com/testing-library/dom-testing-library/watchers
+    [github-star-badge]: https://img.shields.io/github/stars/testing-library/dom-testing-library.svg?style=social
+    [github-star]: https://github.com/testing-library/dom-testing-library/stargazers
+    [twitter]: https://twitter.com/intent/tweet?text=Check%20out%20dom-testing-library%20by%20%40testing-library%20https%3A%2F%2Fgithub.com%2Ftesting-library%2Fdom-testing-library%20%F0%9F%91%8D
+    [twitter-badge]: https://img.shields.io/twitter/url/https/github.com/testing-library/dom-testing-library.svg?style=social
+    [emojis]: https://github.com/all-contributors/all-contributors#emoji-key
+    [all-contributors]: https://github.com/all-contributors/all-contributors
+    [all-contributors-badge]: https://img.shields.io/github/all-contributors/testing-library/dom-testing-library?color=orange&style=flat-square
+    [set-immediate]: https://developer.mozilla.org/en-US/docs/Web/API/Window/setImmediate
+    [guiding-principle]: https://twitter.com/kentcdodds/status/977018512689455106
+    [jest]: https://facebook.github.io/jest
+    [discord-badge]: https://img.shields.io/discord/723559267868737556.svg?color=7389D8&labelColor=6A7EC2&logo=discord&logoColor=ffffff&style=flat-square
+    [discord]: https://discord.gg/testing-library
+
+    <!-- prettier-ignore-end -->
+notices: []

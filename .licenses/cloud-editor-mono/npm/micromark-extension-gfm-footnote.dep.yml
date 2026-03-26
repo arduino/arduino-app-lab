@@ -1,0 +1,138 @@
+---
+name: micromark-extension-gfm-footnote
+version: 1.1.2
+type: npm
+summary: micromark extension to support GFM footnotes
+homepage: 
+license: mit
+licenses:
+- sources: license
+  text: |
+    (The MIT License)
+
+    Copyright (c) 2021 Titus Wormer <tituswormer@gmail.com>
+
+    Permission is hereby granted, free of charge, to any person obtaining
+    a copy of this software and associated documentation files (the
+    'Software'), to deal in the Software without restriction, including
+    without limitation the rights to use, copy, modify, merge, publish,
+    distribute, sublicense, and/or sell copies of the Software, and to
+    permit persons to whom the Software is furnished to do so, subject to
+    the following conditions:
+
+    The above copyright notice and this permission notice shall be
+    included in all copies or substantial portions of the Software.
+
+    THE SOFTWARE IS PROVIDED 'AS IS', WITHOUT WARRANTY OF ANY KIND,
+    EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+    MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+    IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+    CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+    TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+    SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+- sources: readme.md
+  text: |-
+    [MIT][license] © [Titus Wormer][author]
+
+    <!-- Definitions -->
+
+    [build-badge]: https://github.com/micromark/micromark-extension-gfm-footnote/workflows/main/badge.svg
+
+    [build]: https://github.com/micromark/micromark-extension-gfm-footnote/actions
+
+    [coverage-badge]: https://img.shields.io/codecov/c/github/micromark/micromark-extension-gfm-footnote.svg
+
+    [coverage]: https://codecov.io/github/micromark/micromark-extension-gfm-footnote
+
+    [downloads-badge]: https://img.shields.io/npm/dm/micromark-extension-gfm-footnote.svg
+
+    [downloads]: https://www.npmjs.com/package/micromark-extension-gfm-footnote
+
+    [size-badge]: https://img.shields.io/bundlephobia/minzip/micromark-extension-gfm-footnote.svg
+
+    [size]: https://bundlephobia.com/result?p=micromark-extension-gfm-footnote
+
+    [sponsors-badge]: https://opencollective.com/unified/sponsors/badge.svg
+
+    [backers-badge]: https://opencollective.com/unified/backers/badge.svg
+
+    [collective]: https://opencollective.com/unified
+
+    [chat-badge]: https://img.shields.io/badge/chat-discussions-success.svg
+
+    [chat]: https://github.com/micromark/micromark/discussions
+
+    [npm]: https://docs.npmjs.com/cli/install
+
+    [esmsh]: https://esm.sh
+
+    [license]: license
+
+    [author]: https://wooorm.com
+
+    [contributing]: https://github.com/micromark/.github/blob/HEAD/contributing.md
+
+    [support]: https://github.com/micromark/.github/blob/HEAD/support.md
+
+    [coc]: https://github.com/micromark/.github/blob/HEAD/code-of-conduct.md
+
+    [esm]: https://gist.github.com/sindresorhus/a39789f98801d908bbc7ff3ecc99d99c
+
+    [typescript]: https://www.typescriptlang.org
+
+    [development]: https://nodejs.org/api/packages.html#packages_resolving_user_conditions
+
+    [micromark]: https://github.com/micromark/micromark
+
+    [micromark-content-types]: https://github.com/micromark/micromark#content-types
+
+    [micromark-extension]: https://github.com/micromark/micromark#syntaxextension
+
+    [micromark-html-extension]: https://github.com/micromark/micromark#htmlextension
+
+    [micromark-normalize-identifier]: https://github.com/micromark/micromark/tree/main/packages/micromark-util-normalize-identifier
+
+    [micromark-extension-gfm]: https://github.com/micromark/micromark-extension-gfm
+
+    [mdast-util-gfm-footnote]: https://github.com/syntax-tree/mdast-util-gfm-footnote
+
+    [mdast-util-gfm]: https://github.com/syntax-tree/mdast-util-gfm
+
+    [remark-gfm]: https://github.com/remarkjs/remark-gfm
+
+    [post]: https://github.blog/changelog/2021-09-30-footnotes-now-supported-in-markdown-fields/
+
+    [cmark-gfm]: https://github.com/github/cmark-gfm
+
+    [commonmark-block]: https://spec.commonmark.org/0.30/#phase-1-block-structure
+
+    [html-a]: https://html.spec.whatwg.org/multipage/text-level-semantics.html#the-a-element
+
+    [html-data]: https://html.spec.whatwg.org/multipage/dom.html#embedding-custom-non-visible-data-with-the-data-*-attributes
+
+    [html-h]: https://html.spec.whatwg.org/multipage/sections.html#the-h1,-h2,-h3,-h4,-h5,-and-h6-elements
+
+    [html-li]: https://html.spec.whatwg.org/multipage/grouping-content.html#the-li-element
+
+    [html-ol]: https://html.spec.whatwg.org/multipage/grouping-content.html#the-ol-element
+
+    [html-p]: https://html.spec.whatwg.org/multipage/grouping-content.html#the-p-element
+
+    [html-section]: https://html.spec.whatwg.org/multipage/sections.html#the-section-element
+
+    [html-sup]: https://html.spec.whatwg.org/multipage/text-level-semantics.html#the-sub-and-sup-elements
+
+    [aria-describedby]: https://w3c.github.io/aria/#aria-describedby
+
+    [aria-label]: https://w3c.github.io/aria/#aria-label
+
+    [api-gfm-footnote]: #gfmfootnote
+
+    [api-gfm-footnote-html]: #gfmfootnotehtmloptions
+
+    [api-html-options]: #htmloptions
+
+    [api-default-back-label]: #defaultbacklabelreferenceindex-rereferenceindex
+
+    [api-back-label-template]: #backlabeltemplate
+notices: []

@@ -1,0 +1,46 @@
+---
+name: pidtree
+version: 0.6.0
+type: npm
+summary: Cross platform children list of a PID
+homepage: http://github.com/simonepri/pidtree#readme
+license: mit
+licenses:
+- sources: license
+  text: |
+    MIT License
+
+    Copyright (c) 2018 Simone Primarosa
+
+    Permission is hereby granted, free of charge, to any person obtaining a copy
+    of this software and associated documentation files (the "Software"), to deal
+    in the Software without restriction, including without limitation the rights
+    to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+    copies of the Software, and to permit persons to whom the Software is
+    furnished to do so, subject to the following conditions:
+
+    The above copyright notice and this permission notice shall be included in all
+    copies or substantial portions of the Software.
+
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+    SOFTWARE.
+- sources: readme.md
+  text: |-
+    This project is licensed under the MIT License - see the [license][license] file for details.
+
+    <!-- Links -->
+    [new issue]: https://github.com/simonepri/pidtree/issues/new
+    [license]: https://github.com/simonepri/pidtree/tree/master/license
+    [contributors]: https://github.com/simonepri/pidtree/contributors
+
+    [github:simonepri]: https://github.com/simonepri
+
+    [gh:pidusage]: https://github.com/soyuka/pidusage
+    [gh:ps-tree]: https://github.com/indexzero/ps-tree
+    [gh:ps-tree-um]: https://github.com/indexzero/ps-tree/issues/30
+notices: []

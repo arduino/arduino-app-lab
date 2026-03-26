@@ -1,0 +1,58 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+*.local
+
+# Editor directories and files
+.vscode/*
+!.vscode/tasks.json
+!.vscode/useful.code-snippets
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+*.pem
+
+dev-utils/dev-config/themes/*
+!dev-utils/dev-config/themes/README.md
+vuln.json
+.env
+.tool-versions
+
+# Direnv
+__engines__
+
+# yarn
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/sdks
+!.yarn/versions
+
+.npmrc
+
+# Pwa files
+standalone-apps/cloud-editor-standalone/dev-dist/
+
+# Build output for app-lab debian version
+/build/
+
+# App Lab learn contents
+standalone-apps/app-lab-desktop/internal/learn/assets/
+
+# App Lab emoji assets
+standalone-apps/app-lab-desktop/internal/emoji/assets/

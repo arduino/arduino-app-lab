@@ -1,0 +1,98 @@
+---
+name: remark-parse
+version: 8.0.3
+type: npm
+summary: remark plugin to parse Markdown
+homepage: https://remark.js.org
+license: mit
+licenses:
+- sources: readme.md
+  text: |-
+    [MIT][license] © [Titus Wormer][author]
+
+    <!-- Definitions -->
+
+    [build-badge]: https://img.shields.io/travis/remarkjs/remark.svg
+
+    [build]: https://travis-ci.org/remarkjs/remark
+
+    [coverage-badge]: https://img.shields.io/codecov/c/github/remarkjs/remark.svg
+
+    [coverage]: https://codecov.io/github/remarkjs/remark
+
+    [downloads-badge]: https://img.shields.io/npm/dm/remark-parse.svg
+
+    [downloads]: https://www.npmjs.com/package/remark-parse
+
+    [size-badge]: https://img.shields.io/bundlephobia/minzip/remark-parse.svg
+
+    [size]: https://bundlephobia.com/result?p=remark-parse
+
+    [sponsors-badge]: https://opencollective.com/unified/sponsors/badge.svg
+
+    [backers-badge]: https://opencollective.com/unified/backers/badge.svg
+
+    [collective]: https://opencollective.com/unified
+
+    [chat-badge]: https://img.shields.io/badge/chat-spectrum-7b16ff.svg
+
+    [chat]: https://spectrum.chat/unified/remark
+
+    [health]: https://github.com/remarkjs/.github
+
+    [contributing]: https://github.com/remarkjs/.github/blob/HEAD/contributing.md
+
+    [support]: https://github.com/remarkjs/.github/blob/HEAD/support.md
+
+    [coc]: https://github.com/remarkjs/.github/blob/HEAD/code-of-conduct.md
+
+    [ideas]: https://github.com/remarkjs/ideas
+
+    [awesome]: https://github.com/remarkjs/awesome-remark
+
+    [license]: https://github.com/remarkjs/remark/blob/main/license
+
+    [author]: https://wooorm.com
+
+    [npm]: https://docs.npmjs.com/cli/install
+
+    [unified]: https://github.com/unifiedjs/unified
+
+    [data]: https://github.com/unifiedjs/unified#processordatakey-value
+
+    [remark]: https://github.com/remarkjs/remark/tree/main/packages/remark
+
+    [blocks]: https://github.com/remarkjs/remark/blob/main/packages/remark-parse/lib/block-elements.js
+
+    [mdast]: https://github.com/syntax-tree/mdast
+
+    [escapes]: https://spec.commonmark.org/0.29/#backslash-escapes
+
+    [node]: https://github.com/syntax-tree/unist#node
+
+    [parent]: https://github.com/syntax-tree/unist#parent
+
+    [position]: https://github.com/syntax-tree/unist#position
+
+    [parser]: https://github.com/unifiedjs/unified#processorparser
+
+    [transformer]: https://github.com/unifiedjs/unified#function-transformernode-file-next
+
+    [extend]: #extending-the-parser
+
+    [tokenizer]: #function-tokenizereat-value-silent
+
+    [locator]: #tokenizerlocatorvalue-fromindex
+
+    [eat]: #eatsubvalue
+
+    [add]: #addnode-parent
+
+    [remark-disable-tokenizers]: https://github.com/zestedesavoir/zmarkdown/tree/HEAD/packages/remark-disable-tokenizers
+
+    [xss]: https://en.wikipedia.org/wiki/Cross-site_scripting
+
+    [rehype]: https://github.com/rehypejs/rehype
+
+    [sanitize]: https://github.com/rehypejs/rehype-sanitize
+notices: []

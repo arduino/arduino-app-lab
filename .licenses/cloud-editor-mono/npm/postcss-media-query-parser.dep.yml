@@ -1,0 +1,11 @@
+---
+name: postcss-media-query-parser
+version: 0.2.3
+type: npm
+summary: A tool for parsing media query lists.
+homepage: https://github.com/dryoma/postcss-media-query-parser
+license: mit
+licenses:
+- sources: README.md
+  text: MIT
+notices: []

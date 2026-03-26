@@ -1,0 +1,132 @@
+---
+name: micromark-extension-gfm
+version: 2.0.3
+type: npm
+summary: micromark extension to support GFM (GitHub Flavored Markdown)
+homepage: 
+license: mit
+licenses:
+- sources: license
+  text: |
+    (The MIT License)
+
+    Copyright (c) 2020 Titus Wormer <tituswormer@gmail.com>
+
+    Permission is hereby granted, free of charge, to any person obtaining
+    a copy of this software and associated documentation files (the
+    'Software'), to deal in the Software without restriction, including
+    without limitation the rights to use, copy, modify, merge, publish,
+    distribute, sublicense, and/or sell copies of the Software, and to
+    permit persons to whom the Software is furnished to do so, subject to
+    the following conditions:
+
+    The above copyright notice and this permission notice shall be
+    included in all copies or substantial portions of the Software.
+
+    THE SOFTWARE IS PROVIDED 'AS IS', WITHOUT WARRANTY OF ANY KIND,
+    EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+    MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+    IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+    CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+    TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+    SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+- sources: readme.md
+  text: |-
+    [MIT][license] © [Titus Wormer][author]
+
+    <!-- Definitions -->
+
+    [build-badge]: https://github.com/micromark/micromark-extension-gfm/workflows/main/badge.svg
+
+    [build]: https://github.com/micromark/micromark-extension-gfm/actions
+
+    [coverage-badge]: https://img.shields.io/codecov/c/github/micromark/micromark-extension-gfm.svg
+
+    [coverage]: https://codecov.io/github/micromark/micromark-extension-gfm
+
+    [downloads-badge]: https://img.shields.io/npm/dm/micromark-extension-gfm.svg
+
+    [downloads]: https://www.npmjs.com/package/micromark-extension-gfm
+
+    [size-badge]: https://img.shields.io/bundlephobia/minzip/micromark-extension-gfm.svg
+
+    [size]: https://bundlephobia.com/result?p=micromark-extension-gfm
+
+    [sponsors-badge]: https://opencollective.com/unified/sponsors/badge.svg
+
+    [backers-badge]: https://opencollective.com/unified/backers/badge.svg
+
+    [collective]: https://opencollective.com/unified
+
+    [chat-badge]: https://img.shields.io/badge/chat-discussions-success.svg
+
+    [chat]: https://github.com/micromark/micromark/discussions
+
+    [npm]: https://docs.npmjs.com/cli/install
+
+    [esmsh]: https://esm.sh
+
+    [license]: license
+
+    [author]: https://wooorm.com
+
+    [contributing]: https://github.com/micromark/.github/blob/main/contributing.md
+
+    [support]: https://github.com/micromark/.github/blob/main/support.md
+
+    [coc]: https://github.com/micromark/.github/blob/main/code-of-conduct.md
+
+    [esm]: https://gist.github.com/sindresorhus/a39789f98801d908bbc7ff3ecc99d99c
+
+    [development]: https://nodejs.org/api/packages.html#packages_resolving_user_conditions
+
+    [typescript]: https://www.typescriptlang.org
+
+    [gfm]: https://github.github.com/gfm/
+
+    [strikethrough]: https://github.github.com/gfm/#strikethrough-extension-
+
+    [tables]: https://github.github.com/gfm/#tables-extension-
+
+    [tasklists]: https://github.github.com/gfm/#task-list-items-extension-
+
+    [autolink literals]: https://github.github.com/gfm/#autolinks-extension-
+
+    [tagfilter]: https://github.github.com/gfm/#disallowed-raw-html-extension-
+
+    [footnotes]: https://github.blog/changelog/2021-09-30-footnotes-now-supported-in-markdown-fields/
+
+    [micromark]: https://github.com/micromark/micromark
+
+    [micromark-extension]: https://github.com/micromark/micromark#syntaxextension
+
+    [micromark-html-extension]: https://github.com/micromark/micromark#htmlextension
+
+    [gfm-strikethrough]: https://github.com/micromark/micromark-extension-gfm-strikethrough
+
+    [gfm-strikethrough-options]: https://github.com/micromark/micromark-extension-gfm-strikethrough#options
+
+    [gfm-autolink-literal]: https://github.com/micromark/micromark-extension-gfm-autolink-literal
+
+    [gfm-footnote]: https://github.com/micromark/micromark-extension-gfm-footnote
+
+    [gfm-footnote-html-options]: https://github.com/micromark/micromark-extension-gfm-footnote#htmloptions
+
+    [gfm-table]: https://github.com/micromark/micromark-extension-gfm-table
+
+    [gfm-tagfilter]: https://github.com/micromark/micromark-extension-gfm-tagfilter
+
+    [gfm-task-list-item]: https://github.com/micromark/micromark-extension-gfm-task-list-item
+
+    [remark-gfm]: https://github.com/remarkjs/remark-gfm
+
+    [mdast-util-gfm]: https://github.com/syntax-tree/mdast-util-gfm
+
+    [api-gfm]: #gfmoptions
+
+    [api-gfm-html]: #gfmhtmloptions
+
+    [api-options]: #options
+
+    [api-html-options]: #htmloptions
+notices: []

@@ -1,0 +1,43 @@
+{
+    "react functional component": {
+		"scope": "javascript,typescript,javascriptreact,typescriptreact",
+		"prefix": "reactfunctional",
+		"body": [
+			"interface ${TM_FILENAME_BASE/(.*)/${1:/pascalcase}/g}Props {}",
+			"",
+			"const ${TM_FILENAME_BASE/(.*)/${1:/pascalcase}/g}: React.FC<${TM_FILENAME_BASE/(.*)/${1:/pascalcase}/g}Props> = (props: ${TM_FILENAME_BASE/(.*)/${1:/pascalcase}/g}Props) => {",
+			"\tconst { ..._ } = props",
+			"",
+			"\treturn <></>",
+			"}",
+			"",
+			"export default ${TM_FILENAME_BASE/(.*)/${1:/pascalcase}/g}"
+		],
+		"description": "react functional component with props"
+	},
+    "import scss module": {
+		"scope": "javascript,typescript,javascriptreact,typescriptreact",
+		"prefix": "importscssmodule",
+		"body": [
+			"import styles from './${TM_FILENAME_BASE/(^[A-Z][a-z]*|[a-z])([A-Z])?/${1:/downcase}${2:+-}${2:/downcase}/g}.module.scss'",
+		],
+		"description": "to import a scss module"
+	},
+	"local messages": {
+		"scope": "javascript,typescript,javascriptreact,typescriptreact",
+		"prefix": "localmessages",
+		"body": [
+			"const messages = defineMessages({ message: { id: '', defaultMessage: 'default', description: 'description' } })",
+		],
+	},
+	"file function": {
+		"scope": "javascript,typescript,javascriptreact,typescriptreact",
+		"prefix": "filefunction",
+		"body": [
+			"type ${TM_FILENAME_BASE/(.*)/${1:/pascalcase}/g} = () => any",
+			"",
+			"export function ${TM_FILENAME_BASE/(.*)/${1:/camelcase}/g}(): ReturnType<${TM_FILENAME_BASE/(.*)/${1:/pascalcase}/g}> {}",
+		],
+		"description": "to import a scss module"
+	}
+}

@@ -1,0 +1,17 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+      {
+        "label": "Start editor",
+        "type": "shell",
+        "command": "yarn start-editor",
+        "group": "build",
+        "presentation": {
+          "reveal": "always",
+          "panel": "new",
+          "clear": false
+        }
+      }
+    ]
+  }
+  
