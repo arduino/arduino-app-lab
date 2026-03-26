@@ -15,8 +15,14 @@ export let setEILatencyDevice: EdgeImpulseService['setEILatencyDevice'] =
     throw new Error('setEILatencyDevice service not implemented');
   };
 
+export let isEIDeploymentOutdated: EdgeImpulseService['isEIDeploymentOutdated'] =
+  async function () {
+    throw new Error('isDeplo service not implemented');
+  };
+
 export const setEdgeImpulseService = (service: EdgeImpulseService): void => {
   getEIProjects = service.getEIProjects;
   getEIProjectAPIKey = service.getEIProjectAPIKey;
   setEILatencyDevice = service.setEILatencyDevice;
+  isEIDeploymentOutdated = service.isEIDeploymentOutdated;
 };

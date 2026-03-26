@@ -47,6 +47,7 @@ export const Flasher: React.FC<FlasherProps> = ({
       ? FlashBoardStep.Flashing
       : FlashBoardStep.Preparation;
   }, [flashEvent]);
+  const disabled = useMemo(() => step === FlashBoardStep.Flashing, [step]);
 
   const {
     loading,
@@ -58,6 +59,8 @@ export const Flasher: React.FC<FlasherProps> = ({
     getUserPartitionPreservationSupported,
     flashBoard,
     openArduinoSupport,
+    clearBoardAsUsed,
+    flashingBoard,
   } = useFlasherLogic(selectBoard);
 
   const handleFlash = useCallback(
@@ -67,6 +70,9 @@ export const Flasher: React.FC<FlasherProps> = ({
           setFlashEvent(event);
           if (event.step === 'flashing' && event.log === 'completed') {
             setSucceeded(true);
+            // Clear the board as used when flash is completed successfully
+            // Note: flashingBoard comes from useFlasherLogic and contains the current board info
+            clearBoardAsUsed(flashingBoard.serial);
           }
         });
         setSucceeded(true);
@@ -80,7 +86,13 @@ export const Flasher: React.FC<FlasherProps> = ({
         setSucceeded(false);
       }
     },
-    [flashBoard, formatMessage, setSucceeded],
+    [
+      flashBoard,
+      setSucceeded,
+      clearBoardAsUsed,
+      flashingBoard.serial,
+      formatMessage,
+    ],
   );
 
   const handleRetry = useCallback((): void => {
@@ -138,7 +150,7 @@ export const Flasher: React.FC<FlasherProps> = ({
           type={ButtonType.Secondary}
           variant={ButtonVariant.LowContrast}
           Icon={Exit}
-          disabled={flashEvent !== null}
+          disabled={disabled}
           onClick={close}
         >
           {formatMessage(messages.exitButton)}

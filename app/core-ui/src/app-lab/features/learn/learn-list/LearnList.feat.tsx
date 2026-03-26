@@ -1,7 +1,7 @@
 import { NavigationGroup } from '@cloud-editor-mono/images/assets/icons';
 import {
-  AppLabTopBar,
   LearnItem as Card,
+  TopBar,
   useI18n,
 } from '@cloud-editor-mono/ui-components/lib/components-by-app/app-lab';
 import { Link } from '@tanstack/react-router';
@@ -17,7 +17,7 @@ const LearnList: React.FC = () => {
 
   return (
     <section className={styles['main']}>
-      <AppLabTopBar pathItems={['learn']} />
+      <TopBar pathItems={['learn']} />
       {!learnListLoading && learnList.length === 0 ? (
         <div className={styles['empty-learn-list']}>
           <div className={styles['empty-learn-list-icon']}>

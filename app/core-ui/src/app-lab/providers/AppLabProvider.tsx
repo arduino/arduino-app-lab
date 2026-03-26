@@ -13,6 +13,7 @@ import LinuxCredentialsContextProvider from './linux-credentials/LinuxCredential
 import NetworkContextProvider from './network/NetworkContextProvider';
 import RuntimeContextProvider from './runtime/runtimeContextProvider';
 import SetupContextProvider from './setup/SetupContextProvider';
+import UpdaterContextProvider from './updater/UpdaterContextProvider';
 
 interface AppLabProviderProps {
   children?: React.ReactNode;
@@ -35,10 +36,12 @@ const AppLabProvider: React.FC<AppLabProviderProps> = (
                     <LinuxCredentialsContextProvider>
                       <EdgeImpulseModelsContextProvider>
                         <RuntimeContextProvider>
-                          <ThemeProvider>
-                            <SnackbarProvider />
-                            <HelmetProvider>{children}</HelmetProvider>
-                          </ThemeProvider>
+                          <UpdaterContextProvider>
+                            <ThemeProvider>
+                              <SnackbarProvider />
+                              <HelmetProvider>{children}</HelmetProvider>
+                            </ThemeProvider>
+                          </UpdaterContextProvider>
                         </RuntimeContextProvider>
                       </EdgeImpulseModelsContextProvider>
                     </LinuxCredentialsContextProvider>

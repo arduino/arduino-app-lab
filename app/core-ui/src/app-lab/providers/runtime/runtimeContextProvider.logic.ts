@@ -11,8 +11,8 @@ import {
   MessageData,
 } from '@cloud-editor-mono/infrastructure';
 import {
-  AppLabAction,
-  AppLabActionStatus,
+  Action,
+  ActionStatus,
   CONSOLE_SOURCE_KEYS,
 } from '@cloud-editor-mono/ui-components/lib/components-by-app/app-lab';
 import { useCallback, useMemo, useState } from 'react';
@@ -20,7 +20,8 @@ import { useCallback, useMemo, useState } from 'react';
 import { useAppSSE } from '../../features/app/app-detail/hooks/useAppSSE';
 import { useConsoleSources } from '../../features/app/app-detail/hooks/useConsoleSources';
 import { useCurrentAction } from '../../features/app/app-detail/hooks/useCurrentAction';
-import { useBoardLifecycleStore } from '../../store/boards/boards';
+import { sendAppLabNotification } from '../../features/notifications';
+import { useBoardLifecycleStore } from '../../store/boardLifecycle';
 import useAppsStatus from './hooks/useAppsStatus';
 import { RuntimeContextValue } from './runtimeContext';
 import { UseRuntimeLogic } from './runtimeContextProvider.type';
@@ -52,15 +53,24 @@ export const useRuntimeLogic: UseRuntimeLogic =
     const { defaultApp, runningApp, failedApp } = useAppsStatus();
 
     //On startup success if called after start/stop actions succeeded.
-    const onStartupSuccess = useCallback(async (): Promise<void> => {
-      appendData(CONSOLE_SOURCE_KEYS.STARTUP, undefined, undefined, {
-        className: 'success',
-        isGlobalStyle: true,
-      });
-      sendCurrentAction({
-        type: 'ACTION_SUCCEEDED',
-      });
-    }, [appendData, sendCurrentAction]);
+    const onStartupSuccess = useCallback(
+      async (param?: { isStopped: boolean }): Promise<void> => {
+        appendData(CONSOLE_SOURCE_KEYS.STARTUP, undefined, undefined, {
+          className: 'success',
+          isGlobalStyle: true,
+        });
+        sendCurrentAction({
+          type: 'ACTION_SUCCEEDED',
+        });
+        sendAppLabNotification({
+          message: param?.isStopped
+            ? `${activeApp?.name ?? ''} has been stopped`
+            : `${activeApp?.name ?? ''} is now running`,
+          variant: 'success',
+        });
+      },
+      [activeApp?.name, appendData, sendCurrentAction],
+    );
 
     //On startup success if called after start/stop actions fail.
     const onStartupError = useCallback(
@@ -82,7 +92,10 @@ export const useRuntimeLogic: UseRuntimeLogic =
       [appendData],
     );
 
-    const { selectedConnectedBoard: selectedBoard } = useBoardLifecycleStore();
+    const selectedBoard = useBoardLifecycleStore(
+      (state) => state.selectedConnectedBoard,
+    );
+
     const openUIIfAvailable = useCallback(
       async (app: AppDetailedInfo): Promise<void> => {
         // Temp. work-around for video streaming in examples via port `4912`,
@@ -154,13 +167,13 @@ export const useRuntimeLogic: UseRuntimeLogic =
         sendCurrentAction({
           type: 'ACTION_REQUESTED',
           payload: {
-            currentAction: AppLabAction.Run,
+            currentAction: Action.Run,
           },
         });
         startAppStream(activeApp.id);
         openUIIfAvailable(activeApp);
       } else {
-        onStartupSuccess();
+        onStartupSuccess({ isStopped: true });
       }
 
       setIsSwapping(false);
@@ -231,7 +244,7 @@ export const useRuntimeLogic: UseRuntimeLogic =
         sendCurrentAction({
           type: 'ACTION_REQUESTED',
           payload: {
-            currentAction: AppLabAction.Run,
+            currentAction: Action.Run,
           },
         });
 
@@ -261,14 +274,14 @@ export const useRuntimeLogic: UseRuntimeLogic =
 
         //Aborting the previous action
         if (
-          currentActionStatus === AppLabActionStatus.Pending &&
+          currentActionStatus === ActionStatus.Pending &&
           app.status !== 'running'
         ) {
           startAppAbort();
           sendCurrentAction({
             type: 'ACTION_SUCCEEDED',
             payload: {
-              currentAction: AppLabAction.Stop,
+              currentAction: Action.Stop,
             },
           });
           return;
@@ -277,7 +290,7 @@ export const useRuntimeLogic: UseRuntimeLogic =
         sendCurrentAction({
           type: 'ACTION_REQUESTED',
           payload: {
-            currentAction: AppLabAction.Stop,
+            currentAction: Action.Stop,
           },
         });
 
@@ -308,7 +321,7 @@ export const useRuntimeLogic: UseRuntimeLogic =
         sendCurrentAction({
           type: 'ACTION_REQUESTED',
           payload: {
-            currentAction: AppLabAction.Stop,
+            currentAction: Action.Stop,
           },
         });
 

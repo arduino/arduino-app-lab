@@ -1,0 +1,104 @@
+#message-dialog-container {
+    background-color: rgba(0, 0, 0, .8);
+    z-index: 9999999;
+    position: relative;    
+}
+
+.message-dialog {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 50vw;
+  height: 50vh;
+  backdrop-filter: brightness(0.9);
+  border: 1px solid transparent;
+  background-color: black;
+  color: white;
+  padding: 0;
+
+  animation: .25s cubic-bezier(0,0,.4,1);
+  border-radius: 16px;
+  background: var(--surface-bg-baseline, #232b2e);
+  color: var(--text-default, #fff);
+  box-sizing: border-box;
+  gap: 36px;
+  font-family: Open Sans,sans-serif;
+}
+
+.message-dialog::backdrop {
+  background-color: rgba(10, 10, 10, 0.9);
+}
+
+.message-dialog-header {
+  padding: 8px 16px;
+  font-size: 16px;
+  font-weight: 600;
+  height: 40px;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border-default, #434f54);
+  box-sizing: border-box; 
+}
+
+.message-dialog-content {
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+  height: calc(100% - 120px);
+  overflow-x: hidden;
+  overflow-y: auto;  
+}
+
+.message-dialog-footer {
+  position: fixed;
+  left: -40px;
+  bottom: 0;
+  height: 20px;
+  text-align: right;
+  width: 100%;
+  padding: 10px 20px;
+  font-size: 12px;
+  border-top: 1px solid var(--border-default, #434f54);
+  color: var(--border-default, #434f54)
+}
+
+.close-button {
+  background: none !important;
+  border: none;
+  /*input has OS specific font-family*/
+  color: var(--component-bg-accent-strong, #7fcbcd) !important;;
+  cursor: pointer;  
+  font-weight: 600;
+  font-size: inherit;
+}
+
+.close-button:hover {
+  text-decoration: underline;
+}
+
+.close-button:focus-visible {
+  outline: none;
+}
+
+.message-dialog-content a {
+    color: var(--text-accent, #25c2c7);
+}
+
+.message-dialog-content strong > a {
+    color: var(--text-accent, #25c2c7);
+    background-color: var(--component-bg-selected, rgba(37, 194, 199, 0.2));
+    border-radius: 8px;
+    padding: 7px 12px !important;
+    height: 36px !important;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    border: 2px solid transparent;
+    transition: all 0.1s;    
+    width: fit-content;
+    text-decoration: none;
+}

@@ -1,4 +1,3 @@
-import { renderHook, waitFor } from '@bcmi-labs/cloud-editor-test';
 import * as domain from '@cloud-editor-mono/domain';
 import {
   CreateSketch_Response,
@@ -7,6 +6,7 @@ import {
   PostSketchFile_Response,
 } from '@cloud-editor-mono/infrastructure';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { renderHook, waitFor } from '@testing-library/react';
 
 import {
   BatchFile,

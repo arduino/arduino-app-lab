@@ -9,4 +9,6 @@ const externalDependencies = pkg.peerDependencies
   ? Object.keys(pkg.peerDependencies)
   : [];
 
-export default defineConfig(libConfig('images', externalDependencies));
+export default defineConfig(
+  libConfig({ exportName: 'images', externalDependencies }),
+);

@@ -47,7 +47,6 @@ export interface EdgeImpulseClientOptions {
 }
 
 export class EdgeImpulseClient {
-  private state: string;
   private studioHost: string;
 
   private cache: BackendAuthCache;
@@ -63,9 +62,9 @@ export class EdgeImpulseClient {
   private _subscribers: Array<() => void> = [];
   private tokenCache: OAuthToken | null = null;
   private tokenExpiresAt: number = 0;
+  private refreshPromise: Promise<string> | null = null;
 
   constructor(options: EdgeImpulseClientOptions) {
-    this.state = this.generateRandomStateString(16);
     this.studioHost = Config.EI_STUDIO_HOST;
 
     this.cache =
@@ -203,7 +202,12 @@ export class EdgeImpulseClient {
     this.tokenCache = token;
     this.tokenExpiresAt = Date.now() + token.expires_in * 1000 - 60000;
 
-    await this.cache.set(EI_STORAGE_KEYS.TOKENS, token);
+    const tokenToSave = {
+      ...token,
+      expiresAt: this.tokenExpiresAt,
+    };
+
+    await this.cache.set(EI_STORAGE_KEYS.TOKENS, tokenToSave);
 
     const user = await this.fetchUserInfo(token.access_token);
 
@@ -217,6 +221,8 @@ export class EdgeImpulseClient {
     const tokens = await this.cache.get(EI_STORAGE_KEYS.TOKENS);
     if (tokens) {
       this.tokenCache = tokens;
+
+      this.tokenExpiresAt = tokens.expiresAt || 0;
 
       try {
         const accessToken = await this.getTokenSilently();
@@ -241,17 +247,24 @@ export class EdgeImpulseClient {
       !this.tokenCache.access_token ||
       (this.tokenExpiresAt > 0 && now > this.tokenExpiresAt);
 
-    if (isExpired && this.tokenCache.refresh_token) {
-      try {
-        const newTokens = await this.refreshToken(
-          this.tokenCache.refresh_token,
-        );
-        await this.setSession(newTokens);
-        return newTokens.access_token;
-      } catch (error) {
-        await this.logout();
-        throw error;
+    const currentRefreshToken = this.tokenCache.refresh_token;
+
+    if (isExpired && currentRefreshToken) {
+      if (!this.refreshPromise) {
+        this.refreshPromise = (async (): Promise<string> => {
+          try {
+            const newTokens = await this.refreshToken(currentRefreshToken);
+            await this.setSession(newTokens);
+            return newTokens.access_token;
+          } catch (error) {
+            await this.logout();
+            throw error;
+          } finally {
+            this.refreshPromise = null;
+          }
+        })();
       }
+      return this.refreshPromise;
     }
 
     if (!this.tokenCache.access_token)

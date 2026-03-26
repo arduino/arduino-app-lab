@@ -35,7 +35,11 @@ interface FileTreeProps {
   selectedFileChange: (node: TreeNode) => void;
   renderNodeIcon: (node: TreeNode) => JSX.Element;
   onFileCreate: (path: string) => Promise<void>;
-  onFileRename: (path: string, newName: string) => Promise<void>;
+  onFileRename: (
+    path: string,
+    newName: string,
+    nodeType?: TreeNode['type'],
+  ) => Promise<void>;
   onFileDelete: (path: string) => Promise<void>;
   onFolderCreate: (path: string) => Promise<void>;
   isBricksSelected: boolean;
@@ -74,8 +78,12 @@ const FileTree = forwardRef<FileTreeApi, FileTreeProps>((props, ref) => {
     if (!treeApiRef.current || !selectedNode) {
       return;
     }
-    scrollToNode(selectedNode.path);
+
     treeApiRef.current.openParents(selectedNode.path);
+
+    setTimeout(() => {
+      scrollToNode(selectedNode.path);
+    }, 100);
   }, [selectedNode]);
 
   const data = useMemo(() => {
@@ -127,6 +135,9 @@ const FileTree = forwardRef<FileTreeApi, FileTreeProps>((props, ref) => {
       });
 
       scrollToNode(`${createAtPath}/${TEMP_CREATED_NODE_NAME}`);
+      if (treeApiRef.current && createAtPath) {
+        treeApiRef.current.openParents(createAtPath);
+      }
     },
     [],
   );
@@ -174,7 +185,10 @@ const FileTree = forwardRef<FileTreeApi, FileTreeProps>((props, ref) => {
             setIsCreating(null);
           }
           if (isEditingAt !== null) {
-            await onFileRename(isEditingAt, newName);
+            // Use treeApi to find the node in the complete tree (need this to nested folders)
+            const foundNode = treeApiRef.current?.get(isEditingAt);
+            const nodeType = foundNode?.data?.type ?? 'file';
+            await onFileRename(isEditingAt, newName, nodeType);
             setIsEditingAt(null);
           }
         }}

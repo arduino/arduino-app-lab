@@ -10,10 +10,10 @@ import { FileNode, FolderNode, TreeNode } from './fileTree.type';
  * so folders must show the context menu, with "add new..." items
  */
 export const mustHideContextMenu = (
-  isProjectReadonly: boolean,
+  isProjectReadOnly: boolean,
   node: TreeNode,
 ): boolean => {
-  if (isProjectReadonly) {
+  if (isProjectReadOnly) {
     return true;
   }
   if (isFileNode(node)) {
@@ -31,18 +31,37 @@ export const isFolderNode = (node: TreeNode): node is FolderNode => {
 };
 
 export const canBeRenamed = (node: TreeNode): boolean => {
-  return canEditNode(node);
+  if (isFileNode(node)) {
+    return canEditNode(node);
+  } else if (isFolderNode(node)) {
+    // Enable rename for user-created folders - backend now has extended support
+    const isSketchFolder = node.path === 'sketch';
+    const isMainPythonFolder = node.path === 'python';
+    return !isMainPythonFolder && !isSketchFolder;
+  }
+  return false;
 };
 
 export const canBeDeleted = (node: TreeNode): boolean => {
-  return canEditNode(node);
+  if (isFileNode(node)) {
+    return canEditNode(node);
+  } else if (isFolderNode(node)) {
+    // Enable delete for user-created folders - same logic as canBeRenamed
+    const isSketchFolder = node.path === 'sketch';
+    const isMainPythonFolder = node.path === 'python';
+    return !isMainPythonFolder && !isSketchFolder;
+  }
+  return false;
 };
 
 export const canEditNode = (node: TreeNode): boolean => {
   if (isFileNode(node)) {
     return canEditFile(node);
   } else if (isFolderNode(node)) {
-    return canEditFolder(node);
+    // Enable editing for user-created folders
+    const isSketchFolder = node.path === 'sketch';
+    const isMainPythonFolder = node.path === 'python';
+    return !isMainPythonFolder && !isSketchFolder;
   }
   return false;
 };
@@ -53,22 +72,6 @@ export const canEditFile = (node: FileNode): boolean => {
   const isMainPy = /^python\/main.py$/.test(node.path);
 
   return !isMainPy && !isAppYaml && !isSketchYaml;
-};
-
-const canEditFolder = (_node: FolderNode): boolean => {
-  // const isSketchFolder = node.path === 'sketch';
-  // const isMainPythonFolder = node.path === 'python';
-
-  // return !isMainPythonFolder && !isSketchFolder;
-  return false;
-};
-
-export const countAllNodes = (nodes?: TreeNode[]): number => {
-  if (!nodes) {
-    return 0;
-  }
-
-  return nodes.reduce((total, node) => total + countNodes(node), 0);
 };
 
 export const countNodes = (node?: TreeNode): number => {

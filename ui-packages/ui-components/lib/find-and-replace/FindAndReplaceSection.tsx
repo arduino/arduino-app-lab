@@ -45,18 +45,18 @@ const FindAndReplaceSection: React.FC<FindAndReplaceProps> = (
         [styles['has-header']]: hasHeader,
       })}
     >
-      <div className={styles['row']}>
-        <IconButton
-          title={isReplacing ? 'Close replace panel' : 'Open replace panel'}
-          label={isReplacing ? 'Close replace panel' : 'Open replace panel'}
-          onPress={handleToggle}
-          classes={{
-            button: clsx(styles['toggle-replace'], {
-              [styles['active']]: isReplacing,
-            }),
-          }}
-          Icon={ChevronRightNoPad}
-        />
+      <IconButton
+        title={isReplacing ? 'Close replace panel' : 'Open replace panel'}
+        label={isReplacing ? 'Close replace panel' : 'Open replace panel'}
+        onPress={handleToggle}
+        classes={{
+          button: clsx(styles['toggle-replace'], {
+            [styles['active']]: isReplacing,
+          }),
+        }}
+        Icon={ChevronRightNoPad}
+      />
+      <div>
         <FindSection
           view={view}
           loading={loading}
@@ -67,24 +67,24 @@ const FindAndReplaceSection: React.FC<FindAndReplaceProps> = (
           selectNextMatch={selectNextMatch}
           selectPrevMatch={selectPrevMatch}
         />
-        <IconButton
-          title="Close"
-          label="Close"
-          onPress={(): boolean => cmCloseSearchPanel(view)}
-          classes={{
-            button: styles['close'],
-          }}
-          Icon={CloseX}
-        />
+        {isReplacing ? (
+          <ReplaceSection
+            view={view}
+            searchState={searchState}
+            totalOccurrences={totalOccurrences}
+            selectNextMatch={selectNextMatch}
+          />
+        ) : null}
       </div>
-      {isReplacing ? (
-        <ReplaceSection
-          view={view}
-          searchState={searchState}
-          totalOccurrences={totalOccurrences}
-          selectNextMatch={selectNextMatch}
-        />
-      ) : null}
+      <IconButton
+        title="Close"
+        label="Close"
+        onPress={(): boolean => cmCloseSearchPanel(view)}
+        classes={{
+          button: styles['close'],
+        }}
+        Icon={CloseX}
+      />
     </section>
   );
 };

@@ -8,7 +8,7 @@ const { TanStackRouterVite } = require('@tanstack/router-plugin/vite');
 
 const DEFAULT_ENV_DIR = '../../app/common/cloud-editor-standalone-config';
 
-function libConfig(
+function libConfig({
   exportName,
   externalDependencies = [],
   plugins = [],
@@ -16,7 +16,7 @@ function libConfig(
   noUI = false,
   vitestSetupFiles = [],
   envDir,
-) {
+} = {}) {
   return ({ mode }) => {
     const { build: buildOptions, ...restOptions } = options;
 
@@ -83,7 +83,7 @@ function defaultChunking(id) {
   }
 }
 
-function appConfig(port, envDir, pathLevel, isWails) {
+function appConfig({ port, envDir, pathLevel, isWails } = {}) {
   return ({ mode }) => {
     const startPath = !pathLevel
       ? '../../'
@@ -197,6 +197,14 @@ function appConfig(port, envDir, pathLevel, isWails) {
       publicDir: `${startPath}ui-packages/images/public`,
       css: {
         devSourcemap: mode === 'development',
+      },
+      test: {
+        globals: true,
+        environment: 'jsdom',
+        setupFiles: ['../../dev-utils/dev-config/tests-setup.ts'],
+        watch: false,
+        cleanMocks: true,
+        css: true,
       },
     };
   };

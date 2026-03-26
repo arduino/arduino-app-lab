@@ -6,7 +6,7 @@ import { NodeRendererProps } from 'react-arborist';
 import { XXSmall } from '../typography';
 import styles from './file-tree.module.scss';
 import { TreeNode } from './fileTree.type';
-import { canEditNode, isFolderNode } from './utils';
+import { canEditNode } from './utils';
 
 type FileNodeProps = NodeRendererProps<TreeNode> & {
   isEditing: boolean;
@@ -34,7 +34,8 @@ const FileNode: React.FC<FileNodeProps> = ({
   const [value, setValue] = useState<string>(node.data.name);
 
   const preSubmit = useCallback((): void => {
-    if (value && value !== node.data.name) {
+    const isNewNode = node.data.name === '';
+    if (value && (isNewNode || value !== node.data.name)) {
       onEditSubmit(value);
     } else {
       onEditCancel();
@@ -43,8 +44,13 @@ const FileNode: React.FC<FileNodeProps> = ({
 
   useEffect(() => {
     if (isEditing && inputRef.current) {
-      inputRef.current.focus();
-      inputRef.current.select();
+      const timeoutId = setTimeout(() => {
+        if (inputRef.current) {
+          inputRef.current.focus();
+          inputRef.current.select();
+        }
+      }, 10);
+      return () => clearTimeout(timeoutId);
     }
   }, [isEditing]);
 
@@ -55,10 +61,6 @@ const FileNode: React.FC<FileNodeProps> = ({
       className={clsx(styles.node, node.state, styles['tree-node'])}
       onDoubleClick={async (e): Promise<void> => {
         if (isReadOnly || !canEditNode(node.data)) {
-          return;
-        }
-        if (isFolderNode(node.data)) {
-          // Temporary disable folder rename
           return;
         }
         e.stopPropagation();

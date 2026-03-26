@@ -19,14 +19,17 @@
         &.primary {
             $bg-color: var(--component-bg-accent, #25c2c7);
             $color: var(--text-inverted, #171e21);
-            $hover-color: var(--component-bg-accent-strong, #7fcbcd);
-            $focus-color: var(--border-selected, #005c5f);
+            $hover-bg-color: var(--component-bg-accent-strong, #7fcbcd);
+            $focus-color: var(--border-selected, #c8e9ea);
 
             color: $color;
+            svg path {
+                fill: $color;
+            }
             background-color: $bg-color;
 
             &:hover {
-                background-color: $hover-color;
+                background-color: $hover-bg-color;
             }
 
             &:focus {
@@ -42,14 +45,29 @@
         &.secondary {
             $bg-color: var(--component-bg-selected, rgba(37, 194, 199, 0.2));
             $color: var(--text-accent, #25c2c7);
-            $hover-color: var(--component-bg-hover, #aeb8b826);
-            $focus-color: var(--border-accent-strong, #7fcbcd);
+            $hover-bg-color:
+                linear-gradient(
+                    0deg,
+                    var(--component-bg-flexible, rgba(174, 184, 184, 0.15)) 0%,
+                    var(--component-bg-flexible, rgba(174, 184, 184, 0.15)) 100%
+                ),
+                var(--component-bg-selected, rgba(37, 194, 199, 0.2));
+
+            $focus-color: var(--border-selected, #c8e9ea);
 
             color: $color;
+            svg path {
+                fill: $color;
+            }
             background-color: $bg-color;
 
             &:hover {
-                background-color: $hover-color;
+                background: $hover-bg-color;
+                $hover-color: var(--text-accent-strong, #7fcbcd);
+                color: $hover-color;
+                svg path {
+                    fill: $hover-color;
+                }
             }
 
             &:focus {
@@ -64,15 +82,22 @@
 
         &.tertiary {
             $color: var(--text-accent, #25c2c7);
-            $hover-color: var(--component-bg-hover, rgba(37, 194, 199, 0.08));
-            $focus-color: var(--border-accent-strong, #7fcbcd);
+            $hover-bg-color: var(--component-bg-hover, rgba(37, 194, 199, 0.08));
+            $focus-color: var(--border-selected, #c8e9ea);
 
             color: $color;
+            svg path {
+                fill: $color;
+            }
             background-color: unset;
 
             &:hover {
-                background-color: $hover-color;
-                color: var(--text-accent-strong, #7fcbcd);
+                background-color: $hover-bg-color;
+                $hover-color: var(--text-accent-strong, #7fcbcd);
+                color: $hover-color;
+                svg path {
+                    fill: $hover-color;
+                }
             }
 
             &:focus {
@@ -90,14 +115,17 @@
         &.primary {
             $bg-color: var(--feedback-error-default, #ff8878);
             $color: var(--text-inverted, #171e21);
-            $hover-color: #ffbdb4;
-            $focus-color: var(--feedback-error-selected, #aa4335);
+            $hover-bg-color: var(--feedback-error-strong, #ffbdb4);
+            $focus-color: var(--feedback-error-default, #ff8878);
 
             color: $color;
+            svg path {
+                fill: $color;
+            }
             background-color: $bg-color;
 
             &:hover {
-                background-color: $hover-color;
+                background: $hover-bg-color;
             }
 
             &:focus {
@@ -111,22 +139,30 @@
         }
 
         &.secondary {
-            $bg-color: rgba(255, 136, 120, 0.15);
+            $bg-color: var(--feedback-error-flexible, rgba(255, 136, 120, 0.2));
             $color: var(--feedback-error-default, #ff8878);
-            $hover-color:
+            $hover-bg-color:
                 linear-gradient(
                     0deg,
                     var(--component-bg-flexible, rgba(174, 184, 184, 0.15)) 0%,
                     var(--component-bg-flexible, rgba(174, 184, 184, 0.15)) 100%
                 ),
                 rgba(255, 136, 120, 0.15);
-            $focus-color: var(--feedback-error-strong, #ffbdb4);
+            $focus-color: var(--feedback-error-default, #ff8878);
 
             color: $color;
+            svg path {
+                fill: $color;
+            }
             background-color: $bg-color;
 
             &:hover {
-                background-color: $hover-color;
+                background: $hover-bg-color;
+                $hover-color: var(--feedback-error-strong, #ffbdb4);
+                color: $hover-color;
+                svg path {
+                    fill: $hover-color;
+                }
             }
 
             &:focus {
@@ -141,15 +177,22 @@
 
         &.tertiary {
             $color: var(--feedback-error-default, #ff8878);
-            $hover-color: rgba(255, 136, 120, 0.15);
-            $focus-color: var(--feedback-error-strong, #ffbdb4);
+            $hover-bg-color: var(--feedback-error-flexible, rgba(255, 136, 120, 0.2));
+            $focus-color: var(--feedback-error-default, #ff8878);
 
             color: $color;
+            svg path {
+                fill: $color;
+            }
             background-color: unset;
 
             &:hover {
-                background-color: $hover-color;
-                color: var(--feedback-error-strong, #ffbdb4);
+                background-color: $hover-bg-color;
+                $hover-color: var(--feedback-error-strong, #ffbdb4);
+                color: $hover-color;
+                svg path {
+                    fill: $hover-color;
+                }
             }
 
             &:focus {
@@ -164,17 +207,58 @@
     }
 
     &.low-contrast {
-        &.secondary {
+        &.primary {
             $bg-color: var(--component-bg-above, #374146);
             $color: var(--text-default, #fff);
-            $hover-color: var(--component-bg-flexible, rgba(174, 184, 184, 0.15));
+            $hover-bg-color:
+                linear-gradient(
+                    0deg,
+                    var(--component-bg-flexible, rgba(174, 184, 184, 0.15)) 0%,
+                    var(--component-bg-flexible, rgba(174, 184, 184, 0.15)) 100%
+                ),
+                var(--component-bg-above, #374146);
             $focus-color: var(--border-strong, #7f8c8d);
 
             color: $color;
+            svg path {
+                fill: $color;
+            }
             background-color: $bg-color;
 
             &:hover {
-                background-color: $hover-color;
+                background: $hover-bg-color;
+            }
+
+            &:focus {
+                border: 2px solid $focus-color;
+                outline: unset;
+            }
+
+            .loader-spinner {
+                @include arduino-sass.spinner($color, $bg-color, 64px);
+            }
+        }
+
+        &.secondary {
+            $bg-color: var(--component-bg-flexible, rgba(174, 184, 184, 0.15));
+            $color: var(--text-default, #fff);
+            $hover-bg-color:
+                linear-gradient(
+                    0deg,
+                    var(--component-bg-flexible, rgba(174, 184, 184, 0.15)) 0%,
+                    var(--component-bg-flexible, rgba(174, 184, 184, 0.15)) 100%
+                ),
+                var(--component-bg-flexible, rgba(174, 184, 184, 0.15));
+            $focus-color: var(--border-strong, #7f8c8d);
+
+            color: $color;
+            svg path {
+                fill: $color;
+            }
+            background-color: $bg-color;
+
+            &:hover {
+                background: $hover-bg-color;
             }
 
             &:focus {
@@ -189,14 +273,17 @@
 
         &.tertiary {
             $color: var(--text-default, #fff);
-            $hover-color: var(--component-bg-flexible, rgba(174, 184, 184, 0.15));
+            $hover-bg-color: var(--component-bg-flexible, rgba(174, 184, 184, 0.15));
             $focus-color: var(--border-strong, #7f8c8d);
 
             color: $color;
+            svg path {
+                fill: $color;
+            }
             background-color: unset;
 
             &:hover {
-                background-color: $hover-color;
+                background-color: $hover-bg-color;
             }
 
             &:focus {

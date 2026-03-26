@@ -3,21 +3,21 @@ import {
   Success,
   TriangleSharpOutline,
 } from '@cloud-editor-mono/images/assets/icons';
-import clsx from 'clsx';
-import { useEffect, useRef, useState } from 'react';
-
-import MarkdownReader from '../../../app-lab-markdown-reader/MarkdownReader';
 import {
   Button,
   ButtonSize,
   ButtonType,
   ButtonVariant,
+  MarkdownReader,
   Medium,
   useI18n,
   XSmall,
   XXSmall,
   XXXSmall,
-} from '../../../components-by-app/app-lab';
+} from '@cloud-editor-mono/ui-components/lib/components-by-app/app-lab';
+import clsx from 'clsx';
+import { useEffect, useRef, useState } from 'react';
+
 import { AppLabDialog } from '../app-lab-dialog/AppLabDialog';
 import styles from './board-update-dialog.module.scss';
 import {
@@ -116,11 +116,16 @@ export const BoardUpdateDialog: React.FC<BoardUpdateDialogProps> = ({
                 <h3>{formatMessage(messages.checkingFailed)}</h3>
                 <span className={styles['checking-failed--description']}>
                   {formatMessage(messages.checkingFailedDescription)}{' '}
-                  <button onClick={openFlasherTool} className={styles['link']}>
+                  <button
+                    type="button"
+                    onClick={openFlasherTool}
+                    className={styles['link']}
+                  >
                     {formatMessage(messages.arduinoFlasherTool)}
                   </button>{' '}
                   {formatMessage(messages.orContact)}{' '}
                   <button
+                    type="button"
                     className={styles['link']}
                     onClick={openArduinoSupport}
                   >

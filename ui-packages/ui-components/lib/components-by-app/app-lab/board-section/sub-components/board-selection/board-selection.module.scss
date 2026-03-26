@@ -1,0 +1,153 @@
+@use "@cloud-editor-mono/arduino-sass/src/variables" as vars;
+@use "@cloud-editor-mono/arduino-sass/src/breakpoints" as bp;
+
+.container {
+    $color: #c9d2d2;
+
+    color: var(--text-subtle, $color);
+    font-size: 10px;
+    font-weight: 600;
+
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    svg {
+        path {
+            fill: var(--text-subtle, $color);
+        }
+    }
+}
+
+.selected-board {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+
+    .label {
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+
+        @include bp.breakpoint(vars.$breakpoint-2xl) {
+            max-width: 103px;
+        }
+
+        @include bp.breakpoint(vars.$breakpoint-md) {
+            max-width: 72px;
+        }
+    }
+
+    svg {
+        height: 15px;
+    }
+}
+
+.tooltip-container {
+    position: relative;
+}
+
+%tooltip-content {
+    background-color: #aeb8b8;
+    border-radius: 3px;
+    color: #171e21;
+    font-size: 12px;
+    font-weight: 400;
+    padding: 2px 8px;
+}
+
+.tooltip-content--label {
+    @extend %tooltip-content;
+    left: 0px;
+    bottom: 26px;
+}
+
+.inactive {
+    opacity: 0.6;
+}
+
+/* dropdown */
+
+.dropdown-menu-button-wrapper {
+    height: 28px;
+    width: 28px;
+}
+
+.dropdown-menu-button {
+    height: 28px;
+    width: 28px;
+    padding: 7px;
+    border-radius: 8px;
+
+    &:hover {
+        background: var(--component-bg-flexible, #aeb8b826);
+    }
+
+    &:focus {
+        outline: 2px solid var(--border-strong, #7f8c8d);
+    }
+
+    &-open {
+        outline: 2px solid var(--border-strong, #7f8c8d);
+
+        svg {
+            transform: rotate(180deg);
+        }
+    }
+}
+
+.dropdown-menu {
+    $background-color: #aeb8b826;
+
+    border-radius: 8px;
+    padding: 4px;
+
+    &-item {
+        height: 28px;
+        border-radius: 4px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+
+        &:hover {
+            background-color: $background-color;
+        }
+
+        &.is-selected {
+            background-color: $background-color;
+        }
+
+        & > span {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+
+            svg {
+                width: 16px;
+                height: 16px;
+            }
+        }
+
+        &-label-prefix {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+
+            &-text {
+                font-weight: 600;
+                max-width: 100px;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+        }
+    }
+}
+
+.tooltip-content--dropdown {
+    @extend %tooltip-content;
+    left: 24px;
+    bottom: 32px;
+}

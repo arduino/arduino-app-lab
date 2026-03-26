@@ -10,10 +10,14 @@ const externalDependencies = pkg.peerDependencies
   : [];
 
 export default defineConfig(
-  libConfig('infrastructure', externalDependencies, undefined, {
-    css: {
-      modules: {
-        hashPrefix: pkg.name,
+  libConfig({
+    exportName: 'infrastructure',
+    externalDependencies,
+    options: {
+      css: {
+        modules: {
+          hashPrefix: pkg.name,
+        },
       },
     },
   }),

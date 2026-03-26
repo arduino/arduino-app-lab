@@ -2,7 +2,8 @@ import { getApps } from '@cloud-editor-mono/domain/src/services/services-by-app/
 import { useQuery } from '@tanstack/react-query';
 import { useCallback, useState } from 'react';
 
-import { useBoardLifecycleStore } from '../../../store/boards/boards';
+import { useBoardLifecycleStore } from '../../../store/boardLifecycle';
+import { sendAppLabNotification } from '../../notifications';
 import { AppsSection } from '../app.type';
 import { UseAppListLogic } from './appList.type';
 import { ImportStatus } from './importAppDialog.type';
@@ -22,9 +23,12 @@ export const useAppListLogic = function (
   >();
   const [importedAppId, setImportedAppId] = useState<string | undefined>();
 
-  const { boardIsReachable } = useBoardLifecycleStore();
+  const boardIsReachable = useBoardLifecycleStore(
+    (state) => state.boardIsReachable,
+  );
+
   const { data: apps, isLoading: getAppsLoading } = useQuery(
-    ['list-my-apps'],
+    ['list-my-apps', section],
     () => {
       return getApps({
         query: { filter: section === 'my-apps' ? 'apps' : 'examples' },
@@ -61,6 +65,7 @@ export const useAppListLogic = function (
   return {
     apps: apps || [],
     isLoading: getAppsLoading,
+    sendNotification: sendAppLabNotification,
     openCreateAppDialog: handleOpenCreateAppDialog,
     openImportAppDialog: handleOpenImportAppDialog,
     createAppDialogLogic,

@@ -12,7 +12,6 @@ import {
   TreeNode,
 } from '@cloud-editor-mono/ui-components/lib/components-by-app/app-lab';
 
-import { EdgeImpulseModelsContextValue } from '../../../providers/edge-impulse-models/edgeImpulseModelsContext';
 import { EditorLogicParams } from '../../editor/editor.type';
 
 export interface UseAppDetailLogic {
@@ -37,7 +36,6 @@ export interface UseAppDetailLogic {
   openExternal: () => void;
   openExternalLink: (url: string) => void;
   addAppBrick: (brickId: string) => Promise<boolean>;
-  loadAppBrick: (brickId: string) => Promise<BrickInstance>;
   removeAppBrick: (brickId: string) => Promise<boolean>;
   updateAppBrick: (
     brickId: string,
@@ -47,9 +45,13 @@ export interface UseAppDetailLogic {
     bricks: Record<string, BrickCreateUpdateRequest>,
   ) => Promise<boolean>;
   editorLogicParams: EditorLogicParams;
-  edgeImpulseValue: EdgeImpulseModelsContextValue;
   addFileHandler: (path: string) => Promise<void>;
-  renameFileHandler: (path: string, newName: string) => Promise<void>;
+  renameFileHandler: (
+    path: string,
+    newName: string,
+    appendExt?: boolean,
+    nodeType?: 'file' | 'folder',
+  ) => Promise<void>;
   deleteFileHandler: (path: string) => Promise<void>;
   addSketchLibraryDialogLogic: AddSketchLibraryDialogLogic;
   openAddSketchLibraryDialog: () => void;

@@ -33,6 +33,7 @@ export const FlashBoardDialog: React.FC<FlashBoardDialogProps> = ({
       onOpenChange={onOpenChange}
       title={formatMessage(messages.title)}
       closeable={false}
+      onSubmit={confirmAction}
       footer={
         <>
           <Button
@@ -45,7 +46,9 @@ export const FlashBoardDialog: React.FC<FlashBoardDialogProps> = ({
           <Button
             type={ButtonType.Primary}
             uppercase={false}
-            onClick={confirmAction}
+            isSubmit
+            /* eslint-disable-next-line jsx-a11y/no-autofocus */
+            autoFocus
           >
             {formatMessage(messages.updateButton)}
           </Button>
@@ -61,7 +64,11 @@ export const FlashBoardDialog: React.FC<FlashBoardDialogProps> = ({
           {formatMessage(messages.description, {
             bold: (text: string) => <strong>{text}</strong>,
             link: (text: string) => (
-              <button className={styles['link']} onClick={openFlasherTutorial}>
+              <button
+                type="button"
+                className={styles['link']}
+                onClick={openFlasherTutorial}
+              >
                 {text}
               </button>
             ),

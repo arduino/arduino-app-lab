@@ -47,17 +47,6 @@ const FindSection: React.FC<FindSectionProps> = (props: FindSectionProps) => {
           }}
         />
         <div className={styles['find-filters']}>
-          {searchState.searchValue ? (
-            <span className={styles['find-filters-count']}>
-              {totalOccurrences
-                ? `${currentMatch} of ${totalOccurrences}`
-                : loading
-                ? `${currentMatch} of +99`
-                : formatMessage(messages.noResults)}
-            </span>
-          ) : (
-            ''
-          )}
           {FilterChips.map((filterChip) => (
             <IconButton
               key={filterChip.id}
@@ -74,6 +63,16 @@ const FindSection: React.FC<FindSectionProps> = (props: FindSectionProps) => {
           ))}
         </div>
       </div>
+      <span className={styles['find-filters-count']}>
+        {searchState.searchValue
+          ? totalOccurrences
+            ? `${currentMatch} of ${totalOccurrences}`
+            : loading
+            ? `${currentMatch} of +99`
+            : formatMessage(messages.noResults)
+          : formatMessage(messages.noResults)}
+      </span>
+
       <div className={styles['actions-first']}>
         <IconButton
           title="Previous"

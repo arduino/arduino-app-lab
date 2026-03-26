@@ -7,8 +7,6 @@ import {
   ButtonSize,
   ButtonType,
   ButtonVariant,
-  UseArduinoAccountLogic,
-  UseEdgeImpulseAccountLogic,
   useI18n,
 } from '../../../components-by-app/app-lab';
 import { AppLabDialog } from '../app-lab-dialog/AppLabDialog';
@@ -17,41 +15,39 @@ import ConnectionPanel from './sub-components/ConnectionPanel';
 import WelcomePanel from './sub-components/WelcomePanel';
 import styles from './train-new-model-dialog.module.scss';
 
-type TrainNewModelDialogProps = {
-  arduinoAuthAccountLogic: UseArduinoAccountLogic;
-  edgeImpulseAuthAccountLogic: UseEdgeImpulseAccountLogic;
+export type TrainNewModelDialogLogic = () => {
+  isArduinoConnected: boolean;
+  isEdgeImpulseConnected: boolean;
+  isWelcomePageDismissed: boolean;
+  dismissWelcomePage: () => void;
+  arduinoLogin: () => Promise<void>;
+  edgeImpulseLogin: () => Promise<void>;
+  openEdgeImpulse: () => void;
+};
+
+export type TrainNewModelDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  openAndAssociateToDevice?: () => void;
+  logic: TrainNewModelDialogLogic;
 };
 
 export const TrainNewModelDialog: React.FC<TrainNewModelDialogProps> = (
   props: TrainNewModelDialogProps,
 ) => {
+  const { open, onOpenChange, logic } = props;
   const {
-    arduinoAuthAccountLogic,
-    edgeImpulseAuthAccountLogic,
-    open,
-    onOpenChange,
-    openAndAssociateToDevice,
-  } = props;
+    isArduinoConnected,
+    isEdgeImpulseConnected,
+    isWelcomePageDismissed,
+    dismissWelcomePage,
+    arduinoLogin,
+    edgeImpulseLogin,
+    openEdgeImpulse,
+  } = logic();
 
   const { formatMessage } = useI18n();
 
-  const {
-    login: arduinoLogin,
-    user: arduinoUser,
-    isWelcomePageDismissed,
-    dismissWelcomePage,
-  } = arduinoAuthAccountLogic();
-
-  const { login: edgeImpulseLogin, user: edgeImpulseUser } =
-    edgeImpulseAuthAccountLogic();
-
   const [showWelcomePage, setShowWelcomePage] = useState(true);
-
-  const isArduinoConnected = !!arduinoUser;
-  const isEdgeImpulseConnected = !!edgeImpulseUser;
   const shouldShowWelcome = !isWelcomePageDismissed && showWelcomePage;
 
   const handleStartWelcome = useCallback(
@@ -65,9 +61,9 @@ export const TrainNewModelDialog: React.FC<TrainNewModelDialogProps> = (
   );
 
   const handleOpenEdgeImpulse = useCallback(() => {
-    openAndAssociateToDevice && openAndAssociateToDevice();
+    openEdgeImpulse();
     onOpenChange(false);
-  }, [onOpenChange, openAndAssociateToDevice]);
+  }, [onOpenChange, openEdgeImpulse]);
 
   return (
     <AppLabDialog

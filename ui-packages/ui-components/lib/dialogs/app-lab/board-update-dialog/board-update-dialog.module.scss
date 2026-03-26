@@ -3,7 +3,7 @@
   border-top: none;
   height: 320px;
   gap: 0;
-  
+
   &:not(.checking) {
     height: 580px;
     width: 720px;
@@ -190,7 +190,7 @@
   }
 
   .update-logs {
-    background: var(--surface-bg-below-1, #171e21);
+    background: var(--surface-bg-below-2, #090f11);
     border: 1px solid var(--border-default, #434f54);
     border-bottom: none;
     border-radius: 8px 8px 0 0;
@@ -235,7 +235,7 @@
 
       &.expanded {
         border-top: none;
-        
+
         .infinite-indicator {
           margin: 0 -8px;
           width: calc(100% + 16px);
@@ -252,7 +252,7 @@
         .indicator {
           width: 30%;
           height: 100%;
-          background-color: #25C2C7;
+          background-color: #25c2c7;
           position: absolute;
           left: -30%;
           animation: slide 1s linear infinite;

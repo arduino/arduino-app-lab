@@ -13,7 +13,6 @@ export interface FlashEvent {
 
 export interface FlasherService {
   boardNeedsOSUpdate: () => Promise<boolean>;
-  getOSImageVersion(): Promise<string>;
   getAvailableFreeSpace(): Promise<number>;
   isUserPartitionPreservationSupported(
     targetImageVersion: string,

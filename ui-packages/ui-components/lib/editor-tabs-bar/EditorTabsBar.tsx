@@ -152,14 +152,29 @@ const EditorTabsBar: React.FC<EditorTabsBarProps> = (
     }
   }, [newTabMenuAction, dispatchNewFileAction, setDispatchNewFileAction]);
 
-  const handleDragEnd = ({ active, over }: DragEndEvent): void => {
-    const prevIndex = active.data.current?.sortable.index;
-    const newIndex = over?.data.current?.sortable.index;
-    if (prevIndex !== newIndex) {
-      const newTabList = arrayMove(tabs, prevIndex, newIndex);
-      updateTabOrder(newTabList.map((tab) => tab.fileId));
-    }
-  };
+  useEffect(() => {
+    return () => {
+      tabsRef.current = {};
+
+      if (document.activeElement instanceof HTMLElement) {
+        document.activeElement.blur();
+      }
+
+      window.getSelection()?.removeAllRanges();
+    };
+  }, []);
+
+  const handleDragEnd = useCallback(
+    ({ active, over }: DragEndEvent): void => {
+      const prevIndex = active.data.current?.sortable.index;
+      const newIndex = over?.data.current?.sortable.index;
+      if (prevIndex !== newIndex) {
+        const newTabList = arrayMove(tabs, prevIndex, newIndex);
+        updateTabOrder(newTabList.map((tab) => tab.fileId));
+      }
+    },
+    [tabs, updateTabOrder],
+  );
 
   const renderTabNodes = (): JSX.Element => {
     const items = tabs.map((t) => ({ ...t, id: t.fileId }));
@@ -198,6 +213,8 @@ const EditorTabsBar: React.FC<EditorTabsBarProps> = (
                 ref={(tabRef): void => {
                   if (tabRef) {
                     tabsRef.current[tab.fileId] = tabRef as HTMLLIElement;
+                  } else {
+                    delete tabsRef.current[tab.fileId];
                   }
                 }}
                 id={id}

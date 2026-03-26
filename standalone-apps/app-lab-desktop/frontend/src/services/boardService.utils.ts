@@ -1,4 +1,4 @@
-import { Board } from '@cloud-editor-mono/ui-components/lib/app-lab-setup';
+import { Board } from '@cloud-editor-mono/ui-components/lib/components-by-app/app-lab';
 import { get, set } from 'idb-keyval';
 
 const LAST_SEEN_USB_BOARD_KEY = 'last-seen-usb-board';

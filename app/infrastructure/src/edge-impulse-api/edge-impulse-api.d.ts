@@ -391,7 +391,7 @@ export interface paths {
   '/api/{projectId}/devkeys': {
     /**
      * Get development keys
-     * @description Retrieve the development API and HMAC keys for a project. These keys are specifically marked to be used during development. These keys can be `undefined` if no development keys are set.
+     * @description Retrieve the development API and HMAC keys for a project. These keys are specifically marked to be used during development. These keys can be `undefined` if no development keys are set. Only available through JWT token authentication, if you authenticate with an API key then all keys will return undefined (this is changed behavior since 28 January 2026).
      */
     get: operations['listDevkeys'];
   };
@@ -1851,7 +1851,7 @@ export interface paths {
   '/api/{projectId}/deployment/download': {
     /**
      * Download
-     * @description Download the build artefacts for a project
+     * @description DEPRECATED, use downloadHistoricDeployment instead. Download the build artefacts for a project.
      */
     get: operations['downloadBuild'];
   };
@@ -1880,6 +1880,27 @@ export interface paths {
      * @description Automatically find the current posterior parameters for the Syntiant deployment target
      */
     post: operations['findSyntiantPosterior'];
+  };
+  '/api/{projectId}/deployment/history': {
+    /**
+     * List deployment history
+     * @description Lists all successfully built deployments.
+     */
+    get: operations['listDeploymentHistory'];
+  };
+  '/api/{projectId}/deployment/history/{deploymentVersion}': {
+    /**
+     * Get historic deployment
+     * @description Get info about a previously built deployment.
+     */
+    get: operations['getHistoricDeployment'];
+  };
+  '/api/{projectId}/deployment/history/{deploymentVersion}/download': {
+    /**
+     * Download historic deployment
+     * @description Download a previously built deployment (use listDeploymentHistory to see all deployments).
+     */
+    get: operations['downloadHistoricDeployment'];
   };
   '/api/{projectId}/jobs/data-explorer-features': {
     /**
@@ -2181,14 +2202,14 @@ export interface paths {
   '/api/{projectId}/jobs/build-ondevice-model': {
     /**
      * Build on-device model
-     * @description Generate code to run the impulse on an embedded device. When this step is complete use `downloadBuild` to download the artefacts.  Updates are streamed over the websocket API.
+     * @description Generate code to run the impulse on an embedded device. When this step is complete use `downloadHistoricDeployment` to download the artefacts. Updates are streamed over the websocket API.
      */
     post: operations['buildOnDeviceModelJob'];
   };
   '/api/{projectId}/jobs/build-ondevice-model/organization': {
     /**
      * Build organizational on-device model
-     * @description Generate code to run the impulse on an embedded device using an organizational deployment block. When this step is complete use `downloadBuild` to download the artefacts.  Updates are streamed over the websocket API.
+     * @description Generate code to run the impulse on an embedded device using an organizational deployment block. When this step is complete use `downloadHistoricDeployment` to download the artefacts.  Updates are streamed over the websocket API.
      */
     post: operations['buildOrganizationOnDeviceModelJob'];
   };
@@ -5060,6 +5081,10 @@ export interface components {
         y: number;
         /** @description Training label string */
         yLabel: string;
+        /** @description All key/value label pairs for samples with multiple labels (i.e. label map datasets). */
+        structuredYLabel?: {
+          [key: string]: string;
+        };
         sample?: {
           id: number;
           name: string;
@@ -5911,12 +5936,13 @@ export interface components {
       videoUrl?: string;
       /** @description Video link in original resolution. */
       videoUrlFull?: string;
-      /**
-       * @description Structured sample labels in the form of a key-value map.
-       * This property is optional and only defined for samples with key-value labels.
-       */
-      labelMap?: components['schemas']['SampleKeyValueLabels'];
+      labelMap?: components['schemas']['SampleLabelMapLabels'];
     };
+    /**
+     * @description Structured sample labels in the form of a key-value map.
+     * This property is optional and only defined for samples with key-value labels.
+     */
+    SampleLabelMapLabels: components['schemas']['SampleKeyValueLabels'];
     SampleKeyValueLabels: {
       /** @enum {string} */
       type: 'key-values';
@@ -6207,12 +6233,7 @@ export interface components {
       supportedTargets?: string[];
     };
     /** @enum {string} */
-    BlockType:
-      | 'official'
-      | 'personal'
-      | 'enterprise'
-      | 'pro-or-enterprise'
-      | 'community';
+    BlockType: 'official' | 'personal' | 'enterprise' | 'community';
     LearnBlock: {
       /** @example spectral-analysis */
       type: string;
@@ -7221,7 +7242,7 @@ export interface components {
     };
     BuildOnDeviceModelRequest: {
       engine: components['schemas']['DeploymentTargetEngine'];
-      modelType?: components['schemas']['KerasModelTypeEnum'];
+      modelType?: components['schemas']['KerasModelVariantEnum'];
       /** @description List of custom parameters for this deployment job (see the list of parameters that the block exposes in DeploymentTarget#parameters). */
       parameters?: {
         [key: string]: string;
@@ -7230,7 +7251,7 @@ export interface components {
     BuildOrganizationOnDeviceModelRequest: {
       engine: components['schemas']['DeploymentTargetEngine'];
       deployBlockId: number;
-      modelType?: components['schemas']['KerasModelTypeEnum'];
+      modelType?: components['schemas']['KerasModelVariantEnum'];
       /** @description List of custom parameters for this deployment job (see the list of parameters that the block exposes in DeploymentTarget#parameters). */
       parameters?: {
         [key: string]: string;
@@ -7244,29 +7265,45 @@ export interface components {
       /** @description Username or e-mail address */
       usernameOrEmail: string;
     };
+    ProjectHmacKey: {
+      id: number;
+      hmacKey: string;
+      isDevelopmentKey: boolean;
+      name: string;
+      /** Format: date-time */
+      created: string;
+      createdByUser?: components['schemas']['CreatedUpdatedByUser'];
+    };
     ListHmacKeysResponse: components['schemas']['GenericApiResponse'] & {
       /** @description List of HMAC keys */
-      hmacKeys: {
-        id: number;
-        hmacKey: string;
-        isDevelopmentKey: boolean;
-        name: string;
+      hmacKeys: components['schemas']['ProjectHmacKey'][];
+    };
+    ProjectApiKey: {
+      id: number;
+      apiKey: string;
+      isDevelopmentKey: boolean;
+      name: string;
+      /** Format: date-time */
+      created: string;
+      /** @enum {string} */
+      role: 'admin' | 'readonly' | 'ingestiononly' | 'wladmin';
+      createdByUser?: components['schemas']['CreatedUpdatedByUser'];
+      /** @description When this API key was last used. */
+      lastUsed?: {
         /** Format: date-time */
-        created: string;
-      }[];
+        date: string;
+        /**
+         * @description If available, the country from which the API key was last used.
+         * @example United States
+         */
+        country?: string;
+        /** @description If available, the IP address from which the API key was last used. */
+        ipAddress?: string;
+      };
     };
     ListApiKeysResponse: components['schemas']['GenericApiResponse'] & {
       /** @description List of API keys. */
-      apiKeys: {
-        id: number;
-        apiKey: string;
-        isDevelopmentKey: boolean;
-        name: string;
-        /** Format: date-time */
-        created: string;
-        /** @enum {string} */
-        role: 'admin' | 'readonly' | 'ingestiononly' | 'wladmin';
-      }[];
+      apiKeys: components['schemas']['ProjectApiKey'][];
     };
     AddHmacKeyRequest: {
       /** @description Description of the key */
@@ -7629,7 +7666,6 @@ export interface components {
      */
     PublicProjectTierAvailability:
       | 'enterprise-only'
-      | 'pro-or-enterprise'
       | 'all-projects'
       | 'all-projects-including-whitelabels';
     KerasVisualLayer: {
@@ -8174,18 +8210,32 @@ export interface components {
       /** @description Time to live in seconds. If not set, the key will expire in 1 minute. */
       ttl?: number;
     };
+    OrganizationApiKey: {
+      id: number;
+      apiKey: string;
+      name: string;
+      /** Format: date-time */
+      created: string;
+      /** @enum {string} */
+      role: 'admin' | 'member';
+      isTransformationJobKey: boolean;
+      createdByUser?: components['schemas']['CreatedUpdatedByUser'];
+      /** @description When this API key was last used. */
+      lastUsed?: {
+        /** Format: date-time */
+        date: string;
+        /**
+         * @description If available, the country from which the API key was last used.
+         * @example United States
+         */
+        country?: string;
+        /** @description If available, the IP address from which the API key was last used. */
+        ipAddress?: string;
+      };
+    };
     ListOrganizationApiKeysResponse: components['schemas']['GenericApiResponse'] & {
       /** @description List of API keys. */
-      apiKeys: {
-        id: number;
-        apiKey: string;
-        name: string;
-        /** Format: date-time */
-        created: string;
-        /** @enum {string} */
-        role: 'admin' | 'member';
-        isTransformationJobKey: boolean;
-      }[];
+      apiKeys: components['schemas']['OrganizationApiKey'][];
     };
     AddMemberRequest: {
       /** @description Username or e-mail address */
@@ -8459,7 +8509,7 @@ export interface components {
     OrganizationAddDataFileRequest: {
       'files[]': string[];
     };
-    /** @description If uploadType is set to 'project', either projectId, newProjectName or both projectApiKey and projectHmacKey are required. projectId and newProjectName are only available through JWT tokens. If uploadType is set to 'dataset' then outputDatasetName can be set to '' to output in the same dataset, or set to a string to create (or append to) a new dataset. */
+    /** @description If uploadType is set to 'project', either projectId, newProjectName or projectApiKey is required. projectId and newProjectName are only available through JWT tokens. If uploadType is set to 'dataset' then outputDatasetName can be set to '' to output in the same dataset, or set to a string to create (or append to) a new dataset. */
     OrganizationCreateProjectRequest: {
       name: string;
       /** @description Filter in SQL format, used for creating transformation jobs on clinical datasets */
@@ -8580,7 +8630,7 @@ export interface components {
     OrganizationCreateProjectResponse: components['schemas']['GenericApiResponse'] & {
       /** @description Project ID for the new project */
       createProjectId: number;
-      /** @description API key for the new project */
+      /** @description DEPRECATED. API key for the new project. This field will always be empty. */
       apiKey: string;
     };
     ExportOriginalDataRequest: {
@@ -8661,6 +8711,8 @@ export interface components {
     };
     /** @enum {string} */
     RawDataCategory: 'training' | 'testing' | 'post-processing';
+    /** @enum {string} */
+    RawDataFilterCategory: 'training' | 'testing' | 'post-processing' | 'all';
     SocketTokenResponse: components['schemas']['GenericApiResponse'] & {
       token: {
         socketToken: string;
@@ -8769,6 +8821,7 @@ export interface components {
       repositoryUrl?: string;
       /** @description Whether this block is publicly available to Edge Impulse users (if false, then only for members of the owning organization) */
       isPublic: boolean;
+      publicProjectTierAvailability: components['schemas']['PublicProjectTierAvailability'];
       /** @description Whether to show this block in 'Data sources'. Only applies for standalone blocks. */
       showInDataSources: boolean;
       /** @description Whether to show this block in 'Create transformation job'. Only applies for standalone blocks. */
@@ -8850,6 +8903,7 @@ export interface components {
       /** @description 15m for 15 minutes, 2h for 2 hours, 1d for 1 day. If not set, the default is 8 hours. */
       maxRunningTimeStr?: string;
       isPublic?: boolean;
+      publicProjectTierAvailability?: components['schemas']['PublicProjectTierAvailability'];
       /** @description URL to the source code of this custom learn block. */
       repositoryUrl?: string;
       /** @description Whether to show this block in 'Data sources'. Only applies for standalone blocks. (defaults to 'true' when not provided) */
@@ -8885,6 +8939,7 @@ export interface components {
       /** @description 15m for 15 minutes, 2h for 2 hours, 1d for 1 day. If not set, the default is 8 hours. */
       maxRunningTimeStr?: string;
       isPublic?: boolean;
+      publicProjectTierAvailability?: components['schemas']['PublicProjectTierAvailability'];
       /** @description URL to the source code of this custom learn block. */
       repositoryUrl?: string;
       /** @description Whether to show this block in 'Data sources'. Only applies for standalone blocks. */
@@ -9177,6 +9232,7 @@ export interface components {
       | 'tao-yolov4'
       | 'yolov11'
       | 'yolov11-abs'
+      | 'paddleocr-detector'
       | 'qc-face-det-lite';
     ListOrganizationFilesResponse: components['schemas']['GenericApiResponse'] & {
       filterParseError?: string;
@@ -9604,6 +9660,9 @@ export interface components {
     SampleBoundingBoxesRequest: {
       boundingBoxes: components['schemas']['BoundingBox'][];
     };
+    SampleLabelMapRequest: {
+      labelMap: components['schemas']['SampleLabelMapLabels'];
+    };
     TrackObjectsRequest: {
       sourceSampleId: number;
       nextSampleId: number;
@@ -9965,7 +10024,8 @@ export interface components {
       | 'ethos-linux'
       | 'st-aton'
       | 'ceva-npn'
-      | 'nordic-axon';
+      | 'nordic-axon'
+      | 'vlm-connector';
     DeploymentTargetVariant: {
       variant: components['schemas']['KerasModelVariantEnum'];
       supported: boolean;
@@ -10612,13 +10672,25 @@ export interface components {
       /** @enum {string} */
       modelType: 'anomaly';
     };
+    DeployPretrainedModelModelVisualAnomaly: {
+      /** @enum {string} */
+      modelType: 'visual-anomaly';
+      /** @description All configured thresholds for the current model. Valid keys are 'min_anomaly_score' and 'anomaly_scoring_aggregation_method'. */
+      thresholdValues?: {
+        [key: string]: components['schemas']['ThresholdValue'];
+      };
+    };
     DeployPretrainedModelModelObjectDetection: {
       /** @enum {string} */
       modelType: 'object-detection';
       labels: string[];
       lastLayer: components['schemas']['ObjectDetectionLastLayer'];
-      /** @description Threshold for objects (f.e. 0.3) */
+      /** @description Deprecated: use thresholdValues instead. Threshold for objects (f.e. 0.3). */
       minimumConfidence: number;
+      /** @description All configured thresholds for the current model. Valid keys are 'min_score' (object detection models, all but paddleocr-detector); 'min_score_pixel', 'min_score_box', 'unclip_ratio' (paddleocr-detector). */
+      thresholdValues?: {
+        [key: string]: number;
+      };
     };
     DeployPretrainedModelRequest: {
       /** @description A base64 encoded pretrained model */
@@ -10646,7 +10718,8 @@ export interface components {
           | components['schemas']['DeployPretrainedModelModelRegression']
           | components['schemas']['DeployPretrainedModelModelObjectDetection']
           | components['schemas']['DeployPretrainedModelModelFreeform']
-          | components['schemas']['DeployPretrainedModelModelAnomaly'];
+          | components['schemas']['DeployPretrainedModelModelAnomaly']
+          | components['schemas']['DeployPretrainedModelModelVisualAnomaly'];
       };
       /** @description A base64 encoded .npy file containing the features from your validation set (optional for onnx and saved_model) - used to quantize your model. */
       representativeFeaturesBase64?: string;
@@ -10660,6 +10733,8 @@ export interface components {
       /** @description Optional for ONNX files: overrides the input shape of the model. This is highly suggested if the model has dynamic dimensions. If this field is not set, then all dynamic dimensions will be set to '1'. */
       overrideInputShape?: number[];
     };
+    /** @description Current value of the threshold */
+    ThresholdValue: number | string;
     UpdateProjectTagsRequest: {
       tags: string[];
     };
@@ -10763,7 +10838,8 @@ export interface components {
           | components['schemas']['DeployPretrainedModelModelRegression']
           | components['schemas']['DeployPretrainedModelModelObjectDetection']
           | components['schemas']['DeployPretrainedModelModelFreeform']
-          | components['schemas']['DeployPretrainedModelModelAnomaly'];
+          | components['schemas']['DeployPretrainedModelModelAnomaly']
+          | components['schemas']['DeployPretrainedModelModelVisualAnomaly'];
       };
     };
     TestPretrainedModelRequest: {
@@ -10779,7 +10855,8 @@ export interface components {
           | components['schemas']['DeployPretrainedModelModelRegression']
           | components['schemas']['DeployPretrainedModelModelObjectDetection']
           | components['schemas']['DeployPretrainedModelModelFreeform']
-          | components['schemas']['DeployPretrainedModelModelAnomaly'];
+          | components['schemas']['DeployPretrainedModelModelAnomaly']
+          | components['schemas']['DeployPretrainedModelModelVisualAnomaly'];
       };
     };
     TestPretrainedModelResponse: components['schemas']['GenericApiResponse'] & {
@@ -10796,6 +10873,8 @@ export interface components {
           data: number[];
         }[];
       };
+      /** @description Anomaly scores and computed metrics for visual anomaly detection, one item per window. */
+      anomalyResult?: components['schemas']['AnomalyResult'][];
     };
     TestPretrainedModelImagesRequest: {
       /** @description A base64 encoded input image file */
@@ -10809,7 +10888,8 @@ export interface components {
         | components['schemas']['DeployPretrainedModelModelRegression']
         | components['schemas']['DeployPretrainedModelModelObjectDetection']
         | components['schemas']['DeployPretrainedModelModelFreeform']
-        | components['schemas']['DeployPretrainedModelModelAnomaly'];
+        | components['schemas']['DeployPretrainedModelModelAnomaly']
+        | components['schemas']['DeployPretrainedModelModelVisualAnomaly'];
     };
     SavePretrainedModelRequest: {
       input:
@@ -10822,7 +10902,8 @@ export interface components {
         | components['schemas']['DeployPretrainedModelModelRegression']
         | components['schemas']['DeployPretrainedModelModelObjectDetection']
         | components['schemas']['DeployPretrainedModelModelFreeform']
-        | components['schemas']['DeployPretrainedModelModelAnomaly'];
+        | components['schemas']['DeployPretrainedModelModelAnomaly']
+        | components['schemas']['DeployPretrainedModelModelVisualAnomaly'];
     };
     ProjectInfoSummaryResponse: components['schemas']['GenericApiResponse'] & {
       id: number;
@@ -12472,10 +12553,10 @@ export interface components {
     VlmModel: {
       /** @example 1 */
       modelId: number;
-      /** @example gemma-3-4b */
+      /** @example qwen/qwen3-vl-8b-instruct */
       modelName: string;
       type: components['schemas']['VlmModelType'];
-      /** @example Classify images using an open prompt with a pre-trained multimodal model from Google */
+      /** @example Qwen3 VL 8B Instruct is a multimodal open-weight model for zero-shot image classification via text prompts */
       description: string;
       /** @description If true, the warmup endpoint may be called to prepare the model for inference */
       requiresWarmup?: boolean;
@@ -12571,6 +12652,41 @@ export interface components {
     VlmGetModelResponse: components['schemas']['GenericApiResponse'] & {
       model?: components['schemas']['VlmModel'];
     };
+    DeploymentHistory: {
+      /**
+       * Format: date-time
+       * @description Date when the model was deployed
+       */
+      created: string;
+      deploymentVersion: number;
+      deploymentFormat: string;
+      deploymentTarget?: components['schemas']['ProjectDeploymentTarget'];
+      engine: components['schemas']['DeploymentTargetEngine'];
+      modelType?: components['schemas']['KerasModelTypeEnum'];
+      impulseId: number;
+      impulseName: string;
+      impulseIsDeleted: boolean;
+      createdByUser?: components['schemas']['CreatedUpdatedByUser'];
+      /** @description Set to true if the deployment no longer exactly matches the impulse it was created from (e.g. model was trained since the deployment was created, or some thresholds have changed) */
+      impulseHasChangedSinceDeployment: boolean;
+      downloadUrl: string;
+    };
+    ListDeploymentHistoryResponse: components['schemas']['GenericApiResponse'] & {
+      deployments: components['schemas']['DeploymentHistory'][];
+      totalDeploymentCount: number;
+    };
+    BuildOnDeviceModelResponse: components['schemas']['GenericApiResponse'] & {
+      /**
+       * @description Job identifier. Status updates will include this identifier.
+       * @example 12873488112
+       */
+      id: number;
+      /** @description Deployment version, use `downloadHistoricDeployment` to later download the deployment using this identifier. */
+      deploymentVersion: number;
+    };
+    GetDeploymentHistoryResponse: components['schemas']['GenericApiResponse'] & {
+      deployment: components['schemas']['DeploymentHistory'];
+    };
   };
   responses: never;
   parameters: {
@@ -12623,7 +12739,7 @@ export interface components {
     /** @description Whether to download raw data or processed data. Processed data is the default. */
     DSPDataRawParameter?: boolean;
     /** @description Which of the three acquisition categories to retrieve data from */
-    RawDataCategoryQueryParameter: components['schemas']['RawDataCategory'];
+    RawDataCategoryQueryParameter: components['schemas']['RawDataFilterCategory'];
     /** @description Job ID */
     JobIdParameter: number;
     /** @description Job parent type (project, organization, or standalone) */
@@ -12922,6 +13038,8 @@ export interface components {
     ImpulseIdParameter: number;
     /** @description Impulse ID. If this is unset then the default impulse is used. */
     OptionalImpulseIdParameter?: number;
+    /** @description Impulse ID. If this is unset, data for all impulses is returned. */
+    FilterByImpulseIdParameter?: number;
     /** @description Format of the detailed impulses response, either 'json' or 'csv'. If not set, defaults to 'json'. */
     DetailedImpulsesFormatParameter?: 'json' | 'csv';
     OptionalDeploymentIdParameter?: number;
@@ -12981,6 +13099,8 @@ export interface components {
     ClientIdParameter: number;
     /** @description The ID of the VLM model to retrieve */
     VlmModelIdParameter: number;
+    /** @description Deployment version ID */
+    DeploymentVersionParameter: number;
   };
   requestBodies: never;
   headers: never;
@@ -14039,7 +14159,7 @@ export interface operations {
   };
   /**
    * Get development keys
-   * @description Retrieve the development API and HMAC keys for a project. These keys are specifically marked to be used during development. These keys can be `undefined` if no development keys are set.
+   * @description Retrieve the development API and HMAC keys for a project. These keys are specifically marked to be used during development. These keys can be `undefined` if no development keys are set. Only available through JWT token authentication, if you authenticate with an API key then all keys will return undefined (this is changed behavior since 28 January 2026).
    */
   listDevkeys: {
     parameters: {
@@ -19057,7 +19177,7 @@ export interface operations {
   };
   /**
    * Download
-   * @description Download the build artefacts for a project
+   * @description DEPRECATED, use downloadHistoricDeployment instead. Download the build artefacts for a project.
    */
   downloadBuild: {
     parameters: {
@@ -19174,6 +19294,70 @@ export interface operations {
       200: {
         content: {
           'application/json': components['schemas']['StartJobResponse'];
+        };
+      };
+    };
+  };
+  /**
+   * List deployment history
+   * @description Lists all successfully built deployments.
+   */
+  listDeploymentHistory: {
+    parameters: {
+      query?: {
+        impulseId?: components['parameters']['FilterByImpulseIdParameter'];
+        limit?: components['parameters']['LimitResultsParameter'];
+        offset?: components['parameters']['OffsetResultsParameter'];
+      };
+      path: {
+        projectId: components['parameters']['ProjectIdParameter'];
+      };
+    };
+    responses: {
+      /** @description OK */
+      200: {
+        content: {
+          'application/json': components['schemas']['ListDeploymentHistoryResponse'];
+        };
+      };
+    };
+  };
+  /**
+   * Get historic deployment
+   * @description Get info about a previously built deployment.
+   */
+  getHistoricDeployment: {
+    parameters: {
+      path: {
+        projectId: components['parameters']['ProjectIdParameter'];
+        deploymentVersion: components['parameters']['DeploymentVersionParameter'];
+      };
+    };
+    responses: {
+      /** @description OK */
+      200: {
+        content: {
+          'application/json': components['schemas']['GetDeploymentHistoryResponse'];
+        };
+      };
+    };
+  };
+  /**
+   * Download historic deployment
+   * @description Download a previously built deployment (use listDeploymentHistory to see all deployments).
+   */
+  downloadHistoricDeployment: {
+    parameters: {
+      path: {
+        projectId: components['parameters']['ProjectIdParameter'];
+        deploymentVersion: components['parameters']['DeploymentVersionParameter'];
+      };
+    };
+    responses: {
+      /** @description ZIP or BIN file */
+      200: {
+        content: {
+          'application/zip': string;
         };
       };
     };
@@ -20134,7 +20318,7 @@ export interface operations {
   };
   /**
    * Build on-device model
-   * @description Generate code to run the impulse on an embedded device. When this step is complete use `downloadBuild` to download the artefacts.  Updates are streamed over the websocket API.
+   * @description Generate code to run the impulse on an embedded device. When this step is complete use `downloadHistoricDeployment` to download the artefacts. Updates are streamed over the websocket API.
    */
   buildOnDeviceModelJob: {
     parameters: {
@@ -20155,14 +20339,14 @@ export interface operations {
       /** @description OK */
       200: {
         content: {
-          'application/json': components['schemas']['StartJobResponse'];
+          'application/json': components['schemas']['BuildOnDeviceModelResponse'];
         };
       };
     };
   };
   /**
    * Build organizational on-device model
-   * @description Generate code to run the impulse on an embedded device using an organizational deployment block. When this step is complete use `downloadBuild` to download the artefacts.  Updates are streamed over the websocket API.
+   * @description Generate code to run the impulse on an embedded device using an organizational deployment block. When this step is complete use `downloadHistoricDeployment` to download the artefacts.  Updates are streamed over the websocket API.
    */
   buildOrganizationOnDeviceModelJob: {
     parameters: {
@@ -20182,7 +20366,7 @@ export interface operations {
       /** @description OK */
       200: {
         content: {
-          'application/json': components['schemas']['StartJobResponse'];
+          'application/json': components['schemas']['BuildOnDeviceModelResponse'];
         };
       };
     };

@@ -18,7 +18,7 @@ const CodeEditorElement: React.FC<CodeEditorElementProps> = (
   props: CodeEditorElementProps,
 ) => {
   const { classes, valueInstanceIds, ...useCodeEditorParams } = props;
-  const ref = useCodeEditor(useCodeEditorParams);
+  const ref = useCodeEditor({ ...useCodeEditorParams });
 
   useCodeMirrorInstanceCleanup(useCodeEditorParams.viewInstanceId);
 

@@ -56,6 +56,10 @@ export const MockSettingsService: SettingsService = {
   async getConnectionName(): Promise<string | null> {
     return wifiStatus === 'connected' ? 'Mock WiFi Connection' : null;
   },
+
+  async getIPAddress(): Promise<string | null> {
+    return wifiStatus === 'connected' ? '192.168.1.177' : null;
+  },
 };
 
 export const mockGetNetworkList = (): NetworkItem[] => {

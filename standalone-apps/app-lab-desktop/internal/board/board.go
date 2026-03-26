@@ -1,11 +1,13 @@
 package board
 
 import (
+	"bufio"
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/arduino/arduino-app-cli/pkg/board"
 	"github.com/arduino/arduino-app-cli/pkg/board/remote"
@@ -126,20 +128,6 @@ func (b *Board) EstablishConnection(ctx context.Context, optPassword string) err
 			return fmt.Errorf("failed to start tunnel: %w", err)
 		}
 
-		// Enable network mode if not already enabled when connecting over serial
-		go func() {
-			s, err := board.NetworkModeStatus(ctx, conn)
-			if err != nil {
-				runtime.LogErrorf(ctx, "failed to get network mode status: %v", err)
-				return
-			}
-			if !s {
-				if err := board.EnableNetworkMode(ctx, conn); err != nil {
-					runtime.LogErrorf(ctx, "failed to enable network mode: %v", err)
-				}
-			}
-		}()
-
 	case board.NetworkProtocol:
 		var err error
 		if optPassword == "" {
@@ -207,6 +195,18 @@ func (b *Board) SetKeyboardLayout(ctx context.Context, layoutCode string) error 
 	return board.SetKeyboardLayout(ctx, b.Conn, layoutCode)
 }
 
+func (b *Board) GetNetworkModeStatus(ctx context.Context) (bool, error) {
+	return board.NetworkModeStatus(ctx, b.Conn)
+}
+
+func (b *Board) EnableNetworkMode(ctx context.Context) error {
+	return board.EnableNetworkMode(ctx, b.Conn)
+}
+
+func (b *Board) DisableNetworkMode(ctx context.Context) error {
+	return board.DisableNetworkMode(ctx, b.Conn)
+}
+
 func (b *Board) GetOrchestratorURL() (string, error) {
 	if len(b.tunnels) == 0 {
 		return "", fmt.Errorf("no active tunnels")
@@ -238,4 +238,31 @@ func (b *Board) IsR0Build() bool {
 // It will return R0 image version in case of any error.
 func (b *Board) GetOSImageVersion() string {
 	return board.GetOSImageVersion(b.Conn)
+}
+
+func (b *Board) GetKernelVersion(ctx context.Context) (string, error) {
+	cmd := b.Conn.GetCmd("uname", "-r")
+	out, err := cmd.Output(ctx)
+	if err != nil {
+		return "", fmt.Errorf("output failed: %w", err)
+	}
+	return strings.TrimSpace(string(out)), nil
+}
+
+func (b *Board) GetLinuxDistribution() (string, error) {
+	f, err := b.Conn.ReadFile("/etc/os-release")
+	if err != nil {
+		return "", fmt.Errorf("failed to read os-release file: %w", err)
+	}
+
+	s := bufio.NewScanner(f)
+	for s.Scan() {
+		line := s.Text()
+		if strings.HasPrefix(line, "PRETTY_NAME=") {
+			prettyName := strings.TrimPrefix(line, "PRETTY_NAME=")
+			return strings.Trim(prettyName, "\n\t\" "), nil
+		}
+	}
+
+	return "", fmt.Errorf("PRETTY_NAME not found in os-release file")
 }

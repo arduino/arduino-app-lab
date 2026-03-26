@@ -1,6 +1,6 @@
 import {
-  AppLabSetupItemId,
   Board,
+  SetupItemId,
 } from '@cloud-editor-mono/ui-components/lib/components-by-app/app-lab';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import React, { ReactNode } from 'react';
@@ -31,6 +31,13 @@ import { SetupContext } from '../../providers/setup/setupContext';
 import { UseSetup } from '../../providers/setup/setupContextProvider.logic';
 import { SystemPropKey } from '../../store/systemProps';
 import { createUseSetupLogic, SetupSteps } from './setup.logic';
+
+vi.mock(
+  '@cloud-editor-mono/domain/src/services/services-by-app/app-lab',
+  () => ({
+    setNetworkMode: vi.fn().mockResolvedValue(undefined),
+  }),
+);
 
 let isBoardMock: boolean | undefined;
 
@@ -119,10 +126,10 @@ vi.mock('../../hooks/useIsBoard', async () => {
   };
 });
 
-vi.mock('../../store/boards/boards', async () => {
+vi.mock('../../store/boardLifecycle', async () => {
   const actual = await vi.importActual<
-    typeof import('../../store/boards/boards')
-  >('../../store/boards/boards');
+    typeof import('../../store/boardLifecycle')
+  >('../../store/boardLifecycle');
   return {
     ...actual,
     useBoards: vi.fn(() => ({
@@ -139,10 +146,10 @@ vi.mock('../../store/boards/boards', async () => {
   };
 });
 
-vi.mock('../../store/systemProps', async () => {
+vi.mock('../../hooks/useSystemProps', async () => {
   const actual = await vi.importActual<
-    typeof import('../../store/systemProps')
-  >('../../store/systemProps');
+    typeof import('../../hooks/useSystemProps')
+  >('../../hooks/useSystemProps');
   return {
     ...actual,
     useSystemProps: vi.fn(() => ({
@@ -243,11 +250,14 @@ beforeEach(() => {
     boardName: '',
     setBoardNameIsError: false,
     boardNameErrorMsg: '',
+    setBoardName: vi.fn(),
+    setKeyboardLayout: vi.fn(),
   };
 
   networkCtxValue = {
     networkList: [],
     isScanning: false,
+    setScanningIsEnabled: vi.fn(),
     scanNetworkList: vi.fn(),
     connectToWifiNetwork: vi.fn(),
     disconnectFromNetwork: vi.fn(),
@@ -395,9 +405,7 @@ describe('createUseSetupLogic - board selection vs setup steps', () => {
     await waitFor(() => {
       expect(result.current.showBoardSelectionPage).toBe(false);
       expect(result.current.showPostSelectionSetup).toBe(true);
-      expect(result.current.currentStep).toBe(
-        AppLabSetupItemId.BoardConfiguration,
-      );
+      expect(result.current.currentStep).toBe(SetupItemId.BoardConfiguration);
     });
   });
 });
@@ -426,9 +434,7 @@ describe('createUseSetupLogic - 3 step flow', () => {
 
     await waitFor(() => {
       expect(result.current.showPostSelectionSetup).toBe(true);
-      expect(result.current.currentStep).toBe(
-        AppLabSetupItemId.BoardConfiguration,
-      );
+      expect(result.current.currentStep).toBe(SetupItemId.BoardConfiguration);
     });
 
     systemPropsMock = {
@@ -446,7 +452,7 @@ describe('createUseSetupLogic - 3 step flow', () => {
     });
 
     await waitFor(() => {
-      expect(result.current.currentStep).toBe(AppLabSetupItemId.NetworkSetup);
+      expect(result.current.currentStep).toBe(SetupItemId.NetworkSetup);
     });
 
     networkCtxValue = {
@@ -464,9 +470,7 @@ describe('createUseSetupLogic - 3 step flow', () => {
     });
 
     await waitFor(() => {
-      expect(result.current.currentStep).toBe(
-        AppLabSetupItemId.LinuxCredentials,
-      );
+      expect(result.current.currentStep).toBe(SetupItemId.LinuxCredentials);
     });
 
     systemPropsMock = {
@@ -516,7 +520,7 @@ describe('createUseSetupLogic - 3 step flow', () => {
     });
 
     await waitFor(() => {
-      expect(result.current.currentStep).toBe(AppLabSetupItemId.NetworkSetup);
+      expect(result.current.currentStep).toBe(SetupItemId.NetworkSetup);
       expect(result.current.showConfirmButton).toBe(false);
     });
 
@@ -609,7 +613,7 @@ describe('createUseSetupLogic - error handling systemProps', () => {
     await waitFor(() => {
       // should skip to NetworkSetup
       expect(result.current.showPostSelectionSetup).toBe(true);
-      expect(result.current.currentStep).toBe(AppLabSetupItemId.NetworkSetup);
+      expect(result.current.currentStep).toBe(SetupItemId.NetworkSetup);
     });
   });
 });
@@ -644,9 +648,7 @@ describe('createUseSetupLogic - error handling board configuration', () => {
 
     await waitFor(() => {
       expect(result.current.showPostSelectionSetup).toBe(true);
-      expect(result.current.currentStep).toBe(
-        AppLabSetupItemId.BoardConfiguration,
-      );
+      expect(result.current.currentStep).toBe(SetupItemId.BoardConfiguration);
 
       expect(result.current.stepIsSkippable).toBe(true);
     });
@@ -718,7 +720,7 @@ describe('createUseSetupLogic - wifi list & custom wifi', () => {
     });
 
     await waitFor(() => {
-      expect(result.current.currentStep).toBe(AppLabSetupItemId.NetworkSetup);
+      expect(result.current.currentStep).toBe(SetupItemId.NetworkSetup);
       expect(result.current.showConfirmButton).toBe(false);
     });
 
@@ -731,7 +733,7 @@ describe('createUseSetupLogic - wifi list & custom wifi', () => {
     });
 
     await waitFor(() => {
-      expect(result.current.currentStep).toBe(AppLabSetupItemId.NetworkSetup);
+      expect(result.current.currentStep).toBe(SetupItemId.NetworkSetup);
       expect(result.current.showConfirmButton).toBe(true);
     });
   });
@@ -768,7 +770,7 @@ describe('createUseSetupLogic - wifi list & custom wifi', () => {
     });
 
     await waitFor(() => {
-      expect(result.current.currentStep).toBe(AppLabSetupItemId.NetworkSetup);
+      expect(result.current.currentStep).toBe(SetupItemId.NetworkSetup);
       expect(result.current.showConfirmButton).toBe(true);
     });
   });

@@ -14,6 +14,11 @@ export interface BoardService {
   setKeyboardLayout(layoutId: string): Promise<void>;
   isUserPasswordSet(): Promise<boolean>;
   setUserPassword(password: string): Promise<void>;
+  getOSImageVersion(): Promise<string>;
   boardNeedsImageUpdate(): Promise<boolean>;
   openBoardTerminal(): Promise<void>;
+  isNetworkModeEnabled(): Promise<boolean>;
+  setNetworkMode(enabled: boolean): Promise<boolean>;
+  getKernelVersion(): Promise<string>;
+  getLinuxDistribution(): Promise<string>;
 }

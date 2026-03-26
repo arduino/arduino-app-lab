@@ -86,7 +86,9 @@
   toolbarDeviceSelectorBorder: functions.theme-var(--toolbar-device-selector-border);
   toolbarDeviceSelectorBackgroundHover: functions.theme-var(--toolbar-device-selector-background-hover);
   toolbarDeviceSelectorUnselectedLabel: functions.theme-var(--toolbar-device-selector-unselected-label);
-  toolbarDeviceSelectorUnselectedBackgroundHover: functions.theme-var(--toolbar-device-selector-unselected-background-hover);
+  toolbarDeviceSelectorUnselectedBackgroundHover: functions.theme-var(
+    --toolbar-device-selector-unselected-background-hover
+  );
   toolbarDeviceSelectorUnselectedBorder: functions.theme-var(--toolbar-device-selector-unselected-border);
   toolbarButtonPrimaryBackgroundDisabled: functions.theme-var(--toolbar-button-primary-background-disabled);
   toolbarButtonPrimaryBackground: functions.theme-var(--toolbar-button-primary-background);
@@ -148,4 +150,21 @@
   buttonPrimaryBackgroundHover: functions.theme-var(--button-primary-background-hover);
   buttonPrimaryLabel: functions.theme-var(--button-primary-label);
   buttonPrimaryBackground: functions.theme-var(--button-primary-background);
+
+  buttonWarningOutline: functions.theme-var(--button-warning-outline);
+  borderDefault: functions.theme-var(--border-default);
+  tabListBorderActive: functions.theme-var(--tab-list-border-active);
+  inputFieldDisabledBackground: functions.theme-var(--input-field-disabled-background);
+
+  textColorDefault: functions.theme-var(--text-color-default);
+  textIconPrimary: functions.theme-var(--text-icon-primary);
+  textColorSubtle: functions.theme-var(--text-color-subtle);
+  textColorStrong: functions.theme-var(--text-color-strong);
+  iconColorSubtle: functions.theme-var(--icon-color-subtle);
+  editorSelectionMatch: functions.theme-var(--editor-selection-match);
+  borderSelected: functions.theme-var(--border-selected);
+  bgBaseline: functions.theme-var(--bg-baseline);
+
+  borderSelected: functions.theme-var(--border-selected);
+  bgBaseline: functions.theme-var(--bg-baseline);
 }

@@ -1,5 +1,5 @@
-import { BrickDetailLogic } from '../app-lab-brick-detail/BrickDetail.type';
 import { CodeEditorLogic } from '../code-editor';
+import { BrickDetailLogic } from '../components-by-app/app-lab';
 import { EditorControlsHandlers } from '../editor-controls/editorControls.type';
 import { TabsBarLogic } from '../editor-tabs-bar';
 import { SecretsEditorLogic } from '../secrets-editor';

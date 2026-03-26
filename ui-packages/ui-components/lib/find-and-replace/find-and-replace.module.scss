@@ -8,28 +8,36 @@
     position: fixed;
     top: 120px;
     right: 64px;
+    display: flex;
+    gap: 5px;
     z-index: shared.$zIndex1;
     padding: 6px 8px;
-
     border-radius: 3px;
     border: 1px solid shared.theme-var(--console-content-foreground);
     background: shared.theme-var(--console-bar-background);
     box-shadow: 0px 0px 20px 0px rgba(0, 0, 0, 0.13);
-
     font-size: 12px;
 }
 
 .row {
     display: flex;
-    justify-content: end;
     align-items: center;
     border-radius: 3px;
     padding: 2px 0px;
-    gap: 7px;
+    gap: 5px;
 }
 
 .find {
+    box-sizing: border-box;
+    width: 250px;
     position: relative;
+    border: 1px solid shared.theme-var(--input-field-border);
+    border-radius: 2px;
+    background: shared.theme-var(--input-field-background);
+
+    &:focus-within {
+        border: 1px solid shared.theme-var(--border-selected);
+    }
 
     &-filters {
         display: flex;
@@ -42,6 +50,8 @@
 
         &-count {
             opacity: 0.75;
+            color: shared.theme-var(--text-color-default);
+            min-width: 60px;
         }
     }
 
@@ -50,8 +60,6 @@
         height: 24px;
         padding: 0;
         margin: 1px;
-        border: none;
-        background: none;
         opacity: 0.75;
         cursor: pointer;
         border-radius: 2px;
@@ -64,55 +72,50 @@
 
         &:hover {
             opacity: 1;
-            border: 1px solid #95a5a6;
             background: shared.theme-var(--icon-button-tertiary-background-hover);
         }
 
         &-active {
             opacity: 1;
             border: 1px solid shared.theme-var(--toolbar-button-primary-background-hover);
-            background: shared.theme-var(--icon-button-primary-border-active);
-
-            &:hover {
-                border: 1px solid shared.theme-var(--button-primary-background-hover);
-                background: #00979d;
-            }
+            background: shared.theme-var(--bg-baseline);
         }
+    }
+
+    .input {
+        width: calc(100% - 90px);
+        border: none;
+        outline: none;
     }
 }
 
 .input {
-    width: 234px;
+    box-sizing: border-box;
     height: 32px;
-    border: 1px solid shared.theme-var(--input-field-border);
     background: shared.theme-var(--input-field-background);
     color: shared.theme-var(--input-field-foreground);
     padding: 1px 5px;
 }
 
-.close {
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border: none;
-    border-radius: 24px;
-    height: 24px;
-    width: 24px;
-    color: #374146;
-    svg {
-        width: 16px;
-        height: 16px;
+.replace {
+    width: 250px;
 
-        path {
-            fill: shared.theme-var(--editor-tabs-foreground);
+    .input {
+        width: 100%;
+        border: 1px solid shared.theme-var(--input-field-border);
+        border-radius: 2px;
+        outline: none;
+
+        &:focus {
+            border: 1px solid shared.theme-var(--border-selected);
         }
     }
 }
 
 .toggle-replace,
 .prev,
-.next {
+.next,
+.close {
     display: flex;
     justify-content: center;
     align-items: center;
@@ -129,17 +132,34 @@
     }
 }
 
+.toggle-replace,
+.close {
+    margin-top: 7px;
+}
+
+.close {
+    svg {
+        width: 16px;
+        height: 16px;
+
+        path {
+            fill: shared.theme-var(--editor-tabs-foreground);
+        }
+    }
+}
+
 .active {
     rotate: 90deg;
 }
 
 .actions {
     &-first {
+        margin-left: auto;
         width: 61px;
         display: flex;
         align-items: center;
-        justify-content: center;
-        color: #374146;
+        justify-content: space-evenly;
+        color: #374146; // TODO
     }
 
     &-second {
@@ -152,13 +172,8 @@
     }
 }
 
-.disable {
-    opacity: 0.5;
-    cursor: not-allowed;
-}
-
 .button {
-    padding: 5px 0px;
+    padding: 5px 2px;
     border-radius: 2px;
     border: 1px solid shared.theme-var(--editor-lines-background-selected);
     color: shared.theme-var(--icon-button-tertiary-label-active);
@@ -167,8 +182,14 @@
     box-sizing: border-box;
     font-size: 12px;
     cursor: pointer;
+    white-space: nowrap;
 
     &:hover {
         background: shared.theme-var(--icon-button-tertiary-background-hover);
     }
+}
+
+.disable {
+    opacity: 0.5;
+    cursor: not-allowed;
 }

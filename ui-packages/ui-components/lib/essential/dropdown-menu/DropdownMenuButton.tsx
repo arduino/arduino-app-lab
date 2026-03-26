@@ -20,7 +20,12 @@ import {
 interface DropdownMenuButtonProps<T, L extends MessageDescriptor | string> {
   id?: string;
   title?: string;
-  buttonChildren?: React.ReactNode;
+  buttonChildren?:
+    | React.ReactNode
+    | ((
+        props: React.ButtonHTMLAttributes<HTMLButtonElement>,
+        ref: React.RefObject<HTMLButtonElement | null>,
+      ) => React.ReactNode);
   sections: DropdownMenuSectionType<T, L>[];
   disabledKeys?: Key[];
   onAction?: (key: Key) => void;
@@ -97,22 +102,25 @@ export function DropdownMenuButton<T, L extends MessageDescriptor | string>(
         classes?.dropdownMenuButtonWrapper,
       )}
     >
-      {!isOpened && (
-        <button
-          {...buttonProps}
-          ref={buttonRef}
-          className={clsx(
-            styles['dropdown-menu-button'],
-            classes?.dropdownMenuButton,
-            state.isOpen && [
-              styles['dropdown-menu-button-open'],
-              classes?.dropdownMenuButtonOpen,
-            ],
-          )}
-        >
-          {buttonChildren}
-        </button>
-      )}
+      {!isOpened &&
+        (typeof buttonChildren === 'function' ? (
+          buttonChildren(buttonProps, buttonRef)
+        ) : (
+          <button
+            {...buttonProps}
+            ref={buttonRef}
+            className={clsx(
+              styles['dropdown-menu-button'],
+              classes?.dropdownMenuButton,
+              state.isOpen && [
+                styles['dropdown-menu-button-open'],
+                classes?.dropdownMenuButtonOpen,
+              ],
+            )}
+          >
+            {buttonChildren}
+          </button>
+        ))}
       {(state.isOpen || isOpened) && (
         <DropdownMenuPopover
           triggerRef={buttonRef}

@@ -1,9 +1,9 @@
+import { pickMainIno } from '@cloud-editor-mono/common';
 import {
   BuiltinExampleFile,
   BuiltinExampleListResponse,
   getBuiltinExampleDetailRequest,
-} from '@bcmi-labs/cloud-editor-infrastructure';
-import { pickMainIno } from '@cloud-editor-mono/common';
+} from '@cloud-editor-mono/infrastructure';
 import { useQueryClient } from '@tanstack/react-query';
 import { useCallback } from 'react';
 

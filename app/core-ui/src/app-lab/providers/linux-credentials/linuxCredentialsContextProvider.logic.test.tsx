@@ -14,10 +14,12 @@ vi.mock(
   }),
 );
 
-vi.mock('../../store/boards/boards', () => ({
-  useBoardLifecycleStore: () => ({
-    boardIsReachable: true,
-  }),
+vi.mock('../../store/boardLifecycle', () => ({
+  useBoardLifecycleStore: vi.fn((selector) =>
+    selector({
+      boardIsReachable: true,
+    }),
+  ),
 }));
 
 const Wrapper: React.FC<{ children: ReactNode }> = ({ children }) => (

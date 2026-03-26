@@ -1,13 +1,5 @@
-import {
-  getSystemProperty,
-  getSystemPropertyKeys,
-  upsertSystemProperty,
-} from '@cloud-editor-mono/domain/src/services/services-by-app/app-lab';
 import { SystemPropertyValue } from '@cloud-editor-mono/infrastructure';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { create } from 'zustand';
-
-import { useBoardLifecycleStore } from './boards/boards';
 
 interface SystemPropsStore {
   data?: Record<string, SystemPropertyValue>;
@@ -17,18 +9,6 @@ interface SystemPropsStore {
   setError: (isError: boolean) => void;
   isSetupDone: () => boolean;
 }
-
-type UseSystemProps = () => {
-  systemProps: Record<string, SystemPropertyValue> | undefined;
-  getPropsError: boolean | undefined;
-  getPropsSuccess: boolean | undefined;
-  getPropsLoading: boolean | undefined;
-  upsertPropsLoading: boolean | undefined;
-  upsertProp: (prop: {
-    key: SystemPropKey;
-    value: string;
-  }) => Promise<SystemPropertyValue>;
-};
 
 export enum SystemPropKey {
   SetupBoardName = 'setup-board-name',
@@ -54,62 +34,3 @@ export const useSystemPropsStore = create<SystemPropsStore>((set, get) => ({
     );
   },
 }));
-
-export const useSystemProps: UseSystemProps = () => {
-  const { setData, setError } = useSystemPropsStore();
-
-  const queryClient = useQueryClient();
-
-  const { boardIsReachable } = useBoardLifecycleStore();
-
-  const {
-    data: systemProps,
-    isSuccess: getPropsSuccess,
-    isError: getPropsError,
-    isLoading: getPropsLoading,
-  } = useQuery<Record<string, string | undefined>>(
-    ['system-properties'],
-    async () => {
-      const storedKeys = await getSystemPropertyKeys();
-      const obj = {} as Record<string, SystemPropertyValue>;
-      for (const key of Object.values(SystemPropKey)) {
-        if (storedKeys.includes(key)) {
-          const value = await getSystemProperty(key);
-          obj[key] = value;
-        }
-      }
-      return obj;
-    },
-    {
-      onError: () => {
-        setError(true);
-      },
-      onSuccess: (data) => {
-        setData(data);
-      },
-      enabled: boardIsReachable,
-    },
-  );
-
-  const { mutateAsync, isLoading: upsertPropsLoading } = useMutation({
-    mutationFn: async (prop: {
-      key: SystemPropKey;
-      value: SystemPropertyValue;
-    }) => upsertSystemProperty(prop.key, prop.value),
-    onSuccess: (_, { key, value }) => {
-      queryClient.setQueryData<Record<string, SystemPropertyValue>>(
-        ['system-properties'],
-        (prevProps) => ({ ...prevProps, [key]: value }),
-      );
-    },
-  });
-
-  return {
-    systemProps,
-    getPropsError,
-    getPropsSuccess,
-    getPropsLoading,
-    upsertPropsLoading,
-    upsertProp: mutateAsync,
-  };
-};

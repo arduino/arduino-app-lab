@@ -1,9 +1,8 @@
 import { memo } from 'react';
 
-import BrickDetail from '../app-lab-brick-detail/BrickDetail';
-import MarkdownReader from '../app-lab-markdown-reader/MarkdownReader';
 import { CodeEditor } from '../code-editor';
 import { KeywordMap } from '../code-mirror';
+import { BrickDetail, MarkdownReader } from '../components-by-app/app-lab';
 import EditorControls from '../editor-controls/EditorControls';
 import EditorImage from '../editor-image/EditorImage';
 import { EditorStatus } from '../editor-status';
@@ -18,6 +17,7 @@ interface EditorPanelProps {
   editorPanelLogic: EditorPanelLogic;
   getKeywords: () => KeywordMap | undefined;
   readOnlyBanner?: JSX.Element;
+  onCopyCode?: () => void;
   classes?: {
     container: string;
     tabsBar?: string;
@@ -29,7 +29,8 @@ interface EditorPanelProps {
 }
 
 const EditorPanel: React.FC<EditorPanelProps> = (props: EditorPanelProps) => {
-  const { editorPanelLogic, classes, getKeywords, readOnlyBanner } = props;
+  const { editorPanelLogic, classes, getKeywords, readOnlyBanner, onCopyCode } =
+    props;
   const {
     brickDetailLogic,
     codeEditorLogic,
@@ -57,6 +58,7 @@ const EditorPanel: React.FC<EditorPanelProps> = (props: EditorPanelProps) => {
             key={selectedFile.id}
             content={selectedFile.getData()}
             onOpenExternalLink={openExternalLink}
+            onCopyCode={onCopyCode}
           />
         </div>
       );
@@ -125,24 +127,19 @@ const EditorPanel: React.FC<EditorPanelProps> = (props: EditorPanelProps) => {
       {selectedFile?.ext === 'md' &&
       markdownCanBeRendered &&
       setShouldRenderMarkdown ? (
-        <div
-          className={
-            shouldRenderMarkdown
-              ? styles['toolbar-and-content-rendered']
-              : styles['toolbar-and-content-code']
-          }
-        >
+        <div className={styles['toolbar-and-content']}>
           <EditorToolbar
             type="markdown"
             isRendered={!!shouldRenderMarkdown}
             readOnly={readOnly}
             classes={{
-              container: !canSwitchMarkdownMode
-                ? styles['editor-md-toolbar-disabled']
+              container: styles['editor-toolbar-container'],
+              disabled: !canSwitchMarkdownMode
+                ? styles['editor-toolbar-disabled']
                 : undefined,
             }}
             onToggleRender={
-              canSwitchMarkdownMode ? setShouldRenderMarkdown : () => {}
+              canSwitchMarkdownMode ? setShouldRenderMarkdown : undefined
             }
           />
           {renderContent()}

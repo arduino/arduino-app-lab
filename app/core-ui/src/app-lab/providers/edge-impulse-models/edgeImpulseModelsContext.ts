@@ -1,23 +1,28 @@
-import { AIModel, AIModelItem } from '@cloud-editor-mono/infrastructure';
-import { AIModelDownloadInfo } from '@cloud-editor-mono/ui-components/lib/components-by-app/app-lab';
+import {
+  AIModel,
+  AIModelItem,
+  EIProject,
+} from '@cloud-editor-mono/infrastructure';
+import { ModelDownloadInfo } from '@cloud-editor-mono/ui-components/lib/components-by-app/app-lab';
 import { createContext, useContext } from 'react';
 
 export type EdgeImpulseModelsContextValue = {
   projects: AIModel[];
   projectsLoading: boolean;
-  getEIProjectsByBrickType: (brickType: string) => AIModel[];
-  downloadImpulse: (modelId: string, impulseId: string) => Promise<AIModelItem>;
-  isEIModelInstalled: (modelId: string, impulseId: string) => boolean;
+  currentDownloads: { [projectId: string]: ModelDownloadInfo } | null;
+  installedModels: AIModelItem[];
   getInstalledModel: (
-    projectId: string,
+    modelId: string,
     impulseId?: string,
   ) => AIModelItem | undefined;
-  getEIModelDownloadInfo: (
+  getEIProjectsByBrickType: (brickType: string) => EIProject[];
+  downloadImpulse: (
     projectId: string,
-  ) => AIModelDownloadInfo | undefined;
-  removeEIModel: (modelId: string, impulseId?: string) => Promise<void>;
+    impulseId: string,
+  ) => Promise<AIModelItem>;
   enabledEIAutoRefresh: (enabled: boolean) => void;
   openAndAssociateToDevice: () => void;
+  isModelOutdated: (modelId: string) => boolean;
 };
 
 const EdgeImpulseModelsContextValue: EdgeImpulseModelsContextValue =

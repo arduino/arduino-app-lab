@@ -4,19 +4,16 @@ import {
   BrickListItem,
 } from '@cloud-editor-mono/infrastructure';
 import clsx from 'clsx';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
-import { BrickDetailLogic } from '../../../app-lab-brick-detail';
-import BrickDetail from '../../../app-lab-brick-detail/BrickDetail';
-import { AppLabBricksList } from '../../../app-lab-bricks-list';
 import {
-  BoardResourcesValue,
+  BrickDetail,
+  BrickDetailLogic,
+  BricksList,
   Button,
   ButtonType,
   ConfigureAppBrickDialog,
   ConfigureAppBrickDialogLogic,
-  UseArduinoAccountLogic,
-  UseEdgeImpulseAccountLogic,
 } from '../../../components-by-app/app-lab';
 import { useI18n } from '../../../i18n/useI18n';
 import { AppLabDialog } from '../app-lab-dialog/AppLabDialog';
@@ -24,16 +21,15 @@ import { addAppBrickDialogMessages as messages } from '../messages';
 import styles from './add-app-brick-dialog.module.scss';
 
 export type AddAppBrickDialogLogic = () => {
-  appBricks: BrickInstance[] | undefined;
-  bricks: BrickListItem[];
   open: boolean;
+  appId: string;
+  bricks: BrickListItem[];
+  appBricks: BrickInstance[] | undefined;
+  loadBrickDetails: (brickId: string) => Promise<BrickDetails>;
   brickDetailLogic: BrickDetailLogic;
-  confirmAction: (brick: BrickListItem) => Promise<boolean>;
+  configureDialogLogic: ConfigureAppBrickDialogLogic;
+  confirmAction: (brickId: string, modelId?: string) => Promise<boolean>;
   onOpenChange: (open: boolean) => void;
-  arduinoAuthAccountLogic: UseArduinoAccountLogic;
-  edgeImpulseAuthAccountLogic: UseEdgeImpulseAccountLogic;
-  openAndAssociateToDevice: () => void;
-  boardResourcesLogic: () => BoardResourcesValue;
 };
 
 type AddAppBrickDialogProps = { logic: AddAppBrickDialogLogic };
@@ -42,26 +38,29 @@ export const AddAppBrickDialog: React.FC<AddAppBrickDialogProps> = ({
   logic,
 }: AddAppBrickDialogProps) => {
   const {
-    appBricks,
-    bricks,
     open,
+    appId,
+    bricks,
+    appBricks,
     brickDetailLogic,
+    configureDialogLogic,
     confirmAction,
     onOpenChange,
-    arduinoAuthAccountLogic,
-    edgeImpulseAuthAccountLogic,
-    openAndAssociateToDevice,
-    boardResourcesLogic,
+    loadBrickDetails,
   } = logic();
   const [loading, setLoading] = useState(false);
   const [selectedBrick, setSelectedBrick] = useState<BrickListItem>();
   const [brickDetails, setBrickDetails] = useState<BrickDetails>();
   const [succeeded, setSucceeded] = useState(false);
+  const [selectedModelByBrickId, setSelectedModelsByBrickId] = useState(
+    {} as { [brickId: string]: string },
+  );
 
   const closeDialog = (): void => {
     onOpenChange(false);
     setSucceeded(false);
     setBrickDetails(undefined);
+    setSelectedModelsByBrickId({});
   };
 
   useEffect(() => {
@@ -71,57 +70,49 @@ export const AddAppBrickDialog: React.FC<AddAppBrickDialogProps> = ({
   }, [appBricks, bricks, open]);
 
   const { formatMessage } = useI18n();
-  const { loadBrickDetails, loadBrickInstance, updateBrickDetails } =
-    brickDetailLogic();
 
   const handleConfirm = async (): Promise<void> => {
-    if (!selectedBrick) return;
+    if (!selectedBrick?.id) return;
     setLoading(true);
-    const success = await confirmAction(selectedBrick);
+    const success = await confirmAction(
+      selectedBrick.id,
+      selectedModelByBrickId[selectedBrick.id],
+    );
     if (!success) {
       setLoading(false);
       return;
     }
 
     const brickDetails = await loadBrickDetails(selectedBrick.id!);
-    if (
-      (brickDetails.config_variables ?? []).some((v) => v.required) ||
-      brickDetails.require_model
-    ) {
+    if ((brickDetails.config_variables ?? []).some((v) => v.required)) {
       setBrickDetails(brickDetails);
     }
     setSucceeded(success);
     setLoading(false);
   };
 
-  const configureLogic: ConfigureAppBrickDialogLogic | null = useMemo(
-    () =>
-      brickDetails && loadBrickInstance && updateBrickDetails
-        ? (): ReturnType<ConfigureAppBrickDialogLogic> => ({
-            brick: brickDetails,
-            open: true,
-            loadBrickInstance,
-            onOpenChange: (): void => setBrickDetails(undefined),
-            confirmAction: updateBrickDetails,
-            arduinoAuthAccountLogic,
-            edgeImpulseAuthAccountLogic,
-            openAndAssociateToDevice,
-            boardResourcesLogic,
-          })
-        : null,
-    [
-      arduinoAuthAccountLogic,
-      brickDetails,
-      edgeImpulseAuthAccountLogic,
-      loadBrickInstance,
-      updateBrickDetails,
-      openAndAssociateToDevice,
-      boardResourcesLogic,
-    ],
+  const selectedModelChange = useCallback(
+    (modelId: string) => {
+      if (!selectedBrick?.id) {
+        return;
+      }
+
+      setSelectedModelsByBrickId((prev) => ({
+        ...prev,
+        [selectedBrick.id!]: modelId,
+      }));
+    },
+    [selectedBrick],
   );
 
-  return configureLogic ? (
-    <ConfigureAppBrickDialog logic={configureLogic} />
+  return brickDetails ? (
+    <ConfigureAppBrickDialog
+      open={true}
+      setOpen={(): void => setBrickDetails(undefined)}
+      appId={appId}
+      brick={brickDetails}
+      logic={configureDialogLogic}
+    />
   ) : (
     <AppLabDialog
       open={open}
@@ -129,11 +120,14 @@ export const AddAppBrickDialog: React.FC<AddAppBrickDialogProps> = ({
       title={formatMessage(
         succeeded ? messages.successTitle : messages.dialogTitle,
       )}
+      onSubmit={succeeded ? closeDialog : handleConfirm}
       footer={
         succeeded ? (
           <Button
             type={ButtonType.Primary}
-            onClick={closeDialog}
+            isSubmit
+            /* eslint-disable-next-line jsx-a11y/no-autofocus */
+            autoFocus
             classes={{
               button: styles['action-button'],
               textButtonText: styles['action-button-text'],
@@ -159,7 +153,9 @@ export const AddAppBrickDialog: React.FC<AddAppBrickDialogProps> = ({
               disabled={appBricks?.some(
                 (appBrick) => appBrick.id === selectedBrick?.id,
               )}
-              onClick={handleConfirm}
+              isSubmit
+              /* eslint-disable-next-line jsx-a11y/no-autofocus */
+              autoFocus
               classes={{
                 button: styles['action-button'],
                 textButtonText: styles['action-button-text'],
@@ -201,7 +197,7 @@ export const AddAppBrickDialog: React.FC<AddAppBrickDialogProps> = ({
       ) : (
         <div className={styles['split']}>
           <div className={(styles['split-item'], styles['split-item-left'])}>
-            <AppLabBricksList
+            <BricksList
               bricks={bricks}
               disabledBricks={bricks.filter((brick) =>
                 appBricks?.some((appBrick) => appBrick.id === brick.id),
@@ -225,6 +221,10 @@ export const AddAppBrickDialog: React.FC<AddAppBrickDialogProps> = ({
             <BrickDetail
               brickId={selectedBrick?.id ?? ''}
               brickDetailLogic={brickDetailLogic}
+              preSelectedModelId={
+                selectedModelByBrickId[selectedBrick?.id ?? '']
+              }
+              preSelectedModelChange={selectedModelChange}
             />
           </div>
         </div>

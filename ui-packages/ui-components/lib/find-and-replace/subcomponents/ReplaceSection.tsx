@@ -25,6 +25,7 @@ const ReplaceSection: React.FC<ReplaceSectionProps> = (
         />
       </div>
       <button
+        disabled={!totalOccurrences}
         className={clsx(styles['actions-first'], styles['button'], {
           [styles['disable']]: !totalOccurrences,
         })}
@@ -33,6 +34,7 @@ const ReplaceSection: React.FC<ReplaceSectionProps> = (
         {formatMessage(messages.replace)}
       </button>
       <button
+        disabled={!totalOccurrences}
         className={clsx(styles['actions-second'], styles['button'], {
           [styles['disable']]: !totalOccurrences,
         })}
@@ -40,7 +42,6 @@ const ReplaceSection: React.FC<ReplaceSectionProps> = (
       >
         {formatMessage(messages.replaceAll)}
       </button>
-      <div className={styles['close']} />
     </div>
   );
 };

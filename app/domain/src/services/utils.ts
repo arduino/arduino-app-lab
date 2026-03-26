@@ -5,11 +5,6 @@ function transformDataToContent(base64String: string): string {
   return decodeBase64ToString(base64String);
 }
 
-function transformBinDataToContent(base64String: string): string {
-  const decoded = decodeBase64ToString(base64String);
-  return decodeURIComponent(escape(decoded));
-}
-
 function transformContentToData(code: string): string {
   return btoa(unescape(encodeURIComponent(code)));
 }
@@ -29,7 +24,8 @@ export function transformDataToContentByMimeType(
   mimetype?: string,
 ): string {
   if (mimetype && mimeTypeIsBinary(mimetype)) {
-    return transformBinDataToContent(base64String);
+    // binary files are already stored and retrieved as base64
+    return base64String;
   }
 
   return transformDataToContent(base64String);

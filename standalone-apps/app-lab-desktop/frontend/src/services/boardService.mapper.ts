@@ -1,7 +1,7 @@
 import {
   Board,
   ConnectionType,
-} from '@cloud-editor-mono/ui-components/lib/app-lab-setup';
+} from '@cloud-editor-mono/ui-components/lib/components-by-app/app-lab';
 
 import { board } from '../../wailsjs/go/models';
 

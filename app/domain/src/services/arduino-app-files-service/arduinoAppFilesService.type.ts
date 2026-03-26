@@ -6,17 +6,23 @@ import {
 import { BehaviorSubject, Observable } from 'rxjs';
 
 export interface ArduinoAppFilesService {
-  getAppFileTree(path: string): Promise<TreeNode[]>;
   getAppFiles: (path: string) => Promise<{
     filesList: FileNode[];
     fileTree: TreeNode[];
   }>;
-  getAppFileContent(path: string): Promise<string>;
   saveAppFile: (path: string, content: string) => Promise<void>;
   createAppFile: (path: string, content?: string) => Promise<void>;
-  renameAppFile: (path: string, newName: string) => Promise<void>;
+  renameAppFile: (
+    path: string,
+    newName: string,
+    nodeType?: 'file' | 'folder',
+  ) => Promise<void>;
   removeAppFile: (path: string) => Promise<void>;
   createAppFolder: (path: string) => Promise<void>;
+
+  getAppFileTree(path: string): Promise<TreeNode[]>;
+
+  getAppFileContent(path: string): Promise<string>;
 }
 
 export interface BaseCodeChange {

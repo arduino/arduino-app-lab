@@ -19,4 +19,14 @@ export type UseFlasherLogic = (
     onFlashEvent: (event: FlashEvent) => void,
   ) => Promise<void>;
   openArduinoSupport: () => void;
+  clearBoardAsUsed: (serial: string) => Promise<void>;
+  flashingBoard: {
+    id: string;
+    name: string;
+    type: string;
+    connectionType: 'USB' | 'Network' | 'Local';
+    protocol: string;
+    serial: string;
+    address: string;
+  };
 };

@@ -19,7 +19,7 @@ interface ToggleButtonProps extends AriaToggleButtonProps {
 const ToggleButton: React.FC<ToggleButtonProps> = (
   props: ToggleButtonProps,
 ) => {
-  const { buttonOn, buttonOff, classes } = props;
+  const { buttonOn, buttonOff, classes, isDisabled } = props;
   const ref = useRef<HTMLButtonElement>(null);
   const state = useToggleState(props);
   const { buttonProps } = useToggleButton(props, state, ref);
@@ -30,11 +30,22 @@ const ToggleButton: React.FC<ToggleButtonProps> = (
       className={clsx(
         styles['button'],
         { [styles['isSelected']]: state.isSelected },
+        { [styles['isDisabled']]: isDisabled },
         classes?.button,
       )}
       ref={ref}
     >
-      {state.isSelected ? buttonOn ?? <ToggleOn /> : buttonOff ?? <ToggleOff />}
+      {buttonOn || buttonOff ? (
+        state.isSelected ? (
+          buttonOn ?? <ToggleOn />
+        ) : (
+          buttonOff ?? <ToggleOff />
+        )
+      ) : (
+        <div className={styles['track']}>
+          <div className={styles['thumb']} />
+        </div>
+      )}
     </button>
   );
 };

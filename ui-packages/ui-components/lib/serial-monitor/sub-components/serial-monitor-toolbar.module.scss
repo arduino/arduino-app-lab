@@ -1,4 +1,4 @@
-@use "@cloud-editor-mono/ui-components/public/shared.module.scss";
+@use "../../../public/shared.module.scss";
 @use "../serial-monitor-variables.module.scss";
 
 @mixin toolbarButton($svg-side) {

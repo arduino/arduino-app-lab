@@ -229,6 +229,28 @@ export const createAppDialogMessages = defineMessages({
     description:
       'Error message when trying to set an app name that is already used',
   },
+  successCreate: {
+    id: 'createAppDialog.successCreate',
+    defaultMessage: 'App created successfully',
+    description:
+      'Notification message shown when an app is created successfully',
+  },
+  failedCreate: {
+    id: 'createAppDialog.failedCreate',
+    defaultMessage: 'Failed to create app. Please try again.',
+    description: 'Notification message shown when app creation fails',
+  },
+  successDuplicate: {
+    id: 'createAppDialog.successDuplicate',
+    defaultMessage: 'App duplicated successfully',
+    description:
+      'Notification message shown when an app is duplicated successfully',
+  },
+  failedDuplicate: {
+    id: 'createAppDialog.failedDuplicate',
+    defaultMessage: 'Failed to duplicate app. Please try again.',
+    description: 'Notification message shown when app duplication fails',
+  },
 });
 
 export const setAsDefaultAppDialogMessages = defineMessages({
@@ -572,5 +594,50 @@ export const trainNewModelDialogMessages = defineMessages({
     id: 'appLabBrickDetail.trainNewModel.learnMore',
     defaultMessage: 'Learn More',
     description: 'Button to learn more',
+  },
+});
+
+export const networkSettingsDialogMessages = defineMessages({
+  dialogTitle: {
+    id: 'networkSettingsDialog.title',
+    defaultMessage: 'Network Settings',
+    description: 'Title of the network settings dialog',
+  },
+  confirmButton: {
+    id: 'networkSettingsDialog.confirmButton',
+    defaultMessage: 'Connect',
+    description: 'Label for the button to confirm network settings dialog',
+  },
+});
+
+export const disableNetworkModeDialogMessages = defineMessages({
+  dialogTitle: {
+    id: 'disableNetworkModeDialog.title',
+    defaultMessage: 'Remote access (SSH)',
+    description: 'Title of the disable network mode dialog',
+  },
+  dialogBodyTitle: {
+    id: 'disableNetworkModeDialog.bodyTitle',
+    defaultMessage: 'Disable remote access?',
+    description: 'Message shown in the disable network mode dialog',
+  },
+  dialogBodyDescription: {
+    id: 'disableNetworkModeDialog.bodyDescription',
+    defaultMessage:
+      'Turning off Remote Access (SSH) will prevent App Lab from connecting to your board over the network.',
+    description:
+      'Description shown in the disable network mode dialog to explain the consequences of disabling network mode',
+  },
+  cancelButton: {
+    id: 'disableNetworkModeDialog.cancelButton',
+    defaultMessage: 'Cancel',
+    description:
+      'Label for the cancel button in the disable network mode dialog',
+  },
+  confirmButton: {
+    id: 'disableNetworkModeDialog.confirmButton',
+    defaultMessage: 'Disable',
+    description:
+      'Label for the confirm button in the disable network mode dialog',
   },
 });

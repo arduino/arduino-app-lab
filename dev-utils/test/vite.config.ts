@@ -10,5 +10,9 @@ const externalDependencies = pkg.peerDependencies
   : [];
 
 export default defineConfig(
-  libConfig('test', externalDependencies, undefined, undefined, true),
+  libConfig({
+    exportName: 'test',
+    externalDependencies,
+    noUI: true,
+  }),
 );

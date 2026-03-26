@@ -1,0 +1,245 @@
+@use "../../../../typography/typography.module.scss";
+
+.board {
+  display: flex;
+  align-items: center;
+  border: 1px solid var(--color-border, #232B2E);
+  background: var(--color-surface, #171E21);
+  cursor: pointer;
+  transition: border-color 0.2s ease;
+  position: relative;
+  overflow: visible;
+
+  &:hover:not(:disabled) {
+    background: var(--component-bg-flexible, rgba(174, 184, 184, 0.15));
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  // vertical squared card
+  &--single {
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 320px;
+    height: 215px;
+    border-radius: 16px;
+    gap: 20px;
+    padding: 28px 24px;
+
+    // main-content acts as a passthrough — no extra gap
+    .main-content {
+      display: contents;
+    }
+
+    .title-row {
+      justify-content: center;
+    }
+
+    .title {
+      max-width: 200px;
+    }
+
+    .new-badge {
+      width: 95px;
+      height: 24px;
+      padding: 2px 0;
+      font-size: 12px;
+    }
+
+    .trailing {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      color: var(--color-text-secondary, #5D6A6B);
+      width: 100%;
+    }
+
+    .chip-icon-wrapper {
+      position: relative;
+    }
+  }
+
+  // horizontal row card
+  &--multi {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    width: 514.5px;
+    height: 79px;
+    border-radius: 16px;
+    padding: 16px;
+    gap: 12px;
+
+    .icon--small {
+      flex-shrink: 0;
+    }
+
+    .main-content {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      flex: 1;
+      align-items: flex-start;
+    }
+
+    .title-row {
+      justify-content: flex-start;
+    }
+
+    .title {
+      max-width: 160px;
+    }
+
+    .title.title--with-badge {
+      max-width: 250px;
+    }
+
+    .new-badge {
+      width: auto;
+      height: 20px;
+      padding: 2px 8px;
+      font-size: 10px;
+    }
+
+    .trailing {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--color-text-secondary, #5D6A6B);
+      flex-shrink: 0;
+    }
+
+    .chip-icon-wrapper {
+      position: static;
+    }
+  }
+}
+
+.icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.icon--small {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+}
+
+.title-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.title {
+  text-align: left;
+  font-weight: 700;
+  font-size: 20px;
+  color: var(--color-text-primary, #C9D2D2);
+  letter-spacing: 1%;
+}
+
+.new-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  font-family: typography.$roboto-mono-font-family;
+  font-weight: 500 !important;
+  line-height: 170%;
+  vertical-align: middle;
+  text-transform: uppercase;
+  background: var(--feedback-warning-subtitle, #938210);
+  color: var(--color-badge-text, #FFF5CC);
+}
+
+.last-connection {
+  color: var(--color-text-primary, #C9D2D2);
+  font-weight: 400;
+  font-size: 12px;
+  line-height: 160%;
+  letter-spacing: 0.01em;
+}
+
+.chip-icon-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 100px;
+  border: 1px solid var(--color-border-secondary, #434f54);
+  flex-shrink: 0;
+
+  svg {
+    width: 14px;
+    height: 14px;
+    color: var(--color-icon-secondary, #5D6A6B);
+    fill: currentColor !important;
+
+    path {
+      fill: currentColor !important;
+    }
+
+    *[fill] {
+      fill: currentColor !important;
+    }
+  }
+
+  &:hover {
+    background-color: var(--color-border, #232B2E);
+  }
+}
+
+// Tooltip base styles
+.chip-tooltip {
+  position: absolute;
+  width: auto;
+  max-width: none;
+  height: 23px;
+  padding: 2px 8px;
+  border-radius: 3px;
+  background: #AEB8B8;
+  color: #171E21;
+  white-space: nowrap;
+  text-align: center;
+  font-size: 11px;
+  line-height: 19px;
+  box-shadow: none;
+  border: none;
+
+  // Default: above icon (for single variant)
+  bottom: calc(100% + 6px);
+  top: auto;
+  right: auto;
+  left: 50%;
+  transform: translateX(-50%);
+
+  span {
+    color: #171E21;
+    font-size: 11px;
+    font-weight: 400;
+  }
+
+  &::after {
+    display: none;
+  }
+}
+
+// Override for multi: top-right of card
+.board--multi .chip-tooltip {
+  bottom: auto;
+  top: 8px;
+  right: 8px;
+  left: auto;
+  transform: none;
+}

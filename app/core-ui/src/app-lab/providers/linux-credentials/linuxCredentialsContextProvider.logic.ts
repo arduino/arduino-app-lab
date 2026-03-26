@@ -5,7 +5,7 @@ import {
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useReducer } from 'react';
 
-import { useBoardLifecycleStore } from '../../store/boards/boards';
+import { useBoardLifecycleStore } from '../../store/boardLifecycle';
 import { LinuxCredentialsContextValue } from './linuxCredentialsContext';
 
 interface SetUserPasswordState {
@@ -60,7 +60,10 @@ function setUserPasswordReducer(
 
 export function useLinuxCredentials(): LinuxCredentialsContextValue {
   const queryClient = useQueryClient();
-  const { boardIsReachable } = useBoardLifecycleStore();
+
+  const boardIsReachable = useBoardLifecycleStore(
+    (state) => state.boardIsReachable,
+  );
 
   const [errorState, dispatch] = useReducer(
     setUserPasswordReducer,

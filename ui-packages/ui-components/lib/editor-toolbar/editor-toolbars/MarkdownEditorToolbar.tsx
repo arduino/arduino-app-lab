@@ -1,11 +1,10 @@
 import { useCallback, useState } from 'react';
 
-import { AppLabTabs } from '../../app-lab-tabs';
-import styles from './markdown-editor-toolbar.module.scss';
+import { Tabs } from '../../components-by-app/app-lab';
 
 interface MarkdownEditorToolbarProps {
   isRendered: boolean;
-  onToggleRender: (rendered: boolean) => void;
+  onToggleRender?: (rendered: boolean) => void;
   readOnly?: boolean;
 }
 
@@ -22,12 +21,12 @@ const MarkdownEditorToolbar: React.FC<MarkdownEditorToolbarProps> = (
   const setTabAndToggleRender = useCallback(
     (tab: typeof tabs[number]): void => {
       setTab(tab);
-      onToggleRender(tab === 'Preview');
+      onToggleRender?.(tab === 'Preview');
     },
     [onToggleRender],
   );
 
-  const appLabTabsLogic = useCallback(
+  const tabsLogic = useCallback(
     () => ({
       tabs,
       setTab: setTabAndToggleRender,
@@ -36,11 +35,7 @@ const MarkdownEditorToolbar: React.FC<MarkdownEditorToolbarProps> = (
     [activeTab, setTabAndToggleRender],
   );
 
-  return (
-    <div className={styles.container}>
-      {!readOnly && <AppLabTabs appLabTabsLogic={appLabTabsLogic} />}
-    </div>
-  );
+  return <div>{!readOnly && <Tabs tabsLogic={tabsLogic} />}</div>;
 };
 
 export default MarkdownEditorToolbar;

@@ -4,6 +4,8 @@ import { CreateAppDialogLogic } from '@cloud-editor-mono/ui-components/lib/compo
 import { useMutation } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
 
+import { sendAppLabNotification } from '../../notifications';
+
 export const useCreateAppDialogLogic = (
   createAppDialogOpen: boolean,
   setCreateAppDialogOpen: (open: boolean) => void,
@@ -26,5 +28,6 @@ export const useCreateAppDialogLogic = (
     open: createAppDialogOpen,
     confirmAction: handleCreateApp,
     onOpenChange: setCreateAppDialogOpen,
+    sendNotification: sendAppLabNotification,
   });
 };

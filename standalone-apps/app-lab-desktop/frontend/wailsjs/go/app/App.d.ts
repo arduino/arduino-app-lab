@@ -21,7 +21,11 @@ export function CreateFolder(arg1:string):Promise<void>;
 
 export function DeleteRefreshToken(arg1:string):Promise<void>;
 
+export function DisableNetworkMode():Promise<void>;
+
 export function DisconnectWiFi():Promise<void>;
+
+export function EnableNetworkMode():Promise<void>;
 
 export function ExportApp(arg1:string,arg2:string,arg3:boolean):Promise<string>;
 
@@ -55,13 +59,21 @@ export function GetFileContent(arg1:string):Promise<string>;
 
 export function GetFileTree(arg1:string):Promise<fs.FSNode>;
 
+export function GetIPAddress():Promise<any>;
+
 export function GetInternetStatus():Promise<boolean>;
+
+export function GetKernelVersion():Promise<string>;
 
 export function GetKeyboardLayout():Promise<string>;
 
 export function GetLearnResource(arg1:learn.LearnResourceID):Promise<learn.FullLearnResource>;
 
 export function GetLearnResourceList():Promise<Array<learn.LearnResourceEntry>>;
+
+export function GetLinuxDistribution():Promise<string>;
+
+export function GetNetworkModeStatus():Promise<boolean>;
 
 export function GetOSImageVersion():Promise<string>;
 
@@ -110,6 +122,8 @@ export function OpenUIWhenReady(arg1:number,arg2:number):Promise<void>;
 export function RemoveFile(arg1:string):Promise<void>;
 
 export function RenameFile(arg1:string,arg2:string):Promise<void>;
+
+export function RenameFolder(arg1:string,arg2:string):Promise<void>;
 
 export function SaveTempFile(arg1:string,arg2:Array<number>):Promise<string>;
 

@@ -52,7 +52,7 @@ export const messages = defineMessages({
   },
   checkingForUpdatesDescription: {
     id: 'app-lab.board-update-dialog.checking-for-updates-description',
-    defaultMessage: 'Gathering fresh system bits almost there!',
+    defaultMessage: 'Gathering fresh system bit. Almost there!',
     description: 'Additional info text shown when checking for updates',
   },
   checkingFailed: {

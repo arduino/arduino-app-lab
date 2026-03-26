@@ -1,4 +1,4 @@
-import { LibrariesItem_Response } from '@bcmi-labs/cloud-editor-infrastructure/src';
+import { LibrariesItem_Response } from '@cloud-editor-mono/infrastructure';
 
 import { DropdownMenuSectionType } from '../../../essential/dropdown-menu';
 import {

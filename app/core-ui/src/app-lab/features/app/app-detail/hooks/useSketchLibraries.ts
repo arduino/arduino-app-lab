@@ -34,10 +34,20 @@ export interface UseSketchLibraries {
 
 interface UseSketchLibrariesParams {
   appId?: string;
+  refetchSketchYaml?: () => Promise<unknown>;
+  onAddSuccess?: () => void;
+  onAddError?: () => void;
+  onDeleteSuccess?: () => void;
+  onDeleteError?: () => void;
 }
 
 export const useSketchLibraries = ({
   appId,
+  refetchSketchYaml,
+  onAddSuccess,
+  onAddError,
+  onDeleteSuccess,
+  onDeleteError,
 }: UseSketchLibrariesParams): UseSketchLibraries => {
   const queryClient = useQueryClient();
 
@@ -122,6 +132,17 @@ export const useSketchLibraries = ({
     onSuccess: async () => {
       assertNonNull(appId);
       await queryClient.invalidateQueries(['app-sketch-libraries', appId]);
+      if (refetchSketchYaml) {
+        try {
+          await refetchSketchYaml();
+        } catch (error) {
+          // Sketch.yaml doesn't exist, that's okay for sketch-only apps
+        }
+      }
+      onAddSuccess?.();
+    },
+    onError: () => {
+      onAddError?.();
     },
   });
 
@@ -137,11 +158,21 @@ export const useSketchLibraries = ({
       try {
         await deleteAppSketchLibrary(appId, libRef);
         await queryClient.invalidateQueries(['app-sketch-libraries', appId]);
+        if (refetchSketchYaml) {
+          try {
+            await refetchSketchYaml();
+          } catch (error) {
+            // Sketch.yaml doesn't exist, that's okay for sketch-only apps
+          }
+        }
+        onDeleteSuccess?.();
+      } catch {
+        onDeleteError?.();
       } finally {
         setDeletingLibraryId(undefined);
       }
     },
-    [appId, queryClient],
+    [appId, onDeleteError, onDeleteSuccess, queryClient, refetchSketchYaml],
   );
 
   return {

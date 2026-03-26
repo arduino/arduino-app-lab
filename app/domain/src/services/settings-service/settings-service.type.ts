@@ -13,4 +13,5 @@ export interface SettingsService {
   connectToWiFi(ssid: string, password: string): Promise<void | 'timeout'>;
   disconnectWiFi(): Promise<void>;
   getConnectionName(): Promise<string | null>;
+  getIPAddress(): Promise<string | null>;
 }

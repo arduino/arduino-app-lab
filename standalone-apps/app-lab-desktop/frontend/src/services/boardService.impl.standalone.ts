@@ -1,9 +1,15 @@
 import { BoardService } from '@cloud-editor-mono/domain/src/services/services-by-app/app-lab';
 
 import {
+  DisableNetworkMode,
+  EnableNetworkMode,
   GetBoardList,
   GetBoardName,
+  GetKernelVersion,
   GetKeyboardLayout,
+  GetLinuxDistribution,
+  GetNetworkModeStatus,
+  GetOSImageVersion,
   IsBoard,
   IsUserPasswordSet,
   ListKeyboardLayouts,
@@ -119,6 +125,11 @@ export const setUserPassword: BoardService['setUserPassword'] = async function (
   return;
 };
 
+export const getOSImageVersion: BoardService['getOSImageVersion'] =
+  async function () {
+    return GetOSImageVersion();
+  };
+
 export const boardNeedsImageUpdate: BoardService['boardNeedsImageUpdate'] =
   async function () {
     return NeedsImageUpdate();
@@ -131,4 +142,46 @@ export const openBoardTerminal: BoardService['openBoardTerminal'] =
     } catch (e) {
       throw new Error(`${e}`);
     }
+  };
+
+export const isNetworkModeEnabled: BoardService['isNetworkModeEnabled'] =
+  async function () {
+    try {
+      return GetNetworkModeStatus();
+    } catch {
+      console.error('Error getting network mode status');
+    }
+    return false;
+  };
+
+export const setNetworkMode: BoardService['setNetworkMode'] = async function (
+  enabled: boolean,
+) {
+  try {
+    await (enabled ? EnableNetworkMode() : DisableNetworkMode());
+    return enabled;
+  } catch {
+    console.error('Error setting network mode:', enabled);
+  }
+  return false;
+};
+
+export const getKernelVersion: BoardService['getKernelVersion'] =
+  async function () {
+    try {
+      return await GetKernelVersion();
+    } catch (e) {
+      console.error('Error getting kernel version:', e);
+    }
+    return '';
+  };
+
+export const getLinuxDistribution: BoardService['getLinuxDistribution'] =
+  async function () {
+    try {
+      return await GetLinuxDistribution();
+    } catch (e) {
+      console.error('Error getting Linux distribution:', e);
+    }
+    return '';
   };

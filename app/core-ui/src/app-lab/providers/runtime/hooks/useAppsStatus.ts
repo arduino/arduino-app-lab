@@ -10,9 +10,10 @@ import {
 import { EventSourceMessage } from '@microsoft/fetch-event-source';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo } from 'react';
+import { useShallow } from 'zustand/react/shallow';
 
 import { useAppSSE } from '../../../features/app/app-detail/hooks/useAppSSE';
-import { useBoardLifecycleStore } from '../../../store/boards/boards';
+import { useBoardLifecycleStore } from '../../../store/boardLifecycle';
 
 type UseAppsStatus = () => {
   defaultApp?: AppDetailedInfo;
@@ -21,7 +22,13 @@ type UseAppsStatus = () => {
 };
 
 const useAppsStatus: UseAppsStatus = function (): ReturnType<UseAppsStatus> {
-  const { boardIsReachable } = useBoardLifecycleStore();
+  const { boardIsFlashing, boardIsReachable } = useBoardLifecycleStore(
+    useShallow((state) => ({
+      boardIsFlashing: state.boardIsFlashing,
+      boardIsReachable: state.boardIsReachable,
+    })),
+  );
+
   const queryClient = useQueryClient();
 
   const { data: defaultApps } = useQuery(
@@ -95,10 +102,16 @@ const useAppsStatus: UseAppsStatus = function (): ReturnType<UseAppsStatus> {
   });
 
   useEffect(() => {
-    if (!isConnected && !isConnecting && boardIsReachable) {
+    if (!isConnected && !isConnecting && !boardIsFlashing && boardIsReachable) {
       connectToAppStatusSSE();
     }
-  }, [boardIsReachable, connectToAppStatusSSE, isConnected, isConnecting]);
+  }, [
+    boardIsFlashing,
+    boardIsReachable,
+    connectToAppStatusSSE,
+    isConnected,
+    isConnecting,
+  ]);
 
   useEffect(() => {
     return () => {

@@ -6,6 +6,7 @@ import {
   GetFileTree,
   RemoveFile,
   RenameFile,
+  RenameFolder,
   WriteFileContent,
 } from '../../wailsjs/go/app/App';
 import { mapFSNode, mapFSNodeToFlat } from './orchestratorService.mapper';
@@ -44,8 +45,12 @@ export const createAppFile: ArduinoAppFilesService['createAppFile'] =
   };
 
 export const renameAppFile: ArduinoAppFilesService['renameAppFile'] =
-  async function (path: string, newName: string) {
-    return RenameFile(path, newName);
+  async function (path: string, newName: string, nodeType?: 'file' | 'folder') {
+    if (nodeType === 'folder') {
+      return RenameFolder(path, newName);
+    } else {
+      return RenameFile(path, newName);
+    }
   };
 
 export const removeAppFile: ArduinoAppFilesService['removeAppFile'] =

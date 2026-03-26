@@ -36,6 +36,10 @@ export let getConnectionName: SettingsService['getConnectionName'] =
     throw new Error('getConnectionName service not implemented');
   };
 
+export let getIPAddress: SettingsService['getIPAddress'] = async function () {
+  throw new Error('getIPAddress service not implemented');
+};
+
 export const setSettingsService = (service: SettingsService): void => {
   getNetworkList = service.getNetworkList;
   getEthernetStatus = service.getEthernetStatus;
@@ -44,4 +48,5 @@ export const setSettingsService = (service: SettingsService): void => {
   disconnectWiFi = service.disconnectWiFi;
   getInternetStatus = service.getInternetStatus;
   getConnectionName = service.getConnectionName;
+  getIPAddress = service.getIPAddress;
 };

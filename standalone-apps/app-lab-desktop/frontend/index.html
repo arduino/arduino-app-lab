@@ -8,6 +8,10 @@
 </head>
 
 <body id="al-body">
+    <!-- this dialog should have precedence over the main tree-->
+    <div id="message-dialog-container"></div>
+    <script src="./src/message/message.tsx" type="module"></script>
+    <!-- main tree -->
     <div id="root"></div>
     <script type="module">
         import { Buffer } from 'buffer';

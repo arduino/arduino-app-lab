@@ -1,3 +1,4 @@
+import TextLink from '../text-link.svg?react';
 import AccountArduinoCloud from './account-arduino-cloud.svg?react';
 import AccountConnectedBoards from './account-connected-boards.svg?react';
 import AccountCustomAiModels from './account-custom-ai-models.svg?react';
@@ -9,6 +10,7 @@ import AddBrick from './add-brick.svg?react';
 import AddTab from './add-tab.svg?react';
 import Ai from './ai.svg?react';
 import AppExamples from './app-examples.svg?react';
+import AppLab from './app-lab.svg?react';
 import AppLabBrickApi from './app-lab-brick-api.svg?react';
 import AppLabBrickAudio from './app-lab-brick-audio.svg?react';
 import AppLabBrickIot from './app-lab-brick-iot.svg?react';
@@ -30,6 +32,7 @@ import Appearance from './appearance.svg?react';
 import Apply from './apply.svg?react';
 import ApplyFix from './apply-fix.svg?react';
 import Archive from './archive.svg?react';
+import Arduino from './arduino.svg?react';
 import ArduinoAssistant from './arduino-assistant.svg?react';
 import ArduinoLoader from './arduino-loader.svg?react';
 import ArduinoLogo from './arduino-logo.svg?react';
@@ -141,6 +144,7 @@ import OnboardingBack from './onboarding-back.svg?react';
 import OnboardingNext from './onboarding-next.svg?react';
 import OpenInNewTab from './open-in-new-tab.svg?react';
 import OperationListOutline from './operation-list-outline.svg?react';
+import OperationSort from './operation-sort.svg?react';
 import Palette from './palette.svg?react';
 import Pause from './pause.svg?react';
 import Pencil from './pencil.svg?react';
@@ -166,6 +170,7 @@ import ShareSketchIcon from './share-sketch-icon.svg?react';
 import SidePanelTrigger from './side-panel-trigger.svg?react';
 import Sketch from './sketch.svg?react';
 import SketchIcon from './sketch-icon.svg?react';
+import Sort from './sort.svg?react';
 import Sources from './sources.svg?react';
 import Sparkle from './sparkle.svg?react';
 import Speaker from './speaker.svg?react';
@@ -236,6 +241,7 @@ const Icons = {
   ArduinoAssistant,
   ArduinoLoader,
   ArduinoLogo,
+  Arduino,
   ArduinoLoop,
   ArduinoRoundLogo,
   ArrowDown,
@@ -342,6 +348,7 @@ const Icons = {
   OnboardingNext,
   OpenInNewTab,
   OperationListOutline,
+  OperationSort,
   Palette,
   Pause,
   Pencil,
@@ -372,6 +379,7 @@ const Icons = {
   Spinner,
   Stats,
   StatusError,
+  Sort,
   StopWatch,
   StopWatchDisable,
   SubtractMinus,
@@ -388,6 +396,7 @@ const Icons = {
   Triangle,
   TriangleSharp,
   TriangleSharpOutline,
+  TextLink,
   Undo,
   Unlink,
   UnsavedBadge,
@@ -399,6 +408,7 @@ const Icons = {
   Verify,
   VerifyAndUpload,
   WholeWords,
+  AppLab,
 };
 
 const Images = {

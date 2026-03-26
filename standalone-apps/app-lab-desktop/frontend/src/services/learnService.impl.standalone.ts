@@ -2,7 +2,7 @@ import { LearnService } from '@cloud-editor-mono/domain/src/services/services-by
 import {
   LearnListItem,
   LearnResource,
-} from '@cloud-editor-mono/ui-components/lib/app-lab-learn';
+} from '@cloud-editor-mono/ui-components/lib/components-by-app/app-lab';
 
 import {
   GetLearnResource,

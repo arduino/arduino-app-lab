@@ -11,6 +11,7 @@ import {
   GetConnectionName,
   GetEthStatus,
   GetInternetStatus,
+  GetIPAddress,
   GetWiFiStatus,
   ListSSIDs,
 } from '../../wailsjs/go/app/App';
@@ -94,3 +95,13 @@ export const getConnectionName: SettingsService['getConnectionName'] =
       return null;
     }
   };
+
+export const getIPAddress: SettingsService['getIPAddress'] = async function () {
+  try {
+    const result = await GetIPAddress();
+    return result;
+  } catch (e) {
+    console.error(`Failed to get IP address: ${e}`);
+    return null;
+  }
+};

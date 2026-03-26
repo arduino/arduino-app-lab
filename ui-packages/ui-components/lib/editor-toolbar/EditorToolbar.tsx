@@ -9,20 +9,22 @@ type EditorToolbarProps = (
   | {
       type: typeof EditorToolbarType[0];
       isRendered: boolean;
-      onToggleRender: (rendered: boolean) => void;
+      onToggleRender?: (rendered: boolean) => void;
       readOnly?: boolean;
     }
   | {
       type: typeof EditorToolbarType[1];
     }
 ) & {
-  classes?: { container?: string };
+  classes?: { container?: string; disabled?: string };
 };
 
 const EditorToolbar: React.FC<EditorToolbarProps> = (
   props: EditorToolbarProps,
 ) => {
-  const renderToolbar = () => {
+  const { classes } = props;
+
+  const renderToolbar = (): JSX.Element => {
     switch (props.type) {
       case 'markdown':
         return (
@@ -38,7 +40,9 @@ const EditorToolbar: React.FC<EditorToolbarProps> = (
   };
 
   return (
-    <div className={clsx(styles.container, props.classes?.container)}>
+    <div
+      className={clsx(styles.container, classes?.container, classes?.disabled)}
+    >
       {renderToolbar()}
     </div>
   );

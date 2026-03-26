@@ -26,8 +26,16 @@ export function DeleteRefreshToken(arg1) {
   return window['go']['app']['App']['DeleteRefreshToken'](arg1);
 }
 
+export function DisableNetworkMode() {
+  return window['go']['app']['App']['DisableNetworkMode']();
+}
+
 export function DisconnectWiFi() {
   return window['go']['app']['App']['DisconnectWiFi']();
+}
+
+export function EnableNetworkMode() {
+  return window['go']['app']['App']['EnableNetworkMode']();
 }
 
 export function ExportApp(arg1, arg2, arg3) {
@@ -94,8 +102,16 @@ export function GetFileTree(arg1) {
   return window['go']['app']['App']['GetFileTree'](arg1);
 }
 
+export function GetIPAddress() {
+  return window['go']['app']['App']['GetIPAddress']();
+}
+
 export function GetInternetStatus() {
   return window['go']['app']['App']['GetInternetStatus']();
+}
+
+export function GetKernelVersion() {
+  return window['go']['app']['App']['GetKernelVersion']();
 }
 
 export function GetKeyboardLayout() {
@@ -108,6 +124,14 @@ export function GetLearnResource(arg1) {
 
 export function GetLearnResourceList() {
   return window['go']['app']['App']['GetLearnResourceList']();
+}
+
+export function GetLinuxDistribution() {
+  return window['go']['app']['App']['GetLinuxDistribution']();
+}
+
+export function GetNetworkModeStatus() {
+  return window['go']['app']['App']['GetNetworkModeStatus']();
 }
 
 export function GetOSImageVersion() {
@@ -204,6 +228,10 @@ export function RemoveFile(arg1) {
 
 export function RenameFile(arg1, arg2) {
   return window['go']['app']['App']['RenameFile'](arg1, arg2);
+}
+
+export function RenameFolder(arg1, arg2) {
+  return window['go']['app']['App']['RenameFolder'](arg1, arg2);
 }
 
 export function SaveTempFile(arg1, arg2) {

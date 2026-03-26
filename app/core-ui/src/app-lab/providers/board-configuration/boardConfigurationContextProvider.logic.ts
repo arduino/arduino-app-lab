@@ -9,7 +9,7 @@ import {
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useReducer, useState } from 'react';
 
-import { useBoardLifecycleStore } from '../../store/boards/boards';
+import { useBoardLifecycleStore } from '../../store/boardLifecycle';
 import { BoardConfigurationContextValue } from './boardConfigurationContext';
 
 const { generateName } = createNamesGenerator();
@@ -66,7 +66,11 @@ function setBoardConfigurationReducer(
 
 export function useBoardConfiguration(): BoardConfigurationContextValue {
   const queryClient = useQueryClient();
-  const { boardIsReachable } = useBoardLifecycleStore();
+
+  const boardIsReachable = useBoardLifecycleStore(
+    (state) => state.boardIsReachable,
+  );
+
   const [skipped, setSkipped] = useState(false);
 
   const {
@@ -200,6 +204,8 @@ export function useBoardConfiguration(): BoardConfigurationContextValue {
     setKeyboardLayoutIsError: errorState.keyboardLayoutIsError,
     boardName,
     proposeName: generateName,
+    setBoardName,
+    setKeyboardLayout,
     setBoardNameIsSuccess,
     setBoardNameIsError: errorState.boardNameIsError,
     boardNameErrorMsg: errorState.boardNameErrorMsg,

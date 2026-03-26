@@ -10,10 +10,14 @@ const externalDependencies = pkg.peerDependencies
   : [];
 
 export default defineConfig(
-  libConfig('create-agent-client-ts', externalDependencies, undefined, {
-    css: {
-      modules: {
-        hashPrefix: pkg.name,
+  libConfig({
+    exportName: 'create-agent-client-ts',
+    externalDependencies,
+    options: {
+      css: {
+        modules: {
+          hashPrefix: pkg.name,
+        },
       },
     },
   }),

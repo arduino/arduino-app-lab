@@ -22,14 +22,9 @@ export const getAvailableFreeSpace: FlasherService['getAvailableFreeSpace'] =
     return GetAvailableFreeSpace();
   };
 
-export const getOSImageVersion: FlasherService['getOSImageVersion'] =
-  async function () {
-    return GetOSImageVersion();
-  };
-
 export const isUserPartitionPreservationSupported: FlasherService['isUserPartitionPreservationSupported'] =
   async function (targetImageVersion: string) {
-    const currentImageVersion = await getOSImageVersion();
+    const currentImageVersion = await GetOSImageVersion();
     return IsUserPartitionPreservationSupported(
       currentImageVersion,
       targetImageVersion,
@@ -49,7 +44,7 @@ export const listAvailableOSImages: FlasherService['listAvailableOSImages'] =
 
 export const boardNeedsOSUpdate: FlasherService['boardNeedsOSUpdate'] =
   async function () {
-    const currentImageVersion = await getOSImageVersion();
+    const currentImageVersion = await GetOSImageVersion();
     const availableOSVersions = await listAvailableOSImages();
 
     if (availableOSVersions && availableOSVersions.length > 0) {

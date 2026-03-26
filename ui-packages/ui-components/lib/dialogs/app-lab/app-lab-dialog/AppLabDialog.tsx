@@ -25,6 +25,7 @@ type AppLabDialogProps = ComponentProps<typeof BaseModal> & {
   asChild?: boolean;
   classes?: AppLabDialogStyles;
   footer?: React.ReactNode;
+  onSubmit?: () => unknown;
 };
 
 export const AppLabDialog = forwardRef(
@@ -42,6 +43,7 @@ export const AppLabDialog = forwardRef(
       title,
       asChild = false,
       footer,
+      onSubmit,
       ...rest
     } = props;
 
@@ -57,6 +59,7 @@ export const AppLabDialog = forwardRef(
           ...contentProps,
           'aria-describedby': typeof title === 'string' ? title : undefined,
           className: clsx(styles['app-lab-dialog'], classes.root),
+          // tabIndex={-1 as number}
         }}
         ref={ref}
       >
@@ -64,36 +67,53 @@ export const AppLabDialog = forwardRef(
           {...rest}
           className={clsx(styles['app-lab-dialog-content'], classes.content)}
         >
-          {title ? (
-            <div
-              className={clsx(styles['app-lab-dialog-header'], classes.header)}
-            >
-              <DialogTitle>{title}</DialogTitle>
-              {closeable ? (
-                <Close
-                  className={clsx(
-                    styles['app-lab-dialog-header-close'],
-                    classes.closeButton,
-                  )}
-                >
-                  <CloseXIcon />
-                </Close>
-              ) : null}
-            </div>
-          ) : null}
-          <ModalBody
-            className={clsx(styles['app-lab-dialog-body'], classes.body)}
-            asChild={asChild}
+          <form
+            onSubmit={(e): void => {
+              e.preventDefault();
+              onSubmit?.();
+            }}
+            style={{ display: 'contents' }}
           >
-            {children}
-          </ModalBody>
-          {footer ? (
-            <ModalFooter
-              className={clsx(styles['app-lab-dialog-footer'], classes.footer)}
+            <button type="submit" style={{ display: 'none' }}>
+              Submit
+            </button>
+            {title ? (
+              <div
+                className={clsx(
+                  styles['app-lab-dialog-header'],
+                  classes.header,
+                )}
+              >
+                <DialogTitle>{title}</DialogTitle>
+                {closeable ? (
+                  <Close
+                    className={clsx(
+                      styles['app-lab-dialog-header-close'],
+                      classes.closeButton,
+                    )}
+                  >
+                    <CloseXIcon />
+                  </Close>
+                ) : null}
+              </div>
+            ) : null}
+            <ModalBody
+              className={clsx(styles['app-lab-dialog-body'], classes.body)}
+              asChild={asChild}
             >
-              {footer}
-            </ModalFooter>
-          ) : null}
+              {children}
+            </ModalBody>
+            {footer ? (
+              <ModalFooter
+                className={clsx(
+                  styles['app-lab-dialog-footer'],
+                  classes.footer,
+                )}
+              >
+                {footer}
+              </ModalFooter>
+            ) : null}
+          </form>
         </ModalContent>
       </BaseModal>
     );

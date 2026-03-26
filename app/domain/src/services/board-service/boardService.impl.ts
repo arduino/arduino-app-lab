@@ -45,6 +45,11 @@ export let setUserPassword: BoardService['setUserPassword'] =
     throw new Error('setUserPassword service not implemented');
   };
 
+export let getOSImageVersion: BoardService['getOSImageVersion'] =
+  async function () {
+    throw new Error('getOSImageVersion service not implemented');
+  };
+
 export let boardNeedsImageUpdate: BoardService['boardNeedsImageUpdate'] =
   async function () {
     throw new Error('boardNeedsImageUpdate service not implemented');
@@ -53,6 +58,25 @@ export let boardNeedsImageUpdate: BoardService['boardNeedsImageUpdate'] =
 export let openBoardTerminal: BoardService['openBoardTerminal'] =
   async function () {
     throw new Error('openBoardTerminal service not implemented');
+  };
+
+export let isNetworkModeEnabled: BoardService['isNetworkModeEnabled'] =
+  async function () {
+    throw new Error('isNetworkModeEnabled service not implemented');
+  };
+
+export let setNetworkMode: BoardService['setNetworkMode'] = async function () {
+  throw new Error('setNetworkMode service not implemented');
+};
+
+export let getKernelVersion: BoardService['getKernelVersion'] =
+  async function () {
+    throw new Error('getKernelVersion service not implemented');
+  };
+
+export let getLinuxDistribution: BoardService['getLinuxDistribution'] =
+  async function () {
+    throw new Error('getLinuxDistribution service not implemented');
   };
 
 export const setBoardService = (service: BoardService): void => {
@@ -66,6 +90,11 @@ export const setBoardService = (service: BoardService): void => {
   setKeyboardLayout = service.setKeyboardLayout;
   isUserPasswordSet = service.isUserPasswordSet;
   setUserPassword = service.setUserPassword;
+  getOSImageVersion = service.getOSImageVersion;
   boardNeedsImageUpdate = service.boardNeedsImageUpdate;
   openBoardTerminal = service.openBoardTerminal;
+  isNetworkModeEnabled = service.isNetworkModeEnabled;
+  setNetworkMode = service.setNetworkMode;
+  getKernelVersion = service.getKernelVersion;
+  getLinuxDistribution = service.getLinuxDistribution;
 };

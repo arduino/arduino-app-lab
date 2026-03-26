@@ -4,15 +4,15 @@ import {
 } from '@cloud-editor-mono/domain/src/services/services-by-app/app-lab';
 import {
   AppDetailedInfo,
+  AppStatus,
   BrickCreateUpdateRequest,
   BrickInstance,
   MessageData,
   UpdateAppDetailRequest,
 } from '@cloud-editor-mono/infrastructure';
 import {
-  AppLabActionStatus,
-  AppLabTabsLogic,
-  BoardResourcesValue,
+  Action,
+  ActionStatus,
   ConfigureAppBricksDialogLogic,
   CONSOLE_SOURCE_KEYS,
   ConsoleLogValue,
@@ -22,9 +22,8 @@ import {
   SerialMonitorLogic,
   SerialMonitorStatus,
   SwapRunningAppDialogLogic,
+  TabsLogic,
   TreeNode,
-  UseArduinoAccountLogic,
-  UseEdgeImpulseAccountLogic,
 } from '@cloud-editor-mono/ui-components/lib/components-by-app/app-lab';
 import {
   useCallback,
@@ -37,11 +36,8 @@ import {
 import { usePreviousDistinct } from 'react-use';
 import { BehaviorSubject, Subject } from 'rxjs';
 
-import { AuthContext } from '../../../providers/auth/authContext';
-import { BoardResourcesContext } from '../../../providers/board-resources/boardResourcesContext';
-import { EdgeImpulseContext } from '../../../providers/edge-impulse/edgeImpulseContext';
 import { RuntimeContext } from '../../../providers/runtime/runtimeContext';
-import { useBoardLifecycleStore } from '../../../store/boards/boards';
+import { useBoardLifecycleStore } from '../../../store/boardLifecycle';
 import { useAppSSE } from './hooks/useAppSSE';
 import { useAppWebSocket } from './hooks/useAppWebSocket';
 import { checkIfHasIno, checkIfHasPython } from './utils/checkFileTypes';
@@ -57,7 +53,7 @@ export type UseAppDetailRuntimeLogic = (
   ) => Promise<boolean>,
 ) => {
   activePanel: 'editor' | 'console';
-  appLabTabsLogic: AppLabTabsLogic<'editor' | 'console'>;
+  tabsLogic: TabsLogic<'editor' | 'console'>;
   configureAppBricksDialogLogic: ConfigureAppBricksDialogLogic;
   swapRunningAppDialogLogic: SwapRunningAppDialogLogic;
   multipleConsolePanelLogic: MultipleConsolePanelLogic;
@@ -80,7 +76,7 @@ export const useAppDetailRuntimeLogic: UseAppDetailRuntimeLogic = function (
   const [activePanel, setActivePanel] =
     useState<typeof panels[number]>('editor');
 
-  const appLabTabsLogic: AppLabTabsLogic<typeof panels[number]> = useCallback(
+  const tabsLogic: TabsLogic<typeof panels[number]> = useCallback(
     () => ({
       tabs: panels,
       activeTab: activePanel,
@@ -92,9 +88,12 @@ export const useAppDetailRuntimeLogic: UseAppDetailRuntimeLogic = function (
   const [configureAppBricksDialogOpen, setConfigureAppBricksDialogOpen] =
     useState(false);
 
-  const { selectedConnectedBoard: selectedBoard } = useBoardLifecycleStore();
+  const selectedBoard = useBoardLifecycleStore(
+    (state) => state.selectedConnectedBoard,
+  );
+
   const {
-    appsStatus: { defaultApp, activeApp },
+    appsStatus: { defaultApp, activeApp, runningApp },
     runtimeActions: {
       currentAction,
       currentActionStatus,
@@ -119,10 +118,8 @@ export const useAppDetailRuntimeLogic: UseAppDetailRuntimeLogic = function (
   const runApp = useCallback((): void => {
     if (!app) return;
     if (
-      appBricks?.some(
-        (brick) =>
-          brick.config_variables?.some((v) => v.required && !v.value) ||
-          (brick.require_model && !brick.model),
+      appBricks?.some((brick) =>
+        brick.config_variables?.some((v) => v.required && !v.value),
       )
     ) {
       setConfigureAppBricksDialogOpen(true);
@@ -187,7 +184,7 @@ export const useAppDetailRuntimeLogic: UseAppDetailRuntimeLogic = function (
   }, [app, getAppLogsAbort, getSerialMonitorLogsAbort, stopAction]);
 
   useEffect(() => {
-    if (currentActionStatus !== AppLabActionStatus.Pending) {
+    if (currentActionStatus !== ActionStatus.Pending) {
       if (!getAppLogsAbortController.current && !socketRef.current) {
         resetCurrentAction();
       }
@@ -258,22 +255,6 @@ export const useAppDetailRuntimeLogic: UseAppDetailRuntimeLogic = function (
     resetConsoleSources(keysToRemain);
   }, [currentAction, prevCurrentAction, resetConsoleSources]);
 
-  const useArduinoAuthAccountLogic = (): ReturnType<UseArduinoAccountLogic> =>
-    useContext(AuthContext);
-  const arduinoAuthAccountLogic = useCallback(useArduinoAuthAccountLogic, []);
-
-  const useEdgeImpulseAuthAccountLogic =
-    (): ReturnType<UseEdgeImpulseAccountLogic> =>
-      useContext(EdgeImpulseContext);
-  const edgeImpulseAuthAccountLogic = useCallback(
-    useEdgeImpulseAuthAccountLogic,
-    [],
-  );
-
-  const useBoardResourcesLogic = (): BoardResourcesValue =>
-    useContext(BoardResourcesContext);
-  const boardResourcesLogic = useCallback(useBoardResourcesLogic, []);
-
   const useConfigureAppBricksDialogLogic =
     (): ReturnType<ConfigureAppBricksDialogLogic> => ({
       bricks: appBricks ?? [],
@@ -287,22 +268,11 @@ export const useAppDetailRuntimeLogic: UseAppDetailRuntimeLogic = function (
         }
         return result;
       },
-      arduinoAuthAccountLogic,
-      edgeImpulseAuthAccountLogic,
-      boardResourcesLogic,
     });
 
   const configureAppBricksDialogLogic = useCallback(
     useConfigureAppBricksDialogLogic,
-    [
-      appBricks,
-      arduinoAuthAccountLogic,
-      configureAppBricksDialogOpen,
-      edgeImpulseAuthAccountLogic,
-      runApp,
-      updateAppBricks,
-      boardResourcesLogic,
-    ],
+    [appBricks, configureAppBricksDialogOpen, runApp, updateAppBricks],
   );
 
   const isActiveApp =
@@ -390,25 +360,54 @@ export const useAppDetailRuntimeLogic: UseAppDetailRuntimeLogic = function (
       resetSource,
       selectedBoard,
       serialMonitorLogic,
+      isAppStarting:
+        currentAction === Action.Run &&
+        currentActionStatus === ActionStatus.Pending,
     }),
     [
-      activeConsoleTab,
-      consoleSources,
-      consoleTabs,
       isActiveApp,
+      consoleTabs,
+      consoleSources,
+      activeConsoleTab,
+      setActiveConsoleTab,
       resetSource,
       selectedBoard,
-      setActiveConsoleTab,
       serialMonitorLogic,
+      currentAction,
+      currentActionStatus,
     ],
   );
 
-  const runtimeActionsLogic: RuntimeActionsLogic = useCallback(
-    () => ({
+  const runtimeActionsLogic: RuntimeActionsLogic = useCallback(() => {
+    // Use real-time status from runningApp if it matches current app, otherwise fall back to app.status
+    // Also consider intermediate states based on currentAction and currentActionStatus
+    const getAppStatus = (): AppStatus => {
+      // Check for intermediate states first
+      if (
+        currentAction === Action.Run &&
+        currentActionStatus === ActionStatus.Pending
+      ) {
+        return 'starting';
+      }
+      if (
+        currentAction === Action.Stop &&
+        currentActionStatus === ActionStatus.Pending
+      ) {
+        return 'stopping';
+      }
+
+      // Use real-time status from runningApp if it matches current app
+      if (runningApp?.id === app?.id) {
+        return runningApp?.status || 'stopped';
+      }
+      return app?.status || 'stopped';
+    };
+
+    return {
       appId: app?.id || '',
       appDefault: defaultApp,
       appName: app?.name || '',
-      appStatus: app?.status || 'stopped',
+      appStatus: getAppStatus(),
       currentAction,
       currentActionStatus,
       openApp,
@@ -421,25 +420,25 @@ export const useAppDetailRuntimeLogic: UseAppDetailRuntimeLogic = function (
       },
       showStop: isActiveApp,
       isBannerEnabled: isActiveApp,
-    }),
-    [
-      app?.id,
-      app?.name,
-      app?.status,
-      currentAction,
-      currentActionStatus,
-      defaultApp,
-      isActiveApp,
-      openApp,
-      runApp,
-      stopApp,
-      updateApp,
-    ],
-  );
+    };
+  }, [
+    app?.id,
+    app?.name,
+    app?.status,
+    runningApp,
+    currentAction,
+    currentActionStatus,
+    defaultApp,
+    isActiveApp,
+    openApp,
+    runApp,
+    stopApp,
+    updateApp,
+  ]);
 
   return {
     activePanel,
-    appLabTabsLogic,
+    tabsLogic,
     configureAppBricksDialogLogic,
     swapRunningAppDialogLogic,
     multipleConsolePanelLogic,

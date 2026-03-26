@@ -1,7 +1,7 @@
 import {
   addAppBrick as addAppBrickRequest,
   deleteAppBrick,
-  getAppBrickInstance,
+  getAppFiles,
   getBricks,
   getUnsavedFilesSubject,
   openFileExternal,
@@ -12,13 +12,13 @@ import {
 import {
   AppDetailedInfo,
   BrickCreateUpdateRequest,
-  BrickInstance,
   UpdateAppDetailRequest,
 } from '@cloud-editor-mono/infrastructure';
 import {
   FileNode,
   isFileNode,
   TreeNode,
+  useI18n,
 } from '@cloud-editor-mono/ui-components/lib/components-by-app/app-lab';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
@@ -28,9 +28,9 @@ import { resetModuleScopedState } from '../../../../../lib/app-components/app-la
 import { useFiles } from '../../../../common/hooks/files';
 import { queryClient } from '../../../../common/providers/data-fetching/QueryProvider';
 import { useIsBoard } from '../../../hooks/useIsBoard';
-import { useEdgeImpulseModels } from '../../../providers/edge-impulse-models/edgeImpulseModelsContext';
 import { DETAIL_PATH_BY_SECTION } from '../../../routes/__root';
 import { EditorLogicParams } from '../../editor/editor.type';
+import { sendAppLabNotification } from '../../notifications';
 import { AppsSection } from '../app.type';
 import { UseAppDetailLogic } from './appDetail.type';
 import {
@@ -42,6 +42,7 @@ import {
 } from './appDetailFiles';
 import { useSketchLibraries } from './hooks/useSketchLibraries';
 import { useAddSketchLibraryDialog } from './hooks/useSketchLibrariesDialogs';
+import { appDetailMessages as messages } from './messages';
 
 const defaultOpenFoldersState = {};
 
@@ -65,6 +66,8 @@ export const useAppDetailLogic = function (
   useEffect(() => {
     return () => resetModuleScopedState();
   }, []);
+
+  const { formatMessage } = useI18n();
 
   const [initialAppBrickTab, setInitialAppBrickTab] = useState<string>();
   const [selectedNode, setSelectedNode] = useState<FileNode>();
@@ -90,6 +93,7 @@ export const useAppDetailLogic = function (
     createAppFolder,
     refetchAppDetail,
     refetchAppYaml,
+    refetchSketchYaml,
     refetchAppBricks,
     removeFileFromPending,
   } = useAppDetailFiles(appId, firstSelectedFile);
@@ -132,8 +136,6 @@ export const useAppDetailLogic = function (
     closeFile,
   } = useFiles(useFilesPayload);
 
-  const edgeImpulseValue = useEdgeImpulseModels();
-
   useEffect(() => {
     if (firstSelectedFile) {
       selectFile(firstSelectedFile.path);
@@ -155,16 +157,97 @@ export const useAppDetailLogic = function (
       }
       const [fileName, fileExtension] = fullName.split('.');
       const prevSelectedFileId = selectedFile?.fileId;
+
+      // Check if file already exists
+      try {
+        const { filesList } = await getAppFiles(app?.path || '');
+        const filePath = path.replace(app?.path + '/', '');
+        const fileExists = filesList.some((file) => file.path === filePath);
+
+        if (fileExists) {
+          sendAppLabNotification({
+            message: formatMessage(messages.fileAlreadyExists),
+            variant: 'error',
+          });
+          return;
+        }
+      } catch (error) {
+        console.error('Failed to check file existence:', error);
+      }
+
       selectFile(path);
       try {
         await addAppFile(path, fileName, fileExtension);
+        sendAppLabNotification({
+          message: formatMessage(messages.successfullyCreatedFile),
+          variant: 'success',
+        });
       } catch {
         if (prevSelectedFileId) {
           selectFile(prevSelectedFileId);
         }
+        sendAppLabNotification({
+          message: formatMessage(messages.failedCreateFile),
+          variant: 'error',
+        });
       }
     },
-    [addAppFile, selectFile, selectedFile?.fileId],
+    [addAppFile, app?.path, formatMessage, selectFile, selectedFile?.fileId],
+  );
+
+  const addFolderHandler = useCallback(
+    async (path: string) => {
+      const folderName = path.split('/').pop();
+      if (!folderName) {
+        console.error('Invalid folder name');
+        return;
+      }
+
+      // Check if folder already exists by checking file tree
+      try {
+        const { fileTree } = await getAppFiles(app?.path || '');
+        const checkFolderExists = (
+          nodes: TreeNode[],
+          targetPath: string,
+        ): boolean => {
+          for (const node of nodes) {
+            if (node.type === 'folder' && node.path === targetPath) {
+              return true;
+            }
+            if (node.type === 'folder' && node.children) {
+              if (checkFolderExists(node.children, targetPath)) {
+                return true;
+              }
+            }
+          }
+          return false;
+        };
+
+        if (checkFolderExists(fileTree, path)) {
+          sendAppLabNotification({
+            message: formatMessage(messages.folderAlreadyExists),
+            variant: 'error',
+          });
+          return;
+        }
+      } catch (error) {
+        console.error('Failed to check folder existence:', error);
+      }
+
+      try {
+        await createAppFolder(path);
+        sendAppLabNotification({
+          message: formatMessage(messages.successfullyCreatedFolder),
+          variant: 'success',
+        });
+      } catch {
+        sendAppLabNotification({
+          message: formatMessage(messages.failedCreateFolder),
+          variant: 'error',
+        });
+      }
+    },
+    [app?.path, createAppFolder, formatMessage],
   );
 
   const renameFileHandler = useCallback(
@@ -172,6 +255,7 @@ export const useAppDetailLogic = function (
       path: string,
       newName: string,
       appendExt?: boolean,
+      nodeType?: 'file' | 'folder',
     ): Promise<void> => {
       const folder = path.split('/').slice(0, -1).join('/');
       let newPath = folder ? `${folder}/${newName}` : newName;
@@ -181,14 +265,66 @@ export const useAppDetailLogic = function (
         );
         newPath += file?.extension ? `.${file.extension}` : '';
       }
+
+      // Check if target name already exists
+      try {
+        const { filesList, fileTree } = await getAppFiles(app?.path || '');
+        const targetPath = newPath.replace(app?.path + '/', '');
+
+        // Check files
+        const fileExists = filesList.some((file) => file.path === targetPath);
+
+        // Check folders by traversing the tree
+        const checkFolderExists = (
+          nodes: TreeNode[],
+          targetPath: string,
+        ): boolean => {
+          for (const node of nodes) {
+            if (node.type === 'folder' && node.path === targetPath) {
+              return true;
+            }
+            if (node.type === 'folder' && node.children) {
+              if (checkFolderExists(node.children, targetPath)) {
+                return true;
+              }
+            }
+          }
+          return false;
+        };
+
+        const folderExists = checkFolderExists(fileTree, targetPath);
+
+        if (fileExists || folderExists) {
+          sendAppLabNotification({
+            message: formatMessage(
+              fileExists
+                ? messages.fileAlreadyExistsRename
+                : messages.folderAlreadyExistsRename,
+            ),
+            variant: 'error',
+          });
+          return;
+        }
+      } catch (error) {
+        console.error('Failed to check rename conflict:', error);
+      }
+
       try {
         updateOpenFile(path, newPath);
-        await renameAppFile(path, newPath);
-      } catch {
+        await renameAppFile(path, newPath, nodeType);
+        sendAppLabNotification({
+          message: formatMessage(messages.successfullyRenamedFile),
+          variant: 'success',
+        });
+      } catch (error) {
         updateOpenFile(newPath, path);
+        sendAppLabNotification({
+          message: formatMessage(messages.failedRenameFile),
+          variant: 'error',
+        });
       }
     },
-    [app?.path, filesContents, renameAppFile, updateOpenFile],
+    [app?.path, filesContents, renameAppFile, updateOpenFile, formatMessage],
   );
 
   const deleteFileHandler = useCallback(
@@ -197,11 +333,19 @@ export const useAppDetailLogic = function (
       try {
         closeFile(path);
         await deleteAppFile(path);
+        sendAppLabNotification({
+          message: formatMessage(messages.successfullyDeletedFile),
+          variant: 'success',
+        });
       } catch {
         selectFile(path, fileIndex);
+        sendAppLabNotification({
+          message: formatMessage(messages.failedDeleteFile),
+          variant: 'error',
+        });
       }
     },
-    [closeFile, deleteAppFile, openFiles, selectFile],
+    [closeFile, deleteAppFile, formatMessage, openFiles, selectFile],
   );
 
   const updateAppBrick = useCallback(
@@ -249,19 +393,20 @@ export const useAppDetailLogic = function (
   );
 
   const renameFileFromEditor = useCallback(
-    (path: string, newName: string) => renameFileHandler(path, newName, true),
+    (path: string, newName: string, nodeType?: 'file' | 'folder') =>
+      renameFileHandler(path, newName, true, nodeType),
     [renameFileHandler],
   );
 
   const editorLogicParams: EditorLogicParams = useMemo(() => {
     return {
+      appId: app?.id,
       appPath: app?.path,
       appBricks,
       selectedFile,
       selectFile: selectFileFromEditor,
       selectableMainFile,
       unsavedFileIds,
-      edgeImpulseValue,
       closeFile,
       updateOpenFilesOrder,
       deleteAppFile: deleteFileHandler,
@@ -274,13 +419,13 @@ export const useAppDetailLogic = function (
       readOnly: section === 'examples',
     };
   }, [
+    app?.id,
     app?.path,
     appBricks,
     selectedFile,
     selectFileFromEditor,
     selectableMainFile,
     unsavedFileIds,
-    edgeImpulseValue,
     closeFile,
     updateOpenFilesOrder,
     deleteFileHandler,
@@ -392,23 +537,29 @@ export const useAppDetailLogic = function (
   );
 
   const addAppBrick = useCallback(
-    async (brickId: string): Promise<boolean> => {
-      const response = await addAppBrickRequest(appId, brickId, {});
+    async (
+      brickId: string,
+      params: BrickCreateUpdateRequest = {},
+    ): Promise<boolean> => {
+      const response = await addAppBrickRequest(appId, brickId, params);
       if (response) {
         await refetchAppYaml();
         await refetchAppBricks();
         setInitialAppBrickTab('examples');
         selectFile(brickId);
+        sendAppLabNotification({
+          message: formatMessage(messages.successfullyAddedBrick),
+          variant: 'success',
+        });
+      } else {
+        sendAppLabNotification({
+          message: formatMessage(messages.failedAddBrick),
+          variant: 'error',
+        });
       }
       return response;
     },
-    [appId, refetchAppYaml, refetchAppBricks, selectFile],
-  );
-
-  const loadAppBrick = useCallback(
-    (brickId: string): Promise<BrickInstance> =>
-      getAppBrickInstance(appId, brickId),
-    [appId],
+    [appId, refetchAppYaml, refetchAppBricks, selectFile, formatMessage],
   );
 
   const removeAppBrick = useCallback(
@@ -418,10 +569,19 @@ export const useAppDetailLogic = function (
         await refetchAppYaml();
         await refetchAppBricks();
         closeFile(brickId);
+        sendAppLabNotification({
+          message: formatMessage(messages.successfullyDeletedBrick),
+          variant: 'success',
+        });
+      } else {
+        sendAppLabNotification({
+          message: formatMessage(messages.failedDeleteBrick),
+          variant: 'error',
+        });
       }
       return response;
     },
-    [appId, closeFile, refetchAppBricks, refetchAppYaml],
+    [appId, closeFile, formatMessage, refetchAppBricks, refetchAppYaml],
   );
 
   const setSelectedFile = useCallback(
@@ -446,7 +606,30 @@ export const useAppDetailLogic = function (
     deletingLibraryId,
     deleteSketchLibrary,
     addSketchLibraryError,
-  } = useSketchLibraries({ appId });
+  } = useSketchLibraries({
+    appId,
+    refetchSketchYaml,
+    onAddSuccess: () =>
+      sendAppLabNotification({
+        message: formatMessage(messages.successfullyAddedLibrary),
+        variant: 'success',
+      }),
+    onAddError: () =>
+      sendAppLabNotification({
+        message: formatMessage(messages.failedAddLibrary),
+        variant: 'error',
+      }),
+    onDeleteSuccess: () =>
+      sendAppLabNotification({
+        message: formatMessage(messages.successfullyDeletedLibrary),
+        variant: 'success',
+      }),
+    onDeleteError: () =>
+      sendAppLabNotification({
+        message: formatMessage(messages.failedDeleteLibrary),
+        variant: 'error',
+      }),
+  });
 
   const {
     openDialog: openAddSketchLibraryDialog,
@@ -480,7 +663,6 @@ export const useAppDetailLogic = function (
     selectedNode,
     defaultOpenFoldersState,
     editorLogicParams,
-    edgeImpulseValue,
     openApp,
     reloadApp: refetchAppDetail,
     updateApp,
@@ -489,7 +671,6 @@ export const useAppDetailLogic = function (
     openExternal,
     openExternalLink,
     addAppBrick,
-    loadAppBrick,
     removeAppBrick,
     updateAppBrick,
     updateAppBricks,
@@ -499,6 +680,6 @@ export const useAppDetailLogic = function (
     addSketchLibraryDialogLogic,
     openAddSketchLibraryDialog,
     deleteSketchLibrary,
-    addFolderHandler: createAppFolder,
+    addFolderHandler: addFolderHandler,
   };
 };

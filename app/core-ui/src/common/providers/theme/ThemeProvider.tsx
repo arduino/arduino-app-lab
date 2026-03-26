@@ -1,7 +1,7 @@
 import { Preferences } from '@cloud-editor-mono/ui-components/lib/sidenav/sections/settings/settings.type';
 import { Themes } from '@cloud-editor-mono/ui-components/themes/theme.type';
 import clsx from 'clsx';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useMedia } from 'react-use';
 
 import { usePreferenceObservable } from '../../hooks/preferences';
@@ -29,6 +29,14 @@ const ThemeProvider: React.FC<ThemeProviderProps> = (
     : preferredTheme ?? Themes.LightTheme;
 
   const [theme, setTheme] = useState(String(initialTheme));
+
+  useEffect(() => {
+    const body = document.getElementById('al-body');
+    if (body) {
+      body.classList.remove(Themes.LightTheme, Themes.DarkTheme);
+      body.classList.add(theme);
+    }
+  }, [theme]);
 
   return (
     <ThemeContext.Provider value={{ theme, setTheme, isDarkModeOs }}>

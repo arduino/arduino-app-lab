@@ -1,5 +1,5 @@
 import { AppLabInfo } from '@cloud-editor-mono/images/assets/icons';
-import { appLabBoardPreparation } from '@cloud-editor-mono/images/assets/images';
+import { appLabBoardPreparation } from '@cloud-editor-mono/images/assets/images/images-by-app/app-lab';
 import {
   useI18n,
   useTooltip,

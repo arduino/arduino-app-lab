@@ -5,11 +5,6 @@ export let boardNeedsOSUpdate: FlasherService['boardNeedsOSUpdate'] =
     throw new Error('boardNeedsOSUpdate service not implemented');
   };
 
-export let getOSImageVersion: FlasherService['getOSImageVersion'] =
-  async function () {
-    throw new Error('getOSImageVersion service not implemented');
-  };
-
 export let getAvailableFreeSpace: FlasherService['getAvailableFreeSpace'] =
   function () {
     throw new Error('getAvailableFreeSpace service not implemented');
@@ -33,7 +28,6 @@ export let flash: FlasherService['flash'] = async function () {
 
 export const setFlasherService = (service: FlasherService): void => {
   boardNeedsOSUpdate = service.boardNeedsOSUpdate;
-  getOSImageVersion = service.getOSImageVersion;
   getAvailableFreeSpace = service.getAvailableFreeSpace;
   isUserPartitionPreservationSupported =
     service.isUserPartitionPreservationSupported;

@@ -6,8 +6,12 @@ import { useMutation } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 
-import EmojiPicker from '../../../app-lab-emoji-picker/EmojiPicker';
-import { Button, ButtonType } from '../../../components-by-app/app-lab';
+import {
+  Button,
+  ButtonType,
+  EmojiPicker,
+  SnackbarProps,
+} from '../../../components-by-app/app-lab';
 import { Input } from '../../../essential/input';
 import { InputStyle } from '../../../essential/input/input.type';
 import { useI18n } from '../../../i18n/useI18n';
@@ -21,6 +25,7 @@ export type CreateAppDialogLogic = () => {
   app?: AppDetailedInfo;
   confirmAction: (request: CreateAppRequest) => Promise<boolean>;
   onOpenChange: (open: boolean) => void;
+  sendNotification: (props: Omit<SnackbarProps, 'onClose' | 'toastId'>) => void;
 };
 
 type CreateAppDialogProps = { logic: CreateAppDialogLogic };
@@ -30,7 +35,7 @@ const MAX_LENGTH = 80;
 export const CreateAppDialog: React.FC<CreateAppDialogProps> = ({
   logic,
 }: CreateAppDialogProps) => {
-  const { open, app, confirmAction, onOpenChange } = logic();
+  const { open, app, confirmAction, onOpenChange, sendNotification } = logic();
   const [name, setName] = useState(app?.name ? `Copy of ${app?.name}` : '');
   const [icon, setIcon] = useState(app?.icon ?? '😀');
   const [hasError, setHasError] = useState(false);
@@ -60,8 +65,20 @@ export const CreateAppDialog: React.FC<CreateAppDialogProps> = ({
       const result = await confirmAction({ icon, name });
       if (result) {
         onOpenChange(false);
+        sendNotification({
+          message: formatMessage(
+            app ? messages.successDuplicate : messages.successCreate,
+          ),
+          variant: 'success',
+        });
       } else {
         setHasError(true);
+        sendNotification({
+          message: formatMessage(
+            app ? messages.failedDuplicate : messages.failedCreate,
+          ),
+          variant: 'error',
+        });
       }
     },
   );
@@ -73,6 +90,7 @@ export const CreateAppDialog: React.FC<CreateAppDialogProps> = ({
           open={open}
           onOpenChange={onOpenChange}
           title={formatMessage(messages.dialogTitle)}
+          onSubmit={handleCreateApp}
           footer={
             <>
               <Button
@@ -84,8 +102,8 @@ export const CreateAppDialog: React.FC<CreateAppDialogProps> = ({
               <Button
                 type={ButtonType.Primary}
                 loading={isLoading}
-                onClick={handleCreateApp}
                 disabled={name.length === 0}
+                isSubmit
               >
                 {formatMessage(messages.confirmButton)}
               </Button>
@@ -116,6 +134,8 @@ export const CreateAppDialog: React.FC<CreateAppDialogProps> = ({
                   : undefined
               }
               placeholder={formatMessage(messages.inputPlaceholder)}
+              /* eslint-disable-next-line jsx-a11y/no-autofocus */
+              autoFocus
               classes={{
                 input: styles['app-name-input'],
                 inputContainer: styles['app-name-input-container'],

@@ -16,7 +16,7 @@ export const isCompatibleEICategory = (
   switch (category.toLocaleLowerCase()) {
     case 'other':
       // Always show empty projects
-      // They're included in the "other" category but we still need to check presence of learningBlocks
+      // They're included in the "other" category but we still need to check the lack of presence of learningBlocks
       return (
         impulses.length === 0 ||
         impulses.every((i) => i.learnBlocks.length === 0)
@@ -26,16 +26,19 @@ export const isCompatibleEICategory = (
         'arduino:object_detection',
         'arduino:video_object_detection',
       ].includes(brickType);
-    case 'images':
-      if (brickType === 'arduino:visual_anomaly_detection') {
-        return !!impulses.find((i) =>
-          i.learnBlocks.find((lb) => lb.type === 'keras-visual-anomaly'),
-        );
+    case 'images': {
+      const isVisualAnomaly = !!impulses.find((i) =>
+        i.learnBlocks.find((lb) => lb.type === 'keras-visual-anomaly'),
+      );
+      if (isVisualAnomaly) {
+        return brickType === 'arduino:visual_anomaly_detection';
       }
+
       return [
         'arduino:image_classification',
         'arduino:video_image_classification',
       ].includes(brickType);
+    }
     case 'audio':
       return brickType === 'arduino:audio_classification';
     case 'keyword spotting':

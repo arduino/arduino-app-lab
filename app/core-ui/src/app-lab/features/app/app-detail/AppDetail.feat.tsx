@@ -1,9 +1,7 @@
 import { Duplicate } from '@cloud-editor-mono/images/assets/icons';
 import {
   AppAction,
-  AppLabAppTitle,
-  AppLabTabs,
-  AppLabTopBar,
+  AppTitle,
   Button,
   ButtonSize,
   ButtonType,
@@ -12,6 +10,9 @@ import {
   MultipleConsolePanel,
   RuntimeActions,
   SwapRunningAppDialog,
+  Tabs,
+  TopBar,
+  useI18n,
 } from '@cloud-editor-mono/ui-components/lib/components-by-app/app-lab';
 import clsx from 'clsx';
 
@@ -20,6 +21,7 @@ import styles from './app-detail.module.scss';
 import { useAppDetailLogic } from './appDetail.logic';
 import { useAppDetailRuntimeLogic } from './appDetailRuntime.logic';
 import { useCreateAppTitleLogic } from './appDetailTitle.logic';
+import { appDetailMessages as messages } from './messages';
 import AppFilesSection from './sub-components/AppFilesSection.feat';
 
 interface AppDetailProps {
@@ -45,12 +47,10 @@ const AppDetail: React.FC<AppDetailProps> = (props: AppDetailProps) => {
     openExternal,
     openExternalLink,
     addAppBrick,
-    loadAppBrick,
     removeAppBrick,
     updateAppBrick,
     updateAppBricks,
     editorLogicParams,
-    edgeImpulseValue,
     addFileHandler,
     renameFileHandler,
     deleteFileHandler,
@@ -60,9 +60,11 @@ const AppDetail: React.FC<AppDetailProps> = (props: AppDetailProps) => {
     addFolderHandler,
   } = useAppDetailLogic(appId, section);
 
+  const { formatMessage } = useI18n();
+
   const {
     activePanel,
-    appLabTabsLogic,
+    tabsLogic,
     configureAppBricksDialogLogic,
     swapRunningAppDialogLogic,
     multipleConsolePanelLogic,
@@ -89,13 +91,13 @@ const AppDetail: React.FC<AppDetailProps> = (props: AppDetailProps) => {
     <section className={styles['main']}>
       <ConfigureAppBricksDialog logic={configureAppBricksDialogLogic} />
       <SwapRunningAppDialog logic={swapRunningAppDialogLogic} />
-      <AppLabTopBar
+      <TopBar
         pathItems={[
           section,
-          <AppLabAppTitle key="app-title" appTitleLogic={appTitleLogic} />,
+          <AppTitle key="app-title" appTitleLogic={appTitleLogic} />,
         ]}
       >
-        <AppLabTabs appLabTabsLogic={appLabTabsLogic} />
+        <Tabs tabsLogic={tabsLogic} />
         <div className={styles['actions']}>
           {app?.id && (
             <RuntimeActions
@@ -116,12 +118,16 @@ const AppDetail: React.FC<AppDetailProps> = (props: AppDetailProps) => {
                 textButtonText: styles['actions--duplicate-text'],
               }}
             >
-              Copy and edit app
+              {formatMessage(messages.copyAndEditButton)}
             </Button>
           )}
         </div>
-      </AppLabTopBar>
-      {activePanel === 'editor' && (
+      </TopBar>
+      <div
+        className={clsx(styles['editor-panel'], {
+          [styles['hidden']]: activePanel !== 'editor',
+        })}
+      >
         <AppFilesSection
           app={app}
           section={section}
@@ -138,10 +144,8 @@ const AppDetail: React.FC<AppDetailProps> = (props: AppDetailProps) => {
           openExternalLink={openExternalLink}
           addAppBrick={addAppBrick}
           deleteAppBrick={removeAppBrick}
-          loadAppBrick={loadAppBrick}
           updateAppBrick={updateAppBrick}
           editorLogicParams={editorLogicParams}
-          edgeImpulseValue={edgeImpulseValue}
           addFileHandler={addFileHandler}
           renameFileHandler={renameFileHandler}
           deleteFileHandler={deleteFileHandler}
@@ -150,7 +154,7 @@ const AppDetail: React.FC<AppDetailProps> = (props: AppDetailProps) => {
           deleteSketchLibrary={deleteSketchLibrary}
           addFolderHandler={addFolderHandler}
         />
-      )}
+      </div>
       <div
         className={clsx(styles['multiple-console'], {
           [styles['hidden']]: activePanel !== 'console',

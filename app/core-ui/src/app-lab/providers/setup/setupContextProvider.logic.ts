@@ -1,11 +1,13 @@
-import { NetworkCredentials } from '@cloud-editor-mono/ui-components/lib/app-lab-settings';
-import { AppLabSetupItemId } from '@cloud-editor-mono/ui-components/lib/app-lab-setup';
+import {
+  NetworkCredentials,
+  SetupItemId,
+} from '@cloud-editor-mono/ui-components/lib/components-by-app/app-lab';
 import { Dispatch, SetStateAction, useState } from 'react';
 
 export type SetupSteps =
   | 'waiting-selection'
   | 'checking-status'
-  | AppLabSetupItemId
+  | SetupItemId
   | 'done';
 
 export type UseSetup = () => {

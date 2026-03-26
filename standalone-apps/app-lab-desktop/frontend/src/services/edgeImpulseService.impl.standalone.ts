@@ -4,6 +4,7 @@ import {
 } from '@cloud-editor-mono/domain/src/services/services-by-app/app-lab';
 import {
   EIProject,
+  getEIHistoricDeployment,
   getEIProjectAPIKeysV1Request,
   getEIProjectImpulsesV1Request,
   getEIProjectInfoV1Request,
@@ -91,4 +92,25 @@ export const setEILatencyDevice: EdgeImpulseService['setEILatencyDevice'] =
     if (response.error) {
       throw response.error;
     }
+  };
+
+export const isEIDeploymentOutdated: EdgeImpulseService['isEIDeploymentOutdated'] =
+  async function (projectId: string, deploymentVersion: string) {
+    const token = await getEIAccessToken();
+
+    const response = await getEIHistoricDeployment(
+      token,
+      projectId,
+      deploymentVersion,
+    );
+
+    if (response.error) {
+      throw response.error;
+    }
+
+    const isOutdated =
+      !response.deployment?.impulseIsDeleted &&
+      response.deployment?.impulseHasChangedSinceDeployment;
+
+    return isOutdated;
   };

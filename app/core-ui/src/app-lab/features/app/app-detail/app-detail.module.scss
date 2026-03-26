@@ -5,7 +5,6 @@
 .main {
   background: var(--surface-bg-below-2, #090f11);
   height: 100%;
-  height: 100%;
   width: 100%;
   min-width: 600px;
   padding: 0 16px 8px 16px;
@@ -13,6 +12,7 @@
   color: white;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 
 .actions {
@@ -68,6 +68,13 @@ h2 {
   height: 100%;
 }
 
+.editor-panel {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
 .split-item {
   height: 100%;
   &-left {
@@ -78,7 +85,7 @@ h2 {
   border: 1px solid #232b2e;
   background: #090f11;
   box-sizing: border-box;
-  overflow: hidden;
+  overflow: visible;
   border-radius: 12px;
   padding: 2px;
 
@@ -118,15 +125,25 @@ h2 {
     margin-bottom: 4px;
     justify-content: start;
 
+    .tooltip {
+      overflow: visible;
+    }
+
     .app-header-icon {
       display: flex;
       align-items: center;
       justify-content: center;
+      height: 20px;
+      width: 20px;
+
+      path {
+        fill: currentColor !important;
+      }
     }
 
     .app-header-title {
       background: none !important;
-      color: white !important;
+      color: var(--text-default, #fff) !important;
       padding: 0 !important;
       justify-content: start;
       width: 100%;
@@ -154,18 +171,37 @@ h2 {
     }
 
     .app-header-button {
-      padding: 0;
+      padding: 7px;
       width: 28px;
       height: 28px;
       color: var(--text-default, #ffffff);
-      background-color: #232b2e !important;
+      background: var(--component-bg-flexible, #aeb8b826);
       border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      &:hover {
+        background:
+          linear-gradient(
+            0deg,
+            var(--component-bg-flexible, #aeb8b826) 0%,
+            var(--component-bg-flexible, #aeb8b826) 100%
+          ),
+          var(--component-bg-flexible, #aeb8b826);
+      }
+
+      &:focus {
+        outline: 2px solid var(--border-strong, #7f8c8d);
+        outline-offset: -2px;
+      }
 
       &-menu {
         top: 32px !important;
         border-radius: 8px;
         background-color: #374146 !important;
         padding: 4px;
+        z-index: 2000 !important;
 
         &-item {
           outline: none;
@@ -196,16 +232,6 @@ h2 {
     }
   }
 
-  .app-files .app-header-icon svg,
-  .app-files .app-header-button svg {
-    height: 16px;
-    width: 16px;
-  }
-  .app-libraries .app-header-icon svg {
-    height: 20px;
-    width: 20px;
-  }
-
   .app-empty {
     font-size: 12px;
     margin: 0 6px;
@@ -218,19 +244,97 @@ h2 {
     height: 100%;
     display: flex;
     flex-direction: column;
-    overflow: hidden;
 
     .app-list {
       flex: 1;
-      overflow: hidden;
+      overflow: auto;
     }
   }
 }
 
 .split-item-right {
   min-width: 50%;
+  z-index: 0;
 }
 
 .hidden {
   display: none;
+}
+
+.tooltip {
+  position: relative;
+}
+
+.tooltip-content {
+  background-color: #aeb8b8;
+  border-radius: 3px;
+  color: #171e21;
+  font-size: 12px;
+  font-weight: 400;
+  padding: 2px 8px;
+  left: 24px;
+  top: 32px;
+  bottom: unset;
+  position: absolute;
+  pointer-events: none;
+  white-space: nowrap;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+// Specific styles for each tooltip to avoid conflicts
+.tooltip-content--brick {
+  background-color: #aeb8b8;
+  border-radius: 3px;
+  color: #171e21;
+  font-size: 12px;
+  font-weight: 400;
+  padding: 2px 8px;
+  left: 24px;
+  top: 32px;
+  bottom: unset;
+  position: absolute;
+  pointer-events: none;
+  white-space: nowrap;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+.tooltip-content--library {
+  background-color: #aeb8b8;
+  border-radius: 3px;
+  color: #171e21;
+  font-size: 12px;
+  font-weight: 400;
+  padding: 2px 8px;
+  left: 24px;
+  top: 32px;
+  bottom: unset;
+  position: absolute;
+  pointer-events: none;
+  white-space: nowrap;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+.tooltip-content--file {
+  background-color: #aeb8b8;
+  border-radius: 3px;
+  color: #171e21;
+  font-size: 12px;
+  font-weight: 400;
+  padding: 2px 8px;
+  left: 24px;
+  top: 32px;
+  bottom: unset;
+  position: absolute;
+  pointer-events: none;
+  white-space: nowrap;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+// Hide tooltip when dropdown menu is open
+.tooltip.dropdown-open .tooltip-content--file {
+  display: none !important;
 }

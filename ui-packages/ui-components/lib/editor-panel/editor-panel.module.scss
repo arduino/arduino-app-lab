@@ -1,4 +1,4 @@
-@use "@cloud-editor-mono/ui-components/public/shared.module.scss";
+@use "../../public/shared.module.scss";
 @use "../code-editor/code-editor-variables.module.scss";
 
 $tabsBarPaddingLeft: calc(
@@ -27,7 +27,7 @@ $tabsBarPaddingLeft: calc(
     border-bottom-right-radius: 8px;
 }
 
-.toolbar-and-content-rendered {
+.toolbar-and-content {
     display: flex;
     flex-direction: column;
     height: 100%;
@@ -40,14 +40,10 @@ $tabsBarPaddingLeft: calc(
     }
 }
 
-.toolbar-and-content-code {
-    @extend .toolbar-and-content-rendered;
-
-    & .container {
-        padding-left: $tabsBarPaddingLeft;
-    }
+.editor-toolbar-container {
+    padding-left: $tabsBarPaddingLeft;
 }
 
-.editor-md-toolbar-disabled {
+.editor-toolbar-disabled {
     pointer-events: none;
 }

@@ -5,12 +5,12 @@ import {
 } from '@cloud-editor-mono/images/assets/icons';
 import {
   AppItem as Card,
-  AppLabTopBar,
   Button,
   ButtonType,
   CreateAppDialog,
   DropdownMenuButton,
   ImportAppDialog,
+  TopBar,
   useI18n,
 } from '@cloud-editor-mono/ui-components/lib/components-by-app/app-lab';
 import { Link } from '@tanstack/react-router';
@@ -49,7 +49,7 @@ const AppList: React.FC<AppListProps> = (props: AppListProps) => {
     <section className={styles['main']}>
       <CreateAppDialog logic={createAppDialogLogic} />
       <ImportAppDialog logic={importAppDialogLogic} />
-      <AppLabTopBar pathItems={[section]}>
+      <TopBar pathItems={[section]}>
         <div />
         <div className={styles['actions']}>
           {section === 'my-apps' && (
@@ -83,8 +83,10 @@ const AppList: React.FC<AppListProps> = (props: AppListProps) => {
                   : openImportAppDialog()
               }
               useStaticPosition
-              buttonChildren={
+              buttonChildren={(buttonProps, buttonRef): React.ReactNode => (
                 <Button
+                  {...buttonProps}
+                  ref={buttonRef}
                   type={ButtonType.Primary}
                   Icon={Plus}
                   iconPosition="right"
@@ -92,11 +94,11 @@ const AppList: React.FC<AppListProps> = (props: AppListProps) => {
                 >
                   {formatMessage(messages.actionCreate)}
                 </Button>
-              }
+              )}
             />
           )}
         </div>
-      </AppLabTopBar>
+      </TopBar>
       {!appsLoading && apps.length === 0 ? (
         <div className={styles['empty-apps']}>
           <div className={styles['empty-apps-icon']}>

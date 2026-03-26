@@ -1,12 +1,12 @@
-import clsx from 'clsx';
-import { useEffect, useRef } from 'react';
-
-import MarkdownReader from '../../../app-lab-markdown-reader/MarkdownReader';
 import {
   Button,
   ButtonSize,
   ButtonType,
-} from '../../../components-by-app/app-lab';
+  MarkdownReader,
+} from '@cloud-editor-mono/ui-components/lib/components-by-app/app-lab';
+import clsx from 'clsx';
+import { useEffect, useRef } from 'react';
+
 import { useI18n } from '../../../i18n/useI18n';
 import { XXSmall } from '../../../typography';
 import { AppLabDialog } from '../app-lab-dialog/AppLabDialog';

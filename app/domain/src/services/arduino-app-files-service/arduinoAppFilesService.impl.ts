@@ -451,7 +451,11 @@ export let createAppFile: ArduinoAppFilesService['createAppFile'] =
   };
 
 export let renameAppFile: ArduinoAppFilesService['renameAppFile'] =
-  async function () {
+  async function (
+    _path: string,
+    _newName: string,
+    _nodeType?: 'file' | 'folder',
+  ) {
     throw new Error('renameSketch method not implemented');
   };
 

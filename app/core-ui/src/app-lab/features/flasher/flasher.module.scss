@@ -13,10 +13,12 @@
 }
 
 .body {
-  height: calc(100% - 104px);
+  height: calc(100% - 154px);
   display: flex;
   align-items: center;
   justify-content: center;
+  margin-top: 10px;
+  margin-bottom: 40px;
 }
 
 .footer {

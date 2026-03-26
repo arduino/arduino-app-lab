@@ -1,20 +1,20 @@
 import { Config } from '@cloud-editor-mono/common';
 import {
-  deleteAIModel,
   getAIModels,
   getEIProjects,
   installEIModel,
+  isEIDeploymentOutdated,
   openLinkExternal,
   setEILatencyDevice,
 } from '@cloud-editor-mono/domain/src/services/services-by-app/app-lab';
 import { AIModelItem, EIProject } from '@cloud-editor-mono/infrastructure';
-import { AIModelDownloadInfo } from '@cloud-editor-mono/ui-components/lib/components-by-app/app-lab';
+import { ModelDownloadInfo } from '@cloud-editor-mono/ui-components/lib/components-by-app/app-lab';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { get, set } from 'idb-keyval';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 
 import { sendAppLabNotification } from '../../features/notifications';
-import { useBoardLifecycleStore } from '../../store/boards/boards';
+import { useBoardLifecycleStore } from '../../store/boardLifecycle';
 import { EdgeImpulseContext } from '../edge-impulse/edgeImpulseContext';
 import { EdgeImpulseModelsContextValue } from './edgeImpulseModelsContext';
 import { isCompatibleEICategory, mapProjectToModel } from './utils';
@@ -31,57 +31,99 @@ export function useEdgeImpulseModelsLogic(
     useState(false);
 
   const [currentDownloads, setCurrentDownloads] = useState<{
-    [projectId: string]: AIModelDownloadInfo;
+    [projectId: string]: ModelDownloadInfo;
   } | null>(null);
-
-  const queryClient = useQueryClient();
-  const { boardIsReachable } = useBoardLifecycleStore();
 
   const { isAuthenticated } = useContext(EdgeImpulseContext);
 
+  const boardIsReachable = useBoardLifecycleStore(
+    (state) => state.boardIsReachable,
+  );
+
+  const queryClient = useQueryClient();
+
   const [unoQProjects, setUnoQProjects] = useState<EIProject[]>([]);
-  const { data: eiProjects, isLoading: projectsLoading } = useQuery({
+  const { data: projects, isLoading: projectsLoading } = useQuery({
     queryKey: ['edge-impulse-projects', isAuthenticated],
     queryFn: getEIProjects,
     enabled: enableEdgeImpulseAutoRefresh && isAuthenticated,
     refetchOnWindowFocus: true,
   });
   useEffect(() => {
-    setUnoQProjects(eiProjects?.filter((p) => p.hasUnoQLatencyDevice) || []);
-  }, [eiProjects]);
+    setUnoQProjects(projects?.filter((p) => p.hasUnoQLatencyDevice) || []);
+  }, [projects]);
 
   const eiModels = useMemo(
     () => unoQProjects.map(mapProjectToModel),
     [unoQProjects],
   );
 
-  const installedModelsQueryKey = ['installed-models'];
+  const installedModelsQueryKey = useMemo(() => ['get-installed-models'], []);
   const { data: installedModels } = useQuery({
     queryKey: installedModelsQueryKey,
     queryFn: getAIModels,
-    enabled: enableEdgeImpulseAutoRefresh && boardIsReachable,
+    enabled: !!boardIsReachable,
   });
-
   const installedModelsLookup = useMemo(
     () =>
-      installedModels?.reduce((lookup, model) => {
-        return model.id
-          ? {
-              ...lookup,
-              [model.id]: model,
-            }
-          : lookup;
-      }, {} as { [key: string]: AIModelItem }),
+      installedModels?.reduce(
+        (lookup, model) => ({ ...lookup, [model.id ?? 'none']: model }),
+        {} as { [key: string]: AIModelItem },
+      ),
     [installedModels],
   );
 
-  const isEIModelInstalled = useCallback(
-    (projectId: string, impulseId: string) => {
-      const id = `ei-model-${projectId}-${impulseId}`;
-      return !!installedModelsLookup?.[id];
-    },
-    [installedModelsLookup],
+  const outdatedModelsQueryKey = useMemo(
+    () => ['outdated-models', { projects, installedModels }],
+    [installedModels, projects],
   );
+  const { data: outdatedModelsLookup } = useQuery({
+    queryKey: outdatedModelsQueryKey,
+    queryFn: async () => {
+      const deploymentsToCheck: {
+        projectId: string;
+        impulseId: string;
+        deploymentVersion: string;
+      }[] = [];
+      // Get deploymentVersion from installed models that are associated with remote EI project
+      for (const project of projects || []) {
+        for (const impulse of project.impulses || []) {
+          const deploymentVersion = getInstalledModel(
+            project.id.toString(),
+            impulse.id.toString(),
+          )?.metadata?.['ei-deployment-version'];
+          if (deploymentVersion) {
+            deploymentsToCheck.push({
+              projectId: project.id.toString(),
+              impulseId: impulse.id.toString(),
+              deploymentVersion,
+            });
+          }
+        }
+      }
+      // For each deploymentVersion, check if it's outdated
+      const results = await Promise.all(
+        deploymentsToCheck.map(
+          async ({ projectId, impulseId, deploymentVersion }) => {
+            const isOutdated = await isEIDeploymentOutdated(
+              projectId,
+              deploymentVersion,
+            );
+            return { projectId, impulseId, isOutdated };
+          },
+        ),
+      );
+      // Return easy lookup of outdated deployments by projectId and deploymentVersion
+      return results.reduce((lookup, { projectId, impulseId, isOutdated }) => {
+        const id = `ei-model-${projectId}-${impulseId}`;
+        return {
+          ...lookup,
+          [id]: isOutdated,
+        };
+      }, {} as { [key: string]: boolean });
+    },
+    enabled: (installedModels || []).length > 0 && (projects || []).length > 0,
+  });
 
   const getInstalledModel = useCallback(
     (modelId: string, impulseId?: string) => {
@@ -91,100 +133,92 @@ export function useEdgeImpulseModelsLogic(
     [installedModelsLookup],
   );
 
-  const getEIModelDownloadInfo = useCallback(
-    (projectId: string) => {
-      const downloadItem = currentDownloads?.[projectId];
-      return downloadItem;
+  const isModelOutdated = useCallback(
+    (modelId: string): boolean => {
+      return !!outdatedModelsLookup?.[modelId];
     },
-    [currentDownloads],
+    [outdatedModelsLookup],
   );
-
   const getEIProjectsByBrickType = useCallback(
     (brickType: string) => {
-      return unoQProjects
-        .filter((p) =>
-          isCompatibleEICategory(brickType, p.category, p.impulses),
-        )
-        .map(mapProjectToModel);
+      return unoQProjects.filter((p) => {
+        const match = isCompatibleEICategory(brickType, p.category, p.impulses);
+        return match;
+      });
     },
     [unoQProjects],
   );
 
-  const downloadImpulse = async (
-    projectId: string,
-    impulseId: string,
-  ): Promise<AIModelItem> => {
-    if (currentDownloads?.[projectId]?.isDownloading) {
-      throw Error('Already downloading a model from this project');
-    }
-
-    const updateDownload = (info: Partial<AIModelDownloadInfo>): void =>
-      setCurrentDownloads((prev) => ({
-        ...(prev || {}),
-        [projectId]: {
-          ...(prev || {})[projectId],
-          ...info,
-        },
-      }));
-
-    let item: AIModelItem;
-    try {
-      updateDownload({
-        impulseId,
-        error: false,
-        success: false,
-        isDownloading: true,
-      });
-      // TODO: pass signal here if we want to
-      item = await installEIModel(projectId, impulseId);
-      queryClient.setQueryData(
-        installedModelsQueryKey,
-        (prev: AIModelItem[] | undefined) => {
-          return [...(prev || []), item];
-        },
-      );
-      updateDownload({ isDownloading: false, success: true });
-    } catch (error: unknown) {
-      if (error instanceof Error) {
-        sendAppLabNotification({
-          message: error.message,
-          variant: 'error',
-        });
-      } else {
-        console.error(error);
+  const downloadImpulse = useCallback(
+    async (projectId: string, impulseId: string): Promise<AIModelItem> => {
+      if (currentDownloads?.[projectId]?.isDownloading) {
+        throw Error('Already downloading a model from this project');
       }
-      updateDownload({ isDownloading: false, error: true });
 
-      return Promise.reject(error);
-    }
+      const updateDownload = (info: Partial<ModelDownloadInfo>): void =>
+        setCurrentDownloads((prev) => ({
+          ...(prev || {}),
+          [projectId]: {
+            ...(prev || {})[projectId],
+            ...info,
+          },
+        }));
 
-    return item;
-  };
-
-  const removeEIModel = async (
-    projectId: string,
-    impulseId?: string,
-  ): Promise<void> => {
-    const id = impulseId ? `ei-model-${projectId}-${impulseId}` : projectId;
-    try {
-      await deleteAIModel(id);
-      queryClient.setQueryData(
-        installedModelsQueryKey,
-        (prev: AIModelItem[] | undefined) => {
-          return prev?.filter((model) => model.id !== id);
-        },
-      );
-    } catch (error) {
-      if (error instanceof Error) {
-        sendAppLabNotification({
-          message: error.message,
-          variant: 'error',
+      let item: AIModelItem;
+      try {
+        updateDownload({
+          impulseId,
+          error: false,
+          success: false,
+          isDownloading: true,
         });
-      } else {
-        console.error(error);
+        item = await installEIModel(projectId, impulseId);
+        const itemId = item.id || `ei-model-${projectId}-${impulseId}`;
+        queryClient.setQueryData(
+          installedModelsQueryKey,
+          (prev: AIModelItem[] | undefined) => {
+            let found = false;
+            const next = (prev || []).map((m) => {
+              if (m.id === itemId) {
+                found = true;
+                return item;
+              }
+              return m;
+            });
+            return found ? next : (prev || []).concat(item);
+          },
+        );
+        updateDownload({ isDownloading: false, success: true });
+        queryClient.setQueryData(
+          outdatedModelsQueryKey,
+          (prev: { [key: string]: boolean } | undefined) => ({
+            ...prev,
+            [itemId]: false,
+          }),
+        );
+      } catch (error: unknown) {
+        if (error instanceof Error) {
+          sendAppLabNotification({
+            message: error.message,
+            variant: 'error',
+          });
+        } else {
+          console.error(error);
+        }
+        updateDownload({ isDownloading: false, error: true });
+
+        return Promise.reject(error);
       }
-    }
-  };
+
+      return item;
+    },
+    [
+      currentDownloads,
+      installedModelsQueryKey,
+      outdatedModelsQueryKey,
+      queryClient,
+    ],
+  );
 
   const { mutate: openAndAssociateToDevice } = useMutation({
     mutationFn: async () => {
@@ -192,7 +226,7 @@ export function useEdgeImpulseModelsLogic(
 
       const url = `${Config.EI_STUDIO_HOST}?defaultIdps=arduino`; // `defaultIdps=arduino` shows "login with Arduino"
 
-      const freshEiProjects = eiProjects || (await getEIProjects()); // fetch in case above query not yet loaded
+      const freshEiProjects = projects || (await getEIProjects()); // fetch in case above query not yet loaded
 
       if (freshEiProjects?.length !== 1 || alreadyChecked) {
         openLinkExternal(url);
@@ -229,12 +263,12 @@ export function useEdgeImpulseModelsLogic(
   return {
     projects: eiModels,
     projectsLoading,
+    currentDownloads,
+    installedModels: installedModels || [],
+    isModelOutdated,
+    getInstalledModel,
     getEIProjectsByBrickType,
     downloadImpulse,
-    isEIModelInstalled,
-    getInstalledModel,
-    getEIModelDownloadInfo,
-    removeEIModel,
     enabledEIAutoRefresh: setEnableEdgeImpulseAutoRefresh,
     openAndAssociateToDevice,
   };

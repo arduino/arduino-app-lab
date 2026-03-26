@@ -40,6 +40,7 @@ export const DeleteAppDialog: React.FC<DeleteAppDialogProps> = ({
       open={open}
       onOpenChange={onOpenChange}
       title={formatMessage(messages.dialogTitle)}
+      onSubmit={handleDeleteApp}
       footer={
         <>
           <Button
@@ -56,9 +57,11 @@ export const DeleteAppDialog: React.FC<DeleteAppDialogProps> = ({
             type={ButtonType.Secondary}
             variant={ButtonVariant.Destructive}
             loading={isLoading}
-            onClick={handleDeleteApp}
             Icon={Bin}
             iconPosition="right"
+            isSubmit
+            /* eslint-disable-next-line jsx-a11y/no-autofocus */
+            autoFocus
           >
             {formatMessage(messages.confirmButton)}
           </Button>

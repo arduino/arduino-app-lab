@@ -35,10 +35,10 @@ export const BasicInput = forwardRef(
       validateBehavior = InputValidateBehavior.OnChange,
       blurOnEnter = true,
       onBlur = EmptyFn,
-      onKeyDown = EmptyFn,
+      onKeyDown,
       onInputFail = EmptyFn,
       onChange = EmptyFn,
-      onEnter = EmptyFn,
+      onEnter,
       validate = (): boolean => true,
       ...others
     } = props;
@@ -56,13 +56,13 @@ export const BasicInput = forwardRef(
     const onInputKeyDown = (
       event: React.KeyboardEvent<HTMLInputElement>,
     ): void => {
-      onKeyDown(event);
+      onKeyDown?.(event);
 
       if (event.key === 'Enter') {
         if (blurOnEnter) {
           inputRef.current?.blur();
         }
-        onEnter();
+        onEnter?.();
       }
     };
 

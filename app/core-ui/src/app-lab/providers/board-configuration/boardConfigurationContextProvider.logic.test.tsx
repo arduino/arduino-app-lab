@@ -5,16 +5,18 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { useBoardConfiguration } from './boardConfigurationContextProvider.logic';
 
-vi.mock('../../store/boards/boards', async () => {
+vi.mock('../../store/boardLifecycle', async () => {
   const actual = await vi.importActual<
-    typeof import('../../store/boards/boards')
-  >('../../store/boards/boards');
+    typeof import('../../store/boardLifecycle')
+  >('../../store/boardLifecycle');
 
   return {
     ...actual,
-    useBoardLifecycleStore: vi.fn(() => ({
-      boardIsReachable: true,
-    })),
+    useBoardLifecycleStore: vi.fn((selector) =>
+      selector({
+        boardIsReachable: true,
+      }),
+    ),
   };
 });
 

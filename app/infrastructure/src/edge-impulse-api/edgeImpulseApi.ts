@@ -3,6 +3,7 @@ import {
   EIDevelopmentKeysResponse,
   EIGenericApiResponse,
   EIGetAllImpulsesResponse,
+  EIGetDeploymentHistoryResponse,
   EIListProjectsResponse,
   EIProjectInfoResponse,
   EIUpdateProjectRequest,
@@ -105,6 +106,28 @@ export async function postEIUpdateProjectV1Request(
     endpoint,
     token,
     body,
+  });
+
+  if (!response) {
+    throw new Error(
+      `Call to "${endpoint}" did not respond with the expected result`,
+    );
+  }
+
+  return response;
+}
+
+export async function getEIHistoricDeployment(
+  token: string,
+  projectId: string,
+  deploymentVersion: string,
+): Promise<EIGetDeploymentHistoryResponse> {
+  const endpoint = `/${projectId}/deployment/history/${deploymentVersion}`;
+
+  const response = await httpGet<EIGetDeploymentHistoryResponse>({
+    url: EDGE_IMPULSE_API_URL,
+    endpoint,
+    token,
   });
 
   if (!response) {

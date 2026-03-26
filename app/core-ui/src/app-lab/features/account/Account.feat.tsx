@@ -1,6 +1,6 @@
 import {
   AppLabAccount,
-  AppLabTopBar,
+  TopBar,
 } from '@cloud-editor-mono/ui-components/lib/components-by-app/app-lab';
 import { useCallback } from 'react';
 
@@ -12,7 +12,7 @@ const Account: React.FC = () => {
 
   return (
     <section className={styles['main']}>
-      <AppLabTopBar pathItems={['account']} />
+      <TopBar pathItems={['account']} />
       <AppLabAccount logic={accountLogic} />
     </section>
   );

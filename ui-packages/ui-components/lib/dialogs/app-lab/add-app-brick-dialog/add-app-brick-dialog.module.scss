@@ -4,7 +4,8 @@
     height: 80%;
   }
 
-  .body, .content {
+  .body,
+  .content {
     width: 100%;
     height: 100%;
   }
@@ -33,12 +34,12 @@
   overflow-y: auto;
 
   &-left {
-    width: 25% !important;
+    min-width: 300px;
   }
 
   &-right {
     margin-left: 8px;
-    width: 75% !important;
+    flex: 1;
   }
 }
 
@@ -51,16 +52,9 @@
     padding: 8px;
     border-radius: 12px;
 
-    &.selected {
-      background-color: #25C2C714;
-
-      .brick-item-title {
-        font-weight: 600 !important;
-      }
-    }
-
     .brick-item-title {
       font-weight: 400 !important;
+      max-width: 190px !important;
     }
   }
 }

@@ -1,28 +1,23 @@
 import {
   codeInjectionsSubjectNext,
   codeSubjectNext,
-  getBrickDetails,
   getBrowser,
   getCodeInjectionsSubject,
   getCodeSubjectById,
-  getFileContent,
   getUnsavedFilesSubject,
   openLinkExternal,
   replaceFileNameInvalidCharacters,
   saveAppFile,
 } from '@cloud-editor-mono/domain/src/services/services-by-app/app-lab';
-import { BrickInstance } from '@cloud-editor-mono/infrastructure';
 import {
-  BoardResourcesValue,
-  BrickDetailLogic,
   CodeEditorLogic,
   EditorControlsProps,
   EditorPanelLogic,
   mapAssetSources,
   SelectableFileData,
+  snackbar,
   TabsBarLogic,
-  UseArduinoAccountLogic,
-  UseEdgeImpulseAccountLogic,
+  useI18n,
 } from '@cloud-editor-mono/ui-components/lib/components-by-app/app-lab';
 import {
   Preferences,
@@ -30,7 +25,8 @@ import {
 } from '@cloud-editor-mono/ui-components/lib/components-by-app/shared';
 import { EditorView } from '@codemirror/view';
 import { useMutation } from '@tanstack/react-query';
-import { useCallback, useContext, useState } from 'react';
+import { toast } from 'sonner';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import {
   getSelectedCodeObservableValue,
@@ -45,10 +41,9 @@ import { SKETCH_SECRETS_FILE_ID } from '../../../common/hooks/files';
 import { usePreferenceObservable } from '../../../common/hooks/preferences';
 import { UseCreateSketchFromExisting } from '../../../common/hooks/queries/create.type';
 import { getAppLabFileIcon } from '../../../common/utils';
-import { AuthContext } from '../../providers/auth/authContext';
-import { BoardResourcesContext } from '../../providers/board-resources/boardResourcesContext';
-import { EdgeImpulseContext } from '../../providers/edge-impulse/edgeImpulseContext';
+import { makeAppBrickDetailLogic } from '../../hooks/useBrickDetail';
 import { EditorLogicParams } from './editor.type';
+import { messages } from './messages';
 
 function getDataFromFile(
   file?: SelectableFileData,
@@ -78,7 +73,7 @@ export const useEditorLogic: UseEditorLogic = function (
   editorLogicParams: EditorLogicParams,
 ) {
   const {
-    appBricks,
+    appId,
     appPath,
     selectedFile,
     selectFile,
@@ -87,9 +82,6 @@ export const useEditorLogic: UseEditorLogic = function (
     addAppFile,
     deleteAppFile,
     renameAppFile,
-    updateAppBrick,
-    edgeImpulseValue,
-    initialAppBrickTab,
     sketchDataIsLoading,
     selectableMainFile,
     unsavedFileIds,
@@ -98,6 +90,42 @@ export const useEditorLogic: UseEditorLogic = function (
   } = editorLogicParams;
 
   const [shouldRenderMarkdown, setShouldRenderMarkdown] = useState(true);
+  const { formatMessage } = useI18n();
+  const [lastNotifiedFile, setLastNotifiedFile] = useState<string>();
+  const currentToastId = useRef<string | number>();
+
+  const isReadonlyFile = (selectedFile?: SelectableFileData): boolean => {
+    const readonlyFiles = ['app.yaml', 'sketch/sketch.yaml'];
+    if (!selectedFile) return false;
+
+    return readonlyFiles.includes(selectedFile?.fileId);
+  };
+
+  // Show notification when a non-editable file is opened (only for sketches, not examples)
+  useEffect(() => {
+    if (selectedFile) {
+      const currentFileIsReadonly = isReadonlyFile(selectedFile);
+
+      // If switching to a non-readonly file, dismiss any existing notification
+      if (!currentFileIsReadonly && currentToastId.current) {
+        toast.dismiss(currentToastId.current);
+        currentToastId.current = undefined;
+      }
+
+      // Show notification for readonly files (only from non-readonly files)
+      if (currentFileIsReadonly && !readOnly) {
+        const fileId = selectedFile.fileId;
+        if (fileId !== lastNotifiedFile) {
+          currentToastId.current = snackbar({
+            message: formatMessage(messages.readOnlyAttempt),
+            variant: 'info',
+            opts: { duration: 3000 },
+          });
+          setLastNotifiedFile(fileId);
+        }
+      }
+    }
+  }, [selectedFile, readOnly, formatMessage, lastNotifiedFile]);
 
   const useTabsBarLogic = (): ReturnType<TabsBarLogic> => {
     const browser = getBrowser();
@@ -226,13 +254,6 @@ export const useEditorLogic: UseEditorLogic = function (
   const useCodeEditorLogic = (): ReturnType<CodeEditorLogic> => {
     useCodeInjectionsObservable(getCodeInjectionsSubject);
 
-    const isReadonlyFile = (selectedFile?: SelectableFileData): boolean => {
-      const readonlyFiles = ['app.yaml', 'sketch/sketch.yaml'];
-      if (!selectedFile) return false;
-
-      return readonlyFiles.includes(selectedFile?.fileId);
-    };
-
     return {
       setCode,
       sketchDataIsLoading,
@@ -273,7 +294,7 @@ export const useEditorLogic: UseEditorLogic = function (
       onReceiveViewInstance,
       fontSize: Number(usePreferenceObservable(Preferences.FontSize)),
       readOnly: readOnly || isReadonlyFile(selectedFile),
-      showReadOnlyBanner: readOnly && !isReadonlyFile(selectedFile),
+      showReadOnlyBanner: readOnly,
       hasHeader: false,
       hasTabs: true,
       gutter: readOnly ? undefined : { lineNumberStartOffset: 0 },
@@ -288,6 +309,7 @@ export const useEditorLogic: UseEditorLogic = function (
     setCode,
     sketchDataIsLoading,
     tabs,
+    formatMessage,
   ]);
 
   const useSecretsEditorLogic = (): ReturnType<SecretsEditorLogic> => {
@@ -312,57 +334,10 @@ export const useEditorLogic: UseEditorLogic = function (
     openLinkExternal(url);
   }, []);
 
-  const useArduinoAuthAccountLogic = (): ReturnType<UseArduinoAccountLogic> =>
-    useContext(AuthContext);
-  const arduinoAuthAccountLogic = useCallback(useArduinoAuthAccountLogic, []);
-
-  const useEdgeImpulseAuthAccountLogic =
-    (): ReturnType<UseEdgeImpulseAccountLogic> =>
-      useContext(EdgeImpulseContext);
-  const edgeImpulseAuthAccountLogic = useCallback(
-    useEdgeImpulseAuthAccountLogic,
-    [],
+  const brickDetailLogic = useMemo(
+    () => makeAppBrickDetailLogic(appId),
+    [appId],
   );
-
-  const loadBrickInstance = useCallback(
-    (brickId: string): Promise<BrickInstance> => {
-      const brick = appBricks?.find((b) => b.id === brickId);
-      return brick ? Promise.resolve(brick) : Promise.reject();
-    },
-    [appBricks],
-  );
-
-  const useBrickDetailLogic = (): ReturnType<BrickDetailLogic> => {
-    const useBoardResourcesLogic = (): BoardResourcesValue =>
-      useContext(BoardResourcesContext);
-    const boardResourcesLogic = useCallback(useBoardResourcesLogic, []);
-
-    return {
-      initialTab: initialAppBrickTab,
-      showConfigure: !readOnly,
-      edgeImpulseProps: edgeImpulseValue,
-      boardResourcesLogic,
-      loadBrickDetails: getBrickDetails,
-      loadBrickInstance,
-      loadFileContent: getFileContent,
-      onOpenExternalLink: openExternalLink,
-      updateBrickDetails: updateAppBrick,
-      arduinoAuthAccountLogic,
-      edgeImpulseAuthAccountLogic,
-      showTrainNewModel: !readOnly,
-    };
-  };
-
-  const brickDetailLogic = useCallback(useBrickDetailLogic, [
-    initialAppBrickTab,
-    readOnly,
-    edgeImpulseValue,
-    loadBrickInstance,
-    openExternalLink,
-    updateAppBrick,
-    arduinoAuthAccountLogic,
-    edgeImpulseAuthAccountLogic,
-  ]);
 
   const useEditorPanelLogic = (): ReturnType<EditorPanelLogic> => {
     const controlsProps = {

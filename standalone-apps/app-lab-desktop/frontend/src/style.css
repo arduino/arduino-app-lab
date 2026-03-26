@@ -3,6 +3,12 @@
     --border-default: #434F54;
 }
 
+#root {
+    position: fixed;
+    top: 0;
+    left: 0;
+}
+
 #al-body {
   margin: 0;
   height: 100vh;

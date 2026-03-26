@@ -11,10 +11,10 @@ import {
   NetworkItem,
 } from '@cloud-editor-mono/ui-components/lib/components-by-app/app-lab';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useContext, useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useShallow } from 'zustand/react/shallow';
 
-import { useBoardLifecycleStore } from '../../store/boards/boards';
-import { SetupContext } from '../setup/setupContext';
+import { useBoardLifecycleStore } from '../../store/boardLifecycle';
 import { NetworkContextValue } from './networkContext';
 
 export function useNetwork(): NetworkContextValue {
@@ -47,7 +47,12 @@ export function useNetwork(): NetworkContextValue {
     },
   });
 
-  const { boardIsReachable } = useBoardLifecycleStore();
+  const { boardIsFlashing, boardIsReachable } = useBoardLifecycleStore(
+    useShallow((state) => ({
+      boardIsFlashing: state.boardIsFlashing,
+      boardIsReachable: state.boardIsReachable,
+    })),
+  );
 
   const {
     mutateAsync: disconnectFromNetwork,
@@ -78,6 +83,7 @@ export function useNetwork(): NetworkContextValue {
     retry: 3,
     refetchInterval: 3000,
     enabled:
+      !boardIsFlashing &&
       boardIsReachable &&
       !connectRequestIsLoading &&
       !disconnectRequestIsLoading,
@@ -91,6 +97,7 @@ export function useNetwork(): NetworkContextValue {
     retry: 3,
     refetchInterval: 3000,
     enabled:
+      !boardIsFlashing &&
       boardIsReachable &&
       !connectRequestIsLoading &&
       !disconnectRequestIsLoading,
@@ -106,14 +113,12 @@ export function useNetwork(): NetworkContextValue {
   } = useQuery(['internet-status'], async () => getInternetStatus(), {
     retry: 3,
     refetchInterval: 3000,
-    enabled: networkDeviceConnected,
+    enabled: !boardIsFlashing && networkDeviceConnected,
   });
 
   const [scanCount, setScanCount] = useState(0);
-  const { networkStepSkipped } = useContext(SetupContext);
+  const [scanningIsEnabled, setScanningIsEnabled] = useState(false);
   const isConnected = networkDeviceConnected && internetIsReachable === true;
-  const scanningIsEnabled =
-    boardIsReachable && !isConnected && !networkStepSkipped;
   const {
     data: networkList,
     isFetching: isScanning,
@@ -133,8 +138,14 @@ export function useNetwork(): NetworkContextValue {
   const [selectedNetwork, setSelectedNetwork] = useState<NetworkItem>();
   const [manualNetworkSetup, setManualNetworkSetup] = useState(false);
 
+  useEffect(() => {
+    resetConnectRequest();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedNetwork, manualNetworkSetup]);
+
   return {
     isScanning: isScanning || (scanningIsEnabled && scanCount < 8),
+    setScanningIsEnabled,
     networkList: networkList || [],
     isNetworkStatusLoading:
       isWiFiStatusLoading || isEthernetStatusLoading || isInternetStatusLoading,

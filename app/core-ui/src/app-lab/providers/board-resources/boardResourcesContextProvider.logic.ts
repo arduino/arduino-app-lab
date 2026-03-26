@@ -2,8 +2,9 @@ import { getSystemResources } from '@cloud-editor-mono/domain/src/services/servi
 import { SystemResourcesStreamMessageType } from '@cloud-editor-mono/infrastructure';
 import { BoardResources } from '@cloud-editor-mono/ui-components/lib/components-by-app/app-lab';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useShallow } from 'zustand/react/shallow';
 
-import { useBoardLifecycleStore } from '../../store/boards/boards';
+import { useBoardLifecycleStore } from '../../store/boardLifecycle';
 import { BoardResourcesContextValue } from './boardResourcesContext';
 
 export const bytesToGiB = (bytes: unknown): string =>
@@ -20,7 +21,12 @@ export function useBoardResourcesLogic(): BoardResourcesContextValue {
     undefined,
   );
 
-  const { boardIsReachable } = useBoardLifecycleStore();
+  const { boardIsFlashing, boardIsReachable } = useBoardLifecycleStore(
+    useShallow((state) => ({
+      boardIsFlashing: state.boardIsFlashing,
+      boardIsReachable: state.boardIsReachable,
+    })),
+  );
 
   const openStream = useCallback(() => {
     if (streamIsConnecting.current) {
@@ -84,7 +90,7 @@ export function useBoardResourcesLogic(): BoardResourcesContextValue {
   }, [setResources]);
 
   useEffect(() => {
-    if (!boardIsReachable) {
+    if (boardIsFlashing || !boardIsReachable) {
       streamAbortController.current?.abort();
       return;
     }
@@ -95,7 +101,7 @@ export function useBoardResourcesLogic(): BoardResourcesContextValue {
       streamAbortController.current?.abort();
       streamIsConnecting.current = false;
     };
-  }, [openStream, boardIsReachable]);
+  }, [openStream, boardIsFlashing, boardIsReachable]);
 
   const singleValuesInGB = useMemo(
     () => ({

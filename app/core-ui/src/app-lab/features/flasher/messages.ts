@@ -8,12 +8,12 @@ export const messages = defineMessages({
   },
   configurationStepTitle: {
     id: 'app-lab.flasher.configuration-step-title',
-    defaultMessage: 'Configure Board Flash',
+    defaultMessage: 'Configure',
     description: 'Title shown during the configuration step',
   },
   configurationStepImageVersionLabel: {
     id: 'app-lab.flasher.configuration-step-image-version-label',
-    defaultMessage: 'Debian image',
+    defaultMessage: 'Build Version',
     description: 'Label for the image selection field',
   },
   configurationStepImageVersionAction: {
@@ -67,7 +67,7 @@ export const messages = defineMessages({
   },
   preparationStepTitle: {
     id: 'app-lab.flasher.preparation-step-title',
-    defaultMessage: 'Preparing the Hardware and flash the board',
+    defaultMessage: 'Preparing the hardware',
     description: 'Title shown during the preparation step',
   },
   preparationStepDescription: {

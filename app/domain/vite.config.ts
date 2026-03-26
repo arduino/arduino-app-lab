@@ -10,18 +10,16 @@ const externalDependencies = pkg.peerDependencies
   : [];
 
 export default defineConfig(
-  libConfig(
-    'domain',
+  libConfig({
+    exportName: 'domain',
     externalDependencies,
-    undefined,
-    {
+    options: {
       css: {
         modules: {
           hashPrefix: pkg.name,
         },
       },
     },
-    false,
-    ['./tests-setup.ts'],
-  ),
+    vitestSetupFiles: ['./tests-setup.ts'],
+  }),
 );

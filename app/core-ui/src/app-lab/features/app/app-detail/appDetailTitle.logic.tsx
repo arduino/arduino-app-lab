@@ -15,6 +15,7 @@ import {
   CreateAppDialogLogic,
   DeleteAppDialogLogic,
   ExportAppDialogLogic,
+  useI18n,
 } from '@cloud-editor-mono/ui-components/lib/components-by-app/app-lab';
 import { useMutation } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
@@ -23,6 +24,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { DETAIL_PATH_BY_SECTION } from '../../../routes/__root';
 import { sendAppLabNotification } from '../../notifications';
 import { AppsSection } from '../app.type';
+import { appDetailMessages as messages } from './messages';
 
 export type UseCreateAppTitleLogic = (
   app: AppDetailedInfo | undefined,
@@ -44,6 +46,8 @@ export const useCreateAppTitleLogic: UseCreateAppTitleLogic = function (
     from: DETAIL_PATH_BY_SECTION[section || 'examples'],
   });
 
+  const { formatMessage } = useI18n();
+
   const [deleteAppDialogOpen, setDeleteAppDialogOpen] = useState(false);
   const [createAppDialogOpen, setCreateAppDialogOpen] = useState(false);
   const [exportAppDialogOpen, setExportAppDialogOpen] = useState(false);
@@ -61,6 +65,10 @@ export const useCreateAppTitleLogic: UseCreateAppTitleLogic = function (
           navigate({
             to: `/${section}`,
           });
+          sendAppLabNotification({
+            message: formatMessage(messages.successfullyDeletedApp),
+            variant: 'success',
+          });
         }
         return result;
       },
@@ -76,6 +84,7 @@ export const useCreateAppTitleLogic: UseCreateAppTitleLogic = function (
   const deleteAppDialogLogic = useCallback(useDeleteAppDialogLogic, [
     app,
     deleteAppDialogOpen,
+    formatMessage,
     navigate,
     section,
   ]);
@@ -99,6 +108,7 @@ export const useCreateAppTitleLogic: UseCreateAppTitleLogic = function (
       app,
       confirmAction: handleCloneApp,
       onOpenChange: setCreateAppDialogOpen,
+      sendNotification: sendAppLabNotification,
     };
   };
   const createAppDialogLogic = useCallback(useCreateAppDialogLogic, [

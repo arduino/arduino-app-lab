@@ -102,6 +102,9 @@
     },
     "./themes/theme.type": {
       "import": "./themes/theme.type.ts"
+    },
+    "./lib/common/utils": {
+      "import": "./lib/common/utils/index.ts"
     }
   },
   "devDependencies": {
@@ -115,5 +118,8 @@
     "@storybook/testing-library": "0.0.13",
     "@tanstack/react-query": "4.12.0",
     "babel-loader": "8.2.5"
+  },
+  "dependencies": {
+    "@dotlottie/react-player": "^1.6.19"
   }
 }

@@ -305,7 +305,11 @@ export const MockArduinoAppFilesService: ArduinoAppFilesService = {
     fileContents.set(path, content);
   },
 
-  async renameAppFile(path: string, newName: string): Promise<void> {
+  async renameAppFile(
+    path: string,
+    newName: string,
+    _nodeType?: 'file' | 'folder',
+  ): Promise<void> {
     const fromRelative = stripAppRoot(path);
     const toRelative = stripAppRoot(newName);
     renameNodePath(mockRoot, fromRelative, toRelative);

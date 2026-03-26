@@ -1,71 +1,47 @@
 import clsx from 'clsx';
-import React, {
-  forwardRef,
-  ReactNode,
-  useImperativeHandle,
-  useRef,
-} from 'react';
+import React, { forwardRef, useImperativeHandle, useRef } from 'react';
 
 import { Text, TextSize } from '../../typography';
 import { Loader } from '../loader';
 import { ButtonSize, ButtonType, ButtonVariant } from './appLabButton.type';
 import styles from './button.module.scss';
 
-type ButtonProps = {
-  id?: string;
-  children?: ReactNode;
+type ButtonProps = Omit<
+  React.ButtonHTMLAttributes<HTMLButtonElement>,
+  'type'
+> & {
   type?: ButtonType;
   variant?: ButtonVariant;
   size?: ButtonSize;
   Icon?: React.FC;
   iconPosition?: 'left' | 'right';
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  onClick?: (...args: any) => any;
-  onMouseEnter?: () => void;
-  onMouseLeave?: () => void;
   classes?: { button?: string; textButtonText?: string };
-  disabled?: boolean;
   loading?: boolean;
   bold?: boolean;
   uppercase?: boolean;
-  title?: string;
+  isSubmit?: boolean;
 };
 
 export const AppLabButton = forwardRef(
-  (props: ButtonProps, ref: React.ForwardedRef<Partial<HTMLButtonElement>>) => {
+  (props: ButtonProps, ref: React.ForwardedRef<HTMLButtonElement | null>) => {
     const {
-      id,
       children,
       Icon,
       iconPosition = 'right',
-      onClick,
-      onMouseEnter,
-      onMouseLeave,
       classes,
       type = ButtonType.Primary,
       variant = ButtonVariant.Action,
       size = ButtonSize.Small,
-      disabled = false,
       loading = false,
       bold = false,
       uppercase = false,
-      title,
+      isSubmit = false,
+      ...buttonProps
     } = props;
 
-    const buttonRef = useRef<HTMLButtonElement>(null);
+    const buttonRef = useRef<HTMLButtonElement | null>(null);
 
-    useImperativeHandle(ref, () => {
-      return {
-        id: buttonRef.current?.id,
-        focus: (): void => {
-          buttonRef.current?.focus();
-        },
-        blur: (): void => {
-          buttonRef.current?.blur();
-        },
-        width: buttonRef.current?.offsetWidth,
-      };
-    });
+    useImperativeHandle(ref, () => buttonRef.current!);
 
     const WrappedIcon = Icon ? (
       <>
@@ -79,13 +55,10 @@ export const AppLabButton = forwardRef(
 
     return (
       <button
-        id={id}
-        title={title}
+        {...buttonProps}
         ref={buttonRef}
-        disabled={disabled}
-        onClick={onClick}
-        onMouseEnter={onMouseEnter}
-        onMouseLeave={onMouseLeave}
+        tabIndex={0}
+        type={isSubmit ? 'submit' : 'button'}
         className={clsx(
           styles.button,
           {
@@ -106,7 +79,7 @@ export const AppLabButton = forwardRef(
             [styles['small']]: size === ButtonSize.Small,
             [styles['large']]: size === ButtonSize.Large,
 
-            [styles['disabled']]: disabled,
+            [styles['disabled']]: buttonProps.disabled,
           },
           classes?.button,
         )}

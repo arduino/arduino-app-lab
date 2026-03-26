@@ -67,6 +67,10 @@ func (a *App) GetConnectionName() (*string, error) {
 	return network.GetConnectionName(a.ctx(), a.selectedBoard.Conn)
 }
 
+func (a *App) GetIPAddress() (*string, error) {
+	return network.GetIPAddress(a.ctx(), a.selectedBoard.Conn)
+}
+
 // Feature flags management
 func (a *App) GetFeatureFlags() []string {
 	return featureflags.GetFeatureFlags()
@@ -133,6 +137,27 @@ func (a *App) SetKeyboardLayout(layout string) error {
 	return a.selectedBoard.SetKeyboardLayout(a.ctx(), layout)
 }
 
+func (a *App) GetKernelVersion() (string, error) {
+	return a.selectedBoard.GetKernelVersion(a.ctx())
+}
+
+func (a *App) GetLinuxDistribution() (string, error) {
+	return a.selectedBoard.GetLinuxDistribution()
+}
+
+// Board network mode management
+func (a *App) GetNetworkModeStatus() (bool, error) {
+	return a.selectedBoard.GetNetworkModeStatus(a.ctx())
+}
+
+func (a *App) EnableNetworkMode() error {
+	return a.selectedBoard.EnableNetworkMode(a.ctx())
+}
+
+func (a *App) DisableNetworkMode() error {
+	return a.selectedBoard.DisableNetworkMode(a.ctx())
+}
+
 // Board user password management
 func (a *App) IsUserPasswordSet() (bool, error) {
 	return a.selectedBoard.IsUserPasswordSet(a.ctx())
@@ -161,6 +186,10 @@ func (a *App) WriteFileContent(path string, content string) error {
 
 func (a *App) RenameFile(oldPath string, newPath string) error {
 	return fs.RenameFile(a.selectedBoard.Conn, oldPath, newPath)
+}
+
+func (a *App) RenameFolder(oldPath string, newPath string) error {
+	return fs.RenameFolder(a.selectedBoard.Conn, oldPath, newPath)
 }
 
 func (a *App) RemoveFile(path string) error {

@@ -15,23 +15,23 @@ import {
   AddAppBrickDialog,
   AddSketchLibraryDialog,
   AddSketchLibraryDialogLogic,
-  AppLabBrickItem,
-  AppLabLibraryItem,
+  BrickItem,
   Button,
   ButtonSize,
-  ButtonType,
-  ButtonVariant,
   DeleteAppBrickDialog,
   DropdownMenuButton,
   FileNode,
   FileTree,
   FileTreeApi,
   FolderNode,
+  IconButton,
   isFileNode,
   isFolderNode,
+  LibraryItem,
   SelectableFileData,
   TreeNode,
   useI18n,
+  useTooltip,
   XXSmall,
 } from '@cloud-editor-mono/ui-components/lib/components-by-app/app-lab';
 import { useMutation, useQuery } from '@tanstack/react-query';
@@ -42,13 +42,12 @@ import Split from 'react-split';
 import { useMeasure } from 'react-use';
 
 import { getAppLabFileIcon } from '../../../../../common/utils';
-import { EdgeImpulseModelsContextValue } from '../../../../providers/edge-impulse-models/edgeImpulseModelsContext';
 import EditorFeat from '../../../editor/Editor.feat';
 import { EditorLogicParams } from '../../../editor/editor.type';
 import { AppsSection } from '../../app.type';
 import styles from '../app-detail.module.scss';
+import { appFilesMessages } from '../messages';
 import { useAppFilesSectionLogic } from './AppFilesSection.logic';
-import { appFilesMessages } from './messages';
 
 interface AppFilesSection {
   app: AppDetailedInfo | undefined;
@@ -64,22 +63,26 @@ interface AppFilesSection {
   openFilesFolder: () => void;
   openExternal: () => void;
   openExternalLink: (url: string) => void;
-  addAppBrick(brickId: string): Promise<boolean>;
-  deleteAppBrick(brickId: string): Promise<boolean>;
-  loadAppBrick(brickId: string): Promise<BrickInstance>;
-  updateAppBrick(
-    brickId: string,
-    params: BrickCreateUpdateRequest,
-  ): Promise<boolean>;
   editorLogicParams: EditorLogicParams;
-  edgeImpulseValue: EdgeImpulseModelsContextValue;
   addFileHandler: (path: string) => Promise<void>;
-  renameFileHandler: (path: string, newName: string) => Promise<void>;
+  renameFileHandler: (
+    path: string,
+    newName: string,
+    appendExt?: boolean,
+    nodeType?: 'file' | 'folder',
+  ) => Promise<void>;
   deleteFileHandler: (path: string) => Promise<void>;
   addSketchLibraryDialogLogic: AddSketchLibraryDialogLogic;
   openAddSketchLibraryDialog: () => void;
   deleteSketchLibrary: (libRef: string) => Promise<void>;
   addFolderHandler: (path: string) => Promise<void>;
+
+  addAppBrick(brickId: string): Promise<boolean>;
+  deleteAppBrick(brickId: string): Promise<boolean>;
+  updateAppBrick(
+    brickId: string,
+    params: BrickCreateUpdateRequest,
+  ): Promise<boolean>;
 }
 
 interface SidePanelSizes {
@@ -95,17 +98,21 @@ const SIDE_PANEL_SIZES_INITIAL_VALUES = {
 };
 
 const renderIcon = (node: TreeNode): JSX.Element => {
-  const Icon = isFolderNode(node)
-    ? getAppLabFileIcon('folder')
-    : node.name === 'app.yaml'
-    ? getAppLabFileIcon('config')
-    : getAppLabFileIcon(node.extension.slice(1));
+  if (isFolderNode(node)) {
+    return <></>; // No icon for folders, only caret will be shown
+  }
+
+  const Icon =
+    node.name === 'app.yaml'
+      ? getAppLabFileIcon('config')
+      : getAppLabFileIcon(node.extension.slice(1));
 
   return <Icon />;
 };
 
 const AppFilesSection: React.FC<AppFilesSection> = (props: AppFilesSection) => {
   const {
+    app,
     appBricks,
     bricks,
     appLibraries,
@@ -118,10 +125,8 @@ const AppFilesSection: React.FC<AppFilesSection> = (props: AppFilesSection) => {
     openExternalLink,
     addAppBrick,
     deleteAppBrick,
-    loadAppBrick,
     updateAppBrick,
     editorLogicParams,
-    edgeImpulseValue,
     addFileHandler,
     renameFileHandler,
     deleteFileHandler,
@@ -138,12 +143,11 @@ const AppFilesSection: React.FC<AppFilesSection> = (props: AppFilesSection) => {
     deleteAppBrickDialogLogic,
     openDeleteAppBrickDialog,
   } = useAppFilesSectionLogic({
+    appId: app?.id ?? '',
     appBricks,
     bricks,
-    edgeImpulseValue,
     addAppBrick,
     deleteAppBrick,
-    loadAppBrick,
     updateAppBrick,
     openExternalLink,
   });
@@ -151,11 +155,45 @@ const AppFilesSection: React.FC<AppFilesSection> = (props: AppFilesSection) => {
   const [collapseBricks, setCollapseBricks] = useState(false);
   const [collapseLibraries, setCollapseLibraries] = useState(false);
   const [collapseFiles, setCollapseFiles] = useState(false);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [sidePanelSizes, setSidePanelSizes] = useState<SidePanelSizes | null>(
     null,
   );
 
   const { formatMessage } = useI18n();
+
+  const handleFileRename = useCallback(
+    async (path: string, newName: string, nodeType?: 'file' | 'folder') => {
+      await renameFileHandler(path, newName, false, nodeType);
+    },
+    [renameFileHandler],
+  );
+
+  const { props: addBrickTooltipProps, renderTooltip: renderAddBrickTooltip } =
+    useTooltip({
+      content: formatMessage(appFilesMessages.addBrickButton),
+      direction: 'down',
+      timeout: 0,
+    });
+
+  const {
+    props: addLibraryTooltipProps,
+    renderTooltip: renderAddLibraryTooltip,
+  } = useTooltip({
+    content: formatMessage(appFilesMessages.addSketchLibraryButton),
+    direction: 'down',
+    timeout: 0,
+  });
+
+  const {
+    props: addFileTooltipProps,
+    renderTooltip: renderAddFileTooltip,
+    setShowTooltip: setShowAddFileTooltip,
+  } = useTooltip({
+    content: formatMessage(appFilesMessages.addFileButton),
+    direction: 'down',
+    timeout: 0,
+  });
 
   const fileTreeRef = useRef<FileTreeApi>(null);
 
@@ -261,7 +299,6 @@ const AppFilesSection: React.FC<AppFilesSection> = (props: AppFilesSection) => {
           <div className={styles['app-header']}>
             {!isFullscreen ? (
               <Button
-                title={formatMessage(appFilesMessages.bricksLabel)}
                 onClick={(): void => {
                   setCollapseBricks((prev) => !prev);
                 }}
@@ -281,18 +318,15 @@ const AppFilesSection: React.FC<AppFilesSection> = (props: AppFilesSection) => {
               </Button>
             ) : null}
             {section === 'my-apps' && (
-              <Button
-                bold
-                title={formatMessage(appFilesMessages.addBrickButton)}
-                onClick={openAddAppBrickDialog}
-                type={ButtonType.Secondary}
-                size={ButtonSize.XSmall}
-                Icon={AddBrickIcon}
-                variant={ButtonVariant.LowContrast}
-                classes={{
-                  button: styles['app-header-button'],
-                }}
-              />
+              <div className={styles['tooltip']} {...addBrickTooltipProps}>
+                <IconButton
+                  classes={{ button: styles['app-header-button'] }}
+                  Icon={AddBrickIcon}
+                  onPress={openAddAppBrickDialog}
+                  label={formatMessage(appFilesMessages.addBrickButton)}
+                />
+                {renderAddBrickTooltip(styles['tooltip-content--brick'])}
+              </div>
             )}
           </div>
           {!collapseBricks && !isFullscreen && (
@@ -300,7 +334,7 @@ const AppFilesSection: React.FC<AppFilesSection> = (props: AppFilesSection) => {
               {appBricks && appBricks.length > 0 && (
                 <div className={styles['app-list']}>
                   {appBricks.map((brick) => (
-                    <AppLabBrickItem
+                    <BrickItem
                       key={brick.id}
                       brick={brick}
                       selected={brick.id === selectedFile?.fileId}
@@ -327,7 +361,6 @@ const AppFilesSection: React.FC<AppFilesSection> = (props: AppFilesSection) => {
           <div className={styles['app-header']}>
             {!isFullscreen ? (
               <Button
-                title={formatMessage(appFilesMessages.sketchLibrariesLabel)}
                 onClick={(): void => {
                   setCollapseLibraries((prev) => !prev);
                 }}
@@ -335,7 +368,7 @@ const AppFilesSection: React.FC<AppFilesSection> = (props: AppFilesSection) => {
                 classes={{
                   button: clsx(
                     styles['app-header-title'],
-                    collapseBricks && styles['collapsed'],
+                    collapseLibraries && styles['collapsed'],
                   ),
                   textButtonText: styles['app-header-title-content'],
                 }}
@@ -347,18 +380,15 @@ const AppFilesSection: React.FC<AppFilesSection> = (props: AppFilesSection) => {
               </Button>
             ) : null}
             {section === 'my-apps' && (
-              <Button
-                bold
-                title={formatMessage(appFilesMessages.addSketchLibraryButton)}
-                onClick={openAddSketchLibraryDialog}
-                type={ButtonType.Secondary}
-                size={ButtonSize.XSmall}
-                Icon={AddLibraryIcon}
-                variant={ButtonVariant.LowContrast}
-                classes={{
-                  button: styles['app-header-button'],
-                }}
-              />
+              <div className={styles['tooltip']} {...addLibraryTooltipProps}>
+                <IconButton
+                  classes={{ button: styles['app-header-button'] }}
+                  Icon={AddLibraryIcon}
+                  onPress={openAddSketchLibraryDialog}
+                  label={formatMessage(appFilesMessages.addSketchLibraryButton)}
+                />
+                {renderAddLibraryTooltip(styles['tooltip-content--library'])}
+              </div>
             )}
           </div>
           {!collapseLibraries && !isFullscreen && (
@@ -366,7 +396,7 @@ const AppFilesSection: React.FC<AppFilesSection> = (props: AppFilesSection) => {
               {appLibraries && appLibraries.length > 0 && (
                 <div className={styles['app-list']}>
                   {appLibraries.map((lib) => (
-                    <AppLabLibraryItem
+                    <LibraryItem
                       key={lib.id}
                       name={lib.id}
                       version={lib.version}
@@ -380,7 +410,7 @@ const AppFilesSection: React.FC<AppFilesSection> = (props: AppFilesSection) => {
                   ))}
                 </div>
               )}
-              {appLibraries && !appLibraries.length && (
+              {(!appLibraries || !appLibraries.length) && (
                 <XXSmall className={styles['app-empty']} truncate>
                   {formatMessage(appFilesMessages.noSketchLibrariesAddedYet)}
                 </XXSmall>
@@ -393,7 +423,7 @@ const AppFilesSection: React.FC<AppFilesSection> = (props: AppFilesSection) => {
           <div className={styles['app-header']}>
             {!isFullscreen ? (
               <Button
-                title={formatMessage(appFilesMessages.filesLabel)}
+                //title={formatMessage(appFilesMessages.filesLabel)}
                 onClick={(): void => {
                   setCollapseFiles((prev) => !prev);
                 }}
@@ -413,46 +443,62 @@ const AppFilesSection: React.FC<AppFilesSection> = (props: AppFilesSection) => {
               </Button>
             ) : null}
             {section === 'my-apps' && (
-              <DropdownMenuButton
-                title={formatMessage(appFilesMessages.addFileButton)}
-                sections={[
-                  {
-                    name: 'Actions',
-                    items: [
-                      {
-                        id: 'create-file',
-                        label: 'Create file',
-                        labelPrefix: <FileAddIcon />,
-                      },
-                      {
-                        id: 'create-folder',
-                        label: 'Create new folder',
-                        labelPrefix: <FolderAddIcon />,
-                      },
-                    ],
-                  },
-                ]}
-                buttonChildren={<FileAddIcon />}
-                onAction={(key): void =>
-                  key === 'create-file'
-                    ? fileTreeRef.current?.handleFileCreate()
-                    : fileTreeRef.current?.handleFolderCreate()
-                }
-                onOpen={(): void => {
-                  if (isFullscreen) {
-                    setSidePanelSizes(SIDE_PANEL_SIZES_INITIAL_VALUES);
-                  }
-                }}
-                classes={{
-                  dropdownMenu: styles['app-header-button-menu'],
-                  dropdownMenuButton: styles['app-header-button'],
-                  dropdownMenuButtonWrapper:
-                    styles['app-header-button-wrapper'],
-                  dropdownMenuItem: styles['app-header-button-menu-item'],
-                }}
-              />
+              <div
+                className={clsx(
+                  styles['tooltip'],
+                  isDropdownOpen && styles['dropdown-open'],
+                )}
+                {...addFileTooltipProps}
+              >
+                <DropdownMenuButton
+                  sections={[
+                    {
+                      name: 'Actions',
+                      items: [
+                        {
+                          id: 'create-file',
+                          label: 'Create file',
+                          labelPrefix: <FileAddIcon />,
+                        },
+                        {
+                          id: 'create-folder',
+                          label: 'Create new folder',
+                          labelPrefix: <FolderAddIcon />,
+                        },
+                      ],
+                    },
+                  ]}
+                  buttonChildren={<FileAddIcon />}
+                  onAction={(key): void => {
+                    setShowAddFileTooltip(false);
+
+                    key === 'create-file'
+                      ? fileTreeRef.current?.handleFileCreate()
+                      : fileTreeRef.current?.handleFolderCreate();
+                  }}
+                  onOpen={(isOpen): void => {
+                    if (isOpen) {
+                      setIsDropdownOpen(true);
+                      if (isFullscreen) {
+                        setSidePanelSizes(SIDE_PANEL_SIZES_INITIAL_VALUES);
+                      }
+                    } else {
+                      setIsDropdownOpen(false);
+                    }
+                  }}
+                  classes={{
+                    dropdownMenu: styles['app-header-button-menu'],
+                    dropdownMenuButton: styles['app-header-button'],
+                    dropdownMenuButtonWrapper:
+                      styles['app-header-button-wrapper'],
+                    dropdownMenuItem: styles['app-header-button-menu-item'],
+                  }}
+                />
+                {renderAddFileTooltip(styles['tooltip-content--file'])}
+              </div>
             )}
           </div>
+
           {!collapseFiles && !isFullscreen && (
             <div ref={ref} className={styles['app-list']}>
               <FileTree
@@ -463,7 +509,7 @@ const AppFilesSection: React.FC<AppFilesSection> = (props: AppFilesSection) => {
                 selectedFileChange={setSelectedFile}
                 defaultOpenFoldersState={defaultOpenFoldersState}
                 onFileCreate={addFileHandler}
-                onFileRename={renameFileHandler}
+                onFileRename={handleFileRename}
                 onFileDelete={deleteFileHandler}
                 onFolderCreate={addFolderHandler}
                 isReadOnly={section !== 'my-apps'}

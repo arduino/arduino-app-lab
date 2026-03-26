@@ -1,8 +1,8 @@
 import {
-  AppLabBrickDetail,
-  AppLabBrickListItem,
-  AppLabBricksList,
-  AppLabTopBar,
+  BrickDetail,
+  BrickListItem,
+  BricksList,
+  TopBar,
 } from '@cloud-editor-mono/ui-components/lib/components-by-app/app-lab';
 import clsx from 'clsx';
 
@@ -20,14 +20,14 @@ const BrickList: React.FC = () => {
 
   return (
     <section className={styles['main']}>
-      <AppLabTopBar pathItems={['Bricks']} />
+      <TopBar pathItems={['Bricks']} />
       <div className={styles['container']}>
         {/* Loading state */}
-        {bricksLoading ? <AppLabBrickListItem variant="skeleton" /> : null}
+        {bricksLoading ? <BrickListItem variant="skeleton" /> : null}
         {!bricksLoading && selectedBrick && (
           <div className={styles['split']}>
             <div className={(styles['split-item'], styles['split-item-left'])}>
-              <AppLabBricksList
+              <BricksList
                 bricks={bricks}
                 selectedBrick={selectedBrick}
                 onClick={setSelectedBrick}
@@ -37,7 +37,7 @@ const BrickList: React.FC = () => {
             <div
               className={clsx(styles['split-item'], styles['split-item-right'])}
             >
-              <AppLabBrickDetail
+              <BrickDetail
                 brickId={selectedBrick?.id ?? ''}
                 brickDetailLogic={brickDetailLogic}
               />

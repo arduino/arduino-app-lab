@@ -1,12 +1,11 @@
 import {
   boardNeedsImageUpdate,
   boardNeedsOSUpdate,
-  getReleaseImageSrc,
-  getReleaseNotes,
   openLinkExternal,
   reloadApp,
 } from '@cloud-editor-mono/domain/src/services/services-by-app/app-lab';
 import {
+  AppLabWelcomeDialogLogic,
   BoardUpdateDialogLogic,
   FlashBoardDialogLogic,
   SidePanelItemId,
@@ -15,28 +14,28 @@ import {
   SidePanelLogic,
   SidePanelSectionId,
   snackbar,
+  Themes,
   UpdaterStatus,
-  WhatsNewAdHocLogic,
 } from '@cloud-editor-mono/ui-components/lib/components-by-app/app-lab';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useLocation } from '@tanstack/react-router';
-import { get, set } from 'idb-keyval';
 import {
   useCallback,
   useContext,
   useEffect,
   useLayoutEffect,
   useMemo,
-  useRef,
   useState,
 } from 'react';
+import { useShallow } from 'zustand/react/shallow';
 
+import { ThemeContext } from '../../../common/providers/theme/themeContext';
+import { useBoards } from '../../hooks/useBoards';
 import { useIsBoard } from '../../hooks/useIsBoard';
-import { useUpdater } from '../../hooks/useUpdater';
 import { AuthContext } from '../../providers/auth/authContext';
 import { NetworkContext } from '../../providers/network/networkContext';
 import { SetupContext } from '../../providers/setup/setupContext';
-import { useBoardLifecycleStore } from '../../store/boards/boards';
+import { UpdaterContext } from '../../providers/updater/updaterContext';
+import { useBoardLifecycleStore } from '../../store/boardLifecycle';
 import { useSystemPropsStore } from '../../store/systemProps';
 import { UseMainLogic } from './main.type';
 
@@ -48,10 +47,16 @@ const ARDUINO_SUPPORT_URL = 'https://www.arduino.cc/en/contact-us/';
 const FLASHER_TUTORIAL_URL =
   'https://docs.arduino.cc/tutorials/uno-q/update-image/';
 
+const ROUTES_WITHOUT_SIDE_PANEL = ['/settings'];
+
 export const useMainLogic: UseMainLogic =
   function (): ReturnType<UseMainLogic> {
     const useSidePanelLogic = (): ReturnType<SidePanelLogic> => {
       const { pathname } = useLocation();
+
+      const isVisible =
+        pathname.split('/').length <= 2 &&
+        !ROUTES_WITHOUT_SIDE_PANEL.includes(pathname);
 
       const { user } = useContext(AuthContext);
 
@@ -95,76 +100,10 @@ export const useMainLogic: UseMainLogic =
         sidePanelItemsBySection,
         activeItem,
         user,
-        visible: pathname.split('/').length <= 2,
+        visible: isVisible,
       };
     };
     const sidePanelLogic = useCallback(useSidePanelLogic, []);
-
-    // Temp. to be removed in versions following 0.5.0
-    const useWhatsNewAdHocLogic = (): ReturnType<WhatsNewAdHocLogic> => {
-      const [open, setOpen] = useState(false);
-      const [releaseNotes, setReleaseNotes] = useState<{
-        content: string;
-        image: string;
-      }>();
-
-      const queryClient = useQueryClient();
-
-      const { mutate: dismissWhatsNew } = useMutation({
-        mutationFn: () => set('whats-new-adhoc', true),
-        onSuccess: () => {
-          queryClient.invalidateQueries(['whats-new-adhoc']);
-        },
-      });
-
-      const { data: isWhatsNewDismissed, isLoading: isWhatsNewIsLoading } =
-        useQuery(['whats-new-adhoc'], async () => {
-          const data = await get('whats-new-adhoc');
-          return data ?? null;
-        });
-
-      const whatsNewFetched = useRef(false);
-      useEffect(() => {
-        if (
-          isWhatsNewDismissed ||
-          isWhatsNewDismissed === undefined ||
-          isWhatsNewIsLoading ||
-          whatsNewFetched.current
-        )
-          return;
-
-        const _getReleaseNotes = async (): Promise<void> => {
-          const version = '0.5.0_';
-          try {
-            const response = await getReleaseNotes(version);
-            setReleaseNotes({
-              content: response,
-              image: getReleaseImageSrc(version),
-            });
-            setOpen(true);
-          } catch (e) {
-            console.error('Error fetching release notes', e);
-            setReleaseNotes(undefined);
-          }
-        };
-
-        _getReleaseNotes();
-        whatsNewFetched.current = true;
-      }, [isWhatsNewDismissed, isWhatsNewIsLoading]);
-
-      const onClose = useCallback(() => {
-        setOpen(false);
-        dismissWhatsNew();
-      }, [dismissWhatsNew]);
-
-      return {
-        open,
-        onClose,
-        releaseNotes,
-      };
-    };
-
-    const whatsNewAdHocLogic = useCallback(useWhatsNewAdHocLogic, []);
 
     const useBoardUpdateDialogLogic =
       (): ReturnType<BoardUpdateDialogLogic> => {
@@ -173,11 +112,14 @@ export const useMainLogic: UseMainLogic =
         const { setSetupCompleted, setNetworkStepSkipped } =
           useContext(SetupContext);
 
-        const {
-          isError: getPropsError,
-          isSuccess: getPropsSuccess,
-          isSetupDone,
-        } = useSystemPropsStore();
+        const { getPropsError, getPropsSuccess, isSetupDone } =
+          useSystemPropsStore(
+            useShallow((state) => ({
+              getPropsError: state.isError,
+              getPropsSuccess: state.isSuccess,
+              isSetupDone: state.isSetupDone,
+            })),
+          );
 
         const {
           status,
@@ -194,7 +136,7 @@ export const useMainLogic: UseMainLogic =
           bypassSkipUpdate,
           setStatus: setUpdaterStatus,
           setBoardLogs: setBoardUpdaterLogs,
-        } = useUpdater();
+        } = useContext(UpdaterContext);
 
         const {
           disconnectFromNetwork,
@@ -300,8 +242,15 @@ export const useMainLogic: UseMainLogic =
       const [open, setOpen] = useState(false);
 
       const { data: isBoard } = useIsBoard();
+
       const { selectedConnectedBoard, boardIsFlashing, setBoardIsFlashing } =
-        useBoardLifecycleStore();
+        useBoardLifecycleStore(
+          useShallow((state) => ({
+            selectedConnectedBoard: state.selectedConnectedBoard,
+            boardIsFlashing: state.boardIsFlashing,
+            setBoardIsFlashing: state.setBoardIsFlashing,
+          })),
+        );
 
       useEffect(() => {
         const setNeedsOSUpdateAsync = async (): Promise<void> => {
@@ -335,10 +284,63 @@ export const useMainLogic: UseMainLogic =
 
     const flashBoardDialogLogic = useCallback(useFlashBoardDialogLogic, []);
 
+    const useAppLabWelcomeDialogLogic =
+      (): ReturnType<AppLabWelcomeDialogLogic> => {
+        const [open, setOpen] = useState(false);
+
+        const { setupCompleted } = useContext(SetupContext);
+        const { dismissWelcomePage, isWelcomePageDismissed } =
+          useContext(AuthContext);
+
+        useEffect(() => {
+          if (setupCompleted && !isWelcomePageDismissed && !open) {
+            setOpen(true);
+          }
+          // eslint-disable-next-line react-hooks/exhaustive-deps
+        }, [setupCompleted, isWelcomePageDismissed]);
+
+        const onConfirm = (): void => {
+          setOpen(false);
+          dismissWelcomePage();
+        };
+
+        return {
+          open,
+          onOpenChange: setOpen,
+          onConfirm,
+        };
+      };
+
+    const appLabWelcomeDialogLogic = useCallback(
+      useAppLabWelcomeDialogLogic,
+      [],
+    );
+
+    const boardsProps = useBoards();
+
+    const { boardIsFlashing, boardIsReachable } = useBoardLifecycleStore(
+      useShallow((state) => ({
+        boardIsFlashing: state.boardIsFlashing,
+        boardIsReachable: state.boardIsReachable,
+      })),
+    );
+
+    const { setupCompleted } = useContext(SetupContext);
+
+    const showRoutes = setupCompleted && boardIsReachable;
+
+    const { setTheme } = useContext(ThemeContext);
+    useEffect(() => {
+      setTheme(Themes.DarkTheme);
+    }, [setTheme]);
+
     return {
       sidePanelLogic,
       boardUpdateDialogLogic,
       flashBoardDialogLogic,
-      whatsNewAdHocLogic,
+      appLabWelcomeDialogLogic,
+      boardsProps,
+      boardIsFlashing,
+      showRoutes,
     };
   };

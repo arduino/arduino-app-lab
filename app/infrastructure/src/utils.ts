@@ -9,6 +9,12 @@ export const STATUSES_WHERE_RENAME_ALLOWED = [
   'uninitialized',
 ] as const;
 
+export const STATUSES_WHERE_RENAME_FORBIDDEN = [
+  'starting',
+  'running',
+  'stopping',
+] as const;
+
 export function createUUID(): string {
   let dt = new Date().getTime();
   const uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {

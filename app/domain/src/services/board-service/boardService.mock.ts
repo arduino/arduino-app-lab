@@ -41,7 +41,11 @@ let selectedBoardId: string | null = null;
 let boardName = '';
 let keyboardLayoutId = 'default';
 let isUserPasswordSetState = false;
+const osImageVersion = '1.0.0';
 const boardNeedsImageUpdateState = false;
+let isNetworkModeEnabled = false;
+const kernelVersion = '';
+const linuxDistribution = '';
 
 export const MockBoardService: BoardService = {
   async isBoard(): Promise<boolean> {
@@ -98,12 +102,33 @@ export const MockBoardService: BoardService = {
     isUserPasswordSetState = true;
   },
 
+  async getOSImageVersion(): Promise<string> {
+    return osImageVersion;
+  },
+
   async boardNeedsImageUpdate(): Promise<boolean> {
     return boardNeedsImageUpdateState;
   },
 
   async openBoardTerminal(): Promise<void> {
     return Promise.resolve();
+  },
+
+  async isNetworkModeEnabled(): Promise<boolean> {
+    return isNetworkModeEnabled;
+  },
+
+  async setNetworkMode(enabled: boolean): Promise<boolean> {
+    isNetworkModeEnabled = enabled;
+    return enabled;
+  },
+
+  async getKernelVersion(): Promise<string> {
+    return kernelVersion;
+  },
+
+  async getLinuxDistribution(): Promise<string> {
+    return linuxDistribution;
   },
 };
 

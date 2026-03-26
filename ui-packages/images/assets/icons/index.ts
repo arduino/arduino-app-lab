@@ -10,6 +10,7 @@ import AddLibrary from '../add-library.svg?react';
 import AddTab from '../add-tab.svg?react';
 import Ai from '../ai.svg?react';
 import AppExamples from '../app-examples.svg?react';
+import AppLab from '../app-lab.svg?react';
 import AppLabAccount from '../app-lab-account.svg?react';
 import AppLabBrickApi from '../app-lab-brick-api.svg?react';
 import AppLabBrickAudio from '../app-lab-brick-audio.svg?react';
@@ -32,6 +33,7 @@ import Appearance from '../appearance.svg?react';
 import Apply from '../apply.svg?react';
 import ApplyFix from '../apply-fix.svg?react';
 import Archive from '../archive.svg?react';
+import Arduino from '../arduino.svg?react';
 import ArduinoAssistant from '../arduino-assistant.svg?react';
 import ArduinoLoader from '../arduino-loader.svg?react';
 import ArduinoLogo from '../arduino-logo.svg?react';
@@ -49,6 +51,7 @@ import Bell from '../bell.svg?react';
 import BellWithDot from '../bell-with-dot.svg?react';
 import Bin from '../bin.svg?react';
 import Board from '../board.svg?react';
+import Board2 from '../board-2.svg?react';
 import BrickSettings from '../brick-settings.svg?react';
 import Bricks from '../bricks.svg?react';
 import CaretDown from '../caret-down.svg?react';
@@ -78,6 +81,7 @@ import DeviceAssociationConnect from '../device-association-connect.svg?react';
 import Dots from '../dots.svg?react';
 import Download from '../download.svg?react';
 import Duplicate from '../duplicate.svg?react';
+import EdgeImpulse from '../edge-impulse.svg?react';
 import Edit from '../edit.svg?react';
 import EducationIcon from '../education-icon.svg?react';
 import Eraser from '../eraser.svg?react';
@@ -138,6 +142,7 @@ import MyApps from '../my-apps.svg?react';
 import Navigation from '../navigation.svg?react';
 import Navigation2 from '../navigation-2.svg?react';
 import NavigationGroup from '../navigation-group.svg?react';
+import NavigationGroupOutline from '../navigation-group-outline.svg?react';
 import NoBoard from '../no-board.svg?react';
 import NoDevice from '../no-device.svg?react';
 import NoResults from '../no-results.svg?react';
@@ -148,6 +153,7 @@ import OnboardingBack from '../onboarding-back.svg?react';
 import OnboardingNext from '../onboarding-next.svg?react';
 import OpenInNewTab from '../open-in-new-tab.svg?react';
 import OperationListOutline from '../operation-list-outline.svg?react';
+import OperationSort from '../operation-sort.svg?react';
 import Palette from '../palette.svg?react';
 import Pause from '../pause.svg?react';
 import Pencil from '../pencil.svg?react';
@@ -180,6 +186,7 @@ import Sketch from '../sketch.svg?react';
 import SketchIcon from '../sketch-icon.svg?react';
 import SketchIconOutline from '../sketch-icon-outline.svg?react';
 import SketchParentheses from '../sketch-parentheses.svg?react';
+import Sort from '../sort.svg?react';
 import Sources from '../sources.svg?react';
 import Sparkle from '../sparkle.svg?react';
 import Speaker from '../speaker.svg?react';
@@ -196,6 +203,7 @@ import TechReference from '../tech-reference.svg?react';
 import TechnologyVersion from '../technology-version.svg';
 import Terminal from '../terminal.svg?react';
 import Text from '../text.svg?react';
+import TextLink from '../text-link.svg?react';
 import ThreeDots from '../three-dots.svg?react';
 import ToggleOff from '../toggle-off.svg?react';
 import ToggleOn from '../toggle-on.svg?react';
@@ -229,7 +237,6 @@ import WifiOn from '../wifi-on.svg?react';
 import WifiWarning from '../wifi-warning.svg?react';
 import World from '../world.svg?react';
 import WorldDisconnected from '../world-disconnected.svg?react';
-
 export {
   AccountArduinoCloud,
   AccountConnectedBoards,
@@ -244,6 +251,7 @@ export {
   Ai,
   Appearance,
   AppExamples,
+  AppLab,
   AppLabAccount,
   AppLabBrickApi,
   AppLabBrickAudio,
@@ -265,6 +273,7 @@ export {
   ApplyFix,
   AppSettings,
   Archive,
+  Arduino,
   ArduinoAssistant,
   ArduinoLoader,
   ArduinoLogo,
@@ -283,6 +292,7 @@ export {
   BeResponsibleIcon,
   Bin,
   Board,
+  Board2,
   BoardConnected,
   Bricks,
   BrickSettings,
@@ -313,6 +323,7 @@ export {
   Dots,
   Download,
   Duplicate,
+  EdgeImpulse,
   Edit,
   EducationIcon,
   Eraser,
@@ -373,6 +384,7 @@ export {
   Navigation,
   Navigation2,
   NavigationGroup,
+  NavigationGroupOutline,
   NoBoard,
   NoDevice,
   NoResults,
@@ -383,6 +395,7 @@ export {
   OnboardingNext,
   OpenInNewTab,
   OperationListOutline,
+  OperationSort,
   Palette,
   Pause,
   Pencil,
@@ -414,6 +427,7 @@ export {
   SketchIcon,
   SketchIconOutline,
   SketchParentheses,
+  Sort,
   Sources,
   Sparkle,
   Speaker,
@@ -430,6 +444,7 @@ export {
   TechReference,
   Terminal,
   Text,
+  TextLink,
   ThreeDots,
   ToggleOff,
   ToggleOn,

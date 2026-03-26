@@ -18,6 +18,13 @@ interface EditorImageProps {
 const EditorImage: React.FC<EditorImageProps> = (props: EditorImageProps) => {
   const { data, extension, classes } = props;
 
+  let imageData = data
+
+  // temporary fallback/safety net to process images with or without a data/image protocol
+  if (!data?.startsWith("data:image/")) {
+    imageData = `data:image/${extension};base64, ${data}`
+  }
+
   const [isZoomed, setIsZoomed] = useState(false);
 
   const ref = useRef<HTMLImageElement>(null);
@@ -35,7 +42,7 @@ const EditorImage: React.FC<EditorImageProps> = (props: EditorImageProps) => {
     >
       {data ? (
         <img
-          src={`data:image/${extension};base64, ${data.split(',')[1]}`}
+          src={imageData}
           alt="sketch file"
           className={clsx(styles.image, classes?.image, {
             [styles['image-scaled']]: !isZoomed,

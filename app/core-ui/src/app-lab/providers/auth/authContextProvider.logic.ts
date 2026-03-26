@@ -85,14 +85,21 @@ export function useAuth(): AuthContextValue {
     isLoading: isLoginLoading,
     isError: isLoginError,
   } = useMutation({
-    mutationFn: async () => {
-      return loginWithBrowser(false);
+    mutationFn: async (_params?: { isFromAccount: boolean }) => {
+      await loginWithBrowser(false);
     },
-    onSuccess: async () => {
+    onSuccess: async (_, params) => {
       queryClient.invalidateQueries(['auth-token']);
       queryClient.invalidateQueries(['auth-check']);
       queryClient.invalidateQueries(['auth-user']);
       queryClient.invalidateQueries(['auth-state']);
+
+      if (params && params.isFromAccount) {
+        sendAppLabNotification({
+          message: `You're logged in with your Arduino account`,
+          variant: 'success',
+        });
+      }
     },
     onError: (error) => {
       sendAppLabNotification({

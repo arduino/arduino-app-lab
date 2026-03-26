@@ -1,12 +1,12 @@
 import {
-  AppLabAction,
-  AppLabActionStatus,
+  Action,
+  ActionStatus,
 } from '@cloud-editor-mono/ui-components/lib/components-by-app/app-lab';
 import { useCallback, useReducer } from 'react';
 
 interface State {
-  currentAction: AppLabAction | null;
-  currentActionStatus: AppLabActionStatus;
+  currentAction: Action | null;
+  currentActionStatus: ActionStatus;
 }
 
 interface Input {
@@ -15,14 +15,14 @@ interface Input {
 }
 
 interface UseCurrentAction {
-  currentAction: AppLabAction | null;
-  currentActionStatus: AppLabActionStatus;
+  currentAction: Action | null;
+  currentActionStatus: ActionStatus;
   send: (input: Input) => void;
 }
 
 const defaultState = {
   currentAction: null,
-  currentActionStatus: AppLabActionStatus.Idle,
+  currentActionStatus: ActionStatus.Idle,
 };
 export const useCurrentAction = (): UseCurrentAction => {
   const reducer = useCallback((state: State, input: Input): State => {
@@ -30,23 +30,23 @@ export const useCurrentAction = (): UseCurrentAction => {
       case 'RESET':
         return {
           currentAction: null,
-          currentActionStatus: AppLabActionStatus.Idle,
+          currentActionStatus: ActionStatus.Idle,
         };
       case 'ACTION_REQUESTED': {
         return {
           currentAction: input?.payload?.currentAction ?? state.currentAction,
-          currentActionStatus: AppLabActionStatus.Pending,
+          currentActionStatus: ActionStatus.Pending,
         };
       }
       case 'ACTION_SUCCEEDED':
         return {
           currentAction: input?.payload?.currentAction ?? state.currentAction,
-          currentActionStatus: AppLabActionStatus.Succeeded,
+          currentActionStatus: ActionStatus.Succeeded,
         };
       case 'ACTION_FAILED':
         return {
           ...state,
-          currentActionStatus: AppLabActionStatus.Errored,
+          currentActionStatus: ActionStatus.Errored,
         };
       default:
         return state;

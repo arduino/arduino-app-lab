@@ -5,17 +5,22 @@ import {
 } from '@cloud-editor-mono/images/assets/icons';
 import { BoardItem } from '@cloud-editor-mono/ui-components/lib/components-by-app/app-lab';
 import { useContext, useMemo } from 'react';
+import { useShallow } from 'zustand/react/shallow';
 
 import { BoardConfigurationContext } from '../providers/board-configuration/boardConfigurationContext';
-import { useBoardLifecycleStore } from '../store/boards/boards';
+import { useBoardLifecycleStore } from '../store/boardLifecycle';
 
 export interface UseBoardItem {
   boardItem?: BoardItem;
 }
 
 export const useBoardItem = (): UseBoardItem => {
-  const { boardIsReachable, selectedConnectedBoard: selectedBoard } =
-    useBoardLifecycleStore();
+  const { boardIsReachable, selectedBoard } = useBoardLifecycleStore(
+    useShallow((state) => ({
+      boardIsReachable: state.boardIsReachable,
+      selectedBoard: state.selectedConnectedBoard,
+    })),
+  );
 
   const { boardConfigurationIsSet, boardName } = useContext(
     BoardConfigurationContext,

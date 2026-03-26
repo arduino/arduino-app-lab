@@ -8,6 +8,8 @@ import clsx from 'clsx';
 import { memo } from 'react';
 
 import { useKeywords } from '../../../common/hooks/keywords';
+import { appDetailMessages } from '../app/app-detail/messages';
+import { sendAppLabNotification } from '../notifications';
 import { useEditorLogic } from './editor.logic';
 import styles from './editor.module.scss';
 import { EditorLogicParams } from './editor.type';
@@ -35,6 +37,12 @@ const EditorFeat: React.FC<EditorFeatProps> = (props: EditorFeatProps) => {
     <EditorPanel
       editorPanelLogic={editorPanelLogic}
       getKeywords={useKeywords}
+      onCopyCode={(): void =>
+        sendAppLabNotification({
+          message: formatMessage(appDetailMessages.codeCopied),
+          variant: 'success',
+        })
+      }
       classes={{
         container: styles['editor-panel-container'],
         tabsBar: styles['editor-tabs-bar'],

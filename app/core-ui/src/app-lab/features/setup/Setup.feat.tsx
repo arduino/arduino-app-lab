@@ -1,7 +1,7 @@
 import { AppLabSetup } from '@cloud-editor-mono/ui-components/lib/components-by-app/app-lab';
 import { useCallback } from 'react';
 
-import { UseBoards } from '../../store/boards/boards';
+import { UseBoards } from '../../hooks/useBoards';
 import { createUseSetupLogic } from './setup.logic';
 
 interface SetupProps {

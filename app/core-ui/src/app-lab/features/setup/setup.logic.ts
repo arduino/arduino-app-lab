@@ -1,6 +1,7 @@
+import { setNetworkMode } from '@cloud-editor-mono/domain/src/services/services-by-app/app-lab';
 import {
-  AppLabSetupItemId,
   NetworkCredentials,
+  SetupItemId,
   UseBoardConfigurationLogic,
   UseConnectionLost,
   UseLinuxCredentialsLogic,
@@ -10,20 +11,21 @@ import {
 import { useCallback, useContext, useEffect, useRef } from 'react';
 
 import { useBoardItem } from '../../hooks/useBoardItem';
+import { UseBoards } from '../../hooks/useBoards';
 import { useIsBoard } from '../../hooks/useIsBoard';
+import { useSystemProps } from '../../hooks/useSystemProps';
 import { useTerminal } from '../../hooks/useTerminal';
 import { BoardConfigurationContext } from '../../providers/board-configuration/boardConfigurationContext';
 import { LinuxCredentialsContext } from '../../providers/linux-credentials/linuxCredentialsContext';
 import { NetworkContext } from '../../providers/network/networkContext';
 import { SetupContext } from '../../providers/setup/setupContext';
-import { UseBoards } from '../../store/boards/boards';
-import { SystemPropKey, useSystemProps } from '../../store/systemProps';
+import { SystemPropKey } from '../../store/systemProps';
 import { createUseArduinoAccountLogic } from '../account/account.logic';
 
-const SETUP_STEPS_ORDER: AppLabSetupItemId[] = [
-  AppLabSetupItemId.BoardConfiguration,
-  AppLabSetupItemId.NetworkSetup,
-  AppLabSetupItemId.LinuxCredentials,
+const SETUP_STEPS_ORDER: SetupItemId[] = [
+  SetupItemId.BoardConfiguration,
+  SetupItemId.NetworkSetup,
+  SetupItemId.LinuxCredentials,
 ];
 
 const createUseBoardConfigurationLogic =
@@ -69,7 +71,7 @@ const useConnectionLost: UseConnectionLost = function (
 export type SetupSteps =
   | 'waiting-selection'
   | 'checking-status'
-  | AppLabSetupItemId
+  | SetupItemId
   | 'done';
 
 export const createUseSetupLogic = function (
@@ -130,7 +132,13 @@ export const createUseSetupLogic = function (
       connectRequestIsSuccess: networkConnectRequestIsSuccess,
       selectedNetwork,
       manualNetworkSetup,
+      setScanningIsEnabled,
     } = useContext(NetworkContext);
+
+    useEffect(() => {
+      setScanningIsEnabled(currentStep === SetupItemId.NetworkSetup);
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [currentStep]);
 
     // If network comes online "outside" setup, consider network setup step "un-skipped"
     useEffect(() => {
@@ -206,15 +214,12 @@ export const createUseSetupLogic = function (
       if (currentStep === 'checking-status') return;
       if (currentStep === 'done') return;
 
-      const idx = SETUP_STEPS_ORDER.indexOf(currentStep as AppLabSetupItemId);
+      const idx = SETUP_STEPS_ORDER.indexOf(currentStep as SetupItemId);
       if (idx <= 0) return;
       const prev = SETUP_STEPS_ORDER[idx - 1];
       setAutoFlowLocked(true);
 
-      if (
-        currentStep === AppLabSetupItemId.LinuxCredentials &&
-        networkStepSkipped
-      ) {
+      if (currentStep === SetupItemId.LinuxCredentials && networkStepSkipped) {
         setNetworkStepSkipped(false);
       }
 
@@ -244,7 +249,7 @@ export const createUseSetupLogic = function (
           onSkipNetworkSetup: (): void => {
             setAutoFlowLocked(false);
             setNetworkStepSkipped(true);
-            setCurrentStep(AppLabSetupItemId.LinuxCredentials);
+            setCurrentStep(SetupItemId.LinuxCredentials);
           },
         };
       };
@@ -263,7 +268,7 @@ export const createUseSetupLogic = function (
       ) {
         // If fetching SystemProps fails, skip to network setup and blocking update
         // This can happen is board has an older image
-        setCurrentStep(AppLabSetupItemId.NetworkSetup);
+        setCurrentStep(SetupItemId.NetworkSetup);
       }
 
       if (setupCompleted) {
@@ -273,10 +278,7 @@ export const createUseSetupLogic = function (
       function stepTransition(step: SetupSteps): void {
         if (
           currentStep !== 'checking-status' &&
-          !(
-            firstSetupWasCompleted.current &&
-            step === AppLabSetupItemId.NetworkSetup
-          ) // don't slow transition when network reselection is attempted
+          !(firstSetupWasCompleted.current && step === SetupItemId.NetworkSetup) // don't slow transition when network reselection is attempted
         ) {
           // Wait for 1 second before transitioning to the next step for visual feedback
           setTimeout(() => {
@@ -291,16 +293,16 @@ export const createUseSetupLogic = function (
         case systemProps &&
           (!systemProps[SystemPropKey.SetupBoardName] ||
             !systemProps[SystemPropKey.SetupKeyboard]):
-          stepTransition(AppLabSetupItemId.BoardConfiguration);
+          stepTransition(SetupItemId.BoardConfiguration);
           break;
         case !setupCompleted &&
           !networkStepSkipped &&
           networkStatusChecked &&
           !networkConnected:
-          stepTransition(AppLabSetupItemId.NetworkSetup);
+          stepTransition(SetupItemId.NetworkSetup);
           break;
         case systemProps && !systemProps[SystemPropKey.SetupCredentials]:
-          stepTransition(AppLabSetupItemId.LinuxCredentials);
+          stepTransition(SetupItemId.LinuxCredentials);
           break;
         case setupPropsAreComplete:
           setSetupCompleted(true);
@@ -326,10 +328,10 @@ export const createUseSetupLogic = function (
     ]);
 
     const showConfirmButton =
-      currentStep !== AppLabSetupItemId.ArduinoAccount &&
-      (currentStep !== AppLabSetupItemId.NetworkSetup ||
+      currentStep !== SetupItemId.ArduinoAccount &&
+      (currentStep !== SetupItemId.NetworkSetup ||
         manualNetworkSetup ||
-        !!(currentStep === AppLabSetupItemId.NetworkSetup && selectedNetwork));
+        !!(currentStep === SetupItemId.NetworkSetup && selectedNetwork));
 
     const showBoardSelectionPage =
       isBoard !== true &&
@@ -347,16 +349,23 @@ export const createUseSetupLogic = function (
       currentStep === 'checking-status';
 
     const stepIsSkippable =
-      (currentStep === AppLabSetupItemId.BoardConfiguration &&
+      (currentStep === SetupItemId.BoardConfiguration &&
         hasBoardConfigurationError) ||
-      currentStep === AppLabSetupItemId.NetworkSetup ||
-      currentStep === AppLabSetupItemId.ArduinoAccount;
+      currentStep === SetupItemId.NetworkSetup ||
+      currentStep === SetupItemId.ArduinoAccount;
 
     const showLoader =
       isAutoSelectingBoard &&
       showBoardSelectionPage &&
       !showBoardConnPswPrompt &&
       !connToBoardError;
+
+    // enable network mode by default if setup is shown, means it's first usage (new board or after flash)
+    useEffect(() => {
+      if (showPostSelectionSetup) {
+        setNetworkMode(true);
+      }
+    }, [showPostSelectionSetup]);
 
     return {
       isBoard,
@@ -373,17 +382,16 @@ export const createUseSetupLogic = function (
       showLoader,
       showBoardSelectionPage,
       showPostSelectionSetup,
+      setupCompleted,
       ...(showPostSelectionSetup && {
         currentStep,
         stepIsSkippable,
         onBackStep,
         contentLogicMap: {
-          [AppLabSetupItemId.BoardConfiguration]:
-            createUseBoardConfigurationLogic(),
-          [AppLabSetupItemId.NetworkSetup]: createUseNetworkLogicWithSkip(),
-          [AppLabSetupItemId.LinuxCredentials]:
-            createUseLinuxCredentialsLogic(),
-          [AppLabSetupItemId.ArduinoAccount]: createUseArduinoAccountLogic(),
+          [SetupItemId.BoardConfiguration]: createUseBoardConfigurationLogic(),
+          [SetupItemId.NetworkSetup]: createUseNetworkLogicWithSkip(),
+          [SetupItemId.LinuxCredentials]: createUseLinuxCredentialsLogic(),
+          [SetupItemId.ArduinoAccount]: createUseArduinoAccountLogic(),
         },
       }),
       showConfirmButton,

@@ -10,10 +10,14 @@ const externalDependencies = pkg.peerDependencies
   : [];
 
 export default defineConfig(
-  libConfig('web-board-communication', externalDependencies, undefined, {
-    css: {
-      modules: {
-        hashPrefix: pkg.name,
+  libConfig({
+    exportName: 'web-board-communication',
+    externalDependencies,
+    options: {
+      css: {
+        modules: {
+          hashPrefix: pkg.name,
+        },
       },
     },
   }),

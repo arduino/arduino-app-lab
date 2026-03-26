@@ -16,6 +16,8 @@ export type EIDevelopmentKeysResponse =
 export type EIGenericApiResponse = components['schemas']['GenericApiResponse'];
 export type EIUpdateProjectRequest =
   components['schemas']['UpdateProjectRequest'];
+export type EIGetDeploymentHistoryResponse =
+  components['schemas']['GetDeploymentHistoryResponse'];
 
 // mapped models
 export type EIProject = EIProjectItem & {

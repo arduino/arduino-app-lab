@@ -1,6 +1,6 @@
 @use "../typography/typography.module.scss";
 @use "../../public/shared.module.scss";
-@use "../../../ui-components/lib/code-editor/code-editor-variables.module.scss";
+@use "../code-editor/code-editor-variables.module.scss";
 
 :root {
   --console-panel-height: 0;

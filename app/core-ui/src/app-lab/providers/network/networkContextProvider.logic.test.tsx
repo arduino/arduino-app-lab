@@ -10,16 +10,18 @@ enum SecurityProtocols {
 }
 let boardIsReachableMock = true;
 
-vi.mock('../../store/boards/boards', async () => {
+vi.mock('../../store/boardLifecycle', async () => {
   const actual = await vi.importActual<
-    typeof import('../../store/boards/boards')
-  >('../../store/boards/boards');
+    typeof import('../../store/boardLifecycle')
+  >('../../store/boardLifecycle');
 
   return {
     ...actual,
-    useBoardLifecycleStore: vi.fn(() => ({
-      boardIsReachable: boardIsReachableMock,
-    })),
+    useBoardLifecycleStore: vi.fn((selector) =>
+      selector({
+        boardIsReachable: boardIsReachableMock,
+      }),
+    ),
   };
 });
 
@@ -83,6 +85,10 @@ describe('useNetwork - scanNetworkList', () => {
 
     const { result } = renderHook(() => useNetwork(), {
       wrapper: createWrapper(),
+    });
+
+    act(() => {
+      result.current.setScanningIsEnabled(true);
     });
 
     await waitFor(() => {

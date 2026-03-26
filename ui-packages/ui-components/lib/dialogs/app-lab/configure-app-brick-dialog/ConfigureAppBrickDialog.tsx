@@ -1,49 +1,37 @@
-import { OpenInNewTab } from '@cloud-editor-mono/images/assets/icons';
 import {
-  AIModelItem,
   BrickConfigVariable,
   BrickCreateUpdateRequest,
   BrickDetails,
   BrickInstance,
 } from '@cloud-editor-mono/infrastructure';
 import { capitalize } from 'lodash';
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 
-import { AppLabAiModel } from '../../../app-lab-brick-detail/sub-components/ai-model/AiModel';
-import {
-  BoardResourcesValue,
-  Button,
-  ButtonSize,
-  ButtonType,
-  TrainNewModelDialog,
-  UseArduinoAccountLogic,
-  UseEdgeImpulseAccountLogic,
-} from '../../../components-by-app/app-lab';
+import { Button, ButtonType } from '../../../components-by-app/app-lab';
 import { Input } from '../../../essential/input';
 import { InputStyle } from '../../../essential/input/input.type';
 import { useI18n } from '../../../i18n/useI18n';
-import { XSmall, XXSmall, XXXSmall } from '../../../typography';
+import { XXSmall, XXXSmall } from '../../../typography';
 import { AppLabDialog } from '../app-lab-dialog/AppLabDialog';
 import { configureAppBrickDialogMessages as messages } from '../messages';
 import styles from './configure-app-brick-dialog.module.scss';
 
-export type ConfigureAppBrickDialogLogic = () => {
+export type ConfigureAppBrickDialogLogic = (params: {
+  appId: string;
   brick: BrickDetails;
   open: boolean;
-  loadBrickInstance: (id: string) => Promise<BrickInstance>;
-  getInstalledModel?: (id: string) => AIModelItem | undefined;
-  confirmAction: (
-    brickId: string,
-    params: BrickCreateUpdateRequest,
-  ) => Promise<boolean>;
-  onOpenChange: (open: boolean) => void;
-  arduinoAuthAccountLogic: UseArduinoAccountLogic;
-  edgeImpulseAuthAccountLogic: UseEdgeImpulseAccountLogic;
-  openAndAssociateToDevice?: () => void;
-  boardResourcesLogic: () => BoardResourcesValue;
+}) => {
+  brickInstance?: BrickInstance;
+  confirmAction: (params: BrickCreateUpdateRequest) => Promise<boolean>;
 };
 
-type ConfigureAppBrickDialogProps = { logic: ConfigureAppBrickDialogLogic };
+type ConfigureAppBrickDialogProps = {
+  open: boolean;
+  appId: string;
+  brick: BrickDetails;
+  setOpen: (open: boolean) => void;
+  logic: ConfigureAppBrickDialogLogic;
+};
 
 interface BrickVariable extends Omit<BrickConfigVariable, 'value'> {
   value: string;
@@ -51,62 +39,28 @@ interface BrickVariable extends Omit<BrickConfigVariable, 'value'> {
 
 export const ConfigureAppBrickDialog: React.FC<
   ConfigureAppBrickDialogProps
-> = ({ logic }: ConfigureAppBrickDialogProps) => {
-  const {
-    brick,
-    open,
-    loadBrickInstance,
-    confirmAction,
-    onOpenChange,
-    getInstalledModel,
-    arduinoAuthAccountLogic,
-    edgeImpulseAuthAccountLogic,
-    openAndAssociateToDevice,
-    boardResourcesLogic,
-  } = logic();
+> = ({ open, setOpen, appId, brick, logic }: ConfigureAppBrickDialogProps) => {
   const [loading, setLoading] = useState(false);
-  const [instance, setInstance] = useState<BrickInstance>();
   const [variables, setVariables] = useState<BrickVariable[]>([]);
-  const [modelId, setModelId] = useState<string>();
-  const [showTrainModel, setShowTrainModel] = useState(false);
 
-  const { user: arduinoUser } = arduinoAuthAccountLogic();
-
-  const { user: edgeImpulseUser } = edgeImpulseAuthAccountLogic();
+  const { brickInstance, confirmAction } = logic({ appId, brick, open });
 
   const { formatMessage } = useI18n();
 
   useEffect(() => {
-    if (!open) return;
-
-    const loadInstance = async (): Promise<void> => {
-      if (!brick.id) return;
-      try {
-        const instance = await loadBrickInstance(brick.id);
-        setInstance(instance);
-        setVariables(
-          (instance.config_variables ?? []).map((config) => ({
-            ...config,
-            value: config.value ?? '',
-          })),
-        );
-        setModelId(instance.model);
-      } catch {
-        setInstance(undefined);
-        setVariables([]);
-        setModelId(undefined);
-      }
-    };
-    loadInstance();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [brick, open]);
+    setVariables(
+      (brickInstance?.config_variables ?? []).map((config) => ({
+        ...config,
+        value: config.value ?? '',
+      })),
+    );
+  }, [brickInstance?.config_variables]);
 
   const handleConfirm = async (): Promise<void> => {
     if (!brick.id) return;
     setLoading(true);
 
-    const success = await confirmAction(brick.id, {
-      model: modelId,
+    const success = await confirmAction({
       variables: variables.reduce(
         (acc, variable) => ({
           ...acc,
@@ -117,24 +71,21 @@ export const ConfigureAppBrickDialog: React.FC<
     });
     setLoading(false);
     if (success) {
-      onOpenChange(false);
+      setOpen(false);
     }
   };
-
-  const onOpenTrainNewModelDialogChange = useCallback((value: boolean) => {
-    setShowTrainModel(value);
-  }, []);
 
   return (
     <AppLabDialog
       open={open}
-      onOpenChange={onOpenChange}
+      onOpenChange={setOpen}
       title={formatMessage(messages.dialogTitle)}
+      onSubmit={handleConfirm}
       footer={
         <>
           <Button
             type={ButtonType.Secondary}
-            onClick={(): void => onOpenChange(false)}
+            onClick={(): void => setOpen(false)}
             uppercase={false}
             classes={{
               button: styles['action-button'],
@@ -147,10 +98,10 @@ export const ConfigureAppBrickDialog: React.FC<
             type={ButtonType.Primary}
             uppercase={false}
             loading={loading}
-            onClick={handleConfirm}
             disabled={variables.some(
               (variable) => variable.required && !variable.value.trim().length,
             )}
+            isSubmit
             classes={{
               button: styles['action-button'],
               textButtonText: styles['action-button-text'],
@@ -167,14 +118,7 @@ export const ConfigureAppBrickDialog: React.FC<
       }}
     >
       <div className={styles['container']}>
-        <TrainNewModelDialog
-          arduinoAuthAccountLogic={arduinoAuthAccountLogic}
-          edgeImpulseAuthAccountLogic={edgeImpulseAuthAccountLogic}
-          open={showTrainModel}
-          onOpenChange={onOpenTrainNewModelDialogChange}
-          openAndAssociateToDevice={openAndAssociateToDevice}
-        />
-        {variables.map((variable) => (
+        {variables.map((variable, index) => (
           <div key={variable.name} className={styles['param-row']}>
             <Input
               inputStyle={InputStyle.AppLab}
@@ -183,6 +127,8 @@ export const ConfigureAppBrickDialog: React.FC<
               autoCapitalize="off"
               autoCorrect="off"
               spellCheck="false"
+              /* eslint-disable-next-line jsx-a11y/no-autofocus */
+              autoFocus={index === 0}
               onChange={(value: string): void =>
                 setVariables((prev) =>
                   prev.map((v) =>
@@ -203,46 +149,6 @@ export const ConfigureAppBrickDialog: React.FC<
           <XXXSmall className={styles['brick-description']}>
             {formatMessage(messages.dialogBodyDescription)}
           </XXXSmall>
-        )}
-        {brick.compatible_models && brick.compatible_models.length > 0 && (
-          <>
-            <XSmall className={styles['brick-subtitle']}>
-              {formatMessage(messages.dialogBodySubtitle)}
-              <Button
-                type={ButtonType.Tertiary}
-                size={ButtonSize.XSmall}
-                onClick={(): void => {
-                  if (
-                    !!edgeImpulseUser &&
-                    !!arduinoUser &&
-                    openAndAssociateToDevice
-                  ) {
-                    openAndAssociateToDevice();
-                    return;
-                  }
-
-                  setShowTrainModel(true);
-                }}
-                Icon={OpenInNewTab}
-                classes={{
-                  button: styles['train-new-model-button'],
-                }}
-              >
-                {formatMessage(messages.trainNewModelButton)}
-              </Button>
-            </XSmall>
-            {brick.compatible_models.map((model) => (
-              <AppLabAiModel
-                key={model.id}
-                inUseModelId={instance?.model}
-                model={model}
-                selectedModelId={modelId}
-                onClick={setModelId}
-                getInstalledModel={getInstalledModel}
-                boardResourcesLogic={boardResourcesLogic}
-              />
-            ))}
-          </>
         )}
       </div>
     </AppLabDialog>

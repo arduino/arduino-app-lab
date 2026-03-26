@@ -1,4 +1,4 @@
-@use "@cloud-editor-mono/ui-components/public/shared.module.scss";
+@use "../../public/shared.module.scss";
 
 .tree-container {
   width: 100%;
@@ -21,7 +21,7 @@
 
 .tree-row-container {
   margin-top: 1px; // small correction not to hide the border top of selected items
-  padding: 0px;
+  padding: 0;
   box-sizing: border-box;
 }
 .tree-container,
@@ -37,6 +37,8 @@
   cursor: pointer;
   border-radius: 6px;
   margin: 0 1px;
+  min-height: 22px;
+  background: transparent;
 
   .tree-row-file {
     display: flex;
@@ -164,7 +166,7 @@
   flex: 1;
   flex-direction: column;
   align-items: flex-start;
-  padding: 12px 0px 0px 0px;
+  padding: 12px 0 0 0;
   gap: 20px;
 
   @for $i from 1 through 5 {

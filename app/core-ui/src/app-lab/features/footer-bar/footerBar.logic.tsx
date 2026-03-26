@@ -5,6 +5,7 @@ import {
   newVersion,
 } from '@cloud-editor-mono/domain/src/services/services-by-app/app-lab';
 import { ArduinoLoop } from '@cloud-editor-mono/images/assets/icons';
+import { AppDetailedInfo } from '@cloud-editor-mono/infrastructure';
 import {
   FooterBarLogic,
   Notification,
@@ -12,16 +13,18 @@ import {
   useI18n,
 } from '@cloud-editor-mono/ui-components/lib/components-by-app/app-lab';
 import { useQuery } from '@tanstack/react-query';
+import { useNavigate } from '@tanstack/react-router';
 import { useContext, useEffect, useMemo, useState } from 'react';
 
 import { useBoardItem } from '../../hooks/useBoardItem';
+import { UseBoards } from '../../hooks/useBoards';
 import { useIsBoard } from '../../hooks/useIsBoard';
 import { useTerminal } from '../../hooks/useTerminal';
 import { BoardResourcesContext } from '../../providers/board-resources/boardResourcesContext';
 import { NetworkContext } from '../../providers/network/networkContext';
 import { RuntimeContext } from '../../providers/runtime/runtimeContext';
 import { SetupContext } from '../../providers/setup/setupContext';
-import { useBoardLifecycleStore, UseBoards } from '../../store/boards/boards';
+import { useBoardLifecycleStore } from '../../store/boardLifecycle';
 import { messages } from './messages';
 
 const bytesToGiB = (bytes: unknown): string =>
@@ -38,6 +41,7 @@ export const createUseFooterBarLogic = function (
 ): FooterBarLogic {
   return function useFooterBarLogic(): ReturnType<FooterBarLogic> {
     const { formatMessage } = useI18n();
+    const navigate = useNavigate();
 
     const { data: isBoard } = useIsBoard();
 
@@ -61,7 +65,9 @@ export const createUseFooterBarLogic = function (
     const runtimeContext = useContext(RuntimeContext);
     const { resources } = useContext(BoardResourcesContext);
 
-    const { boardIsReachable } = useBoardLifecycleStore();
+    const boardIsReachable = useBoardLifecycleStore(
+      (state) => state.boardIsReachable,
+    );
 
     const { data: currentVersion } = useQuery(['current-version'], () =>
       getCurrentVersion(),
@@ -188,6 +194,12 @@ export const createUseFooterBarLogic = function (
       setNetworkStepSkipped,
     ]);
 
+    const onOpenApp = (app: AppDetailedInfo): void => {
+      navigate({
+        to: `/${app.example ? 'examples' : 'my-apps'}/${app.id}`,
+      });
+    };
+
     return {
       runtimeContext,
       currentVersion: currentVersion || '',
@@ -197,6 +209,7 @@ export const createUseFooterBarLogic = function (
       systemResources,
       boardItem,
       boardIP,
+      onOpenApp,
       onOpenTerminal,
       isBoard: isBoard || false,
       terminalError,

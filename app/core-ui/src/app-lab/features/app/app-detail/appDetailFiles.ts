@@ -22,6 +22,7 @@ import {
 
 export const MAIN_SKETCH_PATH = 'sketch/sketch.ino';
 export const APP_YAML_PATH = 'app.yaml';
+export const SKETCH_YAML_PATH = 'sketch/sketch.yaml';
 export const README_PATH = 'README.md';
 export const MAIN_PYTHON_PATH = 'python/main.py';
 
@@ -47,10 +48,15 @@ type UseAppDetailFiles = (
     fileName: string,
     fileExtension: string,
   ) => Promise<void>;
-  renameAppFile: (from?: string, to?: string) => Promise<void>;
+  renameAppFile: (
+    from?: string,
+    to?: string,
+    nodeType?: 'file' | 'folder',
+  ) => Promise<void>;
   deleteAppFile: (path?: string) => Promise<void>;
   refetchAppDetail: () => void;
   refetchAppYaml: () => Promise<unknown>;
+  refetchSketchYaml: () => Promise<unknown>;
   refetchAppBricks: () => Promise<unknown>;
   removeFileFromPending: (path: string) => void;
   createAppFolder: (path: string) => Promise<void>;
@@ -132,6 +138,14 @@ export const useAppDetailFiles: UseAppDetailFiles = function (
     ],
   );
 
+  const sketchYaml = filesList?.find((file) => file.path === SKETCH_YAML_PATH);
+  const { fileData: sketchYamlFileData, refetch: refetchSketchYamlFileData } =
+    useRetrieveArduinoAppFileContents(
+      !!filesList && !!firstSelectedFileData && !!sketchYaml,
+      appDetail?.path,
+      sketchYaml,
+    );
+
   const filteredFiles = useMemo(() => {
     return (
       firstSelectedFileData &&
@@ -139,15 +153,15 @@ export const useAppDetailFiles: UseAppDetailFiles = function (
       filesList?.filter(
         (f) =>
           f.path !== APP_YAML_PATH &&
+          f.path !== SKETCH_YAML_PATH &&
           f.path !== MAIN_SKETCH_PATH &&
           f.path !== firstSelectedFileData.path,
       )
     );
   }, [firstSelectedFileData, appYamlFileData, filesList]);
 
-  const [pendingFileIds, setPendingFileIds] = useState<string[]>(
-    filteredFiles?.map((f) => f.path) || [],
-  );
+  const [pendingFileIds, setPendingFileIds] = useState<string[]>([]);
+  const [pendingFileIdWasRemoved, setPendingFileIdWasRemoved] = useState(false);
 
   useEffect(() => {
     if (filteredFiles) {
@@ -170,6 +184,7 @@ export const useAppDetailFiles: UseAppDetailFiles = function (
     filteredFiles,
     appDetail?.path,
     pendingFileIds,
+    pendingFileIdWasRemoved,
   );
 
   const _filesContents = useMemo(() => {
@@ -193,15 +208,27 @@ export const useAppDetailFiles: UseAppDetailFiles = function (
       }
     }
 
+    if (sketchYamlFileData) {
+      const alreadyIncluded = files.some(
+        (file) => file.path === sketchYamlFileData.path,
+      );
+      if (!alreadyIncluded) {
+        files.push(sketchYamlFileData);
+      }
+    }
+
     return files;
   }, [
     appYamlFileData,
     filesContents,
     firstSelectedFileData,
     firstSelectedFileIsSketchIno,
+    sketchYamlFileData,
   ]);
 
   const removeFileFromPending = useCallback((path: string) => {
+    setPendingFileIdWasRemoved(true);
+
     setPendingFileIds((prev) => {
       // if id is not in pending list do nothing
       if (!prev.includes(path)) {
@@ -236,6 +263,7 @@ export const useAppDetailFiles: UseAppDetailFiles = function (
     deleteAppFile,
     refetchAppDetail,
     refetchAppYaml,
+    refetchSketchYaml: refetchSketchYamlFileData,
     refetchAppBricks,
     removeFileFromPending,
     createAppFolder,

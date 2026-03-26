@@ -2,7 +2,7 @@ import {
   LearnListItem,
   LearnResource,
   LearnTag,
-} from '@cloud-editor-mono/ui-components/lib/app-lab-learn';
+} from '@cloud-editor-mono/ui-components/lib/components-by-app/app-lab';
 
 export interface LearnService {
   getLearnList(): Promise<LearnListItem[]>;

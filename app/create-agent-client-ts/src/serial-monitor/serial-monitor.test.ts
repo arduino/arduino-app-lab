@@ -89,7 +89,7 @@ describe('openSerialMonitor', () => {
     setAgentDaemonState({
       [AgentDaemonStateKeys.Ports]: [EXAMPLE_PORT],
     });
-    openAgentSerialMonitor$('COM3', 9600).subscribe();
+    openAgentSerialMonitor$('COM3', 9600).subscribe({ error: () => {} });
 
     expect(socketEmit).toBeCalledTimes(1);
   });
@@ -157,7 +157,7 @@ describe('openSerialMonitor', () => {
       });
 
       const serialMonitor$ = openAgentSerialMonitor$('COM3', 9600);
-      serialMonitor$.subscribe();
+      serialMonitor$.subscribe({ error: () => {} });
 
       expectObservable(serialMonitor$).toBe('--ra----b', {
         r: { type: 'info', value: 'ready' },
@@ -276,11 +276,11 @@ describe('openSerialMonitor', () => {
       });
 
       const serialMonitor1$ = openAgentSerialMonitor$('COM3');
-      serialMonitor1$.subscribe();
+      serialMonitor1$.subscribe({ error: () => {} });
       const serialMonitor2$ = openAgentSerialMonitor$('COM4');
-      serialMonitor2$.subscribe();
+      serialMonitor2$.subscribe({ error: () => {} });
       const serialMonitor3$ = openAgentSerialMonitor$('COM5');
-      serialMonitor3$.subscribe();
+      serialMonitor3$.subscribe({ error: () => {} });
 
       const values = {
         r: { type: 'info', value: 'ready' },
@@ -375,7 +375,7 @@ describe('openSerialMonitor', () => {
           error: () => {},
         });
         const serialMonitorClosed$ = closeAgentSerialMonitor$('COM3');
-        serialMonitorClosed$.subscribe();
+        serialMonitorClosed$.subscribe({ error: () => {} });
 
         expectObservable(serialMonitor$).toBe(
           '--ra-#',
@@ -449,9 +449,9 @@ describe('openSerialMonitor', () => {
           error: () => {},
         });
         const serialMonitor2$ = openAgentSerialMonitor$('COM4');
-        serialMonitor2$.subscribe();
+        serialMonitor2$.subscribe({ error: () => {} });
         const serialMonitorClosed$ = closeAgentSerialMonitor$('COM3');
-        serialMonitorClosed$.subscribe();
+        serialMonitorClosed$.subscribe({ error: () => {} });
 
         expectObservable(serialMonitor1$).toBe(
           '--ra-#',

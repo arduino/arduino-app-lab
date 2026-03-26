@@ -80,3 +80,32 @@ func GetConnectionName(ctx context.Context, conn remote.RemoteConn) (*string, er
 	name := strings.TrimSpace(parts[0])
 	return &name, nil
 }
+
+func (nm *Manager) getIPAddress(ctx context.Context, netType string) (*string, error) {
+	out, err := nm.Run(ctx, "-g", "IP4.ADDRESS", "device", "show", netType)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query ip address: %w", err)
+	}
+
+	parts := strings.Split(out, "/")
+	if len(parts) == 0 || strings.TrimSpace(parts[0]) == "" {
+		return nil, nil
+	}
+	name := strings.TrimSpace(parts[0])
+	return &name, nil
+}
+
+func GetIPAddress(ctx context.Context, conn remote.RemoteConn) (*string, error) {
+	if conn == nil {
+		return nil, fmt.Errorf("missing connection")
+	}
+	nm := &Manager{
+		Timeout: 5 * time.Second,
+		Conn:    conn,
+	}
+	name, err := nm.getIPAddress(ctx, "eth0")
+	if err != nil {
+		return nm.getIPAddress(ctx, "wlan0")
+	}
+	return name, nil
+}

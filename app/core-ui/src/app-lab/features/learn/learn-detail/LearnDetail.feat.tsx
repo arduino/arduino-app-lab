@@ -1,8 +1,8 @@
 import {
-  AppLabMarkdownReader,
-  AppLabTopBar,
-  AppLabTopBarBack,
+  MarkdownReader,
   Skeleton,
+  TopBar,
+  TopBarBack,
   TutorialIcon,
 } from '@cloud-editor-mono/ui-components/lib/components-by-app/app-lab';
 
@@ -32,9 +32,9 @@ const LearnDetail: React.FC<LearnDetailProps> = (props: LearnDetailProps) => {
         </div>
       ) : (
         <>
-          <AppLabTopBar
+          <TopBar
             pathItems={[
-              <AppLabTopBarBack label="Learn" onClick={goBack} key={0} />,
+              <TopBarBack label="Learn" onClick={goBack} key={0} />,
               resource?.title,
             ]}
           />
@@ -54,7 +54,7 @@ const LearnDetail: React.FC<LearnDetailProps> = (props: LearnDetailProps) => {
                 </div>
               </div>
             </div>
-            <AppLabMarkdownReader
+            <MarkdownReader
               classes={{ reader: styles['markdown-reader'] }}
               content={resource?.content || ''}
               onOpenExternalLink={openExternalLink}

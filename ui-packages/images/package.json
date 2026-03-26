@@ -49,11 +49,20 @@
     "./assets/images": {
       "import": "./assets/images/index.tsx"
     },
+    "./assets/images/images-by-app/app-lab": {
+      "import": "./assets/images/images-by-app/app-lab/index.tsx"
+    },
     "./assets/devices": {
       "import": "./assets/devices/index.ts"
     },
+    "./assets/app-lab-devices": {
+      "import": "./assets/app-lab-devices/index.ts"
+    },
     "./assets/learn": {
       "import": "./assets/learn/index.ts"
+    },
+    "./assets/lotties": {
+      "import": "./assets/lotties/index.ts"
     }
   }
 }

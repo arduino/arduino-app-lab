@@ -1,6 +1,7 @@
 @use "@cloud-editor-mono/ui-components/public/shared.module.scss";
 
-@use "../../../../../../../ui-packages/ui-components/lib/app-lab-top-bar/top-bar.module.scss" as topBar;
+@use "../../../../../../../ui-packages/ui-components/lib/components-by-app/app-lab/top-bar/top-bar.module.scss" as
+  topBar;
 
 $resource-padding: 0 calc((100% - 900px) / 2); // 900px is the max width
 

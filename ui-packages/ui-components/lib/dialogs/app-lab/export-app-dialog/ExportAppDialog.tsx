@@ -88,29 +88,25 @@ export const ExportAppDialog: React.FC<ExportAppDialogProps> = ({
         >
           {formatMessage(messages.cancelButton)}
         </Button>
-        <Button
-          type={ButtonType.Primary}
-          loading={isLoading}
-          onClick={(): void => onExport(includeData)}
+        <Button 
+          type={ButtonType.Primary} 
+          loading={isLoading} 
+          isSubmit
+          /* eslint-disable-next-line jsx-a11y/no-autofocus */
+          autoFocus
         >
           {formatMessage(messages.confirmButton)}
         </Button>
       </>
     );
-  }, [
-    exportError,
-    handleClose,
-    formatMessage,
-    isLoading,
-    onExport,
-    includeData,
-  ]);
+  }, [exportError, handleClose, formatMessage, isLoading]);
 
   return (
     <AppLabDialog
       open={open}
       onOpenChange={handleClose}
       title={formatMessage(messages.dialogTitle)}
+      onSubmit={(): void => onExport(includeData)}
       footer={footer}
       classes={{
         body: styles['body'],

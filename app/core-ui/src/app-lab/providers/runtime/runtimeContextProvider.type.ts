@@ -1,9 +1,9 @@
 import { AppDetailedInfo } from '@cloud-editor-mono/infrastructure';
 import {
+  Action,
+  ActionStatus,
   AddConsoleSource,
   AppendDataToSource,
-  AppLabAction,
-  AppLabActionStatus,
   ConsoleSourceKey,
   ConsoleSources,
 } from '@cloud-editor-mono/ui-components/lib/components-by-app/app-lab';
@@ -24,8 +24,8 @@ export type RuntimeActions = {
   stopAction: (app: AppDetailedInfo) => void;
   swapAction: (app: AppDetailedInfo) => void;
   resetCurrentAction: () => void;
-  currentAction: AppLabAction | null;
-  currentActionStatus: AppLabActionStatus;
+  currentAction: Action | null;
+  currentActionStatus: ActionStatus;
   progress: number; // currently not used
 };
 

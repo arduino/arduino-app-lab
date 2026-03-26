@@ -89,12 +89,17 @@ type UseRetrieveBatchArduinoAppFileContents = (
   files?: FileNode[],
   appPath?: string,
   pendingFileIds?: string[],
+  pendingFileIdWasRemoved?: boolean,
 ) => {
   filesContents?: FileWithContent[];
   fileIsDeleting: boolean;
   refreshFileContents: (filePaths: string[]) => void;
   deleteAppFile: (path?: string) => Promise<void>;
-  renameAppFile: (from?: string, to?: string) => Promise<void>;
+  renameAppFile: (
+    from?: string,
+    to?: string,
+    nodeType?: 'file' | 'folder',
+  ) => Promise<void>;
   addAppFile: (
     fileId: string,
     fileName: string,
@@ -114,6 +119,7 @@ export const useRetrieveBatchArduinoAppFileContents: UseRetrieveBatchArduinoAppF
     files?: FileNode[],
     appPath?: string,
     pendingFileIds: string[] = [],
+    pendingFileIdWasRemoved: boolean = false,
   ): ReturnType<UseRetrieveBatchArduinoAppFileContents> {
     const queryClient = useQueryClient();
 
@@ -178,7 +184,12 @@ export const useRetrieveBatchArduinoAppFileContents: UseRetrieveBatchArduinoAppF
             throw new Error('No file path provided');
           }
 
-          const isPending = pendingFileIds.includes(file.path);
+          const pendingFileIdsNotSyncd =
+            !pendingFileIdWasRemoved &&
+            files &&
+            pendingFileIds.length !== files.length;
+          const isPending =
+            pendingFileIds.includes(file.path) || pendingFileIdsNotSyncd;
           const content = !isPending
             ? await getAppFileContent(appPath + '/' + file.path)
             : '';
@@ -233,7 +244,11 @@ export const useRetrieveBatchArduinoAppFileContents: UseRetrieveBatchArduinoAppF
     };
 
     const renameAppFile = useCallback(
-      async (prevName?: string, newName?: string): Promise<void> => {
+      async (
+        prevName?: string,
+        newName?: string,
+        nodeType?: 'file' | 'folder',
+      ): Promise<void> => {
         function renameFile(prevName?: string, newName?: string): void {
           setFilesContents((prev) => {
             const items = prev.items.map((file) => {
@@ -252,13 +267,17 @@ export const useRetrieveBatchArduinoAppFileContents: UseRetrieveBatchArduinoAppF
 
         renameFile(prevName, newName);
         try {
-          await renameAppFileMutate({ from: prevName, to: newName });
+          await renameAppFileMutate({ from: prevName, to: newName, nodeType });
+          if (nodeType === 'folder') {
+            // Invalidate the file list query to force a refresh
+            queryClient.invalidateQueries(['app-files']);
+          }
         } catch (error) {
           renameFile(newName, prevName);
           throw error;
         }
       },
-      [renameAppFileMutate],
+      [queryClient, renameAppFileMutate],
     );
 
     const addAppFile = useCallback(
@@ -416,7 +435,10 @@ export const useDeleteArduinoAppFile: UseDeleteArduinoAppFile = function (
         try {
           removeCodeSubject(path);
         } catch (error) {
-          console.error(`Error removing code subject for path ${path}:`, error);
+          console.error(
+            'Error removing code subject for path ' + path + ':',
+            error,
+          );
         }
       }
       queryClient.invalidateQueries({
@@ -439,7 +461,7 @@ type UseRenameArduinoAppFile = (
   renameAppFileMutate: UseMutateAsyncFunction<
     void,
     unknown,
-    { from?: string; to?: string },
+    { from?: string; to?: string; nodeType?: 'file' | 'folder' },
     unknown
   >;
   isLoading: boolean;
@@ -452,18 +474,36 @@ export const useRenameArduinoAppFile: UseRenameArduinoAppFile = function (
   const queryClient = useQueryClient();
 
   const { isLoading, mutateAsync: renameAppFileMutate } = useMutation({
-    mutationFn: (content: { from?: string; to?: string }) => {
+    mutationFn: (content: {
+      from?: string;
+      to?: string;
+      nodeType?: 'file' | 'folder';
+    }) => {
       return content.from !== undefined && content.to !== undefined
         ? renameAppFile(
             appPath + '/' + content.from,
             appPath + '/' + content.to,
+            content.nodeType,
           )
         : Promise.reject(
             new Error('Tried to rename app file without from/to paths'),
           );
     },
     onSuccess: (_, variables) => {
-      if (variables.from) removeCodeSubject(variables.from);
+      if (variables.from) {
+        try {
+          // Only remove code subject for files, not folders
+          // Folders don't have code subjects and will throw an error
+          if (variables.nodeType !== 'folder') {
+            removeCodeSubject(variables.from);
+          }
+        } catch (error) {
+          console.error(
+            'Error removing code subject for path ' + variables.from + ':',
+            error,
+          );
+        }
+      }
       queryClient.invalidateQueries({
         queryKey: keyToInvalidate,
         exact: true,

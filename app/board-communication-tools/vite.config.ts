@@ -10,11 +10,9 @@ const externalDependencies = pkg.peerDependencies
   : [];
 
 export default defineConfig(
-  libConfig(
-    'board-communication-tools',
+  libConfig({
+    exportName: 'board-communication-tools',
     externalDependencies,
-    undefined,
-    undefined,
-    true,
-  ),
+    noUI: true,
+  }),
 );

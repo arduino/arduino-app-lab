@@ -2,9 +2,45 @@
 
 // TODO: Use correct variables when available
 $buttonOffHover: #95a5a6;
+$buttonOff: #bdc3c7;
+$ballSize: 14px;
 
 .button {
   background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+
+  &.isDisabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+
+  .track {
+    display: flex;
+    align-items: center;
+    background-color: $buttonOff;
+    border-radius: 20px;
+
+    width: 37px;
+    height: 20px;
+    flex-shrink: 0;
+
+    position: relative;
+    transition: background-color 0.2s ease-in-out;
+  }
+
+  .thumb {
+    background-color: #ffffff;
+    border-radius: 50%;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    height: $ballSize;
+    width: $ballSize;
+    margin: 3px;
+
+    position: absolute;
+    transition: transform 0.2s ease-in-out;
+  }
 
   &:hover > svg {
     & > rect {
@@ -12,7 +48,21 @@ $buttonOffHover: #95a5a6;
     }
   }
 
+  &:hover {
+    .track {
+      background-color: $buttonOffHover;
+    }
+  }
+
   &.isSelected {
+    .track {
+      background-color: shared.theme-var(--button-primary-background);
+    }
+
+    .thumb {
+      transform: translateX(17px);
+    }
+
     & svg > rect {
       fill: shared.theme-var(--button-primary-background);
     }
@@ -20,6 +70,12 @@ $buttonOffHover: #95a5a6;
     &:hover > svg {
       & > rect {
         fill: shared.theme-var(--button-primary-background-hover);
+      }
+    }
+
+    &:hover {
+      .track {
+        background-color: shared.theme-var(--button-primary-background-hover);
       }
     }
   }

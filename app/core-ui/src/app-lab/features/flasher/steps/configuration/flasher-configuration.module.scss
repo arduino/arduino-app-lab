@@ -70,6 +70,11 @@
     .input {
       border: none;
       background: none;
+
+      &:hover {
+        border: none !important;
+        background: none !important;
+      }
     }
   }
 
@@ -78,7 +83,7 @@
     border: none;
     padding: 0;
     cursor: pointer;
-    
+
     &-label {
       color: var(--text-accent, #25c2c7);
       font-size: 12px;
@@ -95,10 +100,10 @@
   .preserve-data-input {
     width: 16px;
     height: 16px;
-    
+
     &--checked {
       background: var(--component-bg-accent, #25c2c7);
-      
+
       svg {
         path {
           fill: var(--text-inverted, #171e21);
@@ -134,7 +139,7 @@
 }
 
 .preserve-data-warning {
-  background-color: #5F5824;
+  background-color: #5f5824;
   border-radius: 8px;
   display: flex;
   align-items: center;
@@ -146,7 +151,7 @@
     height: 16px;
 
     path {
-      fill: #C1AB15;
+      fill: #c1ab15;
     }
   }
 }
@@ -178,14 +183,14 @@
     display: flex;
     align-items: center;
     gap: 4px;
-    color: #C1AB15;
+    color: #c1ab15;
 
     svg {
       width: 16px;
       height: 16px;
 
       path {
-        fill: #C1AB15;
+        fill: #c1ab15;
       }
     }
   }
