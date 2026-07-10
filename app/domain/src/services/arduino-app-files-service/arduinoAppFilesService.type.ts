@@ -36,7 +36,7 @@ export interface ArduinoAppFilesService {
     newFileName?: string,
   ): Promise<ImportResourceResult>;
   importDroppedResourceToApp: (
-    callback: (paths: string[]) => void,
+    callback: (items: { path: string; isFolder: boolean }[]) => void,
   ) => () => void;
 }
 

@@ -29,6 +29,7 @@
             display: flex;
             align-items: center;
             gap: 32px;
+            flex: 1;
 
             @include bp.breakpoint(vars.$breakpoint-2xl) {
                 gap: 16px;
@@ -38,6 +39,7 @@
         &--center {
             display: flex;
             align-items: center;
+            justify-content: center;
             gap: 16px;
 
             @include bp.breakpoint(vars.$breakpoint-2xl) {
@@ -48,7 +50,9 @@
         &--right {
             display: flex;
             align-items: center;
+            justify-content: flex-end;
             gap: 16px;
+            flex: 1;
         }
     }
 

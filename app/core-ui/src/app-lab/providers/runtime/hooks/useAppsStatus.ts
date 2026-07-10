@@ -24,12 +24,14 @@ type UseAppsStatus = () => {
 };
 
 const useAppsStatus: UseAppsStatus = function (): ReturnType<UseAppsStatus> {
-  const { boardIsFlashing, boardIsReachable } = useBoardLifecycleStore(
-    useShallow((state) => ({
-      boardIsFlashing: state.boardIsFlashing,
-      boardIsReachable: state.boardIsReachable,
-    })),
-  );
+  const { boardIsFlashing, boardIsReachable, selectedConnectedBoard } =
+    useBoardLifecycleStore(
+      useShallow((state) => ({
+        boardIsFlashing: state.boardIsFlashing,
+        boardIsReachable: state.boardIsReachable,
+        selectedConnectedBoard: state.selectedConnectedBoard,
+      })),
+    );
 
   const queryClient = useQueryClient();
 
@@ -127,6 +129,22 @@ const useAppsStatus: UseAppsStatus = function (): ReturnType<UseAppsStatus> {
       getAppStatusAbort();
     };
   }, [getAppStatusAbort]);
+
+  useEffect(() => {
+    if (selectedConnectedBoard?.serial && boardIsReachable) {
+      queryClient.invalidateQueries({
+        predicate: (query) => {
+          const key = query.queryKey;
+          if (key[0] !== 'list-my-apps') return false;
+          // Bare status query, or one of the section lists only.
+          return (
+            key.length === 1 || key[1] === 'my-apps' || key[1] === 'examples'
+          );
+        },
+      });
+      queryClient.invalidateQueries({ queryKey: ['get-default-app'] });
+    }
+  }, [selectedConnectedBoard?.serial, boardIsReachable, queryClient]);
 
   const filteredApps = useMemo(() => {
     return apps?.filter((app) => app.id) as AppDetailedInfo[];

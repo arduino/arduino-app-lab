@@ -8,7 +8,7 @@ import {
 } from '@cloud-editor-mono/ui-components/lib/components-by-app/app-lab';
 import { Outlet } from '@tanstack/react-router';
 
-import { Flasher } from '../flasher/Flasher.feat';
+import { FlasherFeat } from '../flasher/Flasher.feat';
 import FooterBar from '../footer-bar/FooterBar.feat';
 import Setup from '../setup/Setup.feat';
 import { useMainLogic } from './main.logic';
@@ -28,7 +28,7 @@ const AppLabMain: React.FC = () => {
   } = useMainLogic();
 
   return boardIsFlashing ? (
-    <Flasher selectBoard={boardsProps.autoSelectBoard} />
+    <FlasherFeat selectBoard={boardsProps.autoSelectBoard} />
   ) : (
     <>
       <Setup boardsProps={boardsProps} />

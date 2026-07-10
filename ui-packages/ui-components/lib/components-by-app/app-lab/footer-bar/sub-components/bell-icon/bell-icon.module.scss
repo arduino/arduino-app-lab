@@ -6,24 +6,16 @@
     position: relative;
     padding: 3px;
     cursor: pointer;
+    color: #c9d2d2;
+
+    &.active {
+        color: white;
+    }
 
     &:is(.active,:hover) {
         background-color: #AEB8B826;
         border-radius: 2px;
-
-        svg {
-            path {
-                fill: var(--text-subtle, #c9d2d2);
-            }
-        }
-    }
-
-    &:not(.empty) {
-        svg {
-            path {
-                fill: var(--text-subtle, #c9d2d2);
-            }
-        }
+        color: white;
     }
 
     .notification-label {
@@ -31,6 +23,7 @@
         -webkit-user-select: none;
         font-size: 12px;
         color: var(--text-subtle, #c9d2d2);
+        color: green;
         padding-left: 4px;
         padding-right: 4px;
     }

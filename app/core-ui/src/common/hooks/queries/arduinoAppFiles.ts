@@ -195,12 +195,7 @@ export const useRetrieveBatchArduinoAppFileContents: UseRetrieveBatchArduinoAppF
           if (!appPath || !file.path) {
             throw new Error('No file path provided');
           }
-          const pendingFileIdsNotSyncd =
-            !pendingFileIdWasRemoved &&
-            files &&
-            pendingFileIds.length !== files.length;
-          const isPending =
-            pendingFileIds.includes(file.path) || pendingFileIdsNotSyncd;
+          const isPending = pendingFileIds.includes(file.path);
           const content = !isPending
             ? await getAppFileContent(appPath + '/' + file.path)
             : '';
@@ -241,7 +236,16 @@ export const useRetrieveBatchArduinoAppFileContents: UseRetrieveBatchArduinoAppF
             };
           });
         },
-        enabled,
+        // Only enable the query once `pendingFileIds` has been seeded
+        // from `files` (or a removal has occurred). Without this gate,
+        // queries fire during the initial render with `pendingFileIds=[]`
+        // and cache an empty `contentIsPending: true` result under the
+        // same key that `removeFileFromPending` later transitions back
+        // to, preventing the real content from ever being fetched.
+        enabled:
+          enabled &&
+          !!files &&
+          (pendingFileIds.length === files.length || pendingFileIdWasRemoved),
         staleTime: 0,
         cacheTime: 0,
       })),
@@ -577,6 +581,13 @@ export const useDeleteArduinoAppFile: UseDeleteArduinoAppFile = function (
         queryKey: keyToInvalidate,
         exact: true,
       });
+      // Invalidate app-bricks query to update brick status when files are deleted
+      const appId = Array.isArray(keyToInvalidate)
+        ? keyToInvalidate[1]
+        : undefined;
+      if (appId) {
+        queryClient.invalidateQueries(['app-bricks', appId]);
+      }
     },
   });
 

@@ -14,6 +14,7 @@ type IconButtonProps = AriaButtonProps & {
     icon?: string;
     tooltip?: string;
   };
+  onClick?: React.MouseEventHandler<HTMLButtonElement>;
   onMouseEnter?: () => void;
   onMouseLeave?: () => void;
 };
@@ -29,6 +30,7 @@ const IconButton: React.FC<IconButtonProps> = (props: IconButtonProps) => {
     classes,
     children,
     isDisabled = false,
+    onClick,
     onMouseEnter,
     onMouseLeave,
     ['aria-describedby']: ariaDescribedBy,
@@ -39,6 +41,7 @@ const IconButton: React.FC<IconButtonProps> = (props: IconButtonProps) => {
   const renderIconButton = (): JSX.Element => (
     <button
       {...buttonProps}
+      onClick={onClick}
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
       className={clsx(styles['icon-button'], classes?.button, {

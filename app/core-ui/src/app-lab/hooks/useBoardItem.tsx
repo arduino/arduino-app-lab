@@ -4,10 +4,9 @@ import {
   Wifi,
 } from '@cloud-editor-mono/images/assets/icons';
 import { BoardItem } from '@cloud-editor-mono/ui-components/lib/components-by-app/app-lab';
-import { useContext, useMemo } from 'react';
+import { useMemo } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 
-import { BoardConfigurationContext } from '../providers/board-configuration/boardConfigurationContext';
 import { useBoardLifecycleStore } from '../store/boardLifecycle';
 
 export interface UseBoardItem {
@@ -22,17 +21,12 @@ export const useBoardItem = (): UseBoardItem => {
     })),
   );
 
-  const { boardConfigurationIsSet, boardName } = useContext(
-    BoardConfigurationContext,
-  );
-
-  // use 'boardName' instead of 'selectedConnectedBoard.name', cause 'boardName' is re-fetched when board name is changed during setup
   const boardItem = useMemo<BoardItem>(
     () =>
       boardIsReachable
         ? {
-            label: boardConfigurationIsSet
-              ? `${boardName} (${selectedBoard?.type})`
+            label: selectedBoard?.name
+              ? `${selectedBoard.name} (${selectedBoard?.type})`
               : selectedBoard?.type ?? '',
             state: 'default',
             icon:
@@ -46,7 +40,7 @@ export const useBoardItem = (): UseBoardItem => {
             state: 'inactive',
             icon: <UsbPortDisconnected />,
           },
-    [boardConfigurationIsSet, boardIsReachable, boardName, selectedBoard],
+    [boardIsReachable, selectedBoard],
   );
 
   return { boardItem };

@@ -320,3 +320,53 @@ $serialMonitorUnavailableMargin: 20px;
         }
     }
 }
+
+.context-menu {
+    z-index: shared.$zIndex4;
+    width: 232px;
+    background: var(--component-bg-above, #374146);
+    border-radius: 4px;
+    padding: 4px;
+    box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.25);
+}
+
+.context-menu-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    height: 36px;
+    gap: 10px;
+    border-radius: 4px;
+    padding: 0 8px;
+    color: var(--text-default, #fff);
+    background-color: transparent;
+    font-size: 13px;
+    cursor: pointer;
+    user-select: none;
+    -webkit-user-select: none;
+    outline: none;
+    box-sizing: border-box;
+
+    &:hover,
+    &:focus {
+        background-color: var(--component-bg-flexible, #aeb8b826);
+    }
+
+    &[data-disabled] {
+        opacity: 0.5;
+        pointer-events: none;
+    }
+
+    kbd {
+        margin-left: auto;
+        font-size: 12px;
+        opacity: 0.7;
+    }
+}
+
+.context-menu-separator {
+    background-color: var(--grayscale-smoke, #C9D2D2);
+    height: 1px;
+    opacity: 0.1;
+}

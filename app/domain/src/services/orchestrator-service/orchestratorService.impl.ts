@@ -200,6 +200,11 @@ export let deleteAIModel: OrchestratorService['deleteAIModel'] =
     throw new Error('deleteAIModel service not implemented');
   };
 
+export let uploadAIModel: OrchestratorService['uploadAIModel'] =
+  async function () {
+    throw new Error('uploadAIModel service not implemented');
+  };
+
 export const setOrchestratorService = (service: OrchestratorService): void => {
   getApps = service.getApps;
   getAppStatus = service.getAppStatus;
@@ -244,4 +249,5 @@ export const setOrchestratorService = (service: OrchestratorService): void => {
   installEIModel = service.installEIModel;
   getAIModels = service.getAIModels;
   deleteAIModel = service.deleteAIModel;
+  uploadAIModel = service.uploadAIModel;
 };

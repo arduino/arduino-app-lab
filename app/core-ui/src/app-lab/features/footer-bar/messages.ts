@@ -16,6 +16,11 @@ export const messages = defineMessages({
     defaultMessage: 'CPU: {used}%',
     description: 'Label for the cpu used percentage',
   },
+  npu: {
+    id: 'footer.npu',
+    defaultMessage: 'NPU: {used}%',
+    description: 'Label for the npu used percentage',
+  },
   memory: {
     id: 'footer.memory',
     defaultMessage: 'RAM: {used}/{total}GB',

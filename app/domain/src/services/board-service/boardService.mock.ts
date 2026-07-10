@@ -15,7 +15,7 @@ const mockBoards: Board[] = [
     type: 'Arduino Uno Q',
     connectionType: 'USB',
     protocol: 'serial',
-    serial: '',
+    serial: 'serial-1',
     address: '',
   },
   {
@@ -25,7 +25,7 @@ const mockBoards: Board[] = [
     type: 'Arduino Uno Q',
     connectionType: 'USB',
     protocol: 'serial',
-    serial: '',
+    serial: 'serial-2',
     address: '',
   },
   {
@@ -35,7 +35,7 @@ const mockBoards: Board[] = [
     type: 'Arduino Uno Q',
     connectionType: 'USB',
     protocol: 'serial',
-    serial: '',
+    serial: 'serial-3',
     address: '',
   },
 ];
@@ -61,12 +61,12 @@ export const MockBoardService: BoardService = {
     return [...mockBoards];
   },
 
-  async selectBoard(boardId: string, _password?: string): Promise<void> {
-    const found = mockBoards.find((b) => b.id === boardId);
+  async selectBoard(boardSerial: string, _password?: string): Promise<void> {
+    const found = mockBoards.find((b) => b.serial === boardSerial);
     if (!found) {
-      throw new Error(`Board "${boardId}" not found (mock)`);
+      throw new Error(`Board "${boardSerial}" not found (mock)`);
     }
-    selectedBoardId = boardId;
+    selectedBoardId = boardSerial;
     boardName = found.name;
   },
 
@@ -81,7 +81,7 @@ export const MockBoardService: BoardService = {
       return;
     }
 
-    const idx = mockBoards.findIndex((b) => b.id === selectedBoardId);
+    const idx = mockBoards.findIndex((b) => b.serial === selectedBoardId);
     if (idx !== -1) {
       mockBoards[idx] = { ...mockBoards[idx], name: newName };
     }

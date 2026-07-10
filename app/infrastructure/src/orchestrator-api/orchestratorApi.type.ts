@@ -62,6 +62,8 @@ export enum StreamEventType {
   Message = 'message',
   Error = 'error',
   Progress = 'progress',
+  Close = 'close',
+  Done = 'done',
 }
 
 export interface MessageData {
@@ -82,13 +84,26 @@ export type StreamEvent =
   | { event: StreamEventType.App; data: AppDetailedInfo }
   | { event: StreamEventType.Message; data: MessageData }
   | { event: StreamEventType.Error; data: ErrorData }
-  | { event: StreamEventType.Progress; data: ProgressData };
+  | { event: StreamEventType.Progress; data: ProgressData }
+  | { event: StreamEventType.Close; data: string }
+  | { event: StreamEventType.Done; data: string };
 
 export enum SystemResourcesStreamMessageType {
   Cpu = 'cpu',
   Memory = 'mem',
   Disk = 'disk',
+  Npu = 'npu',
   Error = 'error',
+}
+
+export enum UploadAIModelStreamMessageType {
+  Info = 'info',
+  Start = 'start',
+  Update = 'update',
+  Complete = 'complete',
+  Done = 'done',
+  Error = 'error',
+  Close = 'close',
 }
 
 export type BoardUpdateLogEvent =

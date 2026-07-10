@@ -21,12 +21,16 @@ export function useBoardResourcesLogic(): BoardResourcesContextValue {
     undefined,
   );
 
-  const { boardIsFlashing, boardIsReachable } = useBoardLifecycleStore(
-    useShallow((state) => ({
-      boardIsFlashing: state.boardIsFlashing,
-      boardIsReachable: state.boardIsReachable,
-    })),
-  );
+  const { boardIsFlashing, boardIsReachable, selectedConnectedBoard } =
+    useBoardLifecycleStore(
+      useShallow((state) => ({
+        boardIsFlashing: state.boardIsFlashing,
+        boardIsReachable: state.boardIsReachable,
+        selectedConnectedBoard: state.selectedConnectedBoard,
+      })),
+    );
+
+  const isVentunoQ = selectedConnectedBoard?.fqbn === 'arduino:zephyr:ventunoq';
 
   const openStream = useCallback(() => {
     if (streamIsConnecting.current) {
@@ -59,6 +63,12 @@ export function useBoardResourcesLogic(): BoardResourcesContextValue {
             if (messageType === SystemResourcesStreamMessageType.Cpu) {
               return { ...prev, cpuPercentage: data.used_percent };
             }
+            if (
+              messageType === SystemResourcesStreamMessageType.Npu &&
+              isVentunoQ
+            ) {
+              return { ...prev, npuPercentage: data.max_percent };
+            }
             if (messageType === SystemResourcesStreamMessageType.Memory) {
               return { ...prev, ram: { used: data.used, total: data.total } };
             }
@@ -87,7 +97,7 @@ export function useBoardResourcesLogic(): BoardResourcesContextValue {
       },
       streamAbortController.current,
     );
-  }, [setResources]);
+  }, [setResources, isVentunoQ]);
 
   useEffect(() => {
     if (boardIsFlashing || !boardIsReachable) {
@@ -101,7 +111,25 @@ export function useBoardResourcesLogic(): BoardResourcesContextValue {
       streamAbortController.current?.abort();
       streamIsConnecting.current = false;
     };
-  }, [openStream, boardIsFlashing, boardIsReachable]);
+  }, [
+    openStream,
+    boardIsFlashing,
+    boardIsReachable,
+    selectedConnectedBoard?.serial,
+    selectedConnectedBoard?.address,
+  ]);
+
+  useEffect(() => {
+    const currentBoardSerial = selectedConnectedBoard?.serial;
+    const currentBoardAddress = selectedConnectedBoard?.address;
+    const currentBoardKey = currentBoardSerial
+      ? `${currentBoardSerial}-${currentBoardAddress}`
+      : undefined;
+
+    if (currentBoardKey) {
+      setResources(undefined);
+    }
+  }, [selectedConnectedBoard?.serial, selectedConnectedBoard?.address]);
 
   const singleValuesInGB = useMemo(
     () => ({

@@ -190,7 +190,7 @@ export const ImportResourceDialog: React.FC<ImportResourceDialogProps> = ({
             [styles['upload-area--status-uploading']]:
               status !== ImportStatus.Idle,
           })}
-          data-native-dropzone={open}
+          data-native-dropzone={open ? true : undefined}
           onDragEnter={handleDragEnter}
           onDragLeave={handleDragLeave}
           onDragOver={handleDragOver}

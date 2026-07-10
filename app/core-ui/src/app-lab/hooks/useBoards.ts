@@ -49,6 +49,7 @@ export type UseBoards = () => {
   connToBoardCompleted: boolean;
   setSelectedBoardCheckingStatus: () => void;
   lastAppInfo?: BoardAppInfo;
+  lastAppInfoLoaded: boolean;
   saveAppId: (appId: string, section: string) => Promise<void>;
   resetAppId: () => Promise<void>;
 };
@@ -232,6 +233,28 @@ export const useBoards: UseBoards = () => {
     },
   });
 
+  useEffect(() => {
+    if (!selectedConnectedBoard) {
+      return;
+    }
+
+    const updatedBoard = boards.find(
+      (board) => board.serial === selectedConnectedBoard.serial,
+    );
+
+    if (!updatedBoard) {
+      return;
+    }
+
+    if (
+      updatedBoard.name !== selectedConnectedBoard.name ||
+      updatedBoard.type !== selectedConnectedBoard.type ||
+      updatedBoard.address !== selectedConnectedBoard.address
+    ) {
+      setSelectedConnectedBoard(updatedBoard);
+    }
+  }, [boards, selectedConnectedBoard, setSelectedConnectedBoard]);
+
   // If the selected board is unplugged, and no longer detected for 5 seconds, reload the app
   useEffect(() => {
     let timeout: NodeJS.Timeout | void;
@@ -350,13 +373,16 @@ export const useBoards: UseBoards = () => {
         await set(PREVIOUS_BOARD_SERIALS, boardSerialsToSave);
       }
 
-      if (board.connectionType !== 'Network') {
-        try {
-          await connectToBoard(board);
-          updateLastConnection(board.serial);
-        } catch {
-          dispatch({ type: 'UNSELECT_BOARD' });
-        }
+      // For network boards, don't connect directly - let the password prompt handle it
+      if (board.connectionType === 'Network') {
+        return;
+      }
+
+      try {
+        await connectToBoard(board);
+        updateLastConnection(board.serial);
+      } catch (error) {
+        dispatch({ type: 'UNSELECT_BOARD' });
       }
     },
     [connectToBoard, updateLastConnection],
@@ -400,23 +426,30 @@ export const useBoards: UseBoards = () => {
   const autoSelectBoard = useCallback(
     async (boardSerial: string) => {
       const board = boards.find((b) => b.serial === boardSerial);
-      if (board && board.connectionType === 'Network') {
+      if (!board) {
+        await set(AUTO_SELECT_BOARD_SERIAL, boardSerial);
+        reloadApp();
+        return;
+      }
+      if (board.connectionType === 'Network') {
         del(AUTO_SELECT_BOARD_ID);
         del(PREVIOUS_BOARD_IDS);
         del(AUTO_SELECT_BOARD_SERIAL);
         del(PREVIOUS_BOARD_SERIALS);
-        return;
+        await handleSelectBoard(board);
+      } else {
+        await set(AUTO_SELECT_BOARD_SERIAL, boardSerial);
+        reloadApp();
       }
-      await set(AUTO_SELECT_BOARD_SERIAL, boardSerial);
-      reloadApp();
     },
-    [boards],
+    [boards, handleSelectBoard],
   );
 
   // save app ID mapped to current board with section
   const saveAppId = useCallback(
     async (appId: string, section: string): Promise<void> => {
-      const boardSerial = selectedConnectedBoard?.serial;
+      const boardSerial =
+        useBoardLifecycleStore.getState().selectedConnectedBoard?.serial;
       if (!boardSerial) return;
       const mapping = {
         ...((await get<Record<string, BoardAppInfo>>(BOARD_APP_MAPPING)) || {}),
@@ -424,27 +457,30 @@ export const useBoards: UseBoards = () => {
       mapping[boardSerial] = { appId, section };
       await set(BOARD_APP_MAPPING, mapping);
     },
-    [selectedConnectedBoard?.serial],
+    [],
   );
 
   // reset app ID for current board
   const resetAppId = useCallback(async (): Promise<void> => {
-    const boardSerial = selectedConnectedBoard?.serial;
+    const boardSerial =
+      useBoardLifecycleStore.getState().selectedConnectedBoard?.serial;
     if (!boardSerial) return;
     const mapping = {
       ...((await get<Record<string, BoardAppInfo>>(BOARD_APP_MAPPING)) || {}),
     };
     delete mapping[boardSerial];
     await set(BOARD_APP_MAPPING, mapping);
-  }, [selectedConnectedBoard?.serial]);
+  }, []);
 
   // load last app info for current board
   const [lastAppInfo, setLastAppInfo] = useState<BoardAppInfo | undefined>();
+  const [lastAppInfoLoaded, setLastAppInfoLoaded] = useState(false);
   useEffect(() => {
     const loadLastAppInfo = async (): Promise<void> => {
       const boardSerial = selectedConnectedBoard?.serial;
       if (!boardSerial) {
         setLastAppInfo(undefined);
+        setLastAppInfoLoaded(false);
         // Reset couldNotAutoSelectBoard when no board is connected
         setCouldNotAutoSelectBoard(false);
         return;
@@ -453,6 +489,7 @@ export const useBoards: UseBoards = () => {
         ...((await get<Record<string, BoardAppInfo>>(BOARD_APP_MAPPING)) || {}),
       };
       setLastAppInfo(mapping[boardSerial]);
+      setLastAppInfoLoaded(true);
       // Reset couldNotAutoSelectBoard when board changes
       setCouldNotAutoSelectBoard(false);
     };
@@ -585,7 +622,9 @@ export const useBoards: UseBoards = () => {
     autoSelectBoard,
     isAutoSelectingBoard,
     couldNotAutoSelectBoard,
-    showBoardConnPswPrompt: selectedBoard?.connectionType === 'Network',
+    showBoardConnPswPrompt:
+      selectedBoard?.connectionType === 'Network' &&
+      boardStatus !== 'conn-and-selection-done',
     onConnPswCancel,
     onConnPswSubmit: handleBoardConnectionWithPassword,
     isConnectingToBoard: boardStatus === 'conn-started',
@@ -593,6 +632,7 @@ export const useBoards: UseBoards = () => {
     connToBoardCompleted: boardStatus === 'conn-and-selection-done',
     setSelectedBoardCheckingStatus,
     lastAppInfo,
+    lastAppInfoLoaded,
     saveAppId,
     resetAppId,
   };

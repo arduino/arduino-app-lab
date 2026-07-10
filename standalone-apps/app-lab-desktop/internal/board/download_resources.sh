@@ -81,7 +81,7 @@ download_arduino_cli_artifacts(){
 }
 
 download_arduino_flasher_cli_artifacts(){
-    FLASHER_VERSION="0.5.0"
+    FLASHER_VERSION="0.5.1"
     FLASHER_BASE_URL="https://github.com/arduino/arduino-flasher-cli/releases/download/v${FLASHER_VERSION}"
 
     download_flasher_for_arch() {

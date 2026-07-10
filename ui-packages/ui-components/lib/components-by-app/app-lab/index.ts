@@ -36,6 +36,7 @@ export * from './essential/button';
 export * from './essential/icon-button';
 export * from './essential/select';
 export * from './essential/tooltip';
+export * from './flasher';
 export * from './footer-bar';
 export * from './learn';
 export * from './learn-item';

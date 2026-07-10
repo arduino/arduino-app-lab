@@ -12,6 +12,8 @@ import {wifi} from '../models';
 
 export function ApplyBoardUpdate(arg1:boolean,arg2:string):Promise<any>;
 
+export function CancelFlash():Promise<void>;
+
 export function CarrierDisable(arg1:string,arg2:string):Promise<carrier.ShowCarrierResult>;
 
 export function CarrierEnable(arg1:string,arg2:string,arg3:Array<carrier.EnableDeviceConfig>):Promise<carrier.ShowCarrierResult>;
@@ -109,6 +111,8 @@ export function InferOrchestratorURL():Promise<string>;
 export function IsBoard():Promise<boolean>;
 
 export function IsDirectory(arg1:string):Promise<boolean>;
+
+export function IsLocalDirectory(arg1:string):Promise<boolean>;
 
 export function IsUserPartitionPreservationSupported(arg1:string,arg2:string):Promise<boolean>;
 

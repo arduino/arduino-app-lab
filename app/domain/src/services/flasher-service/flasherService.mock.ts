@@ -1,4 +1,6 @@
-import { OSImageRelease } from './flasher-service.type';
+import { OSImageRelease } from '@cloud-editor-mono/infrastructure';
+
+import { FlasherService } from './flasher-service.type';
 
 const mockOSVersions: OSImageRelease[] = [
   {
@@ -16,4 +18,13 @@ const mockOSVersions: OSImageRelease[] = [
 export const mockGetOSVersions = (): OSImageRelease[] => {
   // Not implemented yet, just return an empty array
   return [...mockOSVersions];
+};
+
+export const mockFlasherService: FlasherService = {
+  boardNeedsOSUpdate: async () => false,
+  getAvailableFreeSpace: async () => 10000000000,
+  isUserPartitionPreservationSupported: async () => true,
+  listAvailableOSImages: async () => mockGetOSVersions(),
+  flash: async () => {},
+  cancelFlash: () => {},
 };

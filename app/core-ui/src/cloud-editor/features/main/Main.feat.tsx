@@ -77,6 +77,7 @@ const Main: React.FC = () => {
       <div
         className={clsx(styles.container, {
           [styles['container-with-header']]: showHeader,
+          [styles['container--snippet']]: viewMode === 'snippet',
         })}
       >
         {showHeader && <Header headerLogic={headerLogic} />}

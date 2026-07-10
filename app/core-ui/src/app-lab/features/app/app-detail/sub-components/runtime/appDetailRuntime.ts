@@ -37,6 +37,7 @@ import {
 import { usePreviousDistinct } from 'react-use';
 import { BehaviorSubject, Subject } from 'rxjs';
 
+import { useAiModels } from '../../../../../providers/ai-models/aiModelsContext';
 import { RuntimeContext } from '../../../../../providers/runtime/runtimeContext';
 import { useBoardLifecycleStore } from '../../../../../store/boardLifecycle';
 import { useAppSSE } from '../../hooks/useAppSSE';
@@ -62,6 +63,12 @@ export type UseAppDetailRuntimeLogic = (
   swapRunningAppDialogLogic: SwapRunningAppDialogLogic;
   multipleConsolePanelLogic: MultipleConsolePanelLogic;
   runtimeActionsLogic: RuntimeActionsLogic;
+  aiModelRequiredDialog: {
+    open: boolean;
+    brickId?: string;
+    modelId?: string;
+    close: () => void;
+  };
 };
 
 export const useAppDetailRuntimeLogic: UseAppDetailRuntimeLogic = function (
@@ -115,10 +122,27 @@ export const useAppDetailRuntimeLogic: UseAppDetailRuntimeLogic = function (
       addConsoleSource,
       resetConsoleSources,
     },
+    aiModelRequired,
   } = useContext(RuntimeContext);
+
+  const { getInstalledModel } = useAiModels();
 
   const runApp = useCallback((): void => {
     if (!app) return;
+
+    const brickNeedingModel = appBricks?.find((brick) =>
+      brick.model && app?.example
+        ? !(getInstalledModel(brick.model)?.status == 'installed')
+        : !!brick.require_model && !brick.model,
+    );
+    if (brickNeedingModel?.id) {
+      aiModelRequired.open({
+        brickId: brickNeedingModel.id,
+        modelId: brickNeedingModel.model,
+      });
+      return;
+    }
+
     if (
       appBricks?.some((brick) =>
         brick.config_variables?.some((v) => v.required && !v.value),
@@ -129,7 +153,7 @@ export const useAppDetailRuntimeLogic: UseAppDetailRuntimeLogic = function (
       runAction(app, setOpen);
       setActivePanel('console');
     }
-  }, [app, appBricks, runAction]);
+  }, [app, appBricks, aiModelRequired, getInstalledModel, runAction]);
 
   const setAsDefaultApp = useCallback(
     async (isSelected: boolean): Promise<void> => {
@@ -364,7 +388,7 @@ export const useAppDetailRuntimeLogic: UseAppDetailRuntimeLogic = function (
   );
 
   const serialMonitorLogic: SerialMonitorLogic = useCallback(
-    (logSource$: BehaviorSubject<ConsoleLogValue>) => {
+    <T = ConsoleLogValue>(logSource$?: BehaviorSubject<T> | Subject<T>) => {
       const useContentUpdate: ContentUpdateLogic = (
         receiveContentUpdate: (
           content: string,
@@ -377,12 +401,12 @@ export const useAppDetailRuntimeLogic: UseAppDetailRuntimeLogic = function (
       ): void => {
         useEffect(() => {
           const s = logSource$?.subscribe({
-            next(message: ConsoleLogValue) {
+            next(message: T) {
               receiveContentUpdate(
-                message.value,
-                message?.meta?.isSentByUser ?? false,
-                message?.meta?.className,
-                message?.meta?.isGlobalStyle,
+                (message as ConsoleLogValue).value,
+                (message as ConsoleLogValue)?.meta?.isSentByUser ?? false,
+                (message as ConsoleLogValue)?.meta?.className,
+                (message as ConsoleLogValue)?.meta?.isGlobalStyle,
               );
             },
             error(e: Error) {
@@ -414,12 +438,12 @@ export const useAppDetailRuntimeLogic: UseAppDetailRuntimeLogic = function (
         },
         status: SerialMonitorStatus.Active,
         disabled: false,
-        onMessageSend: (message: string) => {
+        onMessageSend: (message: string): void => {
           sendSerialMonitorLogsMessage(message);
           logSource$?.next({
             value: message.replace(/[\r\n]*$/, '') + LINE_SEPARATOR,
             meta: { id: 'local', isSentByUser: true },
-          });
+          } as T);
         },
       };
     },
@@ -529,5 +553,11 @@ export const useAppDetailRuntimeLogic: UseAppDetailRuntimeLogic = function (
     swapRunningAppDialogLogic,
     multipleConsolePanelLogic,
     runtimeActionsLogic,
+    aiModelRequiredDialog: {
+      open: aiModelRequired.state.open,
+      brickId: aiModelRequired.state.brickId,
+      modelId: aiModelRequired.state.modelId,
+      close: aiModelRequired.close,
+    },
   };
 };

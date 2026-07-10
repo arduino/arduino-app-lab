@@ -23,6 +23,9 @@ export const codeBlockSetup: Extension = [
       backgroundColor: '#FFCC00',
       opacity: '0.4',
     },
+    '.cm-content': {
+      fontSize: '12px',
+    },
   }),
   EditorView.editable.of(false),
   EditorState.readOnly.of(true),

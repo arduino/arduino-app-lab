@@ -22,6 +22,11 @@ export interface paths {
      * @description Get the list of brick instances for a specific app.
      */
     get: operations['getAppBrickInstances'];
+    /**
+     * Create a new local brick for an app
+     * @description Create a new local brick for an app.
+     */
+    post: operations['createAppLocalBrick'];
   };
   [path: `/v1/apps/${string}/bricks/${string}`]: {
     /**
@@ -44,6 +49,13 @@ export interface paths {
      * @description Update a brick instance for an app. It update/add only the provided fields.
      */
     patch: operations['updateAppBrickInstance'];
+  };
+  [path: `/v1/apps/${string}/bricks/${string}/rename`]: {
+    /**
+     * Rename a local brick
+     * @description Rename a local brick. Changes the brick's ID and folder name derived from the new name. Only local bricks can be renamed.
+     */
+    post: operations['renameAppLocalBrick'];
   };
   [path: `/v1/apps/${string}/exposed-ports`]: {
     /**
@@ -202,12 +214,12 @@ export interface paths {
      */
     delete: operations['deleteAIModel'];
   };
-  '/v1/models/edge-impulse': {
+  [path: `/v1/models/ei/projects/${number}`]: {
     /**
      * Download and install a custom Edge Impulse AI model
      * @description Download and install a custom Edge Impulse AI model using the provided project API key.
      */
-    post: operations['installEIModel'];
+    put: operations['installEIModel'];
   };
   '/v1/properties': {
     /**
@@ -275,6 +287,7 @@ export type webhooks = Record<string, never>;
 export interface components {
   schemas: {
     AIModel: {
+      /** @description Deprecated: This field is kept for backward compatibility. */
       description?: string;
       id?: string;
       name?: string;
@@ -282,14 +295,15 @@ export interface components {
     AIModelItem: {
       brick_ids?: string[] | null;
       description?: string;
-      disk_usage?: number | null;
       id?: string;
+      status?: string;
       is_builtin?: boolean;
       metadata?: {
         [key: string]: string;
       };
       name?: string;
       runner?: string;
+      size?: number | null;
     };
     AIModelsListResult: {
       models?: components['schemas']['AIModelItem'][] | null;
@@ -328,6 +342,15 @@ export interface components {
       apps?: components['schemas']['AppInfo'][] | null;
       /** @description List of applications that are broken and couldn't be parsed */
       broken_apps?: components['schemas']['BrokenAppInfo'][];
+    };
+    AppLocalBrickCreateRequest: {
+      name?: string;
+    };
+    AppLocalBrickCreateResponse: {
+      id?: string;
+    };
+    AppLocalBrickRenameRequest: {
+      name?: string;
     };
     AppPortResponse: {
       /**
@@ -373,16 +396,14 @@ export interface components {
       };
     };
     BrickInstance: {
-      api_docs_path?: string;
       author?: string;
       category?: string;
-      code_examples?: components['schemas']['CodeExample'][] | null;
       compatible_models?: components['schemas']['AIModel'][] | null;
       config_variables?: components['schemas']['BrickConfigVariable'][];
       id?: string;
-      readme?: string;
       model?: string;
       name?: string;
+      readme?: string;
       require_model?: boolean;
       status?: string;
       /** @description Deprecated: use config_variables instead. This field is kept for backward compatibility. */
@@ -433,6 +454,7 @@ export interface components {
     };
     ConfigResponse: {
       directories?: components['schemas']['ConfigDirectories'];
+      python_runner?: string;
     };
     CreateAppRequest: {
       /** @description application description */
@@ -506,6 +528,9 @@ export interface components {
     LibraryListResponse: {
       libraries?: components['schemas']['Library'][] | null;
       pagination?: components['schemas']['Pagination'];
+    };
+    LocalBrickRenameResult: {
+      id?: string;
     };
     /**
      * @description Package type
@@ -583,6 +608,18 @@ export interface components {
     };
     /** @description Conflict */
     Conflict: {
+      content: {
+        'application/json': components['schemas']['ErrorResponse'];
+      };
+    };
+    /** @description Forbidden */
+    Forbidden: {
+      content: {
+        'application/json': components['schemas']['ErrorResponse'];
+      };
+    };
+    /** @description Insufficient Storage */
+    InsufficientStorage: {
       content: {
         'application/json': components['schemas']['ErrorResponse'];
       };
@@ -703,6 +740,35 @@ export interface operations {
     };
   };
   /**
+   * Create a new local brick for an app
+   * @description Create a new local brick for an app.
+   */
+  createAppLocalBrick: {
+    parameters: {
+      path: {
+        /** @description application identifier. */
+        appID: string;
+      };
+    };
+    requestBody?: {
+      content: {
+        'application/json': components['schemas']['AppLocalBrickCreateRequest'];
+      };
+    };
+    responses: {
+      /** @description Successful response */
+      201: {
+        content: {
+          'application/json': components['schemas']['AppLocalBrickCreateResponse'];
+        };
+      };
+      400: components['responses']['BadRequest'];
+      409: components['responses']['Conflict'];
+      412: components['responses']['PreconditionFailed'];
+      500: components['responses']['InternalServerError'];
+    };
+  };
+  /**
    * Get a specific brick instance by ID
    * @description Get a specific brick instance for an app by its ID.
    */
@@ -802,6 +868,38 @@ export interface operations {
         content: never;
       };
       400: components['responses']['BadRequest'];
+      412: components['responses']['PreconditionFailed'];
+      500: components['responses']['InternalServerError'];
+    };
+  };
+  /**
+   * Rename a local brick
+   * @description Rename a local brick. Changes the brick's ID and folder name derived from the new name. Only local bricks can be renamed.
+   */
+  renameAppLocalBrick: {
+    parameters: {
+      path: {
+        /** @description application identifier. */
+        appID: string;
+        /** @description brick identifier. */
+        brickID: string;
+      };
+    };
+    requestBody?: {
+      content: {
+        'application/json': components['schemas']['AppLocalBrickRenameRequest'];
+      };
+    };
+    responses: {
+      /** @description Successful response */
+      200: {
+        content: {
+          'application/json': components['schemas']['LocalBrickRenameResult'];
+        };
+      };
+      400: components['responses']['BadRequest'];
+      404: components['responses']['NotFound'];
+      409: components['responses']['Conflict'];
       412: components['responses']['PreconditionFailed'];
       500: components['responses']['InternalServerError'];
     };
@@ -1092,6 +1190,10 @@ export interface operations {
    */
   startApp: {
     parameters: {
+      query?: {
+        /** @description Return a verbose output. Default is false. */
+        verbose?: boolean;
+      };
       path: {
         /** @description application identifier. */
         id: string;
@@ -1393,6 +1495,16 @@ export interface operations {
    * @description Download and install a custom Edge Impulse AI model using the provided project API key.
    */
   installEIModel: {
+    parameters: {
+      header: {
+        /** @description Edge Impulse project API key */
+        'x-api-key': string;
+      };
+      path: {
+        /** @description Edge Impulse project ID */
+        projectID: number;
+      };
+    };
     requestBody?: {
       content: {
         'application/json': {
@@ -1401,16 +1513,6 @@ export interface operations {
            * @example 1
            */
           impulse_id: number;
-          /**
-           * @description Edge Impulse project API key
-           * @example your_edge_impulse_api_token
-           */
-          prj_api_key: string;
-          /**
-           * @description Edge Impulse project ID
-           * @example 123456
-           */
-          project_id: number;
         };
       };
     };
@@ -1421,8 +1523,11 @@ export interface operations {
           'application/json': components['schemas']['AIModelItem'];
         };
       };
+      400: components['responses']['BadRequest'];
       401: components['responses']['Unauthorized'];
+      403: components['responses']['Forbidden'];
       500: components['responses']['InternalServerError'];
+      507: components['responses']['InsufficientStorage'];
     };
   };
   /**

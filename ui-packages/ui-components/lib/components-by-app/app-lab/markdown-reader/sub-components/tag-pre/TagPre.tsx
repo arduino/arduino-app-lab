@@ -4,6 +4,7 @@ import { ElementContent } from 'react-markdown/lib/ast-to-react';
 import { ReactMarkdownProps } from 'react-markdown/lib/complex-types';
 
 import { useI18n } from '../../../../../i18n/useI18n';
+import { useTooltip } from '../../../../../tooltip';
 import { XXSmall } from '../../../../../typography';
 import styles from '../../markdown-reader.module.scss';
 import { messages } from '../../messages';
@@ -17,6 +18,19 @@ export const MarkdownReaderTagPre = (
   }: ReactMarkdownProps): ReactElement => {
     const [copied, setCopied] = useState(false);
     const { formatMessage } = useI18n();
+    const {
+      props: {
+        onPress: onTooltipPress,
+        ref: tooltipRef,
+        'aria-describedby': ariaDescribedby,
+      },
+      renderTooltip,
+    } = useTooltip({
+      content: 'Copied!',
+      timeout: 2000,
+      triggerType: 'click',
+      tooltipType: 'title',
+    });
 
     const findText = (nodes: ElementContent[]): string => {
       for (const node of nodes) {
@@ -34,9 +48,10 @@ export const MarkdownReaderTagPre = (
         await navigator.clipboard.writeText(code);
         setCopied(true);
         onCopyCode?.();
+        onTooltipPress?.();
         setTimeout(() => {
           setCopied(false);
-        }, 3000);
+        }, 2000);
       } catch (error) {
         console.error('Failed to copy to clipboard:', error);
       }
@@ -48,13 +63,17 @@ export const MarkdownReaderTagPre = (
           <XXSmall className={styles['copy-label']}>
             {formatMessage(messages.copyLabel)}
           </XXSmall>
-          {copied ? (
-            <Checkmark />
-          ) : (
-            <button className={styles['copy-button']} onClick={handleCopy}>
-              <FileCopy />
+          <div className={styles['copy-button-wrapper']} ref={tooltipRef}>
+            <button
+              className={styles['copy-button']}
+              onClick={handleCopy}
+              disabled={copied}
+              aria-describedby={ariaDescribedby}
+            >
+              {copied ? <Checkmark /> : <FileCopy />}
             </button>
-          )}
+            {renderTooltip(styles['copy-tooltip'])}
+          </div>
         </div>
         <div>{children}</div>
       </pre>

@@ -47,11 +47,22 @@ export type ModalRootProps = ComponentProps<typeof Dialog.Root> & {
    * @default true
    */
   closeable?: boolean;
+  /**
+   * If true, prevents auto-focusing the first focusable element when the modal opens.
+   * @default false
+   */
+  disableAutoFocus?: boolean;
 };
 
 export const BaseModal = forwardRef<HTMLDivElement, ModalRootProps>(
   function BaseModal(props, ref) {
-    const { trigger, contentProps, closeable = true, ...rest } = props;
+    const {
+      trigger,
+      contentProps,
+      closeable = true,
+      disableAutoFocus = false,
+      ...rest
+    } = props;
     const {
       className: contentClassName,
       // Handle tabIndex manually
@@ -70,6 +81,9 @@ export const BaseModal = forwardRef<HTMLDivElement, ModalRootProps>(
               ref={ref}
               tabIndex={tabIndex}
               className={clsx(styles.Modal, contentClassName)}
+              onOpenAutoFocus={
+                disableAutoFocus ? (e) => e.preventDefault() : undefined
+              }
               {...(!closeable
                 ? {
                     onEscapeKeyDown: (e): void => e.preventDefault(),

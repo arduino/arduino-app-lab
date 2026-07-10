@@ -127,4 +127,10 @@
 
 .settings-section-uptodate-badge {
   width: fit-content;
+
+  background-color: var(--feedback-success-subtle, #213d3c) !important;
+
+  svg {
+    color: var(--text-accent-strong, #7fcbcd) !important;
+  }
 }

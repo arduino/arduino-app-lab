@@ -26,7 +26,6 @@ const Setup: React.FC<SetupProps> = (props: SetupProps) => {
     selectedBoard,
     selectingBoard,
     selectBoard,
-    autoSelectBoard,
     isAutoSelectingBoard,
     isBoard,
     showLoader,
@@ -48,6 +47,8 @@ const Setup: React.FC<SetupProps> = (props: SetupProps) => {
   } = setupLogic();
 
   const { formatMessage } = useI18n();
+
+  const enabledSetupItems = setupItems.filter((item) => item.enabled);
 
   return showLoader ? (
     <ArduinoLoader />
@@ -76,21 +77,19 @@ const Setup: React.FC<SetupProps> = (props: SetupProps) => {
             {formatMessage(welcomeMessages.title)}
           </Large>
           <ol className={styles['items-list']}>
-            {setupItems.map((item) =>
-              item.enabled ? (
-                <li
-                  key={item.id}
-                  className={clsx(styles['item'], {
-                    [styles['selected']]: item.id === currentStep,
-                    [styles['completed']]: currentStep && item.id < currentStep,
-                  })}
-                >
-                  <XSmall bold={item.id === currentStep}>
-                    {formatMessage(setupMessages[item.id])}
-                  </XSmall>
-                </li>
-              ) : null,
-            )}
+            {enabledSetupItems.map((item) => (
+              <li
+                key={item.id}
+                className={clsx(styles['item'], {
+                  [styles['selected']]: item.id === currentStep,
+                  [styles['completed']]: currentStep && item.id < currentStep,
+                })}
+              >
+                <XSmall bold={item.id === currentStep}>
+                  {formatMessage(setupMessages[item.id])}
+                </XSmall>
+              </li>
+            ))}
           </ol>
         </div>
         <div className={styles['board-section']}>
@@ -99,7 +98,7 @@ const Setup: React.FC<SetupProps> = (props: SetupProps) => {
             isBoard={isBoard}
             boards={boards}
             selectedBoard={selectedBoard}
-            autoSelectBoard={autoSelectBoard}
+            selectBoard={selectBoard}
             onOpenTerminal={onOpenTerminal}
             terminalError={terminalError}
           />
@@ -109,7 +108,7 @@ const Setup: React.FC<SetupProps> = (props: SetupProps) => {
         <SectionContainer
           key={currentStep}
           currentStep={currentStep as SetupItemId}
-          itemsLength={setupItems.length}
+          itemsLength={enabledSetupItems.length}
           skippable={stepIsSkippable}
           onBack={onBackStep}
           unlockAutoFlow={unlockAutoFlow}

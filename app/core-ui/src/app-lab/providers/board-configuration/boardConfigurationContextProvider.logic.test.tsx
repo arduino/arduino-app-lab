@@ -10,13 +10,27 @@ vi.mock('../../store/boardLifecycle', async () => {
     typeof import('../../store/boardLifecycle')
   >('../../store/boardLifecycle');
 
+  const mockState = {
+    boardIsReachable: true,
+    selectedConnectedBoard: { name: 'Test Board', type: 'uno' },
+  };
+
+  const useBoardLifecycleStoreMock = Object.assign(
+    vi.fn((selector) => {
+      if (typeof selector === 'function') {
+        return selector(mockState);
+      }
+      return mockState;
+    }),
+    {
+      getState: vi.fn(() => mockState),
+      setState: vi.fn(),
+    },
+  );
+
   return {
     ...actual,
-    useBoardLifecycleStore: vi.fn((selector) =>
-      selector({
-        boardIsReachable: true,
-      }),
-    ),
+    useBoardLifecycleStore: useBoardLifecycleStoreMock,
   };
 });
 

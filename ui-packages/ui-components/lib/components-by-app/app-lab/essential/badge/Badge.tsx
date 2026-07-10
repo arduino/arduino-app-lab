@@ -32,12 +32,14 @@ export const Badge: React.FC<BadgeProps> = ({
         // Styles
         [styles['solid']]: style === BadgeStyle.Solid,
         [styles['light']]: style === BadgeStyle.Light,
+        [styles['ghost']]: style === BadgeStyle.Ghost,
         // Variants
         [styles['neutral']]: variant === BadgeVariant.Neutral,
         [styles['positive']]: variant === BadgeVariant.Positive,
         [styles['warning']]: variant === BadgeVariant.Warning,
         [styles['error']]: variant === BadgeVariant.Error,
         [styles['accent']]: variant === BadgeVariant.Accent,
+        [styles['alert']]: variant === BadgeVariant.Alert,
       })}
     >
       {icon}

@@ -1,13 +1,16 @@
 @use "../../public/shared.module.scss";
 
 .has-header {
-    top: 180px !important;
+    // Reserved for layouts that need an extra offset; currently a no-op
+    // because the panel is anchored to the editor itself.
 }
 
 .container {
-    position: fixed;
-    top: 130px;
-    right: 64px;
+    // Anchored to the (now-lifted) `.cm-panels-bottom` host so each editor
+    // pane gets its own top-right overlay panel.
+    position: absolute;
+    top: 8px;
+    right: 16px;
     display: flex;
     gap: 5px;
     z-index: shared.$zIndex1;

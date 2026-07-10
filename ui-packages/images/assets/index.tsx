@@ -1,4 +1,3 @@
-import TextLink from '../text-link.svg?react';
 import AccountArduinoCloud from './account-arduino-cloud.svg?react';
 import AccountConnectedBoards from './account-connected-boards.svg?react';
 import AccountCustomAiModels from './account-custom-ai-models.svg?react';
@@ -21,26 +20,18 @@ import AppLabBrickStorage from './app-lab-brick-storage.svg?react';
 import AppLabBrickText from './app-lab-brick-text.svg?react';
 import AppLabBrickUi from './app-lab-brick-ui.svg?react';
 import AppLabBrickVision from './app-lab-brick-vision.svg?react';
-import AppLabCloudIot from './app-lab-cloud-iot.svg?react';
-import AppLabFingerprint from './app-lab-fingerprint.svg?react';
 import AppLabInfo from './app-lab-info.svg?react';
-import AppLabStatistics from './app-lab-statistics.svg?react';
 import AppLabToggleOff from './app-lab-toggle-off.svg?react';
 import AppLabToggleOn from './app-lab-toggle-on.svg?react';
-import AppLabView from './app-lab-view.svg?react';
-import AppLabWaveForm from './app-lab-waveform.svg?react';
 import AppSettings from './app-settings.svg?react';
 import Appearance from './appearance.svg?react';
 import Apply from './apply.svg?react';
 import ApplyFix from './apply-fix.svg?react';
-import Archive from './archive.svg?react';
 import Arduino from './arduino.svg?react';
-import ArduinoAssistant from './arduino-assistant.svg?react';
 import ArduinoLoader from './arduino-loader.svg?react';
 import ArduinoLogo from './arduino-logo.svg?react';
 import ArduinoLoop from './arduino-loop.svg?react';
 import ArrowDown from './arrow-down.svg?react';
-import ArrowRight from './arrow-right.svg?react';
 import ArrowRoundedUp from './arrow-rounded-up.svg?react';
 import ArrowSquaredLeft from './arrow-squared-left.svg?react';
 import ArrowSquaredUp from './arrow-squared-up.svg?react';
@@ -67,7 +58,6 @@ import ChevronUp from './chevron-up.svg?react';
 import Clear from './clear.svg?react';
 import Close from './close.svg?react';
 import CloseX from './close-x.svg?react';
-import CloudEditorTitle from './cloud-editor-title.svg?react';
 import CloudPortIcon from './cloud-port-icon.svg?react';
 import CloudPortOff from './cloud-port-off.svg?react';
 import CodeIcon from './code-icon.svg?react';
@@ -77,7 +67,6 @@ import CreateNewModel from './create-new-model.svg?react';
 import DarkTheme from './dark-theme.svg?react';
 import Decrement from './decrement.svg?react';
 import Device from './device.svg?react';
-import DeviceAssociationConnect from './device-association-connect.svg?react';
 import Dots from './dots.svg?react';
 import Download from './download.svg?react';
 import Duplicate from './duplicate.svg?react';
@@ -87,26 +76,18 @@ import EraserIcon from './eraser-icon.svg?react';
 import Exchange from './exchange.svg?react';
 import Exit from './exit.svg?react';
 import ExitButton from './exit-button.svg?react';
-import ExplainError from './explain-error.svg?react';
 import FeedbackThumbsDown from './feedback-thumbs-down.svg?react';
 import FeedbackThumbsUp from './feedback-thumbs-up.svg?react';
 import FileAdd from './file-add.svg?react';
 import FileCopy from './file-copy.svg?react';
-import FileFolder from './file-folder.svg?react';
 import FileFolderOpen from './file-folder-open.svg?react';
 import FileGeneric from './file-generic.svg?react';
-import FileHeader from './file-header.svg?react';
-import FileImage from './file-image.svg?react';
 import FileIno from './file-ino.svg?react';
-import FilePython from './file-python.svg?react';
-import FileText from './file-text.svg?react';
 import FileTypeHeader from './file-type-header.svg?react';
 import FileTypeImage from './file-type-image.svg?react';
 import FileTypeIno from './file-type-ino.svg?react';
 import FileTypeSecrets from './file-type-secrets.svg?react';
 import FileTypeText from './file-type-text.svg?react';
-import FileYaml from './file-yaml.svg?react';
-import FixError from './fix-error.svg?react';
 import Folder from './folder.svg?react';
 import FolderAdd from './folder-add.svg?react';
 import FullScreenExpand from './fullscreen-expand-arrows.svg?react';
@@ -122,11 +103,8 @@ import InfoIconI from './info-icon-i.svg?react';
 import InfoIconOutline from './info-icon-outline.svg?react';
 import InfoSetup from './info-setup.svg?react';
 import Learn from './learn.svg?react';
-import LibraryIcon from './library-icon.svg?react';
 import LightIcon from './light-icon.svg?react';
 import LightTheme from './light-theme.svg?react';
-import LinkIcon from './link.svg?react';
-import LinkIconDiagonal from './link-icon-diagonal.svg?react';
 import Loader from './loader.svg?react';
 import Login from './login.svg?react';
 import LoginIllustration from './login-illustration.svg?react';
@@ -142,7 +120,6 @@ import MyApps from './my-apps.svg?react';
 import NavigationArrow from './navigation-arrow.svg?react';
 import NavigationGroup from './navigation-group.svg?react';
 import NoResults from './no-results.svg?react';
-import NotFoundIconX from './not-found-icon-x.svg?react';
 import NotFoundPageImage from './not-found-page-image.svg?react';
 import NotificationSuccessCheck from './notification-success-check.svg?react';
 import OnboardingBack from './onboarding-back.svg?react';
@@ -150,10 +127,8 @@ import OnboardingNext from './onboarding-next.svg?react';
 import OpenInNewTab from './open-in-new-tab.svg?react';
 import OperationListOutline from './operation-list-outline.svg?react';
 import OperationSort from './operation-sort.svg?react';
-import Palette from './palette.svg?react';
 import Pause from './pause.svg?react';
 import Pencil from './pencil.svg?react';
-import PlayOutline from './play-outline.svg?react';
 import PluginCables from './plugin-cables.svg?react';
 import Plus from './plus.svg?react';
 import Power from './power.svg?react';
@@ -172,13 +147,10 @@ import SelectArrow from './select-arrow.svg?react';
 import SelectedDeviceTick from './selected-device-tick.svg?react';
 import Settings from './settings.svg?react';
 import ShareSketchIcon from './share-sketch-icon.svg?react';
-import SidePanelTrigger from './side-panel-trigger.svg?react';
 import Sketch from './sketch.svg?react';
 import SketchIcon from './sketch-icon.svg?react';
 import Sort from './sort.svg?react';
-import Sources from './sources.svg?react';
 import Sparkle from './sparkle.svg?react';
-import Speaker from './speaker.svg?react';
 import Spinner from './spinner.svg?react';
 import Stats from './stats.svg?react';
 import StatusError from './status-error.svg?react';
@@ -188,6 +160,7 @@ import SubtractMinus from './subtract-minus.svg?react';
 import TechReference from './tech-reference.svg?react';
 import Terminal from './terminal.svg?react';
 import Text from './text.svg?react';
+import TextLink from './text-link.svg?react';
 import ThreeDots from './three-dots.svg?react';
 import ToggleOff from './toggle-off.svg?react';
 import ToggleOn from './toggle-on.svg?react';
@@ -234,26 +207,18 @@ const Icons = {
   AppLabBrickText,
   AppLabBrickUi,
   AppLabBrickVision,
-  AppLabCloudIot,
-  AppLabFingerprint,
   AppLabInfo,
-  AppLabStatistics,
   AppLabToggleOff,
   AppLabToggleOn,
-  AppLabView,
-  AppLabWaveForm,
   Apply,
   ApplyFix,
   AppSettings,
-  Archive,
-  ArduinoAssistant,
   ArduinoLoader,
   ArduinoLogo,
   Arduino,
   ArduinoLoop,
   ArduinoRoundLogo,
   ArrowDown,
-  ArrowRight,
   ArrowRoundedUp,
   ArrowSquaredLeft,
   ArrowSquaredUp,
@@ -280,7 +245,6 @@ const Icons = {
   Clear,
   Close,
   CloseX,
-  CloudEditorTitle,
   CloudPortIcon,
   CloudPortOff,
   CodeIcon,
@@ -290,7 +254,6 @@ const Icons = {
   DarkTheme,
   Decrement,
   Device,
-  DeviceAssociationConnect,
   Dots,
   Download,
   Duplicate,
@@ -300,26 +263,18 @@ const Icons = {
   Exchange,
   Exit,
   ExitButton,
-  ExplainError,
   FeedbackThumbsDown,
   FeedbackThumbsUp,
   FileAdd,
   FileIno,
-  FileYaml,
   FileCopy,
-  FileFolder,
   FileFolderOpen,
   FileGeneric,
-  FileHeader,
-  FileImage,
-  FilePython,
-  FileText,
   FileTypeHeader,
   FileTypeImage,
   FileTypeIno,
   FileTypeSecrets,
   FileTypeText,
-  FixError,
   Folder,
   FolderAdd,
   FullScreenExpand,
@@ -332,11 +287,8 @@ const Icons = {
   InfoSetup,
   InfoIconOutline,
   Learn,
-  LibraryIcon,
   LightIcon,
   LightTheme,
-  LinkIcon,
-  LinkIconDiagonal,
   Loader,
   Login,
   LoginIllustration,
@@ -352,7 +304,6 @@ const Icons = {
   NavigationArrow,
   NavigationGroup,
   NoResults,
-  NotFoundIconX,
   NotFoundPageImage,
   NotificationSuccessCheck,
   OnboardingBack,
@@ -360,10 +311,8 @@ const Icons = {
   OpenInNewTab,
   OperationListOutline,
   OperationSort,
-  Palette,
   Pause,
   Pencil,
-  PlayOutline,
   PluginCables,
   Plus,
   Power,
@@ -381,12 +330,9 @@ const Icons = {
   SelectedDeviceTick,
   Settings,
   ShareSketchIcon,
-  SidePanelTrigger,
   Sketch,
   SketchIcon,
-  Sources,
   Sparkle,
-  Speaker,
   Spinner,
   Stats,
   StatusError,

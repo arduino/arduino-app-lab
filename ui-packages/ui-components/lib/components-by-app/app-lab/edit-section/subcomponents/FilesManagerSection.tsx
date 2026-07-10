@@ -84,6 +84,11 @@ export const FilesManagerSection = ({
     duplicateFileDialogLogic,
     importFileDialogLogic,
     openImportFileDialog,
+    onMoveBlocked,
+    onFileDragStart,
+    onBrickDragStart,
+    onBrickDragEnd,
+    onDragOverFolderChange,
   } = logic();
   const { openFiles } = appLabEditorPanelLogic();
 
@@ -289,7 +294,12 @@ export const FilesManagerSection = ({
                           key={brick.id}
                           brick={brick}
                           selected={brick.id === selectedFile?.fileId}
-                          onClick={(): void => setSelectedFile(brick.id ?? '')}
+                          onClick={(): void =>
+                            setSelectedFile(brick.id ?? '', true)
+                          }
+                          onDoubleClick={(): void =>
+                            setSelectedFile(brick.id ?? '')
+                          }
                           onDelete={
                             section === 'my-apps'
                               ? (): void => openDeleteAppBrickDialog(brick)
@@ -305,6 +315,8 @@ export const FilesManagerSection = ({
                               ? (): void => openAddAppBrickDialog()
                               : undefined
                           }
+                          onDragStart={onBrickDragStart}
+                          onDragEnd={onBrickDragEnd}
                           missingConfig={brick.status === 'not_found'}
                         />
                       ))}
@@ -412,6 +424,9 @@ export const FilesManagerSection = ({
                       duplicateFileDialogLogic={duplicateFileDialogLogic}
                       onAddBrick={openAddAppBrickDialog}
                       onAddSketchLibrary={openAddSketchLibraryDialog}
+                      onFileDragStart={onFileDragStart}
+                      onMoveBlocked={onMoveBlocked}
+                      onDragOverFolderChange={onDragOverFolderChange}
                     />
                   </div>
                 </div>

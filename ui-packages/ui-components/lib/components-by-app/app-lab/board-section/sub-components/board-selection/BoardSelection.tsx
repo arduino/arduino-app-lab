@@ -7,6 +7,7 @@ import {
 import clsx from 'clsx';
 import { Key, useCallback, useState } from 'react';
 
+import { LinuxCredentialsDialog } from '../../../../../dialogs';
 import { DropdownMenuButton } from '../../../../../essential/dropdown-menu';
 import { useI18n } from '../../../../../i18n/useI18n';
 import { useTooltip } from '../../../../../tooltip';
@@ -20,7 +21,8 @@ const BoardSelection: React.FC<BoardSelectionProps> = ({
   boards,
   selectedBoard,
   isBoard,
-  autoSelectBoard,
+  selectBoard,
+  linuxCredentialsDialog,
 }: BoardSelectionProps) => {
   const { label, state = 'inactive', icon } = boardItem ?? {};
 
@@ -46,7 +48,7 @@ const BoardSelection: React.FC<BoardSelectionProps> = ({
   });
 
   const isSelectedBoard = useCallback(
-    (board: Board) => board.id === selectedBoard?.id,
+    (board: Board) => board.serial === selectedBoard?.serial,
     [selectedBoard],
   );
 
@@ -66,9 +68,9 @@ const BoardSelection: React.FC<BoardSelectionProps> = ({
       if (!board || isSelectedBoard(board)) {
         return;
       }
-      autoSelectBoard(board.serial);
+      selectBoard(board);
     },
-    [boards, isSelectedBoard, autoSelectBoard],
+    [boards, isSelectedBoard, selectBoard],
   );
 
   return (
@@ -150,6 +152,9 @@ const BoardSelection: React.FC<BoardSelectionProps> = ({
             ),
           )}
         </div>
+      )}
+      {linuxCredentialsDialog && (
+        <LinuxCredentialsDialog logic={linuxCredentialsDialog} />
       )}
     </div>
   );

@@ -1,3 +1,4 @@
+import { LinuxCredentialsDialogLogic } from '../../../dialogs';
 import { Board } from '../setup';
 
 export type BoardItem =
@@ -17,7 +18,8 @@ export interface BoardSectionProps {
   isBoard?: boolean;
   boards: Board[];
   selectedBoard: Board | undefined;
-  autoSelectBoard: (boardId: string) => void;
+  selectBoard: (board: Board) => Promise<void>;
   onOpenTerminal: () => Promise<void>;
   terminalError: string | null;
+  linuxCredentialsDialog?: LinuxCredentialsDialogLogic;
 }

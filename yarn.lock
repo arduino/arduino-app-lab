@@ -255,14 +255,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@auth0/auth0-spa-js@npm:2.11.0":
-  version: 2.11.0
-  resolution: "@auth0/auth0-spa-js@npm:2.11.0"
-  dependencies:
-    browser-tabs-lock: ^1.2.15
-    dpop: ^2.1.1
-    es-cookie: ~1.3.2
-  checksum: 606e47a3b75a345f80a3e5de44481a5f2f5698892952c358c26b73bf69dc6e080b6b6cbcee01419565b3840c6da64ec3217d346351bb2e07dfe2af150a664785
+"@auth0/auth0-spa-js@npm:^2.1.3":
+  version: 2.1.3
+  resolution: "@auth0/auth0-spa-js@npm:2.1.3"
+  checksum: aff5f3ab8a15ad63e9956e638ea13955dea22268b0d46d93561ae7accce0147198fc01203cbfe65637d709836c7ecf6a7efc5d38742dd0e251eb1387849efff5
   languageName: node
   linkType: hard
 
@@ -1860,7 +1856,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@bcmi-labs/app-lab-desktop@workspace:standalone-apps/app-lab-desktop/frontend"
   dependencies:
-    "@bcmi-labs/art-auth": "npm:@bcmi-labs/auth@1.4.3"
+    "@bcmi-labs/art-auth": 1.0.4
     "@tanstack/react-location": 3.7.4
     "@tanstack/react-query": 4.12.0
     clsx: 1.2.1
@@ -1885,13 +1881,27 @@ __metadata:
     socket.io-client: 2.4.0
     typescript: 5.2.2
     ua-parser-js: 1.0.33
-    use-debounce: 8.0.4
     vite: 5.2.8
     wretch: 2.1.5
   languageName: unknown
   linkType: soft
 
-"@bcmi-labs/arduino-chromeos-uploader@npm:@bcmi-labs/arduino-chromeos-uploader@1.4.3, @bcmi-labs/arduino-chromeos-uploader@workspace:app/arduino-chromeos-uploader":
+"@bcmi-labs/arduino-chromeos-uploader@npm:1.2.12":
+  version: 1.2.12
+  resolution: "@bcmi-labs/arduino-chromeos-uploader@npm:1.2.12::__archiveUrl=https%3A%2F%2Fnpm.pkg.github.com%2Fdownload%2F%40bcmi-labs%2Farduino-chromeos-uploader%2F1.2.12%2F7dcaa5b8b2c26211333935053b7bf3c65c6c2d04"
+  dependencies:
+    async: ^2.6.4
+    awty: ^0.1.0
+    colors: ^1.4.0
+    inherits: ^2.0.4
+    intel-hex: ^0.1.2
+    stk500: "github:bcmi-labs/js-stk500v1#support-uno-wifi-rev2"
+    stk500-v2: ^1.0.4
+  checksum: 37b099261c384cf5ac9f7faa39c70c811a46af0b915c41764d358c6193679c2ade57aec30b268757bb4c6741c825a593dcb913ebb018668f9cc06c0a7de6bd14
+  languageName: node
+  linkType: hard
+
+"@bcmi-labs/arduino-chromeos-uploader@workspace:app/arduino-chromeos-uploader":
   version: 0.0.0-use.local
   resolution: "@bcmi-labs/arduino-chromeos-uploader@workspace:app/arduino-chromeos-uploader"
   languageName: unknown
@@ -1912,7 +1922,19 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@bcmi-labs/art-auth@npm:@bcmi-labs/auth@1.4.3, @bcmi-labs/auth@workspace:app/auth":
+"@bcmi-labs/art-auth@npm:1.0.4":
+  version: 1.0.4
+  resolution: "@bcmi-labs/art-auth@npm:1.0.4::__archiveUrl=https%3A%2F%2Fnpm.pkg.github.com%2Fdownload%2F%40bcmi-labs%2Fart-auth%2F1.0.4%2Fb2bdf19f9c4624352a569cd88202a18b4e49016f"
+  dependencies:
+    "@auth0/auth0-spa-js": ^2.1.3
+    jwt-decode: ^4.0.0
+  peerDependencies:
+    react: ^18.2.0
+  checksum: 19bed4311a08aab556473e95cb631f9ef3d0072d95df56ad7900473decf22af9aced85020cd1eb0bac2055fd8812c1104f961290723cd7d98f36fe99ef14e87f
+  languageName: node
+  linkType: hard
+
+"@bcmi-labs/auth@workspace:app/auth":
   version: 0.0.0-use.local
   resolution: "@bcmi-labs/auth@workspace:app/auth"
   languageName: unknown
@@ -1938,13 +1960,13 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@bcmi-labs/cloud-editor-core-ui@workspace:app/core-ui, @cloud-editor-mono/core-ui@npm:@bcmi-labs/cloud-editor-core-ui@^1.4.3":
+"@bcmi-labs/cloud-editor-component@workspace:consumable-app-components/cloud-editor-component, @cloud-editor-mono/cloud-editor-component@npm:@bcmi-labs/cloud-editor-component@^1.4.3":
   version: 0.0.0-use.local
-  resolution: "@bcmi-labs/cloud-editor-core-ui@workspace:app/core-ui"
+  resolution: "@bcmi-labs/cloud-editor-component@workspace:consumable-app-components/cloud-editor-component"
   peerDependencies:
-    "@arduino/react-icons": ">= 0.1.1"
-    "@bcmi-labs/art-auth": "*"
-    "@bcmi-labs/cloud-sidebar": "*"
+    "@bcmi-labs/arduino-chromeos-uploader": 1.2.12
+    "@bcmi-labs/art-auth": ">= 1.0.4"
+    "@bcmi-labs/cloud-sidebar": ">= 2.1.13"
     "@codemirror/autocomplete": ">= 6.9.1"
     "@codemirror/commands": ">= 6.1.1"
     "@codemirror/lang-cpp": ">= 6.0.1"
@@ -1960,8 +1982,59 @@ __metadata:
     "@codemirror/state": ">= 6.1.2"
     "@codemirror/view": ">= 6.3.0"
     "@lezer/highlight": ">= 1.2.1"
-    "@tanstack/react-location": ">= 3.7.4"
-    "@tanstack/react-query": ">= 4.12.0"
+    "@tanstack/react-location": 3.7.4
+    "@tanstack/react-query": 4.12.0
+    algoliasearch: ">=4.20.0"
+    clsx: ">= 1.2.1"
+    dotenv: ">= 16.0.3"
+    file-saver: ">= 2.0.5"
+    html-react-parser: ">= 4.2.2"
+    idb-keyval: ">= 6.2.1"
+    jszip: ">= 3.10.1"
+    lodash: ">= 4.17.21"
+    object-hash: ">= 3.0.0"
+    react: ">= 18.2.0"
+    react-aria: ">= 3.20.0"
+    react-dom: ">= 18.2.0"
+    react-helmet-async: ">= 2.0.4"
+    react-modal: ">= 3.16.1"
+    react-split: ">= 2.0.14"
+    react-split-grid: ">= 1.0.4"
+    react-stately: ">= 3.20.0"
+    react-use: ">= 17.4.0"
+    react-virtualized: ">= 9.22.5"
+    rxjs: ">= 7.5.7"
+    semver: ">= 7.3.8"
+    socket.io-client: ">= 2.4.0"
+    ua-parser-js: ">= 1.0.33"
+    wretch: ">= 2.1.5"
+  languageName: unknown
+  linkType: soft
+
+"@bcmi-labs/cloud-editor-core-ui@workspace:app/core-ui, @cloud-editor-mono/core-ui@npm:@bcmi-labs/cloud-editor-core-ui@^1.4.3":
+  version: 0.0.0-use.local
+  resolution: "@bcmi-labs/cloud-editor-core-ui@workspace:app/core-ui"
+  peerDependencies:
+    "@arduino/react-icons": ">= 0.1.1"
+    "@bcmi-labs/art-auth": ">= 1.0.4"
+    "@bcmi-labs/cloud-sidebar": ">= 2.1.13"
+    "@codemirror/autocomplete": ">= 6.9.1"
+    "@codemirror/commands": ">= 6.1.1"
+    "@codemirror/lang-cpp": ">= 6.0.1"
+    "@codemirror/lang-css": ">= 6.3.1"
+    "@codemirror/lang-html": ">= 6.0.0"
+    "@codemirror/lang-javascript": ">= 6.0.0"
+    "@codemirror/lang-json": ">= 6.0.2"
+    "@codemirror/lang-python": ">= 6.2.1"
+    "@codemirror/lang-yaml": ">= 6.1.2"
+    "@codemirror/language": ">= 6.0.0"
+    "@codemirror/merge": ">= 6.8.0"
+    "@codemirror/search": ">= 6.2.2"
+    "@codemirror/state": ">= 6.1.2"
+    "@codemirror/view": ">= 6.3.0"
+    "@lezer/highlight": ">= 1.2.1"
+    "@tanstack/react-location": 3.7.4
+    "@tanstack/react-query": 4.12.0
     clsx: ">= 1.2.1"
     react: ">= 18.2.0"
     react-aria: ">= 3.20.0"
@@ -1969,7 +2042,6 @@ __metadata:
     react-helmet-async: ">= 2.4.0"
     react-stately: ">= 3.20.0"
     react-use: ">= 17.4.0"
-    use-debounce: ">= 8.0.4"
   languageName: unknown
   linkType: soft
 
@@ -1985,6 +2057,53 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@bcmi-labs/cloud-editor-detachable-monitor@workspace:standalone-apps/detachable-monitor":
+  version: 0.0.0-use.local
+  resolution: "@bcmi-labs/cloud-editor-detachable-monitor@workspace:standalone-apps/detachable-monitor"
+  dependencies:
+    "@bcmi-labs/art-auth": 1.0.4
+    "@codemirror/autocomplete": ^6.15.0
+    "@codemirror/commands": ^6.3.3
+    "@codemirror/lang-cpp": ^6.0.2
+    "@codemirror/lang-css": ^6.3.1
+    "@codemirror/lang-html": ^6.0.0
+    "@codemirror/lang-javascript": ^6.0.0
+    "@codemirror/lang-json": ^6.0.2
+    "@codemirror/lang-python": ^6.2.1
+    "@codemirror/lang-yaml": ^6.1.2
+    "@codemirror/language": ^6.10.1
+    "@codemirror/merge": ^6.8.0
+    "@codemirror/search": ^6.5.6
+    "@codemirror/state": ^6.4.1
+    "@codemirror/view": ^6.26.0
+    "@lezer/highlight": 1.2.1
+    "@tanstack/react-location": 3.7.4
+    "@tanstack/react-query": 4.12.0
+    clsx: 1.2.1
+    dotenv: 16.0.3
+    file-saver: 2.0.5
+    idb-keyval: 6.2.1
+    jszip: 3.10.1
+    lodash: 4.17.21
+    object-hash: 3.0.0
+    react: 18.2.0
+    react-aria: 3.20.0
+    react-dom: 18.2.0
+    react-helmet-async: 2.0.4
+    react-modal: 3.16.1
+    react-split: 2.0.14
+    react-split-grid: 1.0.4
+    react-stately: 3.20.0
+    react-use: 17.4.0
+    react-virtualized: 9.22.5
+    rxjs: 7.5.7
+    semver: 7.5.2
+    socket.io-client: 2.4.0
+    ua-parser-js: 1.0.33
+    wretch: 2.1.5
+  languageName: unknown
+  linkType: soft
+
 "@bcmi-labs/cloud-editor-dev-config@workspace:dev-utils/dev-config, @cloud-editor-mono/dev-config@npm:@bcmi-labs/cloud-editor-dev-config@^1.4.3":
   version: 0.0.0-use.local
   resolution: "@bcmi-labs/cloud-editor-dev-config@workspace:dev-utils/dev-config"
@@ -1995,8 +2114,8 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@bcmi-labs/cloud-editor-domain@workspace:app/domain"
   peerDependencies:
-    "@bcmi-labs/art-auth": "*"
-    "@bcmi-labs/cloud-sidebar": "*"
+    "@bcmi-labs/art-auth": ">= 1.0.4"
+    "@bcmi-labs/cloud-sidebar": ">= 2.1.13"
     "@codemirror/autocomplete": ">= 6.9.1"
     "@codemirror/commands": ">= 6.1.1"
     "@codemirror/lang-cpp": ">= 6.0.1"
@@ -2012,8 +2131,8 @@ __metadata:
     "@codemirror/state": ">= 6.1.2"
     "@codemirror/view": ">= 6.3.0"
     "@lezer/highlight": ">= 1.2.1"
-    "@tanstack/react-location": ">= 3.7.4"
-    "@tanstack/react-query": ">= 4.12.0"
+    "@tanstack/react-location": 3.7.4
+    "@tanstack/react-query": 4.12.0
     clsx: ">= 1.2.1"
     dotenv: ">= 16.0.3"
     file-saver: ">= 2.0.5"
@@ -2040,7 +2159,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@bcmi-labs/cloud-editor-infrastructure@workspace:app/infrastructure"
   peerDependencies:
-    "@bcmi-labs/art-auth": "*"
+    "@bcmi-labs/art-auth": ">= 1.0.4"
     "@codemirror/autocomplete": ">= 6.9.1"
     "@codemirror/commands": ">= 6.1.1"
     "@codemirror/lang-cpp": ">= 6.0.1"
@@ -2057,13 +2176,69 @@ __metadata:
     "@codemirror/view": ">= 6.3.0"
     "@lezer/highlight": ">= 1.2.1"
     "@microsoft/fetch-event-source": ">= 2.0.1"
-    "@tanstack/react-location": ">= 3.7.4"
-    "@tanstack/react-query": ">= 4.12.0"
+    "@tanstack/react-location": 3.7.4
+    "@tanstack/react-query": 4.12.0
     algoliasearch: ">=4.20.0"
     clsx: ">= 1.2.1"
     react: ">= 18.2.0"
     react-dom: ">= 18.2.0"
     wretch: ">= 2.1.5"
+  languageName: unknown
+  linkType: soft
+
+"@bcmi-labs/cloud-editor-opt-in-out@workspace:consumable-app-components/cloud-editor-opt-in-out":
+  version: 0.0.0-use.local
+  resolution: "@bcmi-labs/cloud-editor-opt-in-out@workspace:consumable-app-components/cloud-editor-opt-in-out"
+  languageName: unknown
+  linkType: soft
+
+"@bcmi-labs/cloud-editor-standalone@workspace:standalone-apps/cloud-editor-standalone":
+  version: 0.0.0-use.local
+  resolution: "@bcmi-labs/cloud-editor-standalone@workspace:standalone-apps/cloud-editor-standalone"
+  dependencies:
+    "@bcmi-labs/art-auth": 1.0.4
+    "@bcmi-labs/cloud-sidebar": 2.1.13
+    "@codemirror/autocomplete": ^6.9.1
+    "@codemirror/commands": ^6.1.1
+    "@codemirror/lang-cpp": ^6.0.1
+    "@codemirror/lang-css": ^6.3.1
+    "@codemirror/lang-html": ^6.0.0
+    "@codemirror/lang-javascript": ^6.0.0
+    "@codemirror/lang-json": ^6.0.2
+    "@codemirror/lang-python": ^6.2.1
+    "@codemirror/lang-yaml": ^6.1.2
+    "@codemirror/language": ">= 6.0.0"
+    "@codemirror/merge": ">= 6.8.0"
+    "@codemirror/search": ">= 6.2.2"
+    "@codemirror/state": ">= 6.1.2"
+    "@codemirror/view": ">= 6.3.0"
+    "@lezer/highlight": 1.2.1
+    "@tanstack/react-location": 3.7.4
+    "@tanstack/react-query": 4.12.0
+    algoliasearch: 4.20.0
+    clsx: 1.2.1
+    dotenv: 16.0.3
+    file-saver: 2.0.5
+    html-react-parser: 4.2.2
+    idb-keyval: 6.2.1
+    jszip: 3.10.1
+    lodash: 4.17.21
+    object-hash: 3.0.0
+    react: 18.2.0
+    react-aria: 3.20.0
+    react-dom: 18.2.0
+    react-helmet-async: 2.0.4
+    react-modal: 3.16.1
+    react-split: 2.0.14
+    react-split-grid: 1.0.4
+    react-stately: 3.20.0
+    react-use: 17.4.0
+    react-virtualized: 9.22.5
+    rxjs: 7.5.7
+    semver: 7.5.2
+    socket.io-client: 2.4.0
+    ua-parser-js: 1.0.33
+    wretch: 2.1.5
   languageName: unknown
   linkType: soft
 
@@ -2103,7 +2278,7 @@ __metadata:
     "@codemirror/state": ">= 6.1.2"
     "@codemirror/view": ">= 6.3.0"
     "@lezer/highlight": ">= 1.2.1"
-    "@tanstack/react-location": ">= 3.7.4"
+    "@tanstack/react-location": 3.7.4
     clsx: ">= 1.2.1"
     emoji-picker-react: ">= 4.14.1"
     html-react-parser: ">=4.2.2"
@@ -2113,6 +2288,7 @@ __metadata:
     react-joyride: ">= 2.7.1"
     react-markdown: ">= 8.0.6"
     react-modal: ">= 3.16.1"
+    react-resizable-panels: ">= 4.10.0"
     react-split: ">= 2.0.14"
     react-split-grid: ">= 1.0.4"
     react-use: ">= 17.4.0"
@@ -2136,7 +2312,28 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@bcmi-labs/cloud-sidebar@npm:@bcmi-labs/cloud-sidebar@1.4.3, @bcmi-labs/cloud-sidebar@workspace:app/cloud-sidebar":
+"@bcmi-labs/cloud-sidebar@npm:2.1.13, @bcmi-labs/cloud-sidebar@npm:^2.1.13":
+  version: 2.1.13
+  resolution: "@bcmi-labs/cloud-sidebar@npm:2.1.13::__archiveUrl=https%3A%2F%2Fnpm.pkg.github.com%2Fdownload%2F%40bcmi-labs%2Fcloud-sidebar%2F2.1.13%2F107aebab207586b3f2e93a61a63b0d9bfba8dc97"
+  dependencies:
+    "@radix-ui/react-avatar": ^1.0.4
+    "@radix-ui/react-dialog": ^1.0.5
+    "@radix-ui/react-dropdown-menu": ^2.0.6
+    "@radix-ui/react-separator": ^1.0.3
+    "@radix-ui/react-slot": ^1.0.2
+    class-variance-authority: ^0.7.0
+  peerDependencies:
+    "@arduino/react-icons": ^0.1.1
+    "@bcmi-labs/art-auth": ^1.0.0
+    "@types/react": "*"
+    "@types/react-dom": "*"
+    react: ^18.0
+    react-dom: ^18.0
+  checksum: 3a078bc98f468920f8411b19efc67b4f2ab30cd501d1744d1f730445962e76b38ecf749e8f11b5338e7587634d0de33697edaabf00177ea756f7762d5786c82f
+  languageName: node
+  linkType: hard
+
+"@bcmi-labs/cloud-sidebar@workspace:app/cloud-sidebar":
   version: 0.0.0-use.local
   resolution: "@bcmi-labs/cloud-sidebar@workspace:app/cloud-sidebar"
   languageName: unknown
@@ -2189,7 +2386,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@codemirror/autocomplete@npm:^6.0.0, @codemirror/autocomplete@npm:^6.15.0":
+"@codemirror/autocomplete@npm:^6.0.0, @codemirror/autocomplete@npm:^6.15.0, @codemirror/autocomplete@npm:^6.3.2":
   version: 6.18.6
   resolution: "@codemirror/autocomplete@npm:6.18.6"
   dependencies:
@@ -2198,6 +2395,30 @@ __metadata:
     "@codemirror/view": ^6.17.0
     "@lezer/common": ^1.0.0
   checksum: 1d3657d5fbd2bbf983edf7fb14568b1f813a15f03848bef3833835dd3a30985d881e093842f7b3def23789b542db4eb81ec07bfa313d1ee1d54cb1b273027dea
+  languageName: node
+  linkType: hard
+
+"@codemirror/autocomplete@npm:^6.9.1":
+  version: 6.20.0
+  resolution: "@codemirror/autocomplete@npm:6.20.0"
+  dependencies:
+    "@codemirror/language": ^6.0.0
+    "@codemirror/state": ^6.0.0
+    "@codemirror/view": ^6.17.0
+    "@lezer/common": ^1.0.0
+  checksum: 0defd46302ab2763d10f3a51ef8f2b607dd7268843aaeec76a272e84723fe17f8a5ee5a7ad06e649066b69d9dad2a81d6a6cfdf7593290bd52b711b96c46518b
+  languageName: node
+  linkType: hard
+
+"@codemirror/commands@npm:^6.1.1":
+  version: 6.10.1
+  resolution: "@codemirror/commands@npm:6.10.1"
+  dependencies:
+    "@codemirror/language": ^6.0.0
+    "@codemirror/state": ^6.4.0
+    "@codemirror/view": ^6.27.0
+    "@lezer/common": ^1.1.0
+  checksum: aa7dec3924e9275bbd8be27a02052843ad296d31fc1e5622deeeb96a4f4dbd54327a7cd8922b4ec45d46843faa5bf29f63fee8f628c73ef80b0aedb19c832279
   languageName: node
   linkType: hard
 
@@ -2210,6 +2431,16 @@ __metadata:
     "@codemirror/view": ^6.27.0
     "@lezer/common": ^1.1.0
   checksum: 7d819bab4830ec7b8c5dffdec4b035dfa664bfd1d2675e639e08a459df65f45be111e1b8b569b1a8a3253d5980cf2ecf4394d8a13509996cca1b65cc16d47a4e
+  languageName: node
+  linkType: hard
+
+"@codemirror/lang-cpp@npm:^6.0.1":
+  version: 6.0.3
+  resolution: "@codemirror/lang-cpp@npm:6.0.3"
+  dependencies:
+    "@codemirror/language": ^6.0.0
+    "@lezer/cpp": ^1.0.0
+  checksum: 982b9a9624367a0086520e1d499b7ad2fba2a14bdd57df88520bac279bd980e12154fd281659226fbcfa530edb5dd72edd114481365e6224bf53e97bc972f3b8
   languageName: node
   linkType: hard
 
@@ -2248,6 +2479,23 @@ __metadata:
     "@lezer/common": ^1.0.0
     "@lezer/html": ^1.0.0
   checksum: 1cb0aa2ed481d2ef644a23afc8a706f745201c67a22da6f214cdaff1b2c7173e8933dfb9f3b60522b777cdcdd74cb5f88786ef4df61e6a640439eb155cc1c777
+  languageName: node
+  linkType: hard
+
+"@codemirror/lang-html@npm:^6.0.0":
+  version: 6.4.11
+  resolution: "@codemirror/lang-html@npm:6.4.11"
+  dependencies:
+    "@codemirror/autocomplete": ^6.0.0
+    "@codemirror/lang-css": ^6.0.0
+    "@codemirror/lang-javascript": ^6.0.0
+    "@codemirror/language": ^6.4.0
+    "@codemirror/state": ^6.0.0
+    "@codemirror/view": ^6.17.0
+    "@lezer/common": ^1.0.0
+    "@lezer/css": ^1.1.0
+    "@lezer/html": ^1.3.12
+  checksum: 31a16cc6be4daa58c6765274b9b7ba1bb54a4b0858d33d8ad1c7ec1bcb85920e3715a891f8cb27f5d9dfe87bbe00f0ddfbac5b04011374e15380b9cec7ba3c69
   languageName: node
   linkType: hard
 
@@ -2301,6 +2549,19 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@codemirror/lang-python@npm:^6.2.1":
+  version: 6.2.1
+  resolution: "@codemirror/lang-python@npm:6.2.1"
+  dependencies:
+    "@codemirror/autocomplete": ^6.3.2
+    "@codemirror/language": ^6.8.0
+    "@codemirror/state": ^6.0.0
+    "@lezer/common": ^1.2.1
+    "@lezer/python": ^1.1.4
+  checksum: 977ce444ab7c68261107c40e8a46d3480a239ac5a093f39fad7da0644fc08cb4b90552c8b7fad396f936e34b5bbac510533ea7b4229d3b8271774a1af1e717aa
+  languageName: node
+  linkType: hard
+
 "@codemirror/lang-yaml@npm:6.0.0":
   version: 6.0.0
   resolution: "@codemirror/lang-yaml@npm:6.0.0"
@@ -2314,7 +2575,22 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@codemirror/language@npm:^6.0.0, @codemirror/language@npm:^6.10.1":
+"@codemirror/lang-yaml@npm:^6.1.2":
+  version: 6.1.2
+  resolution: "@codemirror/lang-yaml@npm:6.1.2"
+  dependencies:
+    "@codemirror/autocomplete": ^6.0.0
+    "@codemirror/language": ^6.0.0
+    "@codemirror/state": ^6.0.0
+    "@lezer/common": ^1.2.0
+    "@lezer/highlight": ^1.2.0
+    "@lezer/lr": ^1.0.0
+    "@lezer/yaml": ^1.0.0
+  checksum: a33946f5928b6b52767d72149722c9156635830ca20861bcd1198ee2adb435b208b3423d3025a85dde3806e30746574a3eb18874a9f5556697ac0bd86e5b0b55
+  languageName: node
+  linkType: hard
+
+"@codemirror/language@npm:>= 6.0.0, @codemirror/language@npm:^6.0.0, @codemirror/language@npm:^6.10.1":
   version: 6.10.8
   resolution: "@codemirror/language@npm:6.10.8"
   dependencies:
@@ -2328,7 +2604,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@codemirror/language@npm:^6.6.0":
+"@codemirror/language@npm:^6.4.0, @codemirror/language@npm:^6.6.0":
   version: 6.12.1
   resolution: "@codemirror/language@npm:6.12.1"
   dependencies:
@@ -2339,6 +2615,20 @@ __metadata:
     "@lezer/lr": ^1.0.0
     style-mod: ^4.0.0
   checksum: f883e5337d8584a82678e4c25023320815892df1e33b05b777f499abd95ce8010cae7216a6c17d13139d84ae43dbe112c5ef3c091b705bd8ee8599ab0fa91637
+  languageName: node
+  linkType: hard
+
+"@codemirror/language@npm:^6.8.0":
+  version: 6.11.3
+  resolution: "@codemirror/language@npm:6.11.3"
+  dependencies:
+    "@codemirror/state": ^6.0.0
+    "@codemirror/view": ^6.23.0
+    "@lezer/common": ^1.1.0
+    "@lezer/highlight": ^1.0.0
+    "@lezer/lr": ^1.0.0
+    style-mod: ^4.0.0
+  checksum: 9ad560fb90ccb8e5660ee162b7ca36323b0cc0fe2c2885a93f052763c177e10118930aae5cdea410e90cf2a6a2b86438a7503fcc6d1f550c8d75a6757e31f3bf
   languageName: node
   linkType: hard
 
@@ -2353,7 +2643,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@codemirror/merge@npm:^6.8.0":
+"@codemirror/merge@npm:>= 6.8.0, @codemirror/merge@npm:^6.8.0":
   version: 6.9.0
   resolution: "@codemirror/merge@npm:6.9.0"
   dependencies:
@@ -2366,7 +2656,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@codemirror/search@npm:^6.5.6":
+"@codemirror/search@npm:>= 6.2.2, @codemirror/search@npm:^6.5.6":
   version: 6.5.10
   resolution: "@codemirror/search@npm:6.5.10"
   dependencies:
@@ -2377,7 +2667,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@codemirror/state@npm:^6.0.0, @codemirror/state@npm:^6.4.0, @codemirror/state@npm:^6.5.0":
+"@codemirror/state@npm:>= 6.1.2, @codemirror/state@npm:^6.0.0, @codemirror/state@npm:^6.4.0, @codemirror/state@npm:^6.4.1, @codemirror/state@npm:^6.5.0":
   version: 6.5.2
   resolution: "@codemirror/state@npm:6.5.2"
   dependencies:
@@ -2386,7 +2676,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@codemirror/view@npm:^6.0.0, @codemirror/view@npm:^6.17.0, @codemirror/view@npm:^6.23.0, @codemirror/view@npm:^6.27.0, @codemirror/view@npm:^6.35.3":
+"@codemirror/view@npm:>= 6.3.0, @codemirror/view@npm:^6.0.0, @codemirror/view@npm:^6.17.0, @codemirror/view@npm:^6.23.0, @codemirror/view@npm:^6.26.0, @codemirror/view@npm:^6.27.0, @codemirror/view@npm:^6.35.3":
   version: 6.36.4
   resolution: "@codemirror/view@npm:6.36.4"
   dependencies:
@@ -3968,7 +4258,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@lezer/common@npm:^1.0.0, @lezer/common@npm:^1.1.0, @lezer/common@npm:^1.2.0":
+"@lezer/common@npm:^1.0.0, @lezer/common@npm:^1.1.0, @lezer/common@npm:^1.2.0, @lezer/common@npm:^1.2.1":
   version: 1.2.3
   resolution: "@lezer/common@npm:1.2.3"
   checksum: 9b5f52d949adae69d077f56c0b1c2295923108c3dfb241dd9f17654ff708f3eab81ff9fa7f0d0e4a668eabdcb9d961c73e75caca87c966ca1436e30e49130fcb
@@ -3993,7 +4283,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@lezer/css@npm:^1.1.7":
+"@lezer/css@npm:^1.1.0, @lezer/css@npm:^1.1.7":
   version: 1.3.0
   resolution: "@lezer/css@npm:1.3.0"
   dependencies:
@@ -4004,7 +4294,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@lezer/highlight@npm:1.2.1, @lezer/highlight@npm:^1.0.0":
+"@lezer/highlight@npm:1.2.1, @lezer/highlight@npm:^1.0.0, @lezer/highlight@npm:^1.2.0":
   version: 1.2.1
   resolution: "@lezer/highlight@npm:1.2.1"
   dependencies:
@@ -4022,7 +4312,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@lezer/html@npm:^1.0.0":
+"@lezer/html@npm:^1.0.0, @lezer/html@npm:^1.3.12":
   version: 1.3.13
   resolution: "@lezer/html@npm:1.3.13"
   dependencies:
@@ -4073,7 +4363,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@lezer/python@npm:^1.0.0":
+"@lezer/python@npm:^1.0.0, @lezer/python@npm:^1.1.4":
   version: 1.1.18
   resolution: "@lezer/python@npm:1.1.18"
   dependencies:
@@ -5035,7 +5325,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@radix-ui/react-avatar@npm:^1.1.3":
+"@radix-ui/react-avatar@npm:^1.0.4, @radix-ui/react-avatar@npm:^1.1.3":
   version: 1.1.7
   resolution: "@radix-ui/react-avatar@npm:1.1.7"
   dependencies:
@@ -5084,6 +5374,28 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@radix-ui/react-collection@npm:1.1.4":
+  version: 1.1.4
+  resolution: "@radix-ui/react-collection@npm:1.1.4"
+  dependencies:
+    "@radix-ui/react-compose-refs": 1.1.2
+    "@radix-ui/react-context": 1.1.2
+    "@radix-ui/react-primitive": 2.1.0
+    "@radix-ui/react-slot": 1.2.0
+  peerDependencies:
+    "@types/react": "*"
+    "@types/react-dom": "*"
+    react: ^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc
+    react-dom: ^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc
+  peerDependenciesMeta:
+    "@types/react":
+      optional: true
+    "@types/react-dom":
+      optional: true
+  checksum: 09fb715d474eda316932d58161a5c3a3a99b6f92b228019628d9c3f1d566b535f14e0904284287ba1918bc2daa2648f0080f1c3f5f51a33f2ce88f653299a9e1
+  languageName: node
+  linkType: hard
+
 "@radix-ui/react-collection@npm:1.1.7":
   version: 1.1.7
   resolution: "@radix-ui/react-collection@npm:1.1.7"
@@ -5103,6 +5415,19 @@ __metadata:
     "@types/react-dom":
       optional: true
   checksum: dd9bb015ef86205b4246f55bc84e5ad54519bb89b4825dd83e646fe95205191fe376bb31a9e847f9d66b710d0ef7fc9353c0b0ded7e8997a5c1f5be6addf94ef
+  languageName: node
+  linkType: hard
+
+"@radix-ui/react-compose-refs@npm:1.1.1":
+  version: 1.1.1
+  resolution: "@radix-ui/react-compose-refs@npm:1.1.1"
+  peerDependencies:
+    "@types/react": "*"
+    react: ^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc
+  peerDependenciesMeta:
+    "@types/react":
+      optional: true
+  checksum: 1be82f9f7fab96cc10f167a2e4f976e0135a63d473334f664c06f02af13bc5ea1994cb0505f89ed190d756cb65d57506721c030908af07e49b9e3cfd36044f33
   languageName: node
   linkType: hard
 
@@ -5156,6 +5481,38 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@radix-ui/react-dialog@npm:^1.0.5, @radix-ui/react-dialog@npm:^1.1.6":
+  version: 1.1.11
+  resolution: "@radix-ui/react-dialog@npm:1.1.11"
+  dependencies:
+    "@radix-ui/primitive": 1.1.2
+    "@radix-ui/react-compose-refs": 1.1.2
+    "@radix-ui/react-context": 1.1.2
+    "@radix-ui/react-dismissable-layer": 1.1.7
+    "@radix-ui/react-focus-guards": 1.1.2
+    "@radix-ui/react-focus-scope": 1.1.4
+    "@radix-ui/react-id": 1.1.1
+    "@radix-ui/react-portal": 1.1.6
+    "@radix-ui/react-presence": 1.1.4
+    "@radix-ui/react-primitive": 2.1.0
+    "@radix-ui/react-slot": 1.2.0
+    "@radix-ui/react-use-controllable-state": 1.2.2
+    aria-hidden: ^1.2.4
+    react-remove-scroll: ^2.6.3
+  peerDependencies:
+    "@types/react": "*"
+    "@types/react-dom": "*"
+    react: ^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc
+    react-dom: ^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc
+  peerDependenciesMeta:
+    "@types/react":
+      optional: true
+    "@types/react-dom":
+      optional: true
+  checksum: fa61a05628353b089c1de6a2eb039f82a897f18a0bdb6ab22950520e9d8532937a66aa2a848f1c304c700e8dcefb83f944c6a4a38a2844030580ed1d8601e654
+  languageName: node
+  linkType: hard
+
 "@radix-ui/react-dialog@npm:^1.1.13":
   version: 1.1.15
   resolution: "@radix-ui/react-dialog@npm:1.1.15"
@@ -5185,38 +5542,6 @@ __metadata:
     "@types/react-dom":
       optional: true
   checksum: a0834338ec66866ce301ef46e0dad9d99accf496f03b5021eceec7e2b79d7286b4f2c5e35f2387891e2bf33ef9a11d381dde2c8fe936a2f30cd50ca4e9bf4cb5
-  languageName: node
-  linkType: hard
-
-"@radix-ui/react-dialog@npm:^1.1.6":
-  version: 1.1.11
-  resolution: "@radix-ui/react-dialog@npm:1.1.11"
-  dependencies:
-    "@radix-ui/primitive": 1.1.2
-    "@radix-ui/react-compose-refs": 1.1.2
-    "@radix-ui/react-context": 1.1.2
-    "@radix-ui/react-dismissable-layer": 1.1.7
-    "@radix-ui/react-focus-guards": 1.1.2
-    "@radix-ui/react-focus-scope": 1.1.4
-    "@radix-ui/react-id": 1.1.1
-    "@radix-ui/react-portal": 1.1.6
-    "@radix-ui/react-presence": 1.1.4
-    "@radix-ui/react-primitive": 2.1.0
-    "@radix-ui/react-slot": 1.2.0
-    "@radix-ui/react-use-controllable-state": 1.2.2
-    aria-hidden: ^1.2.4
-    react-remove-scroll: ^2.6.3
-  peerDependencies:
-    "@types/react": "*"
-    "@types/react-dom": "*"
-    react: ^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc
-    react-dom: ^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc
-  peerDependenciesMeta:
-    "@types/react":
-      optional: true
-    "@types/react-dom":
-      optional: true
-  checksum: fa61a05628353b089c1de6a2eb039f82a897f18a0bdb6ab22950520e9d8532937a66aa2a848f1c304c700e8dcefb83f944c6a4a38a2844030580ed1d8601e654
   languageName: node
   linkType: hard
 
@@ -5276,6 +5601,31 @@ __metadata:
     "@types/react-dom":
       optional: true
   checksum: 69cbcea707d975260574bce669ee861b67ccfb49240eac14b02348944b8979fba9ffab91e5650ef5b6532c74f90bd4526a73c80366081e8c9483586d79e39c54
+  languageName: node
+  linkType: hard
+
+"@radix-ui/react-dropdown-menu@npm:^2.0.6":
+  version: 2.1.12
+  resolution: "@radix-ui/react-dropdown-menu@npm:2.1.12"
+  dependencies:
+    "@radix-ui/primitive": 1.1.2
+    "@radix-ui/react-compose-refs": 1.1.2
+    "@radix-ui/react-context": 1.1.2
+    "@radix-ui/react-id": 1.1.1
+    "@radix-ui/react-menu": 2.1.12
+    "@radix-ui/react-primitive": 2.1.0
+    "@radix-ui/react-use-controllable-state": 1.2.2
+  peerDependencies:
+    "@types/react": "*"
+    "@types/react-dom": "*"
+    react: ^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc
+    react-dom: ^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc
+  peerDependenciesMeta:
+    "@types/react":
+      optional: true
+    "@types/react-dom":
+      optional: true
+  checksum: 640897dc35422c71da3a4c92cc650a35372de997749a6452904a61d09fe34c4b02efc51f82276d35e0939862d19a617517582807d6c89b4c73c436bb1a810dda
   languageName: node
   linkType: hard
 
@@ -5359,6 +5709,42 @@ __metadata:
     "@types/react":
       optional: true
   checksum: 8d68e200778eb3038906870fc869b3d881f4a46715fb20cddd9c76cba42fdaaa4810a3365b6ec2daf0f185b9201fc99d009167f59c7921bc3a139722c2e976db
+  languageName: node
+  linkType: hard
+
+"@radix-ui/react-menu@npm:2.1.12":
+  version: 2.1.12
+  resolution: "@radix-ui/react-menu@npm:2.1.12"
+  dependencies:
+    "@radix-ui/primitive": 1.1.2
+    "@radix-ui/react-collection": 1.1.4
+    "@radix-ui/react-compose-refs": 1.1.2
+    "@radix-ui/react-context": 1.1.2
+    "@radix-ui/react-direction": 1.1.1
+    "@radix-ui/react-dismissable-layer": 1.1.7
+    "@radix-ui/react-focus-guards": 1.1.2
+    "@radix-ui/react-focus-scope": 1.1.4
+    "@radix-ui/react-id": 1.1.1
+    "@radix-ui/react-popper": 1.2.4
+    "@radix-ui/react-portal": 1.1.6
+    "@radix-ui/react-presence": 1.1.4
+    "@radix-ui/react-primitive": 2.1.0
+    "@radix-ui/react-roving-focus": 1.1.7
+    "@radix-ui/react-slot": 1.2.0
+    "@radix-ui/react-use-callback-ref": 1.1.1
+    aria-hidden: ^1.2.4
+    react-remove-scroll: ^2.6.3
+  peerDependencies:
+    "@types/react": "*"
+    "@types/react-dom": "*"
+    react: ^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc
+    react-dom: ^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc
+  peerDependenciesMeta:
+    "@types/react":
+      optional: true
+    "@types/react-dom":
+      optional: true
+  checksum: 3caa8df3908d5828357f08e7d4c64314910a4aebb1b72fd084910fb529e0ff6d9310b349526890a766fe5bd09b3d8312b8e25677c1cb65b1802a22a5a537bf23
   languageName: node
   linkType: hard
 
@@ -5587,6 +5973,25 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@radix-ui/react-primitive@npm:2.0.2":
+  version: 2.0.2
+  resolution: "@radix-ui/react-primitive@npm:2.0.2"
+  dependencies:
+    "@radix-ui/react-slot": 1.1.2
+  peerDependencies:
+    "@types/react": "*"
+    "@types/react-dom": "*"
+    react: ^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc
+    react-dom: ^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc
+  peerDependenciesMeta:
+    "@types/react":
+      optional: true
+    "@types/react-dom":
+      optional: true
+  checksum: 3a6144ed164322b1135f6f774bfd23c7c4c5340db8a1022d05c9c7ad41ba187299a4894caae634e94a1d73b5f69305318a47b41e6dc7806fb5923fa05dd39d40
+  languageName: node
+  linkType: hard
+
 "@radix-ui/react-primitive@npm:2.1.0, @radix-ui/react-primitive@npm:^2.0.2":
   version: 2.1.0
   resolution: "@radix-ui/react-primitive@npm:2.1.0"
@@ -5671,7 +6076,68 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@radix-ui/react-slot@npm:1.2.0, @radix-ui/react-slot@npm:^1.1.2":
+"@radix-ui/react-roving-focus@npm:1.1.7":
+  version: 1.1.7
+  resolution: "@radix-ui/react-roving-focus@npm:1.1.7"
+  dependencies:
+    "@radix-ui/primitive": 1.1.2
+    "@radix-ui/react-collection": 1.1.4
+    "@radix-ui/react-compose-refs": 1.1.2
+    "@radix-ui/react-context": 1.1.2
+    "@radix-ui/react-direction": 1.1.1
+    "@radix-ui/react-id": 1.1.1
+    "@radix-ui/react-primitive": 2.1.0
+    "@radix-ui/react-use-callback-ref": 1.1.1
+    "@radix-ui/react-use-controllable-state": 1.2.2
+  peerDependencies:
+    "@types/react": "*"
+    "@types/react-dom": "*"
+    react: ^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc
+    react-dom: ^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc
+  peerDependenciesMeta:
+    "@types/react":
+      optional: true
+    "@types/react-dom":
+      optional: true
+  checksum: 7cdd94ad9b84685824ab3297d06d8832c1dfcd78eca931e73edf70e6ae7e628f53ba2b015156fed50aa9721a763aeeae0b15df96c8098d94cc862973575adb75
+  languageName: node
+  linkType: hard
+
+"@radix-ui/react-separator@npm:^1.0.3":
+  version: 1.1.2
+  resolution: "@radix-ui/react-separator@npm:1.1.2"
+  dependencies:
+    "@radix-ui/react-primitive": 2.0.2
+  peerDependencies:
+    "@types/react": "*"
+    "@types/react-dom": "*"
+    react: ^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc
+    react-dom: ^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc
+  peerDependenciesMeta:
+    "@types/react":
+      optional: true
+    "@types/react-dom":
+      optional: true
+  checksum: 83a2429171c3dcad1e33e43c843def6b4535d7ce7940fc46d3916c65abaebe5c3b19ca9a8882363c4057dce898e95beb90e97dee012feb02b42d43912c7b4120
+  languageName: node
+  linkType: hard
+
+"@radix-ui/react-slot@npm:1.1.2":
+  version: 1.1.2
+  resolution: "@radix-ui/react-slot@npm:1.1.2"
+  dependencies:
+    "@radix-ui/react-compose-refs": 1.1.1
+  peerDependencies:
+    "@types/react": "*"
+    react: ^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc
+  peerDependenciesMeta:
+    "@types/react":
+      optional: true
+  checksum: f341cd66b284061a5147a67f6d7b8a7337a4c076b97ce087bcb1358fa36e9714ef988cc7ea2c2ed3b6ec3f17adafd2460851b31ed8f4dd73ea22b0b11e22ab97
+  languageName: node
+  linkType: hard
+
+"@radix-ui/react-slot@npm:1.2.0, @radix-ui/react-slot@npm:^1.0.2, @radix-ui/react-slot@npm:^1.1.2":
   version: 1.2.0
   resolution: "@radix-ui/react-slot@npm:1.2.0"
   dependencies:
@@ -9257,7 +9723,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@tanstack/react-router-devtools@npm:^1.116.0":
+"@tanstack/react-router-devtools@npm:1.116.0":
   version: 1.116.0
   resolution: "@tanstack/react-router-devtools@npm:1.116.0"
   dependencies:
@@ -9271,7 +9737,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@tanstack/react-router@npm:^1.116.0":
+"@tanstack/react-router@npm:1.116.0":
   version: 1.116.0
   resolution: "@tanstack/react-router@npm:1.116.0"
   dependencies:
@@ -9347,7 +9813,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@tanstack/router-plugin@npm:^1.116.1":
+"@tanstack/router-plugin@npm:1.116.1":
   version: 1.116.1
   resolution: "@tanstack/router-plugin@npm:1.116.1"
   dependencies:
@@ -11832,6 +12298,22 @@ __metadata:
   languageName: node
   linkType: hard
 
+"async@npm:^0.9.0":
+  version: 0.9.2
+  resolution: "async@npm:0.9.2"
+  checksum: 87dbf129292b8a6c32a4e07f43f462498162aa86f404a7e11f978dbfdf75cfb163c26833684bb07b9d436083cd604cbbf730a57bfcbe436c6ae1ed266cdc56bb
+  languageName: node
+  linkType: hard
+
+"async@npm:^2.6.4":
+  version: 2.6.4
+  resolution: "async@npm:2.6.4"
+  dependencies:
+    lodash: ^4.17.14
+  checksum: a52083fb32e1ebe1d63e5c5624038bb30be68ff07a6c8d7dfe35e47c93fc144bd8652cbec869e0ac07d57dde387aa5f1386be3559cdee799cb1f789678d88e19
+  languageName: node
+  linkType: hard
+
 "async@npm:^3.2.3":
   version: 3.2.6
   resolution: "async@npm:3.2.6"
@@ -11909,6 +12391,15 @@ __metadata:
   version: 1.13.2
   resolution: "aws4@npm:1.13.2"
   checksum: 9ac924e4a91c088b4928ea86b68d8c4558b0e6289ccabaae0e3e96a611bd75277c2eab6e3965821028768700516f612b929a5ce822f33a8771f74ba2a8cedb9c
+  languageName: node
+  linkType: hard
+
+"awty@npm:^0.1.0":
+  version: 0.1.0
+  resolution: "awty@npm:0.1.0"
+  dependencies:
+    isval: 0.0.2
+  checksum: 71ee5cca80e36eeab742b9b570fbdc4b0591c7f73de9abce1d7893706583db63e609a9b813f1b2d821c318f9ddde24ce55604d6f0245ab26683a3ed3a4cd1012
   languageName: node
   linkType: hard
 
@@ -12391,15 +12882,6 @@ __metadata:
     decimal.js: ^10.2.0
     wasm-imagemagick: ^1.2.3
   checksum: e2230ae7877a35c86bea52d870038076d125e54fa013b68a736b8f43998859a1d85990089b70b7192c28217049a24bd7676fea1d5c6ef01e1d911a3e5e76e931
-  languageName: node
-  linkType: hard
-
-"browser-tabs-lock@npm:^1.2.15":
-  version: 1.3.0
-  resolution: "browser-tabs-lock@npm:1.3.0"
-  dependencies:
-    lodash: ">=4.17.21"
-  checksum: 4fcfb6d5fc4bc5e4f53c298d555d8421ca4f815e32c2650b73008868eb70d7ee41aca8f92ad84d9beb77a8ffe0cb99f1efc8d9b3135cc434d48f7bd569f2bb72
   languageName: node
   linkType: hard
 
@@ -13154,7 +13636,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"class-variance-authority@npm:^0.7.1":
+"class-variance-authority@npm:^0.7.0, class-variance-authority@npm:^0.7.1":
   version: 0.7.1
   resolution: "class-variance-authority@npm:0.7.1"
   dependencies:
@@ -13310,13 +13792,14 @@ __metadata:
     "@assistant-ui/react": ^0.8.20
     "@assistant-ui/react-markdown": ^0.8.1
     "@assistant-ui/react-ui": ^0.1.8
-    "@auth0/auth0-spa-js": 2.11.0
+    "@auth0/auth0-spa-js": ^2.1.3
     "@axe-core/react": 4.4.5
-    "@bcmi-labs/arduino-chromeos-uploader": "npm:@bcmi-labs/arduino-chromeos-uploader@1.4.3"
-    "@bcmi-labs/art-auth": "npm:@bcmi-labs/auth@1.4.3"
-    "@bcmi-labs/cloud-sidebar": "npm:@bcmi-labs/cloud-sidebar@1.4.3"
+    "@bcmi-labs/arduino-chromeos-uploader": 1.2.12
+    "@bcmi-labs/art-auth": 1.0.4
+    "@bcmi-labs/cloud-sidebar": ^2.1.13
     "@cloud-editor-mono/arduino-sass": "npm:@bcmi-labs/arduino-sass@^1.4.3"
     "@cloud-editor-mono/board-communication-tools": "npm:@bcmi-labs/cloud-editor-board-communication-tools@^1.4.3"
+    "@cloud-editor-mono/cloud-editor-component": "npm:@bcmi-labs/cloud-editor-component@^1.4.3"
     "@cloud-editor-mono/common": "npm:@bcmi-labs/cloud-editor-common@^1.4.3"
     "@cloud-editor-mono/core-ui": "npm:@bcmi-labs/cloud-editor-core-ui@^1.4.3"
     "@cloud-editor-mono/create-agent-client-ts": "npm:@bcmi-labs/cloud-editor-create-agent-client-ts@^1.4.3"
@@ -13355,9 +13838,9 @@ __metadata:
     "@radix-ui/react-slot": ^1.2.2
     "@tanstack/react-location": 3.7.4
     "@tanstack/react-query": 4.12.0
-    "@tanstack/react-router": ^1.116.0
-    "@tanstack/react-router-devtools": ^1.116.0
-    "@tanstack/router-plugin": ^1.116.1
+    "@tanstack/react-router": 1.116.0
+    "@tanstack/react-router-devtools": 1.116.0
+    "@tanstack/router-plugin": 1.116.1
     "@testing-library/dom": 8.20.0
     "@testing-library/jest-dom": 5.16.5
     "@testing-library/react": 13.4.0
@@ -13447,7 +13930,6 @@ __metadata:
     typescript: 5.2.2
     ua-parser-js: 1.0.33
     unique-names-generator: ^4.2.0
-    use-debounce: 8.0.4
     vite: 5.2.8
     vite-plugin-css-injected-by-js: ^3.5.0
     vite-plugin-dts: 3.8.1
@@ -13577,6 +14059,13 @@ __metadata:
   version: 2.0.20
   resolution: "colorette@npm:2.0.20"
   checksum: 0c016fea2b91b733eb9f4bcdb580018f52c0bc0979443dad930e5037a968237ac53d9beb98e218d2e9235834f8eebce7f8e080422d6194e957454255bde71d3d
+  languageName: node
+  linkType: hard
+
+"colors@npm:^1.4.0":
+  version: 1.4.0
+  resolution: "colors@npm:1.4.0"
+  checksum: 98aa2c2418ad87dedf25d781be69dc5fc5908e279d9d30c34d8b702e586a0474605b3a189511482b9d5ed0d20c867515d22749537f7bc546256c6014f3ebdcec
   languageName: node
   linkType: hard
 
@@ -15117,13 +15606,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"dpop@npm:^2.1.1":
-  version: 2.1.1
-  resolution: "dpop@npm:2.1.1"
-  checksum: 919527254feac8ac46ee1c8b3776f8c2f4ada1876072f3df567eccefaef84ef40ac8d8e50383145322652200877628914045ce7b624a1af64b48f3e88ca5493f
-  languageName: node
-  linkType: hard
-
 "dunder-proto@npm:^1.0.0, dunder-proto@npm:^1.0.1":
   version: 1.0.1
   resolution: "dunder-proto@npm:1.0.1"
@@ -15501,13 +15983,6 @@ __metadata:
   version: 1.0.0
   resolution: "es-array-method-boxes-properly@npm:1.0.0"
   checksum: 2537fcd1cecf187083890bc6f5236d3a26bf39237433587e5bf63392e88faae929dbba78ff0120681a3f6f81c23fe3816122982c160d63b38c95c830b633b826
-  languageName: node
-  linkType: hard
-
-"es-cookie@npm:~1.3.2":
-  version: 1.3.2
-  resolution: "es-cookie@npm:1.3.2"
-  checksum: 8509355a7d00bd2e3fcab4a76a90e0da35b40c1e76f114f8ffe805ab3fdfff51e8fc0e7cdccd9bf1536066150b6b9861e37d78ae14f80680513901902ac4f0df
   languageName: node
   linkType: hard
 
@@ -18869,6 +19344,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"intel-hex@npm:^0.1.2":
+  version: 0.1.2
+  resolution: "intel-hex@npm:0.1.2"
+  checksum: 55388f6f7e5fc97a4a891b121feaa1e4e3e919793e9a2297f9692f11151e0b51ebe0d60306e4de296712dc2575facafa9f3bf3fd2514501335db1edfe12f1691
+  languageName: node
+  linkType: hard
+
 "internal-slot@npm:^1.1.0":
   version: 1.1.0
   resolution: "internal-slot@npm:1.1.0"
@@ -19752,6 +20234,13 @@ __metadata:
     html-escaper: ^2.0.0
     istanbul-lib-report: ^3.0.0
   checksum: 2072db6e07bfbb4d0eb30e2700250636182398c1af811aea5032acb219d2080f7586923c09fa194029efd6b92361afb3dcbe1ebcc3ee6651d13340f7c6c4ed95
+  languageName: node
+  linkType: hard
+
+"isval@npm:0.0.2":
+  version: 0.0.2
+  resolution: "isval@npm:0.0.2"
+  checksum: f78e679349d4fefe9a99e5b929578b39860a433ee8a1bfbcbacc0af7dc16ca1d5d1059cdd2e501b73b89b441f97c330df624c428a8696752a0511a5215d5ffb3
   languageName: node
   linkType: hard
 
@@ -20763,17 +21252,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"lodash@npm:4.17.21, lodash@npm:^4.17.15, lodash@npm:^4.17.19, lodash@npm:^4.17.20, lodash@npm:^4.17.21, lodash@npm:~4.17.15":
+"lodash@npm:4.17.21, lodash@npm:^4.17.14, lodash@npm:^4.17.15, lodash@npm:^4.17.19, lodash@npm:^4.17.20, lodash@npm:^4.17.21, lodash@npm:~4.17.15":
   version: 4.17.21
   resolution: "lodash@npm:4.17.21"
   checksum: eb835a2e51d381e561e508ce932ea50a8e5a68f4ebdd771ea240d3048244a8d13658acbd502cd4829768c56f2e16bdd4340b9ea141297d472517b83868e677f7
-  languageName: node
-  linkType: hard
-
-"lodash@npm:>=4.17.21":
-  version: 4.18.1
-  resolution: "lodash@npm:4.18.1"
-  checksum: bb5f5b49aad29614e709af02b64c56b0f8b78c6a81434a3c1ae527d2f0f78ca08f9d9fb22aa825a053876c9d2166e9c01f31c356014b5e2bdc0556c057433102
   languageName: node
   linkType: hard
 
@@ -28058,6 +28540,24 @@ __metadata:
   languageName: node
   linkType: hard
 
+"stk500-v2@npm:^1.0.4":
+  version: 1.0.4
+  resolution: "stk500-v2@npm:1.0.4"
+  dependencies:
+    async: ^0.9.0
+  checksum: 1de03642ba63a32dbf63f093c79d5e0f09f648e58797f87dd6ac1605c5fb0fca901463ea5334b07685412311169787bface33e0ac4ff57e77aa66c3f7ac0b9a2
+  languageName: node
+  linkType: hard
+
+"stk500@github:bcmi-labs/js-stk500v1#support-uno-wifi-rev2":
+  version: 2.1.0
+  resolution: "stk500@https://github.com/bcmi-labs/js-stk500v1.git#commit=3c6948347a0a6c949305443aabec447f272e1cf7"
+  dependencies:
+    async: ^0.9.0
+  checksum: 650260dbcc6290ef3f76447eb98398d2ec9a2bd5f71706e20822db068b4adb4b7832cd547ecdb8a907af6303f580089dad9eb4d2b95d4d58c5c180580cd1db94
+  languageName: node
+  linkType: hard
+
 "stop-iteration-iterator@npm:^1.0.0":
   version: 1.1.0
   resolution: "stop-iteration-iterator@npm:1.1.0"
@@ -30168,15 +30668,6 @@ __metadata:
     "@types/react":
       optional: true
   checksum: 6968fe85e7a1721e977e7bff8d98ac0975522a380aa23190fe855767bd4d91a73138225a984ddeb90448c00451fb53fa54197b922d21753cd2e2765bd47143a9
-  languageName: node
-  linkType: hard
-
-"use-debounce@npm:8.0.4":
-  version: 8.0.4
-  resolution: "use-debounce@npm:8.0.4"
-  peerDependencies:
-    react: ">=16.8.0"
-  checksum: 0f8b9e571f68a4694033ec00690bf73d781ac890140ae9ed4b330f71f7adb3f7d7df5cdaa32923c4d03fdc9de8a11be0f84301175ae4f66208af52ad03c55504
   languageName: node
   linkType: hard
 

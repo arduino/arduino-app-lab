@@ -1,18 +1,126 @@
+import { FileIcon } from '@cloud-editor-mono/images/assets/file-icons';
 import { BrickIcon } from '@cloud-editor-mono/ui-components/lib/components-by-app/app-lab';
 import { SelectableFileData } from '@cloud-editor-mono/ui-components/lib/components-by-app/shared';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import * as IDB from 'idb-keyval';
 import { sortBy } from 'lodash';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  createElement,
+  ReactNode,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { useEvent } from 'react-use';
 
-import { getAppLabFileIcon, getFileIcon, getMainLibraryFile } from '../utils';
+import { getFileIcon, getMainLibraryFile } from '../utils';
 import { UseFiles } from './files.type';
 import { useObservable } from './useObservable';
 
 export const OPEN_FILES_KEY = 'arduino:editor:open-files';
-export type OpenFilesStoreItem = { items: string[]; selected: string | null };
+export type OpenFilesStorePaneState = {
+  items: string[];
+  selected: string | null;
+  /**
+   * Per-file markdown render mode (true = Preview, false = Write).
+   * Only present for panes that have had at least one md file toggled.
+   */
+  markdownByFileId?: Record<string, boolean>;
+  /**
+   * Per-brick selected sub-tab id (e.g. 'overview', 'examples').
+   * Only present for panes that have had at least one brick tab changed.
+   */
+  brickTabByFileId?: Record<string, string>;
+};
+export type OpenFilesStoreItem = {
+  /** Legacy mirror of panes.A — kept for backwards-compat / downgrade safety. */
+  items: string[];
+  /** Legacy mirror of panes.A.selected. */
+  selected: string | null;
+  /** Per-pane tabs/selection/markdown state. Optional for legacy records. */
+  panes?: {
+    A: OpenFilesStorePaneState;
+    B?: OpenFilesStorePaneState;
+  };
+  /** Whether the editor is currently split (pane B visible). */
+  isSplit?: boolean;
+  /** Width of the left pane as a percentage (0-100). */
+  splitProportionLeft?: number;
+};
 export type OpenFilesStore = { [key: string]: OpenFilesStoreItem };
+
+/**
+ * Shape patched onto an existing OpenFilesStoreItem. Any field set here
+ * replaces that field on the stored record; everything else is preserved.
+ * Pane sub-fields are merged at the pane level (so a patch to
+ * `panes.A.markdownByFileId` doesn't clobber `panes.A.items`).
+ */
+export type OpenFilesStorePatch = Partial<Omit<OpenFilesStoreItem, 'panes'>> & {
+  panes?: {
+    A?: Partial<OpenFilesStorePaneState>;
+    B?: Partial<OpenFilesStorePaneState> | null;
+  };
+};
+
+function mergeStoreItem(
+  prev: OpenFilesStoreItem | undefined,
+  patch: OpenFilesStorePatch,
+): OpenFilesStoreItem {
+  const base: OpenFilesStoreItem = prev ?? { items: [], selected: null };
+  const mergedPanes = ((): OpenFilesStoreItem['panes'] => {
+    if (!patch.panes) return base.panes;
+    // Pane B explicitly set to null means "clear pane B".
+    const nextB =
+      patch.panes.B === null
+        ? undefined
+        : patch.panes.B
+        ? {
+            items: patch.panes.B.items ?? base.panes?.B?.items ?? [],
+            selected:
+              patch.panes.B.selected !== undefined
+                ? patch.panes.B.selected
+                : base.panes?.B?.selected ?? null,
+            markdownByFileId:
+              patch.panes.B.markdownByFileId !== undefined
+                ? patch.panes.B.markdownByFileId
+                : base.panes?.B?.markdownByFileId,
+            brickTabByFileId:
+              patch.panes.B.brickTabByFileId !== undefined
+                ? patch.panes.B.brickTabByFileId
+                : base.panes?.B?.brickTabByFileId,
+          }
+        : base.panes?.B;
+    const nextA: OpenFilesStorePaneState = {
+      items: patch.panes.A?.items ?? base.panes?.A?.items ?? base.items,
+      selected:
+        patch.panes.A?.selected !== undefined
+          ? patch.panes.A.selected
+          : base.panes?.A?.selected ?? base.selected ?? null,
+      markdownByFileId:
+        patch.panes.A?.markdownByFileId !== undefined
+          ? patch.panes.A.markdownByFileId
+          : base.panes?.A?.markdownByFileId,
+      brickTabByFileId:
+        patch.panes.A?.brickTabByFileId !== undefined
+          ? patch.panes.A.brickTabByFileId
+          : base.panes?.A?.brickTabByFileId,
+    };
+    return { A: nextA, B: nextB };
+  })();
+  return {
+    items: patch.items ?? base.items,
+    selected:
+      patch.selected !== undefined ? patch.selected : base.selected ?? null,
+    panes: mergedPanes,
+    isSplit: patch.isSplit !== undefined ? patch.isSplit : base.isSplit,
+    splitProportionLeft:
+      patch.splitProportionLeft !== undefined
+        ? patch.splitProportionLeft
+        : base.splitProportionLeft,
+  };
+}
 
 export const SKETCH_SECRETS_FILE_ID = 'sketch.secrets';
 
@@ -35,6 +143,13 @@ export const useFiles: UseFiles = function ({
   );
   const [openFileIds, setOpenFileIds] = useState<string[]>([]);
   const [enableOpenFilesPersistence] = useState(true);
+  const [previewFileId, _setPreviewFileId] = useState<string>();
+  const previewFileIdRef = useRef<string>();
+
+  const setPreviewFileId = useCallback((id: string | undefined) => {
+    _setPreviewFileId(id);
+    previewFileIdRef.current = id;
+  }, []);
 
   const queryClient = useQueryClient();
   const { data: openFilesStore } = useQuery(
@@ -59,43 +174,54 @@ export const useFiles: UseFiles = function ({
     }
   });
 
+  useEffect(() => {
+    if (previewFileId && unsavedFileIds?.has(previewFileId)) {
+      setPreviewFileId(undefined);
+    }
+  }, [unsavedFileIds, previewFileId, setPreviewFileId]);
+
+  const renderFileIcon = useCallback(
+    (fullName: string, extension: string): ReactNode => {
+      if (isClassicSketch) {
+        const LegacyIcon = getFileIcon(extension);
+        return LegacyIcon ? createElement(LegacyIcon) : undefined;
+      }
+      return <FileIcon fileName={fullName} />;
+    },
+    [isClassicSketch],
+  );
+
   const selectableMainFile: SelectableFileData | undefined = useMemo(() => {
     if (!mainFile) return undefined;
-    const IconComponent = isClassicSketch
-      ? getFileIcon(mainFile.extension)
-      : getAppLabFileIcon(
-          mainFile.name === 'app.yaml' ? 'config' : mainFile.extension,
-        );
     return {
       fileId: mainFile.path,
       fileFullName: mainFile.fullName,
       fileName: mainFile.name,
       fileExtension: mainFile.extension,
-      Icon: IconComponent ? <IconComponent /> : undefined,
+      Icon: renderFileIcon(mainFile.fullName, mainFile.extension),
       tags: ['Main'],
       isFixed: isClassicSketch,
       isMetadataReadOnly: isClassicSketch,
     };
-  }, [isClassicSketch, mainFile]);
+  }, [isClassicSketch, mainFile, renderFileIcon]);
 
   const mainLibraryFile = useMemo(() => {
     if (isLibraryRoute && !filesAreLoading && files) {
       const mainLibFile = getMainLibraryFile(files);
       if (mainLibFile) {
-        const IconComponent = getFileIcon(mainLibFile.extension);
         return {
           fileId: mainLibFile.path,
           fileFullName: mainLibFile.fullName,
           fileName: mainLibFile.name,
           fileExtension: mainLibFile.extension,
-          Icon: IconComponent ? <IconComponent /> : undefined,
+          Icon: renderFileIcon(mainLibFile.fullName, mainLibFile.extension),
           tags: ['Main'],
           isFixed: isClassicSketch,
           isMetadataReadOnly: isClassicSketch,
         };
       }
     }
-  }, [isLibraryRoute, filesAreLoading, files, isClassicSketch]);
+  }, [isLibraryRoute, filesAreLoading, files, isClassicSketch, renderFileIcon]);
 
   const bricksFiles = useMemo(
     () =>
@@ -124,7 +250,7 @@ export const useFiles: UseFiles = function ({
         fileName: 'Sketch Secrets',
         fileFullName: 'Sketch Secrets',
         fileExtension: 'secrets',
-        Icon: getFileIcon('secrets'),
+        Icon: renderFileIcon('Sketch Secrets', 'secrets'),
         tags: [],
         isMetadataReadOnly: true,
       };
@@ -133,6 +259,7 @@ export const useFiles: UseFiles = function ({
     filesContentLoaded,
     openFileIds,
     openFilesStore?.items,
+    renderFileIcon,
     showSketchSecretsFile,
   ]);
 
@@ -141,24 +268,19 @@ export const useFiles: UseFiles = function ({
       return [];
     }
     return files
-      .map((file) => {
-        const IconComponent = isClassicSketch
-          ? getFileIcon(file.extension)
-          : getAppLabFileIcon(file.extension);
-        return {
-          fileId: file.path,
-          fileFullName: file.fullName,
-          fileName: file.name,
-          fileExtension: file.extension,
-          Icon: IconComponent ? <IconComponent /> : undefined,
-          isFixed: false,
-          isMetadataReadOnly: false,
-        };
-      })
+      .map((file) => ({
+        fileId: file.path,
+        fileFullName: file.fullName,
+        fileName: file.name,
+        fileExtension: file.extension,
+        Icon: renderFileIcon(file.fullName, file.extension),
+        isFixed: false,
+        isMetadataReadOnly: false,
+      }))
       .filter((f) =>
         isLibraryRoute ? f.fileId !== mainLibraryFile?.fileId : true,
       );
-  }, [files, isClassicSketch, isLibraryRoute, mainLibraryFile?.fileId]);
+  }, [files, isLibraryRoute, mainLibraryFile?.fileId, renderFileIcon]);
 
   const editorFiles = useMemo(
     () =>
@@ -333,12 +455,39 @@ export const useFiles: UseFiles = function ({
       const uniqueFileIds = Array.from(new Set(fileIds));
       await IDB.update(OPEN_FILES_KEY, (prevValue?: OpenFilesStore) => {
         const prevStoreItem = prevValue?.[storeEntityId];
+        const nextSelected = selectedFileId ?? prevStoreItem?.selected ?? null;
         return {
           ...prevValue,
-          [storeEntityId]: {
+          [storeEntityId]: mergeStoreItem(prevStoreItem, {
             items: uniqueFileIds,
-            selected: selectedFileId ?? prevStoreItem?.selected ?? null,
-          },
+            selected: nextSelected,
+            panes: {
+              A: { items: uniqueFileIds, selected: nextSelected },
+            },
+          }),
+        };
+      });
+      queryClient.invalidateQueries(['get-stored-open-files', storeEntityId]);
+    },
+    [storeEntityId, enableOpenFilesPersistence, queryClient],
+  );
+
+  /**
+   * Patch the split-related fields (pane B state, both panes' markdown maps,
+   * isSplit, split width) on the per-app store record. Shallow-merges via
+   * `mergeStoreItem` so it never clobbers pane A's `{items, selected}`
+   * written by `storeOpenFiles`.
+   */
+  const storeSplitState = useCallback(
+    async (patch: OpenFilesStorePatch) => {
+      if (!storeEntityId || !enableOpenFilesPersistence) {
+        return;
+      }
+      await IDB.update(OPEN_FILES_KEY, (prevValue?: OpenFilesStore) => {
+        const prevStoreItem = prevValue?.[storeEntityId];
+        return {
+          ...prevValue,
+          [storeEntityId]: mergeStoreItem(prevStoreItem, patch),
         };
       });
       queryClient.invalidateQueries(['get-stored-open-files', storeEntityId]);
@@ -355,46 +504,79 @@ export const useFiles: UseFiles = function ({
   }, [openFilesInitComplete, openFileIds, selectedFileId, storeOpenFiles]);
 
   const selectFile = useCallback(
-    (fileId?: string, openAtIndex?: number) => {
+    (params: {
+      fileId?: string;
+      openAtIndex?: number;
+      isPreview?: boolean;
+    }) => {
+      const { fileId, openAtIndex, isPreview = false } = params;
+
       if (!filesContentLoaded) {
         return;
       }
 
-      setSelectedFileId((prevSelectedFileId) => {
-        if (prevSelectedFileId === fileId) {
-          return prevSelectedFileId;
+      if (!fileId) {
+        setSelectedFileId(undefined);
+        return;
+      }
+
+      const oldPreviewId = previewFileIdRef.current;
+      const oldSelectedId = selectedFileId;
+
+      setSelectedFileId(fileId);
+
+      setOpenFileIds((prevOpenFiles) => {
+        if (prevOpenFiles.includes(fileId)) {
+          if (!isPreview && oldPreviewId === fileId) {
+            setPreviewFileId(undefined);
+          }
+          return prevOpenFiles;
         }
 
-        if (!fileId) {
-          return undefined;
+        let newOpenFiles = prevOpenFiles;
+        let targetIndex =
+          typeof openAtIndex === 'number' && openAtIndex >= 0
+            ? openAtIndex
+            : -1;
+
+        if (oldPreviewId && prevOpenFiles.includes(oldPreviewId)) {
+          const indexOfOldPreview = prevOpenFiles.indexOf(oldPreviewId);
+
+          if (oldPreviewId === oldSelectedId) {
+            targetIndex = indexOfOldPreview;
+          } else if (targetIndex > indexOfOldPreview) {
+            targetIndex -= 1;
+          }
+
+          newOpenFiles = prevOpenFiles.filter((id) => id !== oldPreviewId);
         }
 
-        setOpenFileIds((prevOpenFileIds) => {
-          if (fileId && prevOpenFileIds.includes(fileId)) {
-            return prevOpenFileIds;
-          }
-          let currOpenFileIds: string[];
-          if (
-            typeof openAtIndex === 'number' &&
-            Number.isInteger(openAtIndex) &&
-            openAtIndex >= 0 &&
-            openAtIndex < prevOpenFileIds.length
-          ) {
-            currOpenFileIds = [
-              ...prevOpenFileIds.slice(0, openAtIndex),
-              fileId,
-              ...prevOpenFileIds.slice(openAtIndex),
-            ];
-          } else {
-            currOpenFileIds = [...prevOpenFileIds, fileId];
-          }
-          return currOpenFileIds;
-        });
+        if (
+          targetIndex === -1 &&
+          oldSelectedId &&
+          newOpenFiles.includes(oldSelectedId)
+        ) {
+          targetIndex = newOpenFiles.indexOf(oldSelectedId) + 1;
+        }
 
-        return fileId;
+        if (isPreview) {
+          setPreviewFileId(fileId);
+        } else {
+          setPreviewFileId(undefined);
+        }
+
+        if (targetIndex !== -1 && targetIndex <= newOpenFiles.length) {
+          return [
+            ...newOpenFiles.slice(0, targetIndex),
+            fileId,
+            ...newOpenFiles.slice(targetIndex),
+          ];
+        } else {
+          return [...newOpenFiles, fileId];
+        }
       });
     },
-    [filesContentLoaded],
+    [filesContentLoaded, setPreviewFileId, selectedFileId],
   );
 
   const closeFile = useCallback(
@@ -456,7 +638,7 @@ export const useFiles: UseFiles = function ({
   );
 
   const updateOpenFilesOrder = useCallback(
-    (fileIds: string[]) => {
+    (fileIds: string[], draggedFileId?: string) => {
       setOpenFileIds((prevOpenFileIds) => {
         if (
           fileIds.length !== prevOpenFileIds.length ||
@@ -468,10 +650,13 @@ export const useFiles: UseFiles = function ({
         }
         return fileIds;
       });
-    },
-    [editorFileIdsMap],
-  );
 
+      if (draggedFileId && draggedFileId === previewFileIdRef.current) {
+        setPreviewFileId(undefined);
+      }
+    },
+    [editorFileIdsMap, setPreviewFileId],
+  );
   const onSketchRename = useCallback(
     async (_newName: string) => {
       if (!storeEntityId || !selectableMainFile || !openFilesStore) {
@@ -521,11 +706,13 @@ export const useFiles: UseFiles = function ({
     unsavedFileIds,
     selectedFile,
     openFilesStore,
+    previewFileId,
     selectFile,
     closeFile,
     updateOpenFile,
     updateOpenFilesOrder,
     onSketchRename,
     onAppRename,
+    storeSplitState,
   };
 };

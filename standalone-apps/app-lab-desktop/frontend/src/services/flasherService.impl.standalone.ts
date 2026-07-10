@@ -1,11 +1,12 @@
 import {
+  eventsOff,
   eventsOn,
   FlasherService,
-  FlashEvent,
-  OSImageRelease,
 } from '@cloud-editor-mono/domain/src/services/services-by-app/app-lab';
+import { FlashEvent, OSImageRelease } from '@cloud-editor-mono/infrastructure';
 
 import {
+  CancelFlash as CancelFlashGo,
   Flash,
   GetAvailableFreeSpace,
   GetOSImageVersion,
@@ -57,11 +58,20 @@ export const boardNeedsOSUpdate: FlasherService['boardNeedsOSUpdate'] =
     return false;
   };
 
+export const cancelFlash: FlasherService['cancelFlash'] = function () {
+  eventsOff('flash-progress');
+  CancelFlashGo();
+};
+
 export const flash: FlasherService['flash'] = async function (
   image: OSImageRelease,
   preserveUserPartition: boolean,
   onFlashEvent: (event: FlashEvent) => void,
 ) {
   eventsOn('flash-progress', onFlashEvent);
-  return Flash(mapOSImageRelease(image), preserveUserPartition);
+  try {
+    return await Flash(mapOSImageRelease(image), preserveUserPartition);
+  } finally {
+    eventsOff('flash-progress');
+  }
 };

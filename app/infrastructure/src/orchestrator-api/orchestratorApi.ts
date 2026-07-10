@@ -17,6 +17,7 @@ import {
   EventSourceHandlers,
   getEventSource,
   postEventSource,
+  putEventSource,
 } from '../fetch-event-source';
 import { getWebSocket, WebSocketHandlers } from '../websocket';
 import {
@@ -45,6 +46,22 @@ import {
   UpdateCheckResult,
   Version,
 } from './orchestratorApi.type';
+
+export const APP_NAME_IN_USE_ERROR = 'APP_NAME_IN_USE';
+export const BOARD_STORAGE_FULL_ERROR = 'BOARD_STORAGE_FULL';
+
+function handleOrchestratorError(error: WretchError): never {
+  if (error.status === 507) {
+    throw new Error(BOARD_STORAGE_FULL_ERROR);
+  }
+  if (error.status === 409) {
+    throw new Error(APP_NAME_IN_USE_ERROR);
+  }
+  if (error.json && error.json.details) {
+    throw new Error(error.json.details);
+  }
+  throw error;
+}
 
 export async function getAppsV1Request(
   params: ListAppParams,
@@ -94,6 +111,7 @@ export async function createAppV1Request(
     url: origin,
     endpoint,
     body,
+    handleError: handleOrchestratorError,
   });
 
   return response?.id;
@@ -272,6 +290,7 @@ export async function cloneAppV1Request(
     url: origin,
     endpoint,
     body,
+    handleError: handleOrchestratorError,
   });
 
   return response?.id;
@@ -379,7 +398,7 @@ export async function getAppLogsStreamV1Request(
   abortController?: AbortController,
   origin = Config.ORCHESTRATOR_API_URL,
 ): Promise<void> {
-  const endpoint = `/v1/apps/${id}/logs?tail=1000`;
+  const endpoint = `/v1/apps/${id}/logs?tail=0`;
   const sseUrl = `${origin}${endpoint}`;
 
   return getEventSource(sseUrl, handlers, undefined, abortController);
@@ -707,6 +726,7 @@ export async function installEIModelV1Request(
 export async function deleteAIModelV1Request(
   id: string,
   origin: string = Config.ORCHESTRATOR_API_URL,
+  isForced?: boolean,
 ): Promise<void> {
   const endpoint = `/v1/models/${id}`;
 
@@ -719,6 +739,7 @@ export async function deleteAIModelV1Request(
       }
       throw error;
     },
+    params: isForced ? { force: 'true' } : undefined,
   });
 
   if (!response) {
@@ -726,4 +747,22 @@ export async function deleteAIModelV1Request(
       `Call to "${endpoint}" did not respond with the expected result`,
     );
   }
+}
+
+export async function uploadAIModelV1Request(
+  id: string,
+  handlers: EventSourceHandlers,
+  abortController?: AbortController,
+  origin = Config.ORCHESTRATOR_API_URL,
+): Promise<void> {
+  const endpoint = `/v1/models/${id}`;
+  const sseUrl = `${origin}${endpoint}`;
+
+  return putEventSource(
+    sseUrl,
+    handlers,
+    undefined,
+    undefined,
+    abortController,
+  );
 }

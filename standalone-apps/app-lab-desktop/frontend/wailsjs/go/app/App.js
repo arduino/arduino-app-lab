@@ -6,6 +6,10 @@ export function ApplyBoardUpdate(arg1, arg2) {
   return window['go']['app']['App']['ApplyBoardUpdate'](arg1, arg2);
 }
 
+export function CancelFlash() {
+  return window['go']['app']['App']['CancelFlash']();
+}
+
 export function CarrierDisable(arg1, arg2) {
   return window['go']['app']['App']['CarrierDisable'](arg1, arg2);
 }
@@ -200,6 +204,10 @@ export function IsBoard() {
 
 export function IsDirectory(arg1) {
   return window['go']['app']['App']['IsDirectory'](arg1);
+}
+
+export function IsLocalDirectory(arg1) {
+  return window['go']['app']['App']['IsLocalDirectory'](arg1);
 }
 
 export function IsUserPartitionPreservationSupported(arg1, arg2) {

@@ -1,11 +1,16 @@
 import { ArrowDown, CloseX } from '@cloud-editor-mono/images/assets/icons';
+import * as ContextMenu from '@radix-ui/react-context-menu';
 import clsx from 'clsx';
 import { useCallback, useEffect, useState } from 'react';
 import { usePreviousDistinct } from 'react-use';
 
+import { getShortcutCommand } from '../../common/utils';
+import { ContextMenuItemIds } from '../../context-menu/contextMenu.type';
+import { messages as contextMenuTranslations } from '../../context-menu/messages';
 import { IconButton } from '../../essential/icon-button';
 import { useI18n } from '../../i18n/useI18n';
 import { XSmall, XXSmall } from '../../typography';
+import { useMonitorContextMenu } from '../hooks/useMonitorContextMenu';
 import { messages as translations } from '../messages';
 import {
   SerialMonitorContentsProps,
@@ -18,10 +23,31 @@ const SerialMonitorContents: React.FC<SerialMonitorContentsProps> = ({
   codeMirrorRef,
   lastLineIsVisible,
   scrollToBottom,
+  viewInstance,
   classes,
 }: SerialMonitorContentsProps) => {
   const { formatMessage } = useI18n();
   const [showErrorMessage, setShowErrorMessage] = useState(false);
+
+  const { containerRef, clickHandlers, disabledKeys, setIsOpen } =
+    useMonitorContextMenu(viewInstance);
+
+  const shortcutCommand = getShortcutCommand();
+
+  const menuItems = [
+    {
+      id: ContextMenuItemIds.Copy,
+      label: formatMessage(contextMenuTranslations[ContextMenuItemIds.Copy]),
+      shortcut: `${shortcutCommand}C`,
+    },
+    {
+      id: ContextMenuItemIds.SelectAll,
+      label: formatMessage(
+        contextMenuTranslations[ContextMenuItemIds.SelectAll],
+      ),
+      shortcut: `${shortcutCommand}A`,
+    },
+  ];
 
   useEffect(() => {
     setShowErrorMessage(
@@ -55,36 +81,72 @@ const SerialMonitorContents: React.FC<SerialMonitorContentsProps> = ({
   };
 
   return (
-    <div className={clsx(styles['serial-monitor-contents'], classes?.wrapper)}>
-      {renderConnectingLabel()}
-      {showErrorMessage && (
-        <div className={styles['serial-monitor-error']}>
-          <XXSmall>
-            {formatMessage(
-              status === SerialMonitorStatus.Unavailable
-                ? translations.unavailable
-                : translations.connectionLost,
+    <div
+      ref={containerRef}
+      className={clsx(styles['serial-monitor-contents'], classes?.wrapper)}
+    >
+      <ContextMenu.Root onOpenChange={setIsOpen}>
+        <ContextMenu.Trigger asChild>
+          <div className={styles['context-menu-trigger']}>
+            {renderConnectingLabel()}
+            {showErrorMessage && (
+              <div className={styles['serial-monitor-error']}>
+                <XXSmall>
+                  {formatMessage(
+                    status === SerialMonitorStatus.Unavailable
+                      ? translations.unavailable
+                      : translations.connectionLost,
+                  )}
+                </XXSmall>
+                <CloseX onClick={closeUnavailableMessage} />
+              </div>
             )}
-          </XXSmall>
-          <CloseX onClick={closeUnavailableMessage} />
-        </div>
-      )}
-      <div id="code-mirror-wrapper" ref={codeMirrorRef} />
-      {lastLineIsVisible === false && (
-        <IconButton
-          onPress={scrollToBottom}
-          label={formatMessage(translations.viewNewData)}
-          Icon={ArrowDown}
-          classes={{
-            button: clsx(
-              styles['serial-monitor-scroll-down'],
-              classes?.viewNewDataButton,
-            ),
-          }}
-        >
-          <XSmall>{formatMessage(translations.viewNewData)}</XSmall>
-        </IconButton>
-      )}
+            <div
+              id="code-mirror-wrapper"
+              className={classes?.content}
+              ref={codeMirrorRef}
+            />
+            {lastLineIsVisible === false && (
+              <IconButton
+                onPress={scrollToBottom}
+                label={formatMessage(translations.viewNewData)}
+                Icon={ArrowDown}
+                classes={{
+                  button: clsx(
+                    styles['serial-monitor-scroll-down'],
+                    classes?.viewNewDataButton,
+                  ),
+                }}
+              >
+                <XSmall>{formatMessage(translations.viewNewData)}</XSmall>
+              </IconButton>
+            )}
+          </div>
+        </ContextMenu.Trigger>
+        <ContextMenu.Portal>
+          <ContextMenu.Content className={styles['context-menu']}>
+            {menuItems.map((item) => {
+              const handler = clickHandlers[item.id];
+              const isDisabled = disabledKeys.includes(item.id);
+              return (
+                <ContextMenu.Item
+                  key={item.id}
+                  className={styles['context-menu-item']}
+                  disabled={isDisabled}
+                  onSelect={(): void => {
+                    if (handler) {
+                      void handler();
+                    }
+                  }}
+                >
+                  {item.label}
+                  <kbd>{item.shortcut}</kbd>
+                </ContextMenu.Item>
+              );
+            })}
+          </ContextMenu.Content>
+        </ContextMenu.Portal>
+      </ContextMenu.Root>
     </div>
   );
 };

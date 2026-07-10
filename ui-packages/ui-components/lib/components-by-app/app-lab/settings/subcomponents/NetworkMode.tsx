@@ -5,9 +5,10 @@ import {
 } from '@cloud-editor-mono/ui-components/lib/components-by-app/app-lab';
 import { useState } from 'react';
 
-import { ToggleButton } from '../../../../essential/toggle-button';
 import { useI18n } from '../../../shared';
+import { Toggle } from '../../essential/toggle';
 import { systemMessages } from '../messages';
+import styles from '../settings.module.scss';
 
 export interface DeviceStorageProps {
   disabled?: boolean;
@@ -34,7 +35,8 @@ export const NetworkMode = ({
           passwordLogic.onOpenChange(true);
         }}
       />
-      <ToggleButton
+      <Toggle
+        className={styles['toggle-button']}
         isDisabled={disabled}
         isSelected={isNetworkModeEnabled}
         aria-label={formatMessage(systemMessages.remoteAccess)}

@@ -169,7 +169,7 @@ export const useAppListLogic = function (
     setImportResourceDialogOpen: setImportAppDialogOpen,
     setImportedResourceId: setImportedAppId,
     selectResourcePath: selectAppPathToImport,
-    importResourceFromPath: importAppFromPath,
+    importResourceFromPath: (filePath: string) => importAppFromPath(filePath),
     type: 'app',
     invalidateQueries: () => {
       queryClient.invalidateQueries(['list-my-apps']);
@@ -184,6 +184,7 @@ export const useAppListLogic = function (
         sendAppLabNotification({
           message: formatMessage(appListMessages.successfullyDeletedApp),
           variant: 'success',
+          duration: 3000,
         });
       }
       return result;

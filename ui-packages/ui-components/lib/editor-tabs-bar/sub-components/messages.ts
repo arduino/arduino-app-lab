@@ -28,6 +28,16 @@ export const commandMessages = defineMessages<keyof typeof TabMenuItemIds>({
     defaultMessage: 'Close All',
     description: 'Close All',
   },
+  [TabMenuItemIds.SplitRight]: {
+    id: 'tabMenu.splitRight',
+    defaultMessage: 'Split Right',
+    description: 'Open the file in a split editor on the right',
+  },
+  [TabMenuItemIds.SplitLeft]: {
+    id: 'tabMenu.splitLeft',
+    defaultMessage: 'Split Left',
+    description: 'Open the file in a split editor on the left',
+  },
   [TabMenuItemIds.RenameFile]: {
     id: 'tabMenu.rename',
     defaultMessage: 'Rename',

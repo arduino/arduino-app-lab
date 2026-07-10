@@ -14,7 +14,7 @@ type Connect<T> = T extends AppSSEWithId
   ? (id: string) => Promise<void>
   : () => Promise<void>;
 
-interface UseSSE<T> {
+export interface UseSSE<T> {
   connect: Connect<T>;
   abort: () => void;
   progress: number;

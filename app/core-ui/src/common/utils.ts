@@ -6,20 +6,11 @@ import {
   transformContentToDataByMimeType,
 } from '@cloud-editor-mono/domain/src/services/services-by-app/shared';
 import {
-  Bricks,
-  FileFolder as FileFolderIcon,
-  FileGeneric as FileGenericIcon,
-  FileHeader as FileHeaderIcon,
-  FileImage as FileImageIcon,
-  FileIno as FileInoIcon,
-  FilePython as FilePythonIcon,
-  FileText as FileTextIcon,
   FileTypeHeader,
   FileTypeImage,
   FileTypeIno,
   FileTypeSecrets,
   FileTypeText,
-  FileYaml as FileYamlIcon,
 } from '@cloud-editor-mono/images/assets/icons';
 import { GetFilesList_Response } from '@cloud-editor-mono/infrastructure';
 import { FunctionComponent, SVGProps, useCallback } from 'react';
@@ -73,39 +64,6 @@ export function getFileIcon(
       return FileTypeSecrets;
     default:
       return undefined;
-  }
-}
-
-export function getAppLabFileIcon(
-  extension: string,
-): FunctionComponent<SVGProps<SVGSVGElement> & { title?: string | undefined }> {
-  switch (extension) {
-    case 'ino':
-    case 'cpp':
-    case 'c':
-    case 'pde':
-      return FileInoIcon;
-    case 'h':
-      return FileHeaderIcon;
-    case 'txt':
-    case 'adoc':
-    case 'asciidoc':
-    case 'asc':
-      return FileTextIcon;
-    case 'py':
-      return FilePythonIcon;
-    case 'png':
-    case 'jpg':
-    case 'svg':
-      return FileImageIcon;
-    case 'brick':
-      return Bricks;
-    case 'folder':
-      return FileFolderIcon;
-    case 'yaml':
-      return FileYamlIcon;
-    default:
-      return FileGenericIcon;
   }
 }
 

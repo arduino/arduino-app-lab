@@ -36,9 +36,8 @@ export const canBeRenamed = (node: TreeNode): boolean => {
     return canEditNode(node);
   } else if (isFolderNode(node)) {
     // Enable rename for user-created folders - backend now has extended support
-    const isSketchFolder = node.path === 'sketch';
     const isMainPythonFolder = node.path === 'python';
-    return !isMainPythonFolder && !isSketchFolder;
+    return !isMainPythonFolder;
   }
   return false;
 };
@@ -47,10 +46,9 @@ export const canBeDeleted = (node: TreeNode): boolean => {
   if (isFileNode(node)) {
     return canEditNode(node);
   } else if (isFolderNode(node)) {
-    // Enable delete for user-created folders - same logic as canBeRenamed
-    const isSketchFolder = node.path === 'sketch';
+    // Enable delete for user-created folders - only python folder is protected
     const isMainPythonFolder = node.path === 'python';
-    return !isMainPythonFolder && !isSketchFolder;
+    return !isMainPythonFolder;
   }
   return false;
 };
@@ -59,23 +57,29 @@ export const canEditNode = (node: TreeNode): boolean => {
   if (isFileNode(node)) {
     return canEditFile(node);
   } else if (isFolderNode(node)) {
-    // Enable editing for user-created folders
-    const isSketchFolder = node.path === 'sketch';
+    // Enable editing for user-created folders - only python folder is protected
     const isMainPythonFolder = node.path === 'python';
-    return !isMainPythonFolder && !isSketchFolder;
+    return !isMainPythonFolder;
   }
   return false;
 };
 
 export const canBeDragged = (node: TreeNode): boolean => {
+  // All files and folders can be dragged so they may be dropped onto the
+  // editor panes for viewing. Whether the drop is allowed to perform a
+  // *move* within the tree is decided by `canBeMoved`; protected entries
+  // surface a notification instead.
+  void node;
+  return true;
+};
+
+export const canBeMoved = (node: TreeNode): boolean => {
   if (isFileNode(node)) {
-    // All files can be dragged except protected ones
     return canEditFile(node);
   } else if (isFolderNode(node)) {
-    // Folders can be dragged - same logic as canBeRenamed
-    const isSketchFolder = node.path === 'sketch';
+    // Folders can be moved - only python folder is protected
     const isMainPythonFolder = node.path === 'python';
-    return !isMainPythonFolder && !isSketchFolder;
+    return !isMainPythonFolder;
   }
   return false;
 };
@@ -83,9 +87,10 @@ export const canBeDragged = (node: TreeNode): boolean => {
 export const canEditFile = (node: FileNode): boolean => {
   const isAppYaml = /^app.ya?ml$/.test(node.path);
   const isSketchYaml = /^sketch\/sketch.ya?ml$/.test(node.path);
+  const isSketchIno = /^sketch\/sketch.ino$/.test(node.path);
   const isMainPy = /^python\/main.py$/.test(node.path);
 
-  return !isMainPy && !isAppYaml && !isSketchYaml;
+  return !isMainPy && !isAppYaml && !isSketchYaml && !isSketchIno;
 };
 
 export const countNodes = (node?: TreeNode): number => {
@@ -140,22 +145,6 @@ export function insertNewNode(
 
   return clone;
 }
-
-export const formatBytes = (
-  bytes: number | undefined,
-  decimals = 1,
-): string => {
-  if (bytes === undefined || bytes < 0) return 'N/A';
-  if (bytes === 0) return '0 bytes';
-  if (bytes < 1024) return `${bytes} byte${bytes === 1 ? '' : 's'}`;
-
-  const k = 1024;
-  const sizes = ['KB', 'MB', 'GB', 'TB', 'PB'];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-  const value = bytes / Math.pow(k, i);
-
-  return `${parseFloat(value.toFixed(decimals))} ${sizes[i - 1]}`;
-};
 
 export const formatDate = (dateStr: string): string => {
   const date = new Date(dateStr);

@@ -26,6 +26,10 @@ export let flash: FlasherService['flash'] = async function () {
   throw new Error('flash service not implemented');
 };
 
+export let cancelFlash: FlasherService['cancelFlash'] = function () {
+  throw new Error('cancelFlash service not implemented');
+};
+
 export const setFlasherService = (service: FlasherService): void => {
   boardNeedsOSUpdate = service.boardNeedsOSUpdate;
   getAvailableFreeSpace = service.getAvailableFreeSpace;
@@ -33,4 +37,5 @@ export const setFlasherService = (service: FlasherService): void => {
     service.isUserPartitionPreservationSupported;
   listAvailableOSImages = service.listAvailableOSImages;
   flash = service.flash;
+  cancelFlash = service.cancelFlash;
 };

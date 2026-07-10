@@ -98,6 +98,9 @@ func uploadAppFile(ctx context.Context, orchestratorURL string, filePath string)
 		}
 		return "", fmt.Errorf("conflict: %s", string(respBody))
 
+	case http.StatusInsufficientStorage:
+		return "", fmt.Errorf("BOARD_STORAGE_FULL")
+
 	case http.StatusInternalServerError:
 		var errorResp map[string]string
 		if err := json.Unmarshal(respBody, &errorResp); err == nil {
@@ -119,6 +122,29 @@ func SelectAppDialog(ctx context.Context, orchestratorURL string) (string, error
 			{
 				DisplayName: "ZIP Archive (*.zip)",
 				Pattern:     "*.zip",
+			},
+		},
+	})
+
+	if err != nil {
+		return "", fmt.Errorf("failed to open file dialog: %w", err)
+	}
+
+	// User cancelled - return empty string, no error
+	if filePath == "" {
+		return "", nil
+	}
+
+	return filePath, err
+}
+
+func SelectAiModelDialog(ctx context.Context, orchestratorURL string) (string, error) {
+	filePath, err := runtime.OpenFileDialog(ctx, runtime.OpenDialogOptions{
+		Title: "Select Model to Import",
+		Filters: []runtime.FileFilter{
+			{
+				DisplayName: "GGUF Archive (*.gguf)",
+				Pattern:     "*.gguf",
 			},
 		},
 	})

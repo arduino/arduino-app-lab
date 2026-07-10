@@ -35,7 +35,10 @@ const FileContextMenu: React.FC<FileContextMenuProps> = ({
 
   return (
     <ContextMenu.Portal>
-      <ContextMenu.Content className={styles['tree-row-context-menu']}>
+      <ContextMenu.Content
+        className={styles['tree-row-context-menu']}
+        onContextMenu={(e): void => e.stopPropagation()}
+      >
         {isFolderNode(node) && (
           <>
             <ContextMenu.Item

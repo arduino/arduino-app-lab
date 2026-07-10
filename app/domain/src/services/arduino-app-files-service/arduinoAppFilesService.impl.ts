@@ -486,9 +486,13 @@ export let importResourceToAppFromPath: ArduinoAppFilesService['importResourceTo
 
 export let importDroppedResourceToApp: ArduinoAppFilesService['importDroppedResourceToApp'] =
   function () {
-    return () => {
-      throw new Error('importDroppedResourceToApp method not implemented');
-    };
+    // The real service isn't bound yet. In production this never happens
+    // (dependencies are injected before render), but during dev hot-reload the
+    // service singletons can reset before `injectDependencies()` re-runs. Warn
+    // and return a no-op unsubscribe — throwing here would blow up the React
+    // effect cleanup that calls it. A full reload re-injects the real impl.
+    console.warn('importDroppedResourceToApp called before service injection');
+    return () => {};
   };
 
 export const setArduinoAppFilesService = (

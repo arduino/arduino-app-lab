@@ -1,4 +1,4 @@
-import { OSImageRelease } from '@cloud-editor-mono/domain/src/services/services-by-app/app-lab';
+import { OSImageRelease } from '@cloud-editor-mono/infrastructure';
 
 import { flasher } from '../../wailsjs/go/models';
 

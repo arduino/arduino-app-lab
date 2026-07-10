@@ -9,6 +9,7 @@ export * from './edge-impulse-api';
 export * from './events-api';
 export * from './fetch';
 export * from './fetch-event-source';
+export * from './flasher';
 export * from './gen-ai-api';
 export * from './iot-api';
 export * from './orchestrator-api';

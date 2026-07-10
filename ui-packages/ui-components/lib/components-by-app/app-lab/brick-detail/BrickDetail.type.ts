@@ -11,6 +11,13 @@ export interface BrickDetailModelImpulse {
   isInstalled: boolean;
   installedModelId: string | undefined;
   isOutdated?: boolean;
+  /**
+   * Board model id for an Edge Impulse model that is already known to the
+   * board and can therefore be downloaded by id through the generic,
+   * login-free path (no linked Edge Impulse account required). Undefined for
+   * models that must be installed from the Edge Impulse cloud.
+   */
+  downloadModelId?: string;
 }
 
 export interface BrickDetailModel {
@@ -20,6 +27,8 @@ export interface BrickDetailModel {
   url?: string;
   source: string;
   isBuiltIn: boolean;
+  isInstalled: boolean;
+  metadata: Record<string, string>;
   edgeImpulseProps?: {
     projectId: string;
     impulses: BrickDetailModelImpulse[];
@@ -32,6 +41,7 @@ export type BrickDetailLogic = (
 ) => {
   board?: Board;
   brick?: BrickDetails;
+  isBrickLoading?: boolean;
   isCustomBrick?: boolean;
   brickInstance?: BrickInstance;
   readme?: string | null;
@@ -40,7 +50,10 @@ export type BrickDetailLogic = (
   models?: BrickDetailModel[];
   readOnly?: boolean;
   hideEdgeImpulse?: boolean;
-  diskUsageWarning?: { used: string; total: string };
+  isExample?: boolean;
+  diskUsageWarning: (
+    modelId: string,
+  ) => { used: string; total: string } | undefined;
   configureDialogProps?: {
     open: boolean;
     appId: string;
@@ -56,16 +69,27 @@ export type BrickDetailLogic = (
   isEdgeImpulseConnected: boolean;
   onTrainNewModelClick: () => void;
   openExternalLink: (url: string) => void;
-  downloadModel: (projectId: string, impulseId: string) => Promise<void>;
-  removeModel: (modelId: string) => Promise<void>;
+  downloadEIModel: (projectId: string, impulseId: string) => Promise<void>;
+  downloadGenericModel: (projectId: string) => Promise<void>;
+  removeModel: (modelId: string, isForced?: boolean) => Promise<void>;
   openModelPage: (modelId: string, impulseId?: string) => void;
   getDownloadInfo: (modelId: string) => ModelDownloadInfo | undefined;
+  modelDownloadInfo?: ModelDownloadInfo;
   updateModelInUse: (modelId: string) => Promise<void>;
+  isModelUninstalling: (modelId: string) => boolean;
+  isModelInstalledInApp?: (model: BrickDetailModel) => boolean;
+};
+
+export type UploadAiModelLogic = {
+  onUpload: (file: File) => void;
+  onError: (error: string) => void;
+  openImportModelDialog: () => void;
 };
 
 export type ModelDownloadInfo = {
   impulseId: string;
   isDownloading: boolean;
+  percentage?: number;
   error?: boolean;
   success?: boolean;
 };

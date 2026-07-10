@@ -1008,7 +1008,7 @@ export const useMainLogic: UseMainLogic =
         selectableMainFile: mainInoFile,
         selectedTab: selectedFile,
         selectTab: selectFile,
-        selectSecretsTab: () => selectFile(SKETCH_SECRETS_FILE_ID),
+        selectSecretsTab: () => selectFile({ fileId: SKETCH_SECRETS_FILE_ID }),
         closeTab: closeFile,
         updateTabOrder: updateOpenFilesOrder,
         sketchDataIsLoading:
@@ -1070,6 +1070,11 @@ export const useMainLogic: UseMainLogic =
 
     const autoSave = usePreferenceObservable(Preferences.AutoSave);
 
+    const selectFileById = useCallback(
+      (fileId?: string) => selectFile({ fileId }),
+      [selectFile],
+    );
+
     const {
       setCode,
       formatCode,
@@ -1084,7 +1089,7 @@ export const useMainLogic: UseMainLogic =
       saveCode,
     } = useCodeChange(
       saveSketchFileQuery,
-      selectFile,
+      selectFileById,
       codeInjectionsSubjectNext,
       getCodeSubjectById,
       codeSubjectNext,
@@ -1337,6 +1342,7 @@ export const useMainLogic: UseMainLogic =
         codeIsFormatting,
         isConcurrent: isConcurrent,
         hideTabs: viewMode === 'snippet',
+        isSnippet: viewMode === 'snippet',
       };
     };
 
@@ -1562,7 +1568,7 @@ export const useMainLogic: UseMainLogic =
         isLoadingFiles: !allContentsRetrieved,
         unsavedFileIds,
         selectedFile,
-        selectFile,
+        selectFile: (fileId?: string) => selectFile({ fileId }),
         renameFile: renameFileHandler,
         deleteFile: openDeleteFileDialog,
         newFileAction: setDispatchNewFileAction,

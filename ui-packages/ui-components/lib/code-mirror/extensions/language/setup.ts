@@ -9,6 +9,8 @@ import { indentUnit } from '@codemirror/language';
 import { Extension } from '@codemirror/state';
 import { highlightSpecialChars } from '@codemirror/view';
 
+import { preprocArgCommentHighlight } from './preprocArgHighlight';
+
 export enum FileExt {
   Ino = 'ino',
   H = 'h',
@@ -31,7 +33,7 @@ type FileExtCodeMirrorExtensionMap = {
   [k in FileExt]: Extension;
 };
 
-const codeExts = [cpp(), highlightSpecialChars()];
+const codeExts = [cpp(), highlightSpecialChars(), preprocArgCommentHighlight];
 const pyCodeExts = [python(), highlightSpecialChars(), indentUnit.of('    ')];
 const yamlCodeExts = [yaml(), highlightSpecialChars()];
 const jsCodeExts = [javascript(), highlightSpecialChars()];

@@ -1,0 +1,40 @@
+@use "../../public/shared.module.scss";
+
+// Visual feedback overlay for drag-to-split operations.
+// A single grey translucent fill is used in every case so file-tree and
+// cross-pane tab drags share the same drop preview as the empty-editor
+// drag-over background.
+
+.drop-zone {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 5;
+}
+
+.trigger {
+    position: absolute;
+    bottom: 0;
+    pointer-events: auto;
+}
+
+.overlay {
+    position: absolute;
+    bottom: 0;
+    transition: opacity 0.12s ease;
+    opacity: 0;
+    background-color: var(--component-bg-flexible, rgba(174, 184, 184, 0.1));
+
+    &--visible {
+        opacity: 1;
+    }
+}
+
+// Variant classes kept for API compatibility with consumers; both render
+// the same grey translucent fill now.
+.overlay--fill,
+.overlay--border {
+    background-color: var(--component-bg-flexible, rgba(174, 184, 184, 0.1));
+    border: none;
+    border-radius: 0;
+}

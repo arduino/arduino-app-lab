@@ -26,7 +26,11 @@ type UseTabsBarActions = (
   selectedTab: SelectableFileData | undefined,
   mainFile: SelectableFileData | undefined,
   inputRef: React.RefObject<HTMLInputElement>,
-  selectTab: (id?: string) => void,
+  selectTab: (params: {
+    fileId?: string;
+    openAtIndex?: number;
+    isPreview?: boolean;
+  }) => void,
   selectSecretsTab: () => void,
   closeTab: (id: string) => void,
   addFile: AddFileHandler,
@@ -35,6 +39,9 @@ type UseTabsBarActions = (
   makeUniqueFileName: MakeUniqueFileName,
   replaceFileNameInvalidCharacters: (fileName: string) => string,
   onBeforeFileAction?: OnBeforeFileAction,
+  onSplitRight?: (fileId: string) => void,
+  onSplitLeft?: (fileId: string) => void,
+  onCloseAll?: () => void,
 ) => {
   filePath?: string;
   newTabMenuAction: (key: Key) => void;
@@ -42,10 +49,12 @@ type UseTabsBarActions = (
   addNewTab: (fileName: string, fileExtension: string) => void;
   renameTab: (fileId: string, newFileName: string) => void;
   handleImportedFile: (e: ChangeEvent<HTMLInputElement>) => Promise<void>;
-  onTabClick: (
-    tab: SelectableFileData,
-    event?: React.MouseEvent<HTMLElement, MouseEvent>,
-  ) => void;
+  onTabClick: (params: {
+    tab: SelectableFileData;
+    event?: React.MouseEvent<HTMLElement, MouseEvent>;
+    openAtIndex?: number;
+    isPreview?: boolean;
+  }) => void;
   isNewTabAdded: boolean;
   newTabActionType?: NewTabMenuItemIds;
   renamingFileId?: string;
@@ -65,6 +74,9 @@ export const useTabsBarActions: UseTabsBarActions = function (
   makeUniqueFileName,
   replaceFileNameInvalidCharacters,
   onBeforeFileAction,
+  onSplitRight,
+  onSplitLeft,
+  onCloseAll,
 ): ReturnType<UseTabsBarActions> {
   const [isNewTabAdded, setIsNewTabAdded] = useState(false);
   const [newTabActionType, setNewTabActionType] = useState<NewTabMenuItemIds>();
@@ -110,7 +122,7 @@ export const useTabsBarActions: UseTabsBarActions = function (
       case NewTabMenuItemIds.AddHeaderFile:
       case NewTabMenuItemIds.AddSketchFile:
       case NewTabMenuItemIds.AddTextFile: {
-        selectTab(undefined);
+        selectTab({});
         setIsNewTabAdded(true);
       }
     }
@@ -145,7 +157,17 @@ export const useTabsBarActions: UseTabsBarActions = function (
         }
         break;
       case TabMenuItemIds.CloseAll:
-        closeTabs(tabs);
+        if (onCloseAll) {
+          onCloseAll();
+        } else {
+          closeTabs(tabs);
+        }
+        break;
+      case TabMenuItemIds.SplitRight:
+        onSplitRight && onSplitRight(fileId);
+        break;
+      case TabMenuItemIds.SplitLeft:
+        onSplitLeft && onSplitLeft(fileId);
         break;
       case TabMenuItemIds.DeleteFile:
         deleteFile(fileId);
@@ -240,10 +262,14 @@ export const useTabsBarActions: UseTabsBarActions = function (
   };
 
   const onTabClick = useCallback(
-    (
-      tab: SelectableFileData,
-      event?: React.MouseEvent<HTMLElement, MouseEvent>,
-    ): void => {
+    (params: {
+      tab: SelectableFileData;
+      event?: React.MouseEvent<HTMLElement, MouseEvent>;
+      openAtIndex?: number;
+      isPreview?: boolean;
+    }): void => {
+      const { tab, event, openAtIndex, isPreview } = params;
+
       if (event && event.button === 2 && !tab.isMetadataReadOnly) {
         event.preventDefault();
         const onActionResult =
@@ -255,7 +281,7 @@ export const useTabsBarActions: UseTabsBarActions = function (
         return;
       }
 
-      selectTab(tab.fileId);
+      selectTab({ fileId: tab.fileId, openAtIndex, isPreview });
     },
     [onBeforeFileAction, selectTab],
   );

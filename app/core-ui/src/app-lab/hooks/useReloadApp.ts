@@ -1,7 +1,7 @@
 import { AppInfo } from '@cloud-editor-mono/infrastructure';
 import { AppsSection } from '@cloud-editor-mono/ui-components/lib/components-by-app/app-lab';
 import { useNavigate } from '@tanstack/react-router';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { UseBoards } from './useBoards';
 
@@ -11,6 +11,7 @@ export type UseReloadApp = (props: {
   currentAppId?: string;
   apps?: AppInfo[];
   currentSection?: AppsSection;
+  lastAppInfoLoaded?: boolean;
 }) => void;
 
 export const useReloadApp: UseReloadApp = ({
@@ -19,9 +20,16 @@ export const useReloadApp: UseReloadApp = ({
   currentAppId,
   apps,
   currentSection,
+  lastAppInfoLoaded,
 }) => {
   const navigate = useNavigate();
-  const [hasNavigatedToSavedApp, setHasNavigatedToSavedApp] = useState(false);
+  const navigateRef = useRef(navigate);
+  navigateRef.current = navigate;
+
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
+  const [boardJustChanged, setBoardJustChanged] = useState(false);
+  const hasNavigatedToSavedAppRef = useRef(false);
+  const previousBoardSerialRef = useRef<string | undefined>();
 
   const {
     lastAppInfo,
@@ -33,46 +41,96 @@ export const useReloadApp: UseReloadApp = ({
     couldNotAutoSelectBoard,
   } = boardsProps;
 
-  // save/reset app id base on route params
+  const selectedBoardSerial = selectedBoard?.serial;
+  const appsLength = apps?.length;
+  const lastAppId = lastAppInfo?.appId;
+  const lastAppSection = lastAppInfo?.section;
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsInitialLoad(false);
+    }, 100);
+    return () => clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    const currentSerial = selectedBoard?.serial;
+
+    if (!showRoutes && hasNavigatedToSavedAppRef.current) {
+      hasNavigatedToSavedAppRef.current = false;
+    }
+
+    if (
+      currentSerial &&
+      currentSerial !== previousBoardSerialRef.current &&
+      hasNavigatedToSavedAppRef.current
+    ) {
+      hasNavigatedToSavedAppRef.current = false;
+      setBoardJustChanged(true);
+    }
+
+    if (
+      lastAppInfo &&
+      hasNavigatedToSavedAppRef.current &&
+      previousBoardSerialRef.current === currentSerial
+    ) {
+      hasNavigatedToSavedAppRef.current = false;
+    }
+
+    if (currentSerial !== previousBoardSerialRef.current) {
+      previousBoardSerialRef.current = currentSerial;
+    }
+  }, [
+    selectedBoardSerial,
+    showRoutes,
+    lastAppId,
+    selectedBoard?.serial,
+    lastAppInfo,
+  ]);
+
   useEffect(() => {
     if (!selectedBoard) {
       return;
     }
 
+    if (boardJustChanged) {
+      return;
+    }
+
     if (currentAppId && currentSection) {
       saveAppId(currentAppId, currentSection).catch(console.error);
-    } else {
+    } else if (!isInitialLoad) {
       resetAppId().catch(console.error);
-      // Don't reset hasNavigatedToSavedApp here, it should persist for the session
     }
-  }, [currentAppId, currentSection, saveAppId, resetAppId, selectedBoard]);
+  }, [
+    currentAppId,
+    currentSection,
+    selectedBoardSerial,
+    boardJustChanged,
+    selectedBoard,
+    isInitialLoad,
+    saveAppId,
+    resetAppId,
+  ]);
 
-  // navigate to saved app id after board selection, or fallback to my-apps/examples
   useEffect(() => {
     const navigateToSavedApp = async (): Promise<void> => {
-      if (!showRoutes || hasNavigatedToSavedApp) return;
+      if (!showRoutes || hasNavigatedToSavedAppRef.current) return;
 
       if (!selectedBoard) {
         return;
       }
-
-      if (currentAppId) {
-        return;
-      }
-
-      // Reset navigation flag when conditions become available
       if (
         !isAutoSelectingBoard &&
         connToBoardCompleted &&
         selectedBoard &&
-        hasNavigatedToSavedApp &&
+        hasNavigatedToSavedAppRef.current &&
         !currentAppId
       ) {
-        setHasNavigatedToSavedApp(false);
+        hasNavigatedToSavedAppRef.current = false;
         return;
       }
 
-      // Don't navigate if board is still being configured or auto-selection failed
       if (
         isAutoSelectingBoard ||
         !connToBoardCompleted ||
@@ -82,22 +140,51 @@ export const useReloadApp: UseReloadApp = ({
       }
 
       try {
-        if (lastAppInfo) {
-          setHasNavigatedToSavedApp(true);
-          const route =
-            lastAppInfo.section === 'examples'
-              ? '/examples/$appId'
-              : '/my-apps/$appId';
-          const navParams = { appId: lastAppInfo.appId };
-          await navigate({ to: route, params: navParams });
+        // If board just changed and currentAppId is set, navigate away
+        // This prevents staying on an app that doesn't exist on the new board
+        if (boardJustChanged && currentAppId) {
+          setBoardJustChanged(false);
+          hasNavigatedToSavedAppRef.current = true;
+          const hasUserApps = appsLength && appsLength > 0;
+          const fallbackRoute = hasUserApps ? '/my-apps' : '/examples';
+          await navigateRef.current({ to: fallbackRoute });
           return;
         }
 
-        // fallback to section
-        setHasNavigatedToSavedApp(true);
-        const hasUserApps = apps && apps.length > 0;
-        const fallbackRoute = hasUserApps ? '/my-apps' : '/examples';
-        await navigate({ to: fallbackRoute });
+        // Reset boardJustChanged if currentAppId is undefined (already navigated away)
+        if (boardJustChanged && !currentAppId) {
+          setBoardJustChanged(false);
+          // Don't set hasNavigatedToSavedApp or return here, let the effect continue to evaluate fallback logic
+        }
+
+        if (lastAppId && lastAppId !== currentAppId) {
+          hasNavigatedToSavedAppRef.current = true;
+          const route =
+            lastAppSection === 'examples'
+              ? '/examples/$appId'
+              : '/my-apps/$appId';
+          const navParams = { appId: lastAppId };
+
+          await navigateRef.current({ to: route, params: navParams });
+          return;
+        }
+
+        if (lastAppId && lastAppId === currentAppId) {
+          hasNavigatedToSavedAppRef.current = true;
+          return;
+        }
+
+        if (!lastAppId) {
+          if (lastAppInfoLoaded) {
+            hasNavigatedToSavedAppRef.current = true;
+            const hasUserApps = appsLength && appsLength > 0;
+            const fallbackRoute = hasUserApps ? '/my-apps' : '/examples';
+            await navigateRef.current({ to: fallbackRoute });
+            return;
+          }
+          hasNavigatedToSavedAppRef.current = false;
+          return;
+        }
       } catch (error) {
         console.error('Failed to navigate to saved app:', error);
       }
@@ -106,13 +193,16 @@ export const useReloadApp: UseReloadApp = ({
     navigateToSavedApp();
   }, [
     showRoutes,
-    lastAppInfo,
-    hasNavigatedToSavedApp,
+    lastAppId,
+    lastAppSection,
+    lastAppInfoLoaded,
     currentAppId,
-    apps,
-    navigate,
+    appsLength,
     isAutoSelectingBoard,
     connToBoardCompleted,
+    selectedBoardSerial,
     selectedBoard,
+    couldNotAutoSelectBoard,
+    boardJustChanged,
   ]);
 };

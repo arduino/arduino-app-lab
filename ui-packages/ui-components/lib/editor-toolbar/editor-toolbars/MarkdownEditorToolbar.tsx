@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback } from 'react';
 
 import { Tabs } from '../../components-by-app/app-lab';
 
@@ -14,13 +14,12 @@ const MarkdownEditorToolbar: React.FC<MarkdownEditorToolbarProps> = (
   props: MarkdownEditorToolbarProps,
 ) => {
   const { isRendered, onToggleRender, readOnly } = props;
-  const [activeTab, setTab] = useState<typeof tabs[number]>(
-    isRendered ? 'Preview' : 'Write',
-  );
+  // Controlled: derive directly from props so per-file mode changes
+  // (eg. switching tabs in a pane) keep the toolbar in sync.
+  const activeTab: typeof tabs[number] = isRendered ? 'Preview' : 'Write';
 
-  const setTabAndToggleRender = useCallback(
+  const setTab = useCallback(
     (tab: typeof tabs[number]): void => {
-      setTab(tab);
       onToggleRender?.(tab === 'Preview');
     },
     [onToggleRender],
@@ -29,10 +28,10 @@ const MarkdownEditorToolbar: React.FC<MarkdownEditorToolbarProps> = (
   const tabsLogic = useCallback(
     () => ({
       tabs,
-      setTab: setTabAndToggleRender,
+      setTab,
       activeTab,
     }),
-    [activeTab, setTabAndToggleRender],
+    [activeTab, setTab],
   );
 
   return <div>{!readOnly && <Tabs tabsLogic={tabsLogic} />}</div>;

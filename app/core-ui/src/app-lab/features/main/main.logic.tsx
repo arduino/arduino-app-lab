@@ -507,6 +507,7 @@ export const useMainLogic: UseMainLogic =
       currentAppId,
       apps,
       currentSection,
+      lastAppInfoLoaded: boardsProps.lastAppInfoLoaded,
     });
 
     const { setTheme } = useContext(ThemeContext);

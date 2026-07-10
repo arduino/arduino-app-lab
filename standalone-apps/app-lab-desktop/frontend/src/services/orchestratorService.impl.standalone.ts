@@ -50,6 +50,7 @@ import {
   renameAppCustomBrickV1Request,
   updateAppBrickV1Request,
   updateAppDetailV1Request,
+  uploadAIModelV1Request,
   upsertSystemPropertyV1Request,
   WebSocketHandlers,
 } from '@cloud-editor-mono/infrastructure';
@@ -467,10 +468,19 @@ export const importAppFromPath = async (
 export const getAIModels: OrchestratorService['getAIModels'] =
   async (): Promise<AIModelItem[]> => {
     const origin = await getOrchestratorURL();
-
     const resp = await getAIModelsV1Request(undefined, origin);
     return resp.models || [];
   };
+
+export const uploadAIModel: OrchestratorService['uploadAIModel'] = async (
+  modelId: string,
+  handlers: EventSourceHandlers,
+  abortController: AbortController,
+): Promise<void> => {
+  const origin = await getOrchestratorURL();
+
+  await uploadAIModelV1Request(modelId, handlers, abortController, origin);
+};
 
 export const installEIModel: OrchestratorService['installEIModel'] = async (
   projectId: string,
@@ -485,8 +495,9 @@ export const installEIModel: OrchestratorService['installEIModel'] = async (
 
 export const deleteAIModel: OrchestratorService['deleteAIModel'] = async (
   id: string,
+  isForced?: boolean,
 ): Promise<void> => {
   const origin = await getOrchestratorURL();
 
-  await deleteAIModelV1Request(id, origin);
+  await deleteAIModelV1Request(id, origin, isForced);
 };

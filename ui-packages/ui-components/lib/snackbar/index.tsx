@@ -20,6 +20,7 @@ import {
   ComponentPropsWithRef,
   ForwardedRef,
   forwardRef,
+  Fragment,
   Ref,
   useCallback,
   useEffect,
@@ -29,7 +30,6 @@ import type { ExternalToast, ToasterProps } from 'sonner';
 import { toast, Toaster } from 'sonner';
 
 import { useWindowDimensions } from '../common/hooks/useWindowDimensions';
-import { Small, XSmall } from '../typography';
 import styles from './Snackbar.module.scss';
 
 // Copied from utils
@@ -130,15 +130,18 @@ export const Snackbar = forwardRef<HTMLDivElement, SnackbarProps>(
           <span className={styles['Snackbar_content-icon']}>
             <Icon />
           </span>
-          <div className={clsx(styles['Snackbar_content-text'])}>
+          <div className={styles['Snackbar_content-text']}>
             {title ? (
-              <Small bold truncate title={title}>
+              <span className={styles['Snackbar_content-title']} title={title}>
                 {title}
-              </Small>
+              </span>
             ) : null}
-            <XSmall truncate title={message}>
+            <span
+              className={styles['Snackbar_content-message']}
+              title={message}
+            >
               {message}
-            </XSmall>
+            </span>
           </div>
           {onClose && mq ? (
             <button
@@ -152,20 +155,18 @@ export const Snackbar = forwardRef<HTMLDivElement, SnackbarProps>(
         {actions ? (
           <div className={styles.Snackbar_actions}>
             {actions.map((a, i) => (
-              <>
+              <Fragment key={`snackbar-action-${i}`}>
                 <div
                   className={styles['Snackbar-separator']}
                   style={{ display: 'block' }}
                 />
-                <Small key={`snackbar-action-${i}`} bold>
-                  <button
-                    className={styles['Snackbar-action']}
-                    onClick={(): void => a.onClick({ dismiss })}
-                  >
-                    {a.text}
-                  </button>
-                </Small>
-              </>
+                <button
+                  className={styles['Snackbar-action']}
+                  onClick={(): void => a.onClick({ dismiss })}
+                >
+                  {a.text}
+                </button>
+              </Fragment>
             ))}
           </div>
         ) : null}

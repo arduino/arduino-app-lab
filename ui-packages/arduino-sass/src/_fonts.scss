@@ -26,7 +26,7 @@ $font-weight-semibold: 600;
 $font-weight-bold: 700;
 $base-url: 'https://content.arduino.cc/';
 $font-path: 'fonts/';
-$used-fonts: ();
+$loaded-fonts: ();
 
 /// Fetch nested keys
 ///
@@ -92,8 +92,6 @@ $used-fonts: ();
   }
 
   @if $font-properties {
-    @include track-fonts($group, $variant);
-
     @each $key, $value in $font-properties {
       @if contains($properties, $key) {
         font-#{$key}: $value;
@@ -108,23 +106,26 @@ $used-fonts: ();
 ///
 /// @param {String} $group
 /// @param {String} $variant
-/// @requires {Map} used-fonts
-@mixin track-fonts($group, $variant) {
+/// @requires {Map} loaded-fonts
+@function track-fonts($group, $variant) {
   // First check if we already knew this one:
-  @if map.has-key($used-fonts, $group) == false {
+  @if map.has-key($loaded-fonts, $group) == false {
     // Font-family isn't in the map yet, so add it.
     // The key for the nested map is the font name:
-    $used-fonts: map.merge($used-fonts, ($group: ())) !global;
+    $loaded-fonts: map.merge($loaded-fonts, ($group: ())) !global;
   }
 
   // Now check if the variation is known
-  $font-map: map.get($used-fonts, $group);
+  $font-map: map.get($loaded-fonts, $group);
 
   @if not list.index($font-map, $variant) {
     // Variation isn't in the map yet, so add it:
     $variations: list.append($font-map, $variant);
-    $used-fonts: map.merge($used-fonts, ($group: $variations)) !global;
+    $loaded-fonts: map.merge($loaded-fonts, ($group: $variations)) !global;
+    @return true;
   }
+
+  @return false;
 }
 
 /// Add the font-face rules for all used fonts
@@ -132,11 +133,11 @@ $used-fonts: ();
 /// @requires {function} map-deep-get
 /// @requires {function} font-face
 @mixin import-fonts($font-stack: $base-font-stack) {
-  @each $group, $variations in $used-fonts {
-    @each $variant in $variations {
-      $font-properties: map-deep-get($font-stack, $group, $variant);
+  @each $group, $variations in $font-stack {
+    @each $variant, $font-properties in $variations {
+      $tracked-font: track-fonts($group, $variant);
 
-      @if $font-properties {
+      @if $tracked-font == true {
         // If we have a font-face key we create the font-face rule
         $font-face: map.get($font-properties, font-face);
 

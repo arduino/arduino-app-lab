@@ -244,6 +244,14 @@ const MultipleConsolePanel: React.FC<ConsolePanelProps> = (
                     [styles['hidden']]: activeTab !== tab,
                   }),
                   contents: {
+                    content: clsx(
+                      styles['serial-monitor-contents-content'],
+                      consoleSources[tab].style
+                        ? styles[
+                            `serial-monitor-contents-content--${consoleSources[tab].style}`
+                          ]
+                        : null,
+                    ),
                     wrapper: clsx(styles['serial-monitor-contents-wrapper'], {
                       [styles['has-actions']]:
                         tab === CONSOLE_SOURCE_KEYS.SERIAL_MONITOR,

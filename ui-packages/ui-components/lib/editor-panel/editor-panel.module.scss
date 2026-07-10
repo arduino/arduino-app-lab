@@ -16,10 +16,50 @@
     overflow: hidden;
 }
 
+// Positioned wrapper so the EditorSplitDropZone overlay can be absolutely
+// placed over the editor area.
+.split-group-wrapper {
+    flex: 1;
+    min-height: 0;
+    position: relative;
+    overflow: hidden;
+}
+
+// Fills the remaining flex space in .editor-content and hosts the resizable panels.
+.split-group {
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+}
+
+// Vertical drag handle between the two code panes.
+.split-separator {
+    background-color: var(--border-inverted, #232b2e);
+    transition: background-color 0.2s ease;
+
+    &[aria-orientation="vertical"] {
+        width: 1px;
+    }
+    &[aria-orientation="horizontal"] {
+        height: 1px;
+    }
+    &[data-separator="active"], &[data-separator="hover"] {
+        background-color: var(--border-accent, #25c2c7);
+    }
+    &:focus-visible {
+        outline: 2px solid var(--border-accent, #25c2c7);
+        outline-offset: -2px;
+    }
+}
+
 .brick-container,
 .markdown-container {
+    flex: 1;
+    min-height: 0;
     padding: 16px 4px 0px 16px;
     overflow: auto;
+    background: shared.theme-var(--editor-background);
+    height: 100%;
 
     &::-webkit-scrollbar {
         height: 12px;
@@ -35,6 +75,116 @@
     }
 }
 
+.editor-panel--snippet {
+    height: auto;
+
+    .editor-content {
+        flex: none;
+        height: auto;
+        overflow: visible;
+    }
+
+    .split-group-wrapper {
+        flex: none;
+        overflow: visible;
+    }
+
+    .split-group {
+        flex: none;
+        overflow: visible;
+    }
+
+    .code-pane {
+        height: auto;
+        overflow: visible;
+    }
+}
+
+.code-editor--snippet {
+    height: auto;
+
+    div {
+        height: auto;
+    }
+
+    .cm-scroller {
+        overflow: visible;
+    }
+
+    .cm-content {
+        padding-bottom: 16px;
+    }
+}
+
 .editor-toolbar-disabled {
     pointer-events: none;
+}
+
+// Wrapper for the left code editor
+.code-pane {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+}
+
+.split-toggle {
+    position: absolute;
+    top: 8px;
+    right: 12px;
+    z-index: 10;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    border: none;
+    border-radius: 4px;
+    background: transparent;
+    color: shared.theme-var(--texts-icons-default);
+    cursor: pointer;
+    opacity: 1;
+    transition: background-color 0.12s ease, color 0.12s ease;
+
+    &:not(:disabled):hover {
+        background-color: shared.theme-var(--button-secondary-background-hover);
+        color: shared.theme-var(--texts-icons-titles);
+    }
+
+    &:focus-visible {
+        outline: 2px solid var(--border-accent, #25c2c7);
+        outline-offset: -2px;
+    }
+
+    &--active {
+        color: shared.theme-var(--texts-icons-titles);
+    }
+
+    &--disabled,
+    &:disabled {
+        opacity: 0.4;
+        cursor: default;
+        background: transparent;
+        color: shared.theme-var(--texts-icons-secondary);
+    }
+}
+
+// Positioned wrapper used when the toggle needs a hover tooltip: the
+// WrapperTitle div owns the absolute placement so its bounding box (and
+// therefore the tooltip anchor) matches the button, while the button
+// inside flows statically.
+.split-toggle-wrapper {
+    position: absolute;
+    top: 8px;
+    right: 12px;
+    z-index: 10;
+    display: inline-flex;
+
+    .split-toggle {
+        position: static;
+        top: auto;
+        right: auto;
+    }
 }

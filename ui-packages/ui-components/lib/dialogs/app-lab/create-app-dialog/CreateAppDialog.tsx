@@ -1,5 +1,7 @@
 import {
+  APP_NAME_IN_USE_ERROR,
   AppDetailedInfo,
+  BOARD_STORAGE_FULL_ERROR,
   CreateAppRequest,
 } from '@cloud-editor-mono/infrastructure';
 import { useMutation } from '@tanstack/react-query';
@@ -13,7 +15,7 @@ import {
   SnackbarProps,
 } from '../../../components-by-app/app-lab';
 import { Input } from '../../../essential/input';
-import { InputStyle } from '../../../essential/input/input.type';
+import { InputStyle } from '../../../essential/input';
 import { useI18n } from '../../../i18n/useI18n';
 import { XXXSmall } from '../../../typography';
 import { AppLabDialog } from '../app-lab-dialog/AppLabDialog';
@@ -38,7 +40,9 @@ export const CreateAppDialog: React.FC<CreateAppDialogProps> = ({
   const { open, app, confirmAction, onOpenChange, sendNotification } = logic();
   const [name, setName] = useState(app?.name ? `Copy of ${app?.name}` : '');
   const [icon, setIcon] = useState(app?.icon ?? '😀');
-  const [hasError, setHasError] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | undefined>(
+    undefined,
+  );
 
   useEffect(() => {
     if (app) {
@@ -48,7 +52,7 @@ export const CreateAppDialog: React.FC<CreateAppDialogProps> = ({
       setName('');
       setIcon('😀');
     }
-    setHasError(false);
+    setErrorMessage(undefined);
   }, [app, open]);
 
   const { formatMessage } = useI18n();
@@ -56,34 +60,51 @@ export const CreateAppDialog: React.FC<CreateAppDialogProps> = ({
   const onAppNameChange = (value: string): void => {
     if (value.length > MAX_LENGTH) return;
     setName(value);
-    setHasError(false);
+    setErrorMessage(undefined);
   };
 
   const { mutateAsync: handleCreateApp, isLoading } = useMutation(
     ['crate-app'],
     async () => {
       if (name.length === 0) {
-        setHasError(true);
+        setErrorMessage(formatMessage(messages.appNameRequired));
         return;
       }
 
-      const result = await confirmAction({ icon, name });
-      if (result) {
-        onOpenChange(false);
-        sendNotification({
-          message: formatMessage(
-            app ? messages.successDuplicate : messages.successCreate,
-          ),
-          variant: 'success',
-        });
-      } else {
-        setHasError(true);
-        sendNotification({
-          message: formatMessage(
-            app ? messages.failedDuplicate : messages.failedCreate,
-          ),
-          variant: 'error',
-        });
+      try {
+        const result = await confirmAction({ icon, name });
+        if (result) {
+          onOpenChange(false);
+          sendNotification({
+            message: formatMessage(
+              app ? messages.successDuplicate : messages.successCreate,
+            ),
+            variant: 'success',
+          });
+          return;
+        }
+
+        setErrorMessage(formatMessage(messages.appNameInUse));
+      } catch (error) {
+        if (error instanceof Error && error.message === APP_NAME_IN_USE_ERROR) {
+          setErrorMessage(formatMessage(messages.appNameInUse));
+          return;
+        }
+        if (
+          error instanceof Error &&
+          error.message === BOARD_STORAGE_FULL_ERROR
+        ) {
+          setErrorMessage(formatMessage(messages.storageFull));
+          return;
+        }
+        const message =
+          error instanceof Error
+            ? error.message
+            : formatMessage(
+                app ? messages.failedDuplicate : messages.failedCreate,
+              );
+        setErrorMessage(message);
+        sendNotification({ message, variant: 'error' });
       }
     },
   );
@@ -134,15 +155,7 @@ export const CreateAppDialog: React.FC<CreateAppDialogProps> = ({
               value={name}
               onChange={onAppNameChange}
               onEnter={handleCreateApp}
-              error={
-                hasError
-                  ? new Error(
-                      name.length === 0
-                        ? formatMessage(messages.appNameRequired)
-                        : formatMessage(messages.appNameInUse),
-                    )
-                  : undefined
-              }
+              error={errorMessage ? new Error(errorMessage) : undefined}
               placeholder={formatMessage(messages.inputPlaceholder)}
               /* eslint-disable-next-line jsx-a11y/no-autofocus */
               autoFocus

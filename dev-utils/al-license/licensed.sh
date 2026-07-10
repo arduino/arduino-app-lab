@@ -15,6 +15,10 @@ mkdir -p "$OUTPUT_DIR"
 licensed cache || echo "Platform packages have been skipped"
 licensed notices
 
+# 3a. Append vendored seti-ui icon pack notice (not picked up by licensed
+# because it has no package manifest).
+../../ui-packages/images/scripts/append-seti-notice.sh .licenses/NOTICE
+
 # 4. Combine LICENSE + NOTICE into copyright
 if [ -f LICENSE ]; then
   cat ".licenses/NOTICE" >> "$OUTPUT_DIR/copyright"

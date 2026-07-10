@@ -9,6 +9,7 @@ import styles from '../settings.module.scss';
 
 export interface DeviceStorageProps {
   boardResources?: BoardResources;
+  boardType?: string;
   bytesToGiB: (bytes: number) => string;
 }
 
@@ -16,15 +17,17 @@ const WARNING_THRESHOLD = 70;
 const ERROR_THRESHOLD = 95;
 export const DeviceStorage = ({
   boardResources,
+  boardType,
   bytesToGiB,
 }: DeviceStorageProps): JSX.Element => {
   const { formatMessage } = useI18n();
+  const isVentuno = boardType?.toLowerCase().includes('ventuno') ?? false;
   const rootDiskUsed = boardResources?.rootDisk?.used ?? 0;
   const rootDiskTotal = boardResources?.rootDisk?.total ?? 0;
   const homeDiskUsed = boardResources?.homeDisk?.used ?? 0;
   const homeDiskTotal = boardResources?.homeDisk?.total ?? 0;
-  const diskUsed = rootDiskUsed + homeDiskUsed;
-  const diskTotal = rootDiskTotal + homeDiskTotal;
+  const diskUsed = isVentuno ? rootDiskUsed : rootDiskUsed + homeDiskUsed;
+  const diskTotal = isVentuno ? rootDiskTotal : rootDiskTotal + homeDiskTotal;
 
   const rootDiskPercentageUsed =
     rootDiskTotal > 0 ? Math.floor((rootDiskUsed / rootDiskTotal) * 100) : 0;
@@ -54,32 +57,34 @@ export const DeviceStorage = ({
             total: bytesToGiB(diskTotal),
           })}
         </XXSmall>
-        <SettingsSection.Info
-          title={formatMessage(deviceMessages.diskStorageUsageInfo)}
-        >
-          <div className={styles['device-storage-info']}>
-            <XXXSmall
-              className={clsx({
-                [styles['device-storage-warning']]:
-                  rootDiskPercentageUsed >= WARNING_THRESHOLD,
-                [styles['device-storage-error']]:
-                  rootDiskPercentageUsed >= ERROR_THRESHOLD,
-              })}
-            >
-              ROOT {bytesToGiB(rootDiskUsed)} / {bytesToGiB(rootDiskTotal)} GB
-            </XXXSmall>
-            <XXXSmall
-              className={clsx({
-                [styles['device-storage-warning']]:
-                  homeDiskPercentageUsed >= WARNING_THRESHOLD,
-                [styles['device-storage-error']]:
-                  homeDiskPercentageUsed >= ERROR_THRESHOLD,
-              })}
-            >
-              USER {bytesToGiB(homeDiskUsed)} / {bytesToGiB(homeDiskTotal)} GB
-            </XXXSmall>
-          </div>
-        </SettingsSection.Info>
+        {!isVentuno && (
+          <SettingsSection.Info
+            title={formatMessage(deviceMessages.diskStorageUsageInfo)}
+          >
+            <div className={styles['device-storage-info']}>
+              <XXXSmall
+                className={clsx({
+                  [styles['device-storage-warning']]:
+                    rootDiskPercentageUsed >= WARNING_THRESHOLD,
+                  [styles['device-storage-error']]:
+                    rootDiskPercentageUsed >= ERROR_THRESHOLD,
+                })}
+              >
+                ROOT {bytesToGiB(rootDiskUsed)} / {bytesToGiB(rootDiskTotal)} GB
+              </XXXSmall>
+              <XXXSmall
+                className={clsx({
+                  [styles['device-storage-warning']]:
+                    homeDiskPercentageUsed >= WARNING_THRESHOLD,
+                  [styles['device-storage-error']]:
+                    homeDiskPercentageUsed >= ERROR_THRESHOLD,
+                })}
+              >
+                USER {bytesToGiB(homeDiskUsed)} / {bytesToGiB(homeDiskTotal)} GB
+              </XXXSmall>
+            </div>
+          </SettingsSection.Info>
+        )}
       </div>
       <div
         className={clsx(styles['progress-bar'], {

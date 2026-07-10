@@ -123,14 +123,16 @@ export const useConsoleSources: UseConsoleSources =
 
     const resetAllSources = useCallback((appId?: string): void => {
       if (appId) {
-        Object.values(consoleSources.current[appId] || {}).forEach((source) =>
-          source.resetSubject?.next(),
-        );
+        Object.values(consoleSources.current[appId] || {}).forEach((source) => {
+          source.resetSubject?.next();
+          source.style = undefined;
+        });
       } else {
         Object.values(consoleSources.current).forEach((appSources) => {
-          Object.values(appSources).forEach((source) =>
-            source.resetSubject?.next(),
-          );
+          Object.values(appSources).forEach((source) => {
+            source.resetSubject?.next();
+            source.style = undefined;
+          });
         });
       }
     }, []);
@@ -145,6 +147,21 @@ export const useConsoleSources: UseConsoleSources =
       [],
     );
 
+    const setStyleToSource = useCallback(
+      (
+        appId: string,
+        tab: ConsoleSourceKey | undefined,
+        style?: string,
+      ): void => {
+        if (!tab) return;
+        const source = consoleSources.current[appId]?.[tab];
+        if (source) {
+          source.style = style;
+        }
+      },
+      [],
+    );
+
     return {
       resetAllSources,
       consoleSources: consoleSources.current,
@@ -153,6 +170,7 @@ export const useConsoleSources: UseConsoleSources =
       setActiveConsoleTab: setTabForApp,
       addConsoleSource,
       appendDataToSource,
+      setStyleToSource,
       reset,
     };
   };

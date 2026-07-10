@@ -29,6 +29,8 @@ export const DuplicateFileDialog: React.FC<DuplicateFileDialogProps> = ({
 
   const disableOverwrite =
     conflictType === 'file-folder' || conflictType === 'folder-file';
+  const disableKeepBoth =
+    conflictType === 'file-folder' || conflictType === 'folder-file';
   const isFolderConflict = conflictType?.startsWith('folder');
   const [selectedAction, setSelectedAction] = useState<
     'overwrite' | 'keepBoth' | null
@@ -96,22 +98,40 @@ export const DuplicateFileDialog: React.FC<DuplicateFileDialogProps> = ({
       title={formatMessage(config.dialogTitleMessage)}
       footer={
         <>
-          <Button
-            variant={
-              disableOverwrite ? ButtonVariant.Primary : ButtonVariant.Secondary
-            }
-            onClick={handleKeepBoth}
-            loading={loading && selectedAction === 'keepBoth'}
-            type="submit"
-            /* eslint-disable-next-line jsx-a11y/no-autofocus */
-            autoFocus={disableOverwrite}
-            classes={{
-              button: styles['action-button'],
-              textButtonText: styles['action-button-text'],
-            }}
-          >
-            {formatMessage(messages.keepBothButton)}
-          </Button>
+          {!disableKeepBoth && (
+            <Button
+              variant={
+                disableOverwrite ? ButtonVariant.Primary : ButtonVariant.Secondary
+              }
+              onClick={handleKeepBoth}
+              loading={loading && selectedAction === 'keepBoth'}
+              type="submit"
+              /* eslint-disable-next-line jsx-a11y/no-autofocus */
+              autoFocus={disableOverwrite}
+              classes={{
+                button: styles['action-button'],
+                textButtonText: styles['action-button-text'],
+              }}
+            >
+              {formatMessage(messages.keepBothButton)}
+            </Button>
+          )}
+
+          {disableKeepBoth && (
+            <Button
+              variant={ButtonVariant.Primary}
+              onClick={() => onOpenChange(false)}
+              type="submit"
+              /* eslint-disable-next-line jsx-a11y/no-autofocus */
+              autoFocus
+              classes={{
+                button: styles['action-button'],
+                textButtonText: styles['action-button-text'],
+              }}
+            >
+              {formatMessage(messages.okGotItButton)}
+            </Button>
+          )}
 
           {!disableOverwrite && (
             <Button

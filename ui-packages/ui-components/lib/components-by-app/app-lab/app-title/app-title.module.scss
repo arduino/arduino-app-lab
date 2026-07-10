@@ -196,21 +196,17 @@
           display: flex;
           gap: 8px;
           flex-direction: column;
+          cursor: default;
 
           &-title {
             display: flex;
             align-items: center;
             gap: 8px;
             width: 100%;
-            svg {
-              cursor: pointer;
-              path {
-                fill: var(--text-default, #ffffff);
-              }
-              &:last-child {
-                margin-left: auto;
-              }
-            }
+          }
+
+          &-toggle {
+            margin-left: auto;
           }
 
           &-content {

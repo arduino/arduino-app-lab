@@ -13,16 +13,20 @@ import {
   updateAppDetail,
 } from '@cloud-editor-mono/domain/src/services/services-by-app/app-lab';
 import { importResourceToAppFromPath } from '@cloud-editor-mono/domain/src/services/services-by-app/app-lab';
+import { FileIcon } from '@cloud-editor-mono/images/assets/file-icons';
 import {
   AppDetailedInfo,
   BrickCreateUpdateRequest,
   UpdateAppDetailRequest,
 } from '@cloud-editor-mono/infrastructure';
+import { BOARD_STORAGE_FULL_ERROR } from '@cloud-editor-mono/infrastructure';
 import {
+  AiModelRequiredDialogLogic,
   AppLabAppDetailLogic,
   AppLabEditorPanelLogic,
   AppLabEditSectionLogic,
   AppsSection,
+  checkForDuplicates,
   isFileNode,
   isFolderNode,
   TreeNode,
@@ -34,14 +38,13 @@ import {
 } from '@cloud-editor-mono/ui-components/lib/dialogs/app-lab/duplicate-file-dialog/types';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { WretchError } from 'wretch/resolver';
 
 import { resetModuleScopedState } from '../../../../../lib/app-components/app-lab/utils';
 import { useFiles } from '../../../../common/hooks/files';
 import { useKeywords } from '../../../../common/hooks/keywords';
 import { queryClient } from '../../../../common/providers/data-fetching/QueryProvider';
-import { getAppLabFileIcon } from '../../../../common/utils';
 import { useBoards } from '../../../hooks/useBoards';
 import {
   makeAppBrickDetailLogic,
@@ -51,6 +54,7 @@ import { useImportResource } from '../../../hooks/useImportResource';
 import { useIsBoard } from '../../../hooks/useIsBoard';
 import { useNotFound } from '../../../hooks/useNotFound';
 import { DETAIL_PATH_BY_SECTION } from '../../../routes/__root';
+import { createWebUIFiles } from '../../../utils/create-webui-files';
 import { sendAppLabNotification } from '../../notifications';
 import { useSketchLibraries } from './hooks/useSketchLibraries';
 import { useAddSketchLibraryDialog } from './hooks/useSketchLibrariesDialogs';
@@ -138,6 +142,11 @@ export const useAppDetailLogic: AppLabAppDetailLogic = function (
     // eslint-disable-next-line @typescript-eslint/no-empty-function
   >(() => () => {});
 
+  const editorPaneSyncRef = useRef<{
+    renameRightPaneTab?: (oldId: string, newId: string) => void;
+    closeRightPaneTab?: (fileId: string) => void;
+  }>({});
+
   const {
     appDetail: app,
     appDetailIsLoading,
@@ -215,11 +224,17 @@ export const useAppDetailLogic: AppLabAppDetailLogic = function (
     updateOpenFilesOrder,
     closeFile,
     onAppRename,
+    previewFileId,
+    editorFiles,
+    openFilesStore,
+    storeSplitState,
   } = useFiles(useFilesPayload);
 
-  // Update the updateOpenFile function once we have the actual one
   useEffect(() => {
-    setUpdateOpenFile(() => actualUpdateOpenFile);
+    setUpdateOpenFile(() => (currFileId: string, nextFileId: string) => {
+      actualUpdateOpenFile(currFileId, nextFileId);
+      editorPaneSyncRef.current.renameRightPaneTab?.(currFileId, nextFileId);
+    });
   }, [actualUpdateOpenFile]);
 
   const duplicateFileDialogLogic: DuplicateFileDialogLogic = useCallback(
@@ -423,11 +438,27 @@ export const useAppDetailLogic: AppLabAppDetailLogic = function (
       isCustom = false,
     ): Promise<boolean> => {
       const response = await addAppBrickRequest(appId, brickId, params);
+
       if (response) {
         await refetchAppYaml();
         await refetchAppBricks();
+
+        // Check if this is the WebUI brick and create required files automatically AFTER successful brick addition
+        if (brickId === 'arduino:web_ui' && app?.name) {
+          try {
+            await createWebUIFiles(app.name, createAppFolder, addAppFile);
+            await refetchAppFiles();
+          } catch (error) {
+            console.error('Failed to create WebUI files:', error);
+            sendAppLabNotification({
+              message: formatMessage(messages.webUIFileCreationFailed),
+              variant: 'error',
+            });
+          }
+        }
+
         setInitialAppBrickTab('examples');
-        selectFile(brickId);
+        selectFile({ fileId: brickId });
         sendAppLabNotification({
           message: formatMessage(
             isCustom
@@ -436,15 +467,26 @@ export const useAppDetailLogic: AppLabAppDetailLogic = function (
           ),
           variant: 'success',
         });
-      } else {
-        sendAppLabNotification({
-          message: formatMessage(messages.failedAddBrick),
-          variant: 'error',
-        });
+        return true;
       }
-      return response;
+
+      sendAppLabNotification({
+        message: formatMessage(messages.failedAddBrick),
+        variant: 'error',
+      });
+      return false;
     },
-    [appId, refetchAppYaml, refetchAppBricks, selectFile, formatMessage],
+    [
+      appId,
+      app,
+      refetchAppYaml,
+      refetchAppBricks,
+      refetchAppFiles,
+      createAppFolder,
+      addAppFile,
+      selectFile,
+      formatMessage,
+    ],
   );
 
   const removeAppBrick = useCallback(
@@ -481,7 +523,7 @@ export const useAppDetailLogic: AppLabAppDetailLogic = function (
         const response = await addAppCustomBrickRequest(appId, body);
 
         if (response && response.id) {
-          selectFile(response.id);
+          selectFile({ fileId: response.id });
           await Promise.all([
             refetchAppBricks(),
             refetchAppFiles(),
@@ -565,15 +607,23 @@ export const useAppDetailLogic: AppLabAppDetailLogic = function (
       const [fileName, fileExtension] = fullName.split('.');
       const prevSelectedFileId = selectedFile?.fileId;
 
-      // Check if file already exists
+      // Check for conflicts using checkForDuplicates
       try {
-        const { filesList } = await getAppFiles(app?.path || '');
-        const filePath = path.replace(app?.path + '/', '');
-        const fileExists = filesList.some((file) => file.path === filePath);
+        const { fileTree } = await getAppFiles(app?.path || '');
+        const { hasDuplicate, conflictType } = checkForDuplicates(
+          fileTree,
+          path,
+          'file',
+        );
 
-        if (fileExists) {
+        if (hasDuplicate) {
+          // Show notification for all conflict types during creation
+          const message =
+            conflictType === 'file-folder'
+              ? formatMessage(messages.fileAlreadyExistsFolder)
+              : formatMessage(messages.fileAlreadyExists);
           sendAppLabNotification({
-            message: formatMessage(messages.fileAlreadyExists),
+            message,
             variant: 'error',
           });
           return;
@@ -583,19 +633,23 @@ export const useAppDetailLogic: AppLabAppDetailLogic = function (
       }
 
       // this row auto-open newly created files in editor
-      selectFile(path);
+      selectFile({ fileId: path });
       try {
         await addAppFile(path, fileName, fileExtension);
         sendAppLabNotification({
           message: formatMessage(messages.successfullyCreatedFile),
           variant: 'success',
         });
-      } catch {
+      } catch (error) {
         if (prevSelectedFileId) {
-          selectFile(prevSelectedFileId);
+          selectFile({ fileId: prevSelectedFileId });
         }
+        const message =
+          error instanceof Error && error.message === BOARD_STORAGE_FULL_ERROR
+            ? formatMessage(messages.failedCreateFileStorageFull)
+            : formatMessage(messages.failedCreateFile);
         sendAppLabNotification({
-          message: formatMessage(messages.failedCreateFile),
+          message,
           variant: 'error',
         });
       }
@@ -611,29 +665,23 @@ export const useAppDetailLogic: AppLabAppDetailLogic = function (
         return;
       }
 
-      // Check if folder already exists by checking file tree
+      // Check for conflicts using checkForDuplicates
       try {
         const { fileTree } = await getAppFiles(app?.path || '');
-        const checkFolderExists = (
-          nodes: TreeNode[],
-          targetPath: string,
-        ): boolean => {
-          for (const node of nodes) {
-            if (node.type === 'folder' && node.path === targetPath) {
-              return true;
-            }
-            if (node.type === 'folder' && node.children) {
-              if (checkFolderExists(node.children, targetPath)) {
-                return true;
-              }
-            }
-          }
-          return false;
-        };
+        const { hasDuplicate, conflictType } = checkForDuplicates(
+          fileTree,
+          path,
+          'folder',
+        );
 
-        if (checkFolderExists(fileTree, path)) {
+        if (hasDuplicate) {
+          // Show notification for all conflict types during creation
+          const message =
+            conflictType === 'folder-file'
+              ? formatMessage(messages.folderAlreadyExistsFile)
+              : formatMessage(messages.folderAlreadyExists);
           sendAppLabNotification({
-            message: formatMessage(messages.folderAlreadyExists),
+            message,
             variant: 'error',
           });
           return;
@@ -648,9 +696,13 @@ export const useAppDetailLogic: AppLabAppDetailLogic = function (
           message: formatMessage(messages.successfullyCreatedFolder),
           variant: 'success',
         });
-      } catch {
+      } catch (error) {
+        const message =
+          error instanceof Error && error.message === BOARD_STORAGE_FULL_ERROR
+            ? formatMessage(messages.failedCreateFolderStorageFull)
+            : formatMessage(messages.failedCreateFolder);
         sendAppLabNotification({
-          message: formatMessage(messages.failedCreateFolder),
+          message,
           variant: 'error',
         });
       }
@@ -747,6 +799,7 @@ export const useAppDetailLogic: AppLabAppDetailLogic = function (
         const fileIndex = openFiles.findIndex((f) => f.fileId === path);
         try {
           closeFile(path);
+          editorPaneSyncRef.current.closeRightPaneTab?.(path);
           await deleteAppFile(path);
           const messages = DELETE_MESSAGES[nodeType || 'file'];
           sendAppLabNotification({
@@ -754,7 +807,7 @@ export const useAppDetailLogic: AppLabAppDetailLogic = function (
             variant: 'success',
           });
         } catch {
-          selectFile(path, fileIndex);
+          selectFile({ fileId: path, openAtIndex: fileIndex });
           const messages = DELETE_MESSAGES[nodeType || 'file'];
           sendAppLabNotification({
             message: formatMessage(messages.error),
@@ -806,11 +859,17 @@ export const useAppDetailLogic: AppLabAppDetailLogic = function (
   );
 
   const selectFileFromEditor = useCallback(
-    (fileId?: string): void => {
+    (params: {
+      fileId?: string;
+      openAtIndex?: number;
+      isPreview?: boolean;
+    }): void => {
+      const { fileId, openAtIndex, isPreview } = params;
+
       if (fileId) {
         removeFileFromPending(fileId);
       }
-      selectFile(fileId);
+      selectFile({ fileId, openAtIndex, isPreview });
     },
     [removeFileFromPending, selectFile],
   );
@@ -840,7 +899,13 @@ export const useAppDetailLogic: AppLabAppDetailLogic = function (
       initialAppBrickTab,
       sketchDataIsLoading,
       openFiles,
+      allFiles: editorFiles,
       readOnly: section === 'examples',
+      removeFileFromPending,
+      previewFileId,
+      openFilesStore,
+      filesContentLoaded: allContentsRetrieved,
+      storeSplitState,
     };
   }, [
     app?.id,
@@ -860,31 +925,62 @@ export const useAppDetailLogic: AppLabAppDetailLogic = function (
     initialAppBrickTab,
     sketchDataIsLoading,
     openFiles,
+    editorFiles,
     section,
+    removeFileFromPending,
+    previewFileId,
+    openFilesStore,
+    allContentsRetrieved,
+    storeSplitState,
   ]);
 
+  // Single owner of the editor-panel/split state machine. Instantiated
+  // once here (rather than inside `useAppLabEditorPanelLogic`) so that
+  // every consumer of `appLabEditorPanelLogic` shares the same instance,
+  // and so the file-tree/brick drop handler below can route files into
+  // pane B by calling `openFileInPane` directly.
+  const {
+    editorPanelLogic,
+    openFileInPane,
+    getActivePane,
+    activePane,
+    rightPaneSelectedFile,
+    renameRightPaneTab,
+    closeRightPaneTab,
+    openBrickAiModelsTab,
+  } = useCreateEditorPanelLogic(editorPanelLogicParams);
+
   useEffect(() => {
-    // selectedNode should always represent the currently open file in the editor
-    // not the visually selected folder in the file tree
-    if (selectedFile?.fileId) {
+    editorPaneSyncRef.current = { renameRightPaneTab, closeRightPaneTab };
+  }, [renameRightPaneTab, closeRightPaneTab]);
+
+  const activeSelectedFile =
+    activePane === 'B' ? rightPaneSelectedFile : selectedFile;
+
+  useEffect(() => {
+    if (activeSelectedFile?.fileId) {
       const foundFile = filesList?.find(
-        (file) => file.path === selectedFile?.fileId,
+        (file) => file.path === activeSelectedFile.fileId,
       );
 
       if (
         foundFile &&
         isFileNode(foundFile) &&
-        selectedFile?.fileExtension !== 'brick'
+        activeSelectedFile.fileExtension !== 'brick'
       ) {
         // Keep selectedNode as the open file, regardless of folder selection
         setSelectedNode(foundFile);
       }
-    } else if (!selectedFile && selectedNode && isFileNode(selectedNode)) {
+    } else if (
+      !activeSelectedFile &&
+      selectedNode &&
+      isFileNode(selectedNode)
+    ) {
       // Clear selectedNode when no file is open, but only if it's a file
       setSelectedNode(undefined);
       // Note: if selectedNode is a folder, keep it for file creation operations
     }
-  }, [selectedFile?.fileId, filesList, selectedFile, selectedNode]);
+  }, [activeSelectedFile, filesList, selectedNode]);
 
   const openExternal = useCallback(() => {
     if (!selectedNode) {
@@ -932,17 +1028,51 @@ export const useAppDetailLogic: AppLabAppDetailLogic = function (
   const { data: bricks } = useQuery(['list-bricks'], () => getBricks());
 
   const setSelectedFile = useCallback(
-    (node: string | TreeNode | undefined) => {
+    (
+      node: string | TreeNode | undefined,
+      isPreview = false,
+      targetPane?: 'A' | 'B',
+    ) => {
       if (!node) return;
       setInitialAppBrickTab(undefined);
       const path = typeof node === 'string' ? node : node.path;
-      selectFile(path);
+
+      // Route to the pane the user last focused when the caller doesn't
+      // pin a target (file-tree clicks). Explicit callers (drag-and-drop)
+      // still win. Pane-B routing falls back to default A behaviour while
+      // nothing is open in A: the split editor only renders alongside a
+      // populated pane A, so routing the first-ever file into B would
+      // leave it invisible.
+      const resolvedPane = targetPane ?? getActivePane();
+      if (resolvedPane === 'B' && openFiles.length > 0) {
+        openFileInPane(path, 'B');
+        removeFileFromPending(path);
+        setSelectedFolderState(undefined);
+        return;
+      }
+
+      const prevSelectedFileIndex = openFiles.findIndex(
+        (f) => f.fileId === selectedFile?.fileId,
+      );
+
+      selectFile({
+        fileId: path,
+        openAtIndex: prevSelectedFileIndex + 1,
+        isPreview,
+      });
       removeFileFromPending(path);
 
       // Reset selectedFolder when a file is selected
       setSelectedFolderState(undefined);
     },
-    [removeFileFromPending, selectFile],
+    [
+      openFiles,
+      openFileInPane,
+      getActivePane,
+      removeFileFromPending,
+      selectFile,
+      selectedFile,
+    ],
   );
 
   const setSelectedFolder = useCallback((node: TreeNode | undefined) => {
@@ -1004,12 +1134,11 @@ export const useAppDetailLogic: AppLabAppDetailLogic = function (
     addSketchLibraryError,
   });
 
+  // Pure closure over the single state-machine instance created above —
+  // consumers (AppLabEditorPanel, FilesManagerSection) may invoke this
+  // freely without instantiating duplicate editor-panel state.
   const useAppLabEditorPanelLogic: AppLabEditorPanelLogic =
     (): ReturnType<AppLabEditorPanelLogic> => {
-      const { editorPanelLogic } = useCreateEditorPanelLogic(
-        editorPanelLogicParams,
-      );
-
       const onCopyCode = useCallback(() => {
         (): void =>
           sendAppLabNotification({
@@ -1027,6 +1156,7 @@ export const useAppDetailLogic: AppLabAppDetailLogic = function (
     };
 
   const appLabEditorPanelLogic = useCallback(useAppLabEditorPanelLogic, [
+    editorPanelLogic,
     editorPanelLogicParams,
     formatMessage,
   ]);
@@ -1071,6 +1201,13 @@ export const useAppDetailLogic: AppLabAppDetailLogic = function (
     [appId],
   );
 
+  const handleMoveBlocked = useCallback(() => {
+    sendAppLabNotification({
+      message: formatMessage(messages.fileCannotBeMoved),
+      variant: 'info',
+    });
+  }, [formatMessage]);
+
   const {
     activePanel,
     defaultApp,
@@ -1079,6 +1216,7 @@ export const useAppDetailLogic: AppLabAppDetailLogic = function (
     swapRunningAppDialogLogic,
     multipleConsolePanelLogic,
     runtimeActionsLogic,
+    aiModelRequiredDialog,
   } = useAppDetailRuntimeLogic(
     app,
     appBricks,
@@ -1087,6 +1225,74 @@ export const useAppDetailLogic: AppLabAppDetailLogic = function (
     updateApp,
     updateAppBricks,
   );
+
+  const aiModelRequiredDialogLogic: AiModelRequiredDialogLogic =
+    useCallback(() => {
+      const { brickId, modelId } = aiModelRequiredDialog;
+      const { models, downloadGenericModel, downloadEIModel } =
+        brickDetailLogic(brickId ?? '');
+
+      const isExample = section === 'examples';
+      const eiProjectId = modelId?.match(/^ei-model-(\d+)-\d+$/)?.[1];
+      const modelName =
+        models?.find((m) =>
+          eiProjectId
+            ? // Account-linked EI model: the id encodes the project id.
+              m.edgeImpulseProps?.projectId === eiProjectId
+            : // Generic/built-in match by id, or an unlinked EI model whose card
+              // id is its project id — match it by the impulse's board model id.
+              m.id === modelId ||
+              m.edgeImpulseProps?.impulses.some(
+                (i) => i.downloadModelId === modelId,
+              ),
+        )?.name ?? '';
+
+      return {
+        open: aiModelRequiredDialog.open,
+        isExample,
+        modelName,
+        onOpenChange: (nextOpen: boolean): void => {
+          if (!nextOpen) aiModelRequiredDialog.close();
+        },
+        onDownloadModel: (): void => {
+          if (brickId) {
+            openBrickAiModelsTab(brickId);
+            // In examples the model is fixed and the CTA is "Download Model",
+            // so start the download (navigating lets the user watch progress).
+            // Mirror the card's own download so progress is reported where the
+            // card reads it: an unlinked EI model is a card keyed by project id,
+            // so route it through downloadEIModel (progress under project id);
+            // everything else downloads by id. An example never requires a
+            // linked EI model, so the impulse-install path is never hit.
+            if (isExample && modelId) {
+              const eiModel = models?.find((m) =>
+                m.edgeImpulseProps?.impulses.some(
+                  (i) => i.downloadModelId === modelId,
+                ),
+              );
+              const eiImpulse = eiModel?.edgeImpulseProps?.impulses.find(
+                (i) => i.downloadModelId === modelId,
+              );
+
+              if (eiModel?.edgeImpulseProps && eiImpulse) {
+                downloadEIModel?.(
+                  eiModel.edgeImpulseProps.projectId,
+                  eiImpulse.id,
+                );
+              } else {
+                downloadGenericModel?.(modelId);
+              }
+            }
+          }
+          aiModelRequiredDialog.close();
+        },
+      };
+    }, [
+      aiModelRequiredDialog,
+      brickDetailLogic,
+      section,
+      openBrickAiModelsTab,
+    ]);
 
   const useAppLabEditSectionLogic: AppLabEditSectionLogic =
     (): ReturnType<AppLabEditSectionLogic> => {
@@ -1099,14 +1305,21 @@ export const useAppDetailLogic: AppLabAppDetailLogic = function (
         isFolder: false,
       });
 
+      const handleDragOverFolderChange = useCallback((path: string) => {
+        setImportTarget((prev) => {
+          if (prev.path !== path) {
+            return { path, isFolder: false };
+          }
+          return prev;
+        });
+      }, []);
+
       const renderIcon = useCallback((node: TreeNode): JSX.Element => {
         if (isFolderNode(node)) {
           return <></>; // No icon for folders, only caret will be shown
         }
 
-        const Icon = getAppLabFileIcon(node.extension.slice(1));
-
-        return <Icon />;
+        return <FileIcon fileName={node.name} />;
       }, []);
 
       const handleOpenImportFileDialog = useCallback(
@@ -1128,13 +1341,17 @@ export const useAppDetailLogic: AppLabAppDetailLogic = function (
               : app?.path ?? '',
             importTarget.isFolder,
           ),
-        importResourceFromPath: (filePath: string, newFileName?: string) =>
+        importResourceFromPath: (
+          filePath: string,
+          isFolder: boolean,
+          newFileName?: string,
+        ) =>
           importResourceToAppFromPath(
             importTarget.path
               ? `${app?.path}/${importTarget.path}`
               : app?.path ?? '',
             filePath,
-            importTarget.isFolder,
+            isFolder,
             newFileName,
           ),
         type: importTarget.isFolder ? 'folder' : 'file',
@@ -1157,7 +1374,7 @@ export const useAppDetailLogic: AppLabAppDetailLogic = function (
         bricks,
         appLibraries,
         fileTree,
-        selectedFile,
+        selectedFile: activeSelectedFile,
         selectedFolder,
         selectedNode,
         defaultOpenFoldersState,
@@ -1188,6 +1405,8 @@ export const useAppDetailLogic: AppLabAppDetailLogic = function (
         duplicateFileDialogLogic,
         importFileDialogLogic,
         openImportFileDialog: handleOpenImportFileDialog,
+        onMoveBlocked: handleMoveBlocked,
+        onDragOverFolderChange: handleDragOverFolderChange,
       };
     };
 
@@ -1199,7 +1418,7 @@ export const useAppDetailLogic: AppLabAppDetailLogic = function (
     bricks,
     appLibraries,
     fileTree,
-    selectedFile,
+    activeSelectedFile,
     selectedFolder,
     selectedNode,
     setSelectedFile,
@@ -1226,6 +1445,7 @@ export const useAppDetailLogic: AppLabAppDetailLogic = function (
     renameAppCustomBrick,
     handleDuplicateConflict,
     duplicateFileDialogLogic,
+    handleMoveBlocked,
   ]);
 
   const { appStatus } = runtimeActionsLogic();
@@ -1247,6 +1467,7 @@ export const useAppDetailLogic: AppLabAppDetailLogic = function (
     activePanel,
     configureAppBricksDialogLogic,
     swapRunningAppDialogLogic,
+    aiModelRequiredDialogLogic,
     onAppAction,
     appTitleLogic,
     appLabEditSectionLogic,

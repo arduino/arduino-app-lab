@@ -6,30 +6,39 @@
   align-items: center;
   gap: 4px;
   border-radius: 4px;
-  padding: 2px 8px 2px 4px;
+  padding: 2px 4px;
   height: 24px;
+  min-width: 24px;
+  min-height: 20px;
+  max-height: 24px;
   box-sizing: border-box;
 
   svg {
     width: 16px;
     height: 16px;
+    color: var(--text-inverted, #ffffff);
   }
 
   .badge-text {
     font-family: typography.$open-sans-font-family;
     font-weight: 600;
     font-size: 12px;
+    line-height: 160%;
+    letter-spacing: 1%;
+    vertical-align: middle;
 
     &.uppercase {
       font-family: typography.$roboto-mono-font-family;
       font-weight: 500;
+      line-height: 170%;
+      letter-spacing: 10%;
       text-transform: uppercase;
     }
   }
 
   &.small {
     height: 20px;
-    padding: 4px 4px 4px 2px;
+    padding: 2px;
 
     svg {
       width: 12px;
@@ -41,88 +50,231 @@
     }
   }
 
-  &.light {
+  &.ghost {
+    background-color: transparent !important;
+
+    svg,
     .badge-text {
-      color: #2C353A;
+      color: #ffffff;
+
+      :global(.light-theme) & {
+        color: #2c353a;
+      }
     }
   }
 
   &.neutral {
-    background-color: #AEB8B8;
+    background-color: #ecf1f1;
 
+    svg,
     .badge-text {
-      color: #171E21;
+      color: #171e21;
+    }
+
+    :global(.light-theme) & {
+      background-color: #374146;
+
+      svg,
+      .badge-text {
+        color: #ffffff;
+      }
     }
 
     &.light {
-      background-color: #4E5B61;
+      background-color: #4e5b61;
 
+      svg,
       .badge-text {
-        color: #FFFFFF;
+        color: #ffffff;
+      }
+
+      :global(.light-theme) & {
+        background-color: #c9d2d2;
+
+        svg,
+        .badge-text {
+          color: #2c353a;
+        }
       }
     }
   }
 
   &.positive {
-    background-color: #16A588;
+    background-color: #16a588;
 
+    svg,
     .badge-text {
-      color: #171E21;
+      color: #171e21;
+    }
+
+    :global(.light-theme) & {
+      background-color: #16a588;
+
+      svg,
+      .badge-text {
+        color: #ffffff;
+      }
     }
 
     &.light {
-      background-color: #213D3C;
+      background-color: #213d3c;
 
+      svg,
       .badge-text {
-        color: #DCF2ED;
+        color: #dcf2ed;
+      }
+
+      :global(.light-theme) & {
+        background-color: #dcf2ed;
+
+        svg,
+        .badge-text {
+          color: #213d3c;
+        }
       }
     }
   }
 
   &.warning {
-    background-color: #C1AB15;
+    background-color: #c1ab15;
 
+    svg,
     .badge-text {
-      color: #FFFFFF;
+      color: #ffffff;
+    }
+
+    :global(.light-theme) & {
+      background-color: #ecc00e;
+
+      svg,
+      .badge-text {
+        color: #2c353a;
+      }
     }
 
     &.light {
       background-color: #938210;
 
+      svg,
       .badge-text {
-        color: #FFF5CC;
+        color: #fff5cc;
+      }
+
+      :global(.light-theme) & {
+        background-color: #fff5cc;
+
+        svg,
+        .badge-text {
+          color: #5f5824;
+        }
       }
     }
   }
 
   &.error {
-    background-color: #FF8878;
+    background-color: #ff8878;
 
+    svg,
     .badge-text {
-      color: #171E21;
+      color: #171e21;
+    }
+
+    :global(.light-theme) & {
+      background-color: #aa4335;
+
+      svg,
+      .badge-text {
+        color: #ffffff;
+      }
     }
 
     &.light {
       background-color: #702419;
 
+      svg,
       .badge-text {
-        color: #FFBDB4;
+        color: #ffbdb4;
+      }
+
+      :global(.light-theme) & {
+        background-color: #f6d9d5;
+
+        svg,
+        .badge-text {
+          color: #611005;
+        }
       }
     }
   }
 
   &.accent {
-    background-color: #25C2C7;
+    background-color: #25c2c7;
 
+    svg,
     .badge-text {
-      color: #171E21;
+      color: #171e21;
+    }
+
+    :global(.light-theme) & {
+      background-color: #008184;
+
+      svg,
+      .badge-text {
+        color: #ffffff;
+      }
     }
 
     &.light {
-      background: linear-gradient(0deg, var(--component-bg-baseline, #232B2E), var(--component-bg-baseline, #232B2E)), linear-gradient(0deg, var(--component-bg-banner, rgba(37, 194, 199, 0.2)), var(--component-bg-banner, rgba(37, 194, 199, 0.2)));
+      background-color: rgba(37, 194, 199, 0.2);
 
+      svg,
       .badge-text {
-        color: #7FCBCD;
+        color: #7fcbcd;
+      }
+
+      :global(.light-theme) & {
+        background-color: rgba(0, 129, 132, 0.2);
+
+        svg,
+        .badge-text {
+          color: #005c5f;
+        }
+      }
+    }
+  }
+
+  &.alert {
+    background-color: #e77f60;
+
+    svg,
+    .badge-text {
+      color: #171e21;
+    }
+
+    :global(.light-theme) & {
+      background-color: #e05a00;
+
+      svg,
+      .badge-text {
+        color: #ffffff;
+      }
+    }
+
+    &.light {
+      background-color: rgba(242, 103, 39, 0.2);
+
+      svg,
+      .badge-text {
+        color: #f26727;
+      }
+
+      :global(.light-theme) & {
+        background-color: rgba(242, 103, 39, 0.2);
+
+        svg,
+        .badge-text {
+          color: #f26727;
+        }
       }
     }
   }

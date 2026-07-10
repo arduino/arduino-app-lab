@@ -11,6 +11,7 @@
 
 .editor {
   height: 100%;;
+  position: relative;
 }
 
 .actions {
@@ -64,7 +65,8 @@
   width: 100%;
   background: none;
   border: none;
-  padding: 17px 8px 2px 8px;
+  margin-top: 17px;
+  padding: 0 8px 2px 8px;
   border-bottom: 1px solid var(--border-inverted, #232b2e);
   display: flex;
   align-items: center;
@@ -219,4 +221,48 @@
     }
     opacity: 0.2;
   }
+
+  &--drag-over {
+    background-color: var(--component-bg-flexible, rgba(174, 184, 184, 0.1));
+  }
+}
+
+// Global drag preview that follows mouse everywhere - matches react-arborist style
+.drag-preview {
+  position: fixed;
+  pointer-events: none;
+  z-index: 10000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.drag-preview-chip {
+  height: 20px;
+  transform: rotate(0deg);
+  opacity: 1;
+  border-radius: 200px;
+  padding: 2px 8px;
+  border: 1px solid #434F54;
+  background: #232B2E;
+  font-family: 'Open Sans', sans-serif;
+  font-weight: 600;
+  font-size: 10px;
+  line-height: 1;
+  vertical-align: middle;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 200px;
+}
+
+.drag-preview-icon {
+  font-size: 12px;
+  line-height: 1;
 }

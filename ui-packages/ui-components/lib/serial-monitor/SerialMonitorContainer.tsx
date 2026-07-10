@@ -8,9 +8,9 @@ import SerialMonitorActions from './sub-components/SerialMonitorActions';
 import SerialMonitorContents from './sub-components/SerialMonitorContents';
 import SerialMonitorToolbar from './sub-components/SerialMonitorToolbar';
 
-const SerialMonitor: React.FC<SerialMonitorProps> = (
-  props: SerialMonitorProps,
-) => {
+const SerialMonitor = <T = unknown,>(
+  props: SerialMonitorProps<T>,
+): React.ReactElement => {
   const {
     serialMonitorLogic,
     resetSource,
@@ -52,6 +52,7 @@ const SerialMonitor: React.FC<SerialMonitorProps> = (
     toggleTimestamps,
     exportFile,
     toggleSearchPanel,
+    viewInstance,
   } = useMonitorCodeMirror(
     status,
     codeMirrorParams,
@@ -86,6 +87,7 @@ const SerialMonitor: React.FC<SerialMonitorProps> = (
         codeMirrorRef={codeMirrorRef}
         lastLineIsVisible={lastLineIsVisible}
         scrollToBottom={scrollToBottom}
+        viewInstance={viewInstance}
       />
       {hasActions && (
         <SerialMonitorActions

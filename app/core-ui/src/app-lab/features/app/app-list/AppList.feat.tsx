@@ -17,8 +17,8 @@ import {
   TopBar,
   useI18n,
 } from '@cloud-editor-mono/ui-components/lib/components-by-app/app-lab';
-import React, { Key } from 'react';
 import clsx from 'clsx';
+import React, { Key } from 'react';
 
 import styles from './app-list.module.scss';
 import { useAppListLogic } from './appList.logic';

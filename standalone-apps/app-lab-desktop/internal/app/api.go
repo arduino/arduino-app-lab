@@ -209,6 +209,10 @@ func (a *App) IsDirectory(path string) (bool, error) {
 	return fs.IsDirectory(a.selectedBoard.Conn, path)
 }
 
+func (a *App) IsLocalDirectory(path string) (bool, error) {
+	return fs.IsLocalDirectory(path)
+}
+
 func (a *App) SelectFilesDialog(remoteDir string) ([]string, error) {
 	return fs.SelectFilesDialog(a.ctx(), a.selectedBoard.Conn, remoteDir)
 }
@@ -273,6 +277,10 @@ func (a *App) Flash(imageVersion flasher.OSImageRelease, preserveUserPartition b
 	return flasher.Flash(a.selectedBoard.Info.Serial, imageVersion, preserveUserPartition, func(event flasher.FlashEvent) {
 		runtime.EventsEmit(a.ctx(), "flash-progress", event)
 	})
+}
+
+func (a *App) CancelFlash() {
+	flasher.CancelFlash()
 }
 
 func (a *App) InferOrchestratorURL() (string, error) {

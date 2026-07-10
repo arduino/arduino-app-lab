@@ -5,7 +5,7 @@ import {
 import { SelectableFileData } from '@cloud-editor-mono/ui-components/lib/components-by-app/shared';
 import { Subject } from 'rxjs';
 
-import { OpenFilesStoreItem } from './files';
+import { OpenFilesStoreItem, OpenFilesStorePatch } from './files';
 
 export interface BasicFileData {
   name: string;
@@ -42,10 +42,16 @@ export type UseFiles = (args: {
   openFiles: SelectableFileData[];
   unsavedFileIds: Set<string> | undefined;
   openFilesStore?: OpenFilesStoreItem | null;
-  selectFile: (fileId?: string, openAtIndex?: number) => void;
+  previewFileId?: string;
+  selectFile: (params: {
+    fileId?: string;
+    openAtIndex?: number;
+    isPreview?: boolean;
+  }) => void;
   closeFile: (fileId: string) => void;
   updateOpenFile: (prevFileId: string, nextFileId: string) => void;
-  updateOpenFilesOrder: (fileIds: string[]) => void;
+  updateOpenFilesOrder: (fileIds: string[], draggedFileId?: string) => void;
   onSketchRename: (newName: string) => void;
   onAppRename: (newAppId: string) => void;
+  storeSplitState: (patch: OpenFilesStorePatch) => Promise<void>;
 };

@@ -1,6 +1,4 @@
 import {
-  AppLabToggleOff,
-  AppLabToggleOn,
   Bin,
   CaretDown,
   Download,
@@ -29,6 +27,7 @@ import { useI18n } from '../../../i18n/useI18n';
 import { XSmall, XXSmall, XXXSmall } from '../../../typography';
 import { EmojiPicker } from '../emoji-picker';
 import { Badge, BadgeStyle, BadgeVariant } from '../essential/badge';
+import { Toggle } from '../essential/toggle';
 import { useTooltip } from '../essential/tooltip';
 import styles from './app-title.module.scss';
 import { AppAction, AppTitleLogic } from './AppTitle.type';
@@ -74,9 +73,6 @@ const AppTitle: React.FC<AppTitleProps> = (props: AppTitleProps) => {
     timeout: 0,
     tooltipType: 'title',
   });
-
-  const SwitchIcon =
-    defaultApp?.id === app?.id ? AppLabToggleOn : AppLabToggleOff;
 
   const measureWidth = useCallback((): void => {
     const width = nameRef.current?.getBoundingClientRect().width ?? 0;
@@ -239,10 +235,10 @@ const AppTitle: React.FC<AppTitleProps> = (props: AppTitleProps) => {
                         <XXSmall>
                           {formatMessage(appTitleMessages.runAtStartup)}
                         </XXSmall>
-                        <SwitchIcon
-                          onClick={(): void => {
-                            setAsDefaultApp?.(defaultApp?.id !== app?.id);
-                          }}
+                        <Toggle
+                          className={styles['default-app-menu-item-toggle']}
+                          isSelected={defaultApp?.id === app?.id}
+                          onChange={setAsDefaultApp}
                         />
                       </div>
                       <XXXSmall

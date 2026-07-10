@@ -5,7 +5,8 @@
   "scripts": {
     "tokens:pull": "ts-node ./scripts/tokens-pull.ts && yarn themes:generate",
     "themes:generate": "ts-node ./scripts/tokens-transform.ts && ts-node ./scripts/themes-generate.ts",
-    "openapi-types:generate": "./scripts/openapi-types-generate.sh"
+    "openapi-types:generate": "./scripts/openapi-types-generate.sh",
+    "download:socket-io": "./scripts/download_socket_io.sh"
   },
   "main": "./index.js",
   "types": "./index.d.ts",

@@ -382,7 +382,7 @@ describe('call useGetSketchStartUpQueries', () => {
       assertNonNull(otherFile);
 
       await waitFor(() => {
-        initialResult.current.selectFile(otherFile.path);
+        initialResult.current.selectFile({ fileId: otherFile.path });
 
         expect(initialResult.current.selectedFile?.fileId).toEqual(
           otherFile.path,

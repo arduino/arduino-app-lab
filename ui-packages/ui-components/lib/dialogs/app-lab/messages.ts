@@ -374,6 +374,12 @@ export const createAppDialogMessages = defineMessages({
     defaultMessage: 'Failed to duplicate app. Please try again.',
     description: 'Notification message shown when app duplication fails',
   },
+  storageFull: {
+    id: 'createAppDialog.storageFull',
+    defaultMessage: 'Unable to duplicate the app. The board storage is full.',
+    description:
+      'Error message shown when the board storage is full and an app cannot be created or cloned',
+  },
 });
 
 export const renameAppDialogMessages = defineMessages({
@@ -649,6 +655,12 @@ export const importResourceDialogMessages = defineMessages({
     defaultMessage: 'This app is broken or misconfigured.',
     description: 'Description shown when upload fails for an app',
   },
+  uploadFailedStorageFullApp: {
+    id: 'app-lab.import-resource-dialog.upload-failed-storage-full-app',
+    defaultMessage: 'Unable to import the app. The board storage is full.',
+    description:
+      'Error shown when the board storage is full while importing an app',
+  },
   uploadFailedDescriptionFile: {
     id: 'app-lab.import-resource-dialog.upload-failed-description-file',
     defaultMessage:
@@ -675,6 +687,49 @@ export const importResourceDialogMessages = defineMessages({
     id: 'app-lab.import-resource-dialog.retry',
     defaultMessage: 'Retry',
     description: 'Button text to retry upload after failure',
+  },
+
+  titleModel: {
+    id: 'app-lab.import-resource-dialog.title-model',
+    defaultMessage: 'Bring your own model',
+    description: 'Title of the import model dialog',
+  },
+  uploadTitleModel: {
+    id: 'app-lab.import-resource-dialog.upload-title-model',
+    defaultMessage: 'Upload a Model',
+    description: 'Title for the upload section in the import model dialog',
+  },
+  uploadDescriptionModel: {
+    id: 'app-lab.import-resource-dialog.upload-description-model',
+    defaultMessage:
+      'Import a .gguf model file from your computer to use it in your bricks.',
+    description: 'Description shown in the import model dialog',
+  },
+  supportGGUF: {
+    id: 'app-lab.import-resource-dialog.support-gguf',
+    defaultMessage: 'Only .GGUF files are supported',
+    description: 'Text indicating supported file types for model import',
+  },
+  uploadingModel: {
+    id: 'app-lab.import-resource-dialog.uploading-model',
+    defaultMessage: 'Uploading model',
+    description: 'Text shown during model upload',
+  },
+  uploadFailedModel: {
+    id: 'app-lab.import-resource-dialog.upload-failed-model',
+    defaultMessage: 'Upload failed',
+    description: 'Title shown when upload fails for a model',
+  },
+  uploadFailedDescriptionModel: {
+    id: 'app-lab.import-resource-dialog.upload-failed-description-model',
+    defaultMessage:
+      'We couldn’t upload the model. Check the model and try again.',
+    description: 'Description shown when upload fails for a model',
+  },
+  dragDropModel: {
+    id: 'app-lab.import-resource-dialog.drag-drop-model',
+    defaultMessage: 'Drag and drop your model here',
+    description: 'Text shown for drag and drop area for model upload',
   },
 });
 
@@ -1040,14 +1095,14 @@ export const duplicateFileDialogMessages = defineMessages({
   fileFolderConflictDescription: {
     id: 'duplicateFileDialog.fileFolderConflictDescription',
     defaultMessage:
-      "Can't move this file. A folder with the same name already exists. Keep both to create a renamed copy.",
+      "Can't move this file. A folder with the same name already exists.",
     description:
       'Description shown when trying to move a file to a location with a folder of the same name',
   },
   folderFileConflictDescription: {
     id: 'duplicateFileDialog.folderFileConflictDescription',
     defaultMessage:
-      "Can't move this folder. A file with the same name already exists. Keep both to create a renamed copy.",
+      "Can't move this folder. A file with the same name already exists.",
     description:
       'Description shown when trying to move a folder to a location with a file of the same name',
   },
@@ -1091,6 +1146,11 @@ export const duplicateFileDialogMessages = defineMessages({
     id: 'duplicateFileDialog.keepBothButton',
     defaultMessage: 'Keep both',
     description: 'Label for the keep both button',
+  },
+  okGotItButton: {
+    id: 'duplicateFileDialog.okGotItButton',
+    defaultMessage: 'Ok, got it',
+    description: 'Label for the ok got it button',
   },
 });
 
@@ -1153,5 +1213,79 @@ export const unsupportedCarrierDialogMessages = defineMessages({
     defaultMessage: 'Update Board',
     description:
       'Label for the confirm button in the unsupported carrier board dialog',
+  },
+});
+
+export const aiModelUninstallDialogMessages = defineMessages({
+  dialogTitle: {
+    id: 'aiModelUninstallDialog.title',
+    defaultMessage: 'Uninstall',
+    description: 'Title of the AI model uninstall dialog',
+  },
+  dialogBodyTitle: {
+    id: 'aiModelUninstallDialog.bodyTitle',
+    defaultMessage:
+      'This AI model is currently linked to one or more other projects',
+    description: 'Message shown in the AI model uninstall dialog',
+  },
+  dialogBodyDescription: {
+    id: 'aiModelUninstallDialog.bodyDescription',
+    defaultMessage:
+      'The AI model will be uninstalled from all linked projects. Proceed anyway?',
+    description: 'Description shown in the AI model uninstall dialog',
+  },
+  confirmButton: {
+    id: 'aiModelUninstallDialog.confirmButton',
+    defaultMessage: 'Uninstall anyway',
+    description:
+      'Label for the confirm button in the AI model uninstall dialog',
+  },
+  cancelButton: {
+    id: 'aiModelUninstallDialog.cancelButton',
+    defaultMessage: 'Keep the AI model',
+    description: 'Label for the cancel button in the AI model uninstall dialog',
+  },
+});
+
+export const aiModelRequiredDialogMessages = defineMessages({
+  dialogTitle: {
+    id: 'aiModelRequiredDialog.title',
+    defaultMessage: 'AI Model required',
+    description: 'Title of the AI model required dialog',
+  },
+  dialogBodyTitleApp: {
+    id: 'aiModelRequiredDialog.bodyTitleApp',
+    defaultMessage: 'AI model not available',
+    description: 'Message shown in the AI model required dialog for apps',
+  },
+  dialogBodyTitleExample: {
+    id: 'aiModelRequiredDialog.bodyTitleExample',
+    defaultMessage: 'Download the AI model to run this example',
+    description: 'Message shown in the AI model required dialog for examples',
+  },
+  dialogBodyDescriptionApp: {
+    id: 'aiModelRequiredDialog.bodyDescriptionApp',
+    defaultMessage:
+      'This App needs the {modelName} AI model. Download it now to run this app or select another one.',
+    description: 'Description shown in the AI model required dialog for apps',
+  },
+  dialogBodyDescriptionExample: {
+    id: 'aiModelRequiredDialog.bodyDescriptionExample',
+    defaultMessage:
+      'This example needs the {modelName} AI model. Download it now to run this example.',
+    description:
+      'Description shown in the AI model required dialog for examples',
+  },
+  confirmButtonApp: {
+    id: 'aiModelRequiredDialog.confirmButtonApp',
+    defaultMessage: 'Select Model',
+    description:
+      'Label for the confirm button in the AI model required dialog for apps',
+  },
+  confirmButtonExample: {
+    id: 'aiModelRequiredDialog.confirmButtonExample',
+    defaultMessage: 'Download Model',
+    description:
+      'Label for the confirm button in the AI model required dialog for examples',
   },
 });

@@ -37,8 +37,8 @@ export const appItemMessages = defineMessages({
     description: 'Action to export the app',
   },
   actionRunAsStartup: {
-    id: 'appItem.actionRunAsStartup',
-    defaultMessage: 'Run As Startup',
-    description: 'Action to set the app to run at startup',
+    id: 'appItem.actionRunAtStartup',
+    defaultMessage: 'Run at startup',
+    description: 'Label for the run at startup action',
   },
 });

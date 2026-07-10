@@ -6,7 +6,14 @@ import {
 import styles from './notifications.module.scss';
 
 export const sendAppLabNotification = (
-  props: Omit<SnackbarProps, 'onClose' | 'toastId'>,
+  props: Omit<SnackbarProps, 'onClose' | 'toastId'> & {
+    duration?: number;
+  },
 ): void => {
-  snackbar({ ...props, className: styles['snackbar'] });
+  const { duration, ...rest } = props;
+  snackbar({
+    ...rest,
+    className: styles['snackbar'],
+    opts: duration ? { duration } : undefined,
+  });
 };

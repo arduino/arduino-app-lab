@@ -22,6 +22,14 @@
     width: 100%;
 }
 
+.container--snippet {
+    height: auto;
+
+    .content {
+        height: auto;
+    }
+}
+
 .container-with-header {
     grid-template-rows: min-content 1fr;
 }

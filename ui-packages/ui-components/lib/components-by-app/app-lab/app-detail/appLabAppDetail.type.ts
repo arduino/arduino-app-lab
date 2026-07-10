@@ -1,5 +1,6 @@
 import { AppDetailedInfo } from '@cloud-editor-mono/infrastructure';
 import {
+  AiModelRequiredDialogLogic,
   AppAction,
   AppLabEditSectionLogic,
   AppTitleLogic,
@@ -21,6 +22,7 @@ export type AppLabAppDetailLogic = (
   activePanel: 'editor' | 'console';
   configureAppBricksDialogLogic: ConfigureAppBricksDialogLogic;
   swapRunningAppDialogLogic: SwapRunningAppDialogLogic;
+  aiModelRequiredDialogLogic: AiModelRequiredDialogLogic;
   onAppAction: (action: AppAction) => void;
   appTitleLogic: AppTitleLogic;
   appLabEditSectionLogic: AppLabEditSectionLogic;

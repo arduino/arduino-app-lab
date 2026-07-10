@@ -32,16 +32,15 @@
     "@codemirror/state": ">= 6.1.2",
     "@codemirror/view": ">= 6.3.0",
     "@lezer/highlight": ">= 1.2.1",
-    "@tanstack/react-location": ">= 3.7.4",
-    "@tanstack/react-query": ">= 4.12.0",
+    "@tanstack/react-location": "3.7.4",
+    "@tanstack/react-query": "4.12.0",
     "clsx": ">= 1.2.1",
     "react": ">= 18.2.0",
     "react-aria": ">= 3.20.0",
     "react-dom": ">= 18.2.0",
     "react-helmet-async": ">= 2.4.0",
     "react-stately": ">= 3.20.0",
-    "react-use": ">= 17.4.0",
-    "use-debounce": ">= 8.0.4"
+    "react-use": ">= 17.4.0"
   },
   "files": [
     "dist"

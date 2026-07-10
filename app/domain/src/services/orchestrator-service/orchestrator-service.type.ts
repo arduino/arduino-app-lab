@@ -113,5 +113,10 @@ export interface OrchestratorService {
   importAppFromPath(filePath: string): Promise<ImportResourceResult>;
   getAIModels(): Promise<AIModelItem[]>;
   installEIModel(projectId: string, impulseId: string): Promise<AIModelItem>;
-  deleteAIModel(id: string): Promise<void>;
+  deleteAIModel(id: string, isForced?: boolean): Promise<void>;
+  uploadAIModel(
+    modelId: string,
+    handlers: EventSourceHandlers,
+    abortController: AbortController,
+  ): Promise<void>;
 }

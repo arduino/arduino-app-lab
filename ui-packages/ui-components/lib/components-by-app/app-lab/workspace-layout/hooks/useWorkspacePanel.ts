@@ -39,7 +39,13 @@ export const useWorkspacePanel: UseWorkspacePanel = ({ defaultSize } = {}) => {
       return;
     }
 
-    panel.isCollapsed() ? panel.expand() : panel.collapse();
+    if (panel.isCollapsed()) {
+      panel.expand();
+      setIsCollapsed(false);
+    } else {
+      panel.collapse();
+      setIsCollapsed(true);
+    }
   }, [panel]);
 
   const toggleMaximize = useCallback(() => {

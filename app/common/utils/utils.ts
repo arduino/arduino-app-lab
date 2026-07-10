@@ -145,3 +145,27 @@ export const IO_COMMAND_TIMEOUT = 5000;
 export type FileLike = { name: string };
 export const pickMainIno = <T extends FileLike>(files: T[]): T | undefined =>
   files.find((f) => f.name.toLowerCase().endsWith('.ino'));
+
+// inspired by https://stackoverflow.com/a/26407251
+export function getPropertyByName(obj: unknown, prop: string): string | null {
+  //property not found
+  if (typeof obj === 'undefined' || obj === null) return null;
+
+  //index of next property split
+  const _index = prop.indexOf('.');
+
+  //property split found; recursive call
+  if (_index > -1) {
+    //get object at property (before split), pass on remainder
+    return getPropertyByName(
+      (obj as Record<string, unknown>)[prop.substring(0, _index)],
+      prop.substring(_index + 1),
+    );
+  }
+
+  const maybeProp = (obj as Record<string, unknown>)[prop];
+  if (typeof maybeProp === 'undefined') {
+    return null;
+  }
+  return maybeProp as string;
+}

@@ -9,7 +9,14 @@ import {
   CodeMirrorEventAnnotationSideEffects,
   CodeMirrorViewInstanceAnnotationMap,
 } from './codeMirror.type';
-import { ViewInstances } from './codeMirrorViewInstances';
+import {
+  codeMirrorAnnotation,
+  splitSyncAnnotation,
+  ViewInstances,
+} from './codeMirrorViewInstances';
+
+// Re-exported for backwards compatibility with existing import paths.
+export { codeMirrorAnnotation };
 
 export type CodeEditorOnChangeType = (
   doc: CodeEditorText,
@@ -22,6 +29,14 @@ export function onUpdate(onChange: CodeEditorOnChangeType): Extension {
       const annotation = transaction.annotation(codeMirrorAnnotation);
 
       if (annotation) return codeMirrorEventAnnotationSideEffects[annotation]();
+
+      // Skip updates originating from the split-view peer sync mechanism:
+      // the source pane's own onChange already wrote the shared code
+      // subject, so running it again here would double-call setCode for
+      // every mirrored keystroke. A mirrored dispatch is always its own
+      // update cycle on the peer view, so bailing out of the whole
+      // listener is safe.
+      if (transaction.annotation(splitSyncAnnotation)) return;
     }
 
     if (viewUpdate.docChanged) {
@@ -31,8 +46,6 @@ export function onUpdate(onChange: CodeEditorOnChangeType): Extension {
   });
 }
 
-export const codeMirrorAnnotation =
-  Annotation.define<CodeMirrorEventAnnotation>();
 export const codeMirrorAnnotationMap: CodeMirrorEventAnnotationMap = {
   [CodeMirrorEventAnnotation.FileTabLoaded]: codeMirrorAnnotation.of(
     CodeMirrorEventAnnotation.FileTabLoaded,
@@ -63,6 +76,8 @@ export const defaultCodeMirrorAnnotationMap: CodeMirrorViewInstanceAnnotationMap
       codeMirrorAnnotationMap[CodeMirrorEventAnnotation.FileTabLoaded],
     [ViewInstances.Console]:
       codeMirrorAnnotationMap[CodeMirrorEventAnnotation.OutputPanelUpdate],
+    [ViewInstances.Editor2]:
+      codeMirrorAnnotationMap[CodeMirrorEventAnnotation.FileTabLoaded],
   };
 
 const codeMirrorEventAnnotationSideEffects: CodeMirrorEventAnnotationSideEffects =

@@ -58,8 +58,8 @@
     "@radix-ui/react-slot": "^1.2.2",
     "@tanstack/react-location": "3.7.4",
     "@tanstack/react-query": "4.12.0",
-    "@tanstack/react-router": "^1.116.0",
-    "@tanstack/react-router-devtools": "^1.116.0",
+    "@tanstack/react-router": "1.116.0",
+    "@tanstack/react-router-devtools": "1.116.0",
     "@types/diff": "7.0.0",
     "algoliasearch": "4.20.0",
     "buffer": "^6.0.3",
@@ -103,7 +103,6 @@
     "standardized-audio-context-mock": "9.7.7",
     "ua-parser-js": "1.0.33",
     "unique-names-generator": "^4.2.0",
-    "use-debounce": "8.0.4",
     "wretch": "2.1.5",
     "zustand": "5.0.8"
   },
@@ -111,7 +110,7 @@
     "@axe-core/react": "4.4.5",
     "@cloud-editor-mono/dev-config": "npm:@bcmi-labs/cloud-editor-dev-config@^1.4.3",
     "@formatjs/cli": "5.1.12",
-    "@tanstack/router-plugin": "^1.116.1",
+    "@tanstack/router-plugin": "1.116.1",
     "@testing-library/dom": "8.20.0",
     "@testing-library/jest-dom": "5.16.5",
     "@testing-library/react": "13.4.0",
@@ -173,6 +172,7 @@
     "coverage": "lerna run coverage --stream",
     "tokens:pull": "yarn workspace @bcmi-labs/cloud-editor-dev-config tokens:pull",
     "themes:generate": "yarn workspace @bcmi-labs/cloud-editor-dev-config themes:generate",
+    "sync-seti-icons": "yarn workspace @bcmi-labs/cloud-editor-images sync-seti-icons",
     "i18n:extract": "formatjs extract 'ui-packages/**/*.ts*' --ignore='**/*.d.ts' --out-file app/core-ui/lang/en.json --flatten --id-interpolation-pattern '[sha512:contenthash:base64:6]'",
     "i18n:compile": "formatjs compile-folder --ast app/core-ui/lang app/core-ui/lang/compiled",
     "i18n:generate": "yarn i18n:extract && yarn i18n:compile",
@@ -188,6 +188,6 @@
     "licensed:update:arduino-app-lab-desktop": "yarn workspace @bcmi-labs/al-license licensed",
     "fetch-learn:arduino-app-lab-desktop": "yarn workspace @bcmi-labs/al-learn-contents fetch"
   },
-  "packageManager": "yarn@3.5.0",
+  "packageManager": "yarn@4.17.1",
   "license": "GPL-3.0"
 }

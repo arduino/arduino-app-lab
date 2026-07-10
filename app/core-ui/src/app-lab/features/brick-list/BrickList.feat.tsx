@@ -4,19 +4,24 @@ import {
   BricksList,
   TopBar,
 } from '@cloud-editor-mono/ui-components/lib/components-by-app/app-lab';
+import { useSearch } from '@tanstack/react-router';
 import clsx from 'clsx';
 
 import styles from './brick-list.module.scss';
 import { useBrickListLogic } from './brickList.logic';
 
 const BrickList: React.FC = () => {
+  const { brickId, tab } = useSearch({ from: '/bricks' });
+
   const {
     bricks,
     isLoading: bricksLoading,
     selectedBrick,
     brickDetailLogic,
     setSelectedBrick,
-  } = useBrickListLogic();
+    selectedTab,
+    setSelectedTab,
+  } = useBrickListLogic({ brickId, tab });
 
   return (
     <section className={styles['main']}>
@@ -40,6 +45,8 @@ const BrickList: React.FC = () => {
               <BrickDetail
                 brickId={selectedBrick?.id ?? ''}
                 brickDetailLogic={brickDetailLogic}
+                selectedTab={selectedTab}
+                onSelectedTabChange={setSelectedTab}
               />
             </div>
           </div>

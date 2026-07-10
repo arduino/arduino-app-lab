@@ -8,6 +8,7 @@ import {
 } from '@cloud-editor-mono/domain/src/services/services-by-app/app-lab';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useReducer, useState } from 'react';
+import { useShallow } from 'zustand/react/shallow';
 
 import { useBoardLifecycleStore } from '../../store/boardLifecycle';
 import { BoardConfigurationContextValue } from './boardConfigurationContext';
@@ -71,6 +72,12 @@ export function useBoardConfiguration(): BoardConfigurationContextValue {
     (state) => state.boardIsReachable,
   );
 
+  const { selectedConnectedBoard } = useBoardLifecycleStore(
+    useShallow((state) => ({
+      selectedConnectedBoard: state.selectedConnectedBoard,
+    })),
+  );
+
   const [skipped, setSkipped] = useState(false);
 
   const {
@@ -111,6 +118,16 @@ export function useBoardConfiguration(): BoardConfigurationContextValue {
     onSuccess: (_, boardName) => {
       queryClient.setQueryData(['get-board-name'], boardName);
       dispatch({ type: 'RESET_ERROR' });
+      if (selectedConnectedBoard) {
+        useBoardLifecycleStore.setState({
+          selectedConnectedBoard: {
+            ...selectedConnectedBoard,
+            name: boardName,
+          },
+        });
+      }
+
+      queryClient.invalidateQueries(['boards']);
     },
     onError: (error) => {
       console.error('Failed to set board name', error);

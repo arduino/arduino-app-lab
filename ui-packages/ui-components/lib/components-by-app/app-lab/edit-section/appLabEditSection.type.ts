@@ -32,7 +32,11 @@ export type AppLabEditSectionLogic = () => {
   selectedNode?: TreeNode;
   selectedFolder?: TreeNode;
   defaultOpenFoldersState: { [key: string]: boolean } | undefined;
-  setSelectedFile: (id: string | TreeNode | undefined) => void;
+  setSelectedFile: (
+    id: string | TreeNode | undefined,
+    isPreview?: boolean,
+    targetPane?: 'A' | 'B',
+  ) => void;
   setSelectedFolder: (node: TreeNode | undefined) => void;
   openFilesFolder: () => void;
   openExternal: () => void;
@@ -80,6 +84,14 @@ export type AppLabEditSectionLogic = () => {
   duplicateFileDialogLogic?: DuplicateFileDialogLogic;
   importFileDialogLogic: ImportResourceLogic;
   openImportFileDialog: (params: { path?: string; isFolder?: boolean }) => void;
+  /**
+   * Called when the user attempts to move (within the file tree) a node
+   * that the Arduino App specification protects. Consumers wire this to
+   * a notification (“file cannot be moved…”). The drop is bailed before
+   * any rename request reaches the backend.
+   */
+  onMoveBlocked?: (node: TreeNode) => void;
+  onDragOverFolderChange: (path: string) => void;
 };
 
 export type FilesManagerSectionLogic = () => {
@@ -93,7 +105,11 @@ export type FilesManagerSectionLogic = () => {
   selectedNode?: TreeNode;
   selectedFolder?: TreeNode;
   defaultOpenFoldersState: { [key: string]: boolean } | undefined;
-  setSelectedFile: (id: string | TreeNode | undefined) => void;
+  setSelectedFile: (
+    id: string | TreeNode | undefined,
+    isPreview?: boolean,
+    targetPane?: 'A' | 'B',
+  ) => void;
   setSelectedFolder: (node: TreeNode | undefined) => void;
   openExternalLink: (url: string) => void;
   addFileHandler: (path: string) => Promise<void>;
@@ -135,4 +151,15 @@ export type FilesManagerSectionLogic = () => {
   duplicateFileDialogLogic?: DuplicateFileDialogLogic;
   importFileDialogLogic: ImportResourceLogic;
   openImportFileDialog: (params: { path?: string; isFolder?: boolean }) => void;
+  /** See `AppLabEditSectionLogic.onMoveBlocked`. */
+  onMoveBlocked?: (node: TreeNode) => void;
+  onFileDragStart?: (nodes: TreeNode[]) => void;
+  /**
+   * Called when the user starts dragging a brick from the sidebar's
+   * `BrickItem`. The drop pipeline in `AppLabEditSection` reads this to
+   * route brick drops to pane A / B (same hit-test as file-tree drops).
+   */
+  onBrickDragStart?: (brick: BrickInstance) => void;
+  onBrickDragEnd?: () => void;
+  onDragOverFolderChange: (path: string) => void;
 };

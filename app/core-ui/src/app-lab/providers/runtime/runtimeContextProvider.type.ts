@@ -42,8 +42,21 @@ export type ConsoleLogic = {
   resetConsoleSources: (appId: string, keysToRetain: string[]) => void;
 };
 
+export type AiModelRequiredDialogState = {
+  open: boolean;
+  brickId?: string;
+  modelId?: string;
+};
+
+export type AiModelRequired = {
+  state: AiModelRequiredDialogState;
+  open: (params: { brickId?: string; modelId?: string }) => void;
+  close: () => void;
+};
+
 export type UseRuntimeLogic = () => {
   appsStatus: AppsStatus;
   runtimeActions: RuntimeActions;
   consoleLogic: ConsoleLogic;
+  aiModelRequired: AiModelRequired;
 };

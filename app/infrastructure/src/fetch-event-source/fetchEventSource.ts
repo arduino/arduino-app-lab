@@ -128,3 +128,37 @@ export async function postEventSource(
 
   return fetchEventSource(url, { ...options, openWhenHidden: true });
 }
+
+export async function putEventSource(
+  url: string,
+  handlers: EventSourceHandlers,
+  body = {},
+  token?: string,
+  abortController?: AbortController,
+  headers?: FetchEventSourceInit['headers'],
+): Promise<void> {
+  const options: FetchEventSourceInit = {
+    method: 'PUT',
+    body: JSON.stringify(body),
+    ...addCommonHandlers(handlers),
+  };
+
+  if (token) {
+    options.headers = {
+      Authorization: `Bearer ${token}`,
+    };
+  }
+
+  if (abortController) {
+    options.signal = abortController.signal;
+  }
+
+  if (headers) {
+    options.headers = {
+      ...options.headers,
+      ...headers,
+    };
+  }
+
+  return fetchEventSource(url, { ...options, openWhenHidden: true });
+}

@@ -3,6 +3,7 @@ import {
   Annotation,
   EditorState,
   Extension,
+  Text,
   Transaction,
 } from '@codemirror/state';
 import { EditorView, scrollPastEnd } from '@codemirror/view';
@@ -14,6 +15,7 @@ import {
 } from './codeMirror.type';
 import {
   appendViewInstanceToDom,
+  createSplitSyncExtension,
   extMetadata,
   ViewInstances,
   viewInstances,
@@ -163,6 +165,13 @@ export function createUseCodeMirrorHook(
           createLineHighlightStateField(highlightLines),
         ),
       );
+
+      if (
+        viewInstanceId === ViewInstances.Editor ||
+        viewInstanceId === ViewInstances.Editor2
+      ) {
+        extensions.push(createSplitSyncExtension(viewInstanceId));
+      }
 
       const state = EditorState.create({
         doc: (getValue && getValue()) || '',
@@ -336,7 +345,25 @@ export function createUseCodeMirrorHook(
               const storedState =
                 viewInstanceStateMaps[viewInstanceId].get(instanceId);
 
-              if (storedState) {
+              // The rxjs code subject is the source of truth for a file's
+              // content. The cached EditorState can fall out of sync when
+              // another pane (eg. Editor2 in split view) writes to the same
+              // file, because edits made there do not refresh this pane's
+              // cache. Drop the stale cache so we rehydrate from the
+              // subject via createState() below — otherwise switching back
+              // to the file would restore old content and (via the
+              // split-sync link effect) clobber the peer pane too.
+              //
+              // Compare via CodeMirror's `Text.eq()` rather than
+              // materialising the full doc with `.toString()`: equality on
+              // the Text rope is O(min(len)) in practice and avoids
+              // allocating a potentially large string for every value
+              // instance change.
+              const subjectValue = (getValue && getValue()) || '';
+              const subjectDoc = Text.of(subjectValue.split('\n'));
+              if (storedState && !storedState.doc.eq(subjectDoc)) {
+                viewInstanceStateMaps[viewInstanceId].delete(instanceId);
+              } else if (storedState) {
                 viewInstance.setState(storedState);
 
                 viewInstance.dispatch({

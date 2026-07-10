@@ -193,7 +193,7 @@ describe('useFiles', () => {
     const lastTabFile =
       result.current.openFiles[result.current.openFiles.length - 1];
     act(() => {
-      result.current.selectFile(lastTabFile.fileId);
+      result.current.selectFile({ fileId: lastTabFile.fileId });
     });
 
     await waitFor(() => {
@@ -225,7 +225,7 @@ describe('useFiles', () => {
 
     const fileToReopen = fileToClose;
     act(() => {
-      result.current.selectFile(fileToReopen.fileId);
+      result.current.selectFile({ fileId: fileToReopen.fileId });
     });
 
     await waitFor(() => {
@@ -409,7 +409,7 @@ describe('useFiles', () => {
     });
 
     act(() => {
-      result.current.selectFile(sketchSecretsFileId);
+      result.current.selectFile({ fileId: sketchSecretsFileId });
     });
 
     await waitFor(() => {

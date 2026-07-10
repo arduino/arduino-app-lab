@@ -5,6 +5,9 @@
 
 :root {
   --rename-tab-index: 0;
+  // Public token so siblings (eg. the editor split drop zone) can offset
+  // their geometry to clear the tabs bar without hardcoding the value.
+  --editor-tabs-bar-height: 40px;
 }
 
 $renameTabIndex: var(--rename-tab-index);
@@ -15,6 +18,7 @@ $renameTabIndex: var(--rename-tab-index);
 
 .tabs-bar {
   display: flex;
+  background-color: shared.theme-var(--editor-tab-background);
 }
 
 .tabs-list {
@@ -29,15 +33,15 @@ $renameTabIndex: var(--rename-tab-index);
   overscroll-behavior: none;
 
   &::-webkit-scrollbar {
-    height: 12px;
+    height: 8px;
     background-color: shared.theme-var(--editor-background);
   }
 
   &::-webkit-scrollbar-thumb {
     border: 2px solid shared.theme-var(--editor-background);
     background-clip: padding-box;
-    border-radius: 8px;
-    background-color: transparent;
+    border-radius: 10px;
+    background-color: rgba(0, 0, 0, 0.5);
     cursor: pointer;
   }
 }
@@ -66,7 +70,7 @@ $renameTabIndex: var(--rename-tab-index);
     left: -1px;
     right: 0;
     bottom: -1px;
-    height: 12px;
+    height: 8px;
     background-color: shared.theme-var(--editor-background);
   }
 }

@@ -37,7 +37,15 @@ const AppLabEditorPanel: React.FC<AppLabEditorPanelProps> = (
     [formatMessage],
   );
 
-  return openFiles.length > 0 ? (
+  if (openFiles.length === 0) {
+    return (
+      <div className={styles['editor-empty-state']}>
+        <ArduinoLoop />
+      </div>
+    );
+  }
+
+  return (
     <EditorPanel
       editorPanelLogic={editorPanelLogic}
       getKeywords={getKeywords}
@@ -54,10 +62,6 @@ const AppLabEditorPanel: React.FC<AppLabEditorPanelProps> = (
       }}
       readOnlyBanner={getReadOnlyBanner()}
     />
-  ) : (
-    <div className={styles['editor-empty-state']}>
-      <ArduinoLoop />
-    </div>
   );
 };
 

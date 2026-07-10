@@ -28,6 +28,14 @@ const tabMenuItems: TabMenuItemDictionary = {
     id: TabMenuItemIds.CloseAll,
     label: commandMessages[TabMenuItemIds.CloseAll],
   },
+  [TabMenuItemIds.SplitRight]: {
+    id: TabMenuItemIds.SplitRight,
+    label: commandMessages[TabMenuItemIds.SplitRight],
+  },
+  [TabMenuItemIds.SplitLeft]: {
+    id: TabMenuItemIds.SplitLeft,
+    label: commandMessages[TabMenuItemIds.SplitLeft],
+  },
   [TabMenuItemIds.RenameFile]: {
     id: TabMenuItemIds.RenameFile,
     label: commandMessages[TabMenuItemIds.RenameFile],
@@ -65,6 +73,10 @@ const newTabMenuItems: NewTabMenuItemDictionary = {
 };
 
 export const tabMenuSections: TabMenuSection[] = [
+  // Section `name` values below are internal grouping labels only; they are
+  // not displayed in the rendered context menu (which only renders item
+  // labels) so they intentionally bypass i18n. If a future design surfaces
+  // these as visible headings they MUST be migrated to `defineMessages`.
   {
     name: 'First Group',
     items: [
@@ -74,6 +86,10 @@ export const tabMenuSections: TabMenuSection[] = [
       tabMenuItems.CloseToTheRight,
       tabMenuItems.CloseAll,
     ],
+  },
+  {
+    name: 'Split Group',
+    items: [tabMenuItems.SplitRight, tabMenuItems.SplitLeft],
   },
   {
     name: 'Second Group',

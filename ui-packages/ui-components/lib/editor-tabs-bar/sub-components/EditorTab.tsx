@@ -21,10 +21,13 @@ export interface EditorTabProps {
   tabData?: SelectableFileData;
   Icon?: React.ReactNode;
   isSelected: boolean;
-  selectTab?: (
-    tab: SelectableFileData,
-    event?: React.MouseEvent<HTMLElement, MouseEvent> | undefined,
-  ) => void;
+  isPreview?: boolean;
+  selectTab?: (params: {
+    tab: SelectableFileData;
+    event?: React.MouseEvent<HTMLElement, MouseEvent>;
+    openAtIndex?: number;
+    isPreview?: boolean;
+  }) => void;
   dataIsLoading?: boolean;
   isMainFile?: boolean;
   tabAction?: (
@@ -37,6 +40,8 @@ export interface EditorTabProps {
   isUnsaved?: boolean;
   deleteFile?: () => void;
   isReadOnly: boolean;
+  hideSplitRight?: boolean;
+  hideSplitLeft?: boolean;
   classes?: { selected?: string; tab?: string };
 }
 
@@ -45,6 +50,7 @@ const EditorTab = (props: EditorTabProps): React.ReactElement => {
     tabData,
     Icon,
     isSelected,
+    isPreview,
     selectTab,
     dataIsLoading,
     isUnsaved,
@@ -52,14 +58,49 @@ const EditorTab = (props: EditorTabProps): React.ReactElement => {
     tabIndex,
     tabsCount,
     isReadOnly,
+    hideSplitRight,
+    hideSplitLeft,
     classes,
   } = props;
 
   const { formatMessage } = useI18n();
   const [closeTooltipVisible, setCloseTooltipVisible] = useState(false);
-  const menuSections = isReadOnly
-    ? tabMenuSections.slice(0, 1)
+  // Bumped on every tabAction so the hover tooltip remounts and clears its
+  // internal show-state — without this, Split/Move/etc. leave a stale tooltip
+  // because the pointer never fires mouseleave on the surviving tab.
+  const [tooltipResetKey, setTooltipResetKey] = useState(0);
+  // When the tab is read-only we hide file-mutating sections (rename/delete)
+  // but keep navigation actions like "Split Right" since they don't modify
+  // file content.
+  const baseMenuSections = isReadOnly
+    ? tabMenuSections.filter((section) =>
+        section.items.every(
+          (item) =>
+            item.id !== TabMenuItemIds.RenameFile &&
+            item.id !== TabMenuItemIds.DeleteFile,
+        ),
+      )
     : tabMenuSections;
+  const menuSections = hideSplitRight
+    ? baseMenuSections
+        .map((section) => ({
+          ...section,
+          items: section.items.filter(
+            (item) => item.id !== TabMenuItemIds.SplitRight,
+          ),
+        }))
+        .filter((section) => section.items.length > 0)
+    : baseMenuSections;
+  const menuSectionsFinal = hideSplitLeft
+    ? menuSections
+        .map((section) => ({
+          ...section,
+          items: section.items.filter(
+            (item) => item.id !== TabMenuItemIds.SplitLeft,
+          ),
+        }))
+        .filter((section) => section.items.length > 0)
+    : menuSections;
   const disabledKeys = [
     ...(tabsCount !== undefined && tabsCount <= 1
       ? [TabMenuItemIds.CloseOthers]
@@ -74,6 +115,7 @@ const EditorTab = (props: EditorTabProps): React.ReactElement => {
 
   const onTabAction = useCallback(
     (key: Key): void => {
+      setTooltipResetKey((k) => k + 1);
       tabAction &&
         tabAction(
           key as TabMenuItemIds | NewTabMenuItemIds,
@@ -88,7 +130,7 @@ const EditorTab = (props: EditorTabProps): React.ReactElement => {
     if (!tabData) {
       return;
     }
-    selectTab && selectTab(tabData);
+    selectTab && selectTab({ tab: tabData });
   }, [selectTab, tabData]);
 
   const onTabKeyDown = useCallback(
@@ -113,12 +155,31 @@ const EditorTab = (props: EditorTabProps): React.ReactElement => {
           className={clsx(styles.tab, classes?.tab, {
             [styles['tab-selected']]: isSelected,
             [classes?.selected ?? '']: isSelected,
+            [styles['tab-preview']]: isPreview,
           })}
-          onClick={(e): void => {
+          onClick={(event): void => {
             if (!tabData) {
               return;
             }
-            selectTab && selectTab(tabData, e);
+            selectTab &&
+              selectTab({
+                tab: tabData,
+                event,
+                openAtIndex: undefined,
+                isPreview,
+              });
+          }}
+          onDoubleClick={(event): void => {
+            if (!tabData) {
+              return;
+            }
+            selectTab &&
+              selectTab({
+                tab: tabData,
+                event,
+                openAtIndex: undefined,
+                isPreview: false,
+              });
           }}
           onKeyDown={onTabKeyDown}
         >
@@ -143,7 +204,10 @@ const EditorTab = (props: EditorTabProps): React.ReactElement => {
             )}
             {tabData && !tabData.isFixed && (
               <IconButton
-                onPress={(): void => onTabAction(TabMenuItemIds.Close)}
+                onClick={(e): void => {
+                  e.stopPropagation();
+                  onTabAction(TabMenuItemIds.Close);
+                }}
                 label="Close"
                 title="Close"
                 Icon={CloseX}
@@ -161,7 +225,7 @@ const EditorTab = (props: EditorTabProps): React.ReactElement => {
       </ContextMenu.Trigger>
       <ContextMenu.Portal>
         <ContextMenu.Content className={styles['tab-menu']}>
-          {menuSections.map((section, sectionIndex) => (
+          {menuSectionsFinal.map((section, sectionIndex) => (
             <ContextMenu.Group key={section.name}>
               {sectionIndex > 0 && (
                 <ContextMenu.Separator
@@ -198,6 +262,7 @@ const EditorTab = (props: EditorTabProps): React.ReactElement => {
 
   return !dataIsLoading ? (
     <WrapperTitle
+      key={tooltipResetKey}
       title={closeTooltipVisible ? undefined : tabData?.fileId}
       classNames={{ tooltip: styles['tab-close-button-tooltip'] }}
     >

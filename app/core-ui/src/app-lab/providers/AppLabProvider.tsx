@@ -6,11 +6,12 @@ import { HelmetProvider } from 'react-helmet-async';
 import QueryProvider from '../../common/providers/data-fetching/QueryProvider';
 import { I18nProvider } from '../../common/providers/i18n/I18nContextProvider';
 import ThemeProvider from '../../common/providers/theme/ThemeProvider';
+import AiModelsContextProvider from './ai-models/AiModelsContextProvider';
 import AuthContextProvider from './auth/AuthContextProvider';
 import BoardConfigurationContextProvider from './board-configuration/BoardConfigurationContextProvider';
 import BoardResourcesContextProvider from './board-resources/BoardResourcesContextProvider';
 import EdgeImpulseContextProvider from './edge-impulse/EdgeImpulseContextProvider';
-import EdgeImpulseModelsContextProvider from './edge-impulse-models/EdgeImpulseModelsContextProvider';
+import FooterNotificationsContextProvider from './footer-notifications/FooterNotificationsContextProvider';
 import LinuxCredentialsContextProvider from './linux-credentials/LinuxCredentialsContextProvider';
 import NetworkContextProvider from './network/NetworkContextProvider';
 import RuntimeContextProvider from './runtime/runtimeContextProvider';
@@ -30,30 +31,32 @@ const AppLabProvider: React.FC<AppLabProviderProps> = (
     <DndProvider backend={HTML5Backend}>
       <QueryProvider>
         <I18nProvider>
-          <BoardResourcesContextProvider>
-            <EdgeImpulseContextProvider>
-              <AuthContextProvider>
-                <SetupContextProvider>
-                  <BoardConfigurationContextProvider>
-                    <NetworkContextProvider>
-                      <LinuxCredentialsContextProvider>
-                        <EdgeImpulseModelsContextProvider>
-                          <RuntimeContextProvider>
-                            <UpdaterContextProvider>
-                              <ThemeProvider>
-                                <SnackbarProvider />
-                                <HelmetProvider>{children}</HelmetProvider>
-                              </ThemeProvider>
-                            </UpdaterContextProvider>
-                          </RuntimeContextProvider>
-                        </EdgeImpulseModelsContextProvider>
-                      </LinuxCredentialsContextProvider>
-                    </NetworkContextProvider>
-                  </BoardConfigurationContextProvider>
-                </SetupContextProvider>
-              </AuthContextProvider>
-            </EdgeImpulseContextProvider>
-          </BoardResourcesContextProvider>
+          <FooterNotificationsContextProvider>
+            <BoardResourcesContextProvider>
+              <EdgeImpulseContextProvider>
+                <AuthContextProvider>
+                  <SetupContextProvider>
+                    <BoardConfigurationContextProvider>
+                      <NetworkContextProvider>
+                        <LinuxCredentialsContextProvider>
+                          <AiModelsContextProvider>
+                            <RuntimeContextProvider>
+                              <UpdaterContextProvider>
+                                <ThemeProvider>
+                                  <SnackbarProvider />
+                                  <HelmetProvider>{children}</HelmetProvider>
+                                </ThemeProvider>
+                              </UpdaterContextProvider>
+                            </RuntimeContextProvider>
+                          </AiModelsContextProvider>
+                        </LinuxCredentialsContextProvider>
+                      </NetworkContextProvider>
+                    </BoardConfigurationContextProvider>
+                  </SetupContextProvider>
+                </AuthContextProvider>
+              </EdgeImpulseContextProvider>
+            </BoardResourcesContextProvider>
+          </FooterNotificationsContextProvider>
         </I18nProvider>
       </QueryProvider>
     </DndProvider>

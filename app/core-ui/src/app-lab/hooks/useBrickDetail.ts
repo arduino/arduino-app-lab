@@ -21,27 +21,29 @@ import {
   ConfigureAppBrickDialogLogic,
   TrainNewModelDialogLogic,
 } from '@cloud-editor-mono/ui-components/lib/components-by-app/app-lab';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
+// import { isEdgeImpulseModel } from '@cloud-editor-mono/ui-components/lib/components-by-app/app-lab/ai-model/helpers';
+import { useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 
+import { GET_BATCH_FILE_CONTENT_QUERY_KEY } from '../../common/hooks/queries/arduinoAppFiles';
 import { sendAppLabNotification } from '../features/notifications';
+import { AiModelsContext } from '../providers/ai-models/aiModelsContext';
 import { AuthContext } from '../providers/auth/authContext';
 import { BoardResourcesContext } from '../providers/board-resources/boardResourcesContext';
 import { EdgeImpulseContext } from '../providers/edge-impulse/edgeImpulseContext';
-import { EdgeImpulseModelsContext } from '../providers/edge-impulse-models/edgeImpulseModelsContext';
 import { useBoardLifecycleStore } from '../store/boardLifecycle';
 
 export const makeAppBrickDetailLogic = (appId?: string) => {
   return (brickId: string): ReturnType<BrickDetailLogic> =>
     useBrickDetailLogic(brickId, appId);
 };
-
-const eiNotCompatibleBricks = [
-  'arduino:llm',
-  'arduino:vlm',
-  'arduino:asr',
-  'arduino:tts',
-];
 
 export const useBrickDetailLogic: BrickDetailLogic = (
   brickId: string,
@@ -69,17 +71,10 @@ export const useBrickDetailLogic: BrickDetailLogic = (
     installedModels,
     getInstalledModel,
     isModelOutdated,
-  } = useContext(EdgeImpulseModelsContext);
+    downloadAIModelSSE,
+  } = useContext(AiModelsContext);
 
   const { homeDiskUsedGB, homeDiskTotalGB } = useContext(BoardResourcesContext);
-  const diskUsage = { used: homeDiskUsedGB, total: homeDiskTotalGB };
-  // Only show if less then 500MB free
-  const diskUsageWarning =
-    homeDiskUsedGB &&
-    homeDiskTotalGB &&
-    parseFloat(homeDiskTotalGB) - parseFloat(homeDiskUsedGB) < 0.5
-      ? diskUsage
-      : undefined; // 500MB
 
   useEffect(() => {
     enabledEIAutoRefresh(true);
@@ -93,20 +88,51 @@ export const useBrickDetailLogic: BrickDetailLogic = (
     queryFn: () => (appId ? getAppDetail(appId) : undefined),
     enabled: !!appId,
   });
-  const hideEdgeImpulse =
-    appDetail?.example === true || eiNotCompatibleBricks.includes(brickId);
-  const readOnly = !appId;
 
-  const { data: brick } = useQuery({
+  const readOnly = !appId;
+  const isExample = appDetail?.example === true;
+
+  const { data: brick, isLoading: isBrickLoading } = useQuery({
     queryKey: ['get-brick-details', brickId],
     queryFn: () => getBrickDetails(brickId),
+    enabled: !!brickId,
   });
 
   const { data: brickInstance } = useQuery({
     queryKey: ['get-brick-instance', brickId, appId],
     queryFn: () => getAppBrickInstance(appId ?? '', brickId),
-    enabled: !!appDetail?.bricks?.find((b) => b.id === brickId),
+    // Gate only on having an app + brick context. Previously this depended on
+    // `appDetail.bricks`, but the app's brick set is tracked by a separate
+    // query (`['app-bricks', appId]`) that is the one refreshed on add/remove,
+    // while `appDetail` (`['list-my-apps', appId]`) is not. That left the
+    // instance query disabled against a stale `appDetail`, so `brickInstance`
+    // (and thus the in-use model) read `undefined` until an unrelated event
+    // refreshed `appDetail`. In the brick-list (read-only) flow `appId` is
+    // undefined, so this stays disabled as before.
+    enabled: !!appId && !!brickId,
   });
+
+  const usedByAppsInstances = useQueries({
+    queries: (readOnly ? brick?.used_by_apps ?? [] : []).map((app) => ({
+      queryKey: ['get-brick-instance', brickId, app.id],
+      queryFn: () => getAppBrickInstance(app.id ?? '', brickId),
+      enabled: !!app.id && !!brickId,
+    })),
+  });
+
+  const referencedModelIds = new Set(
+    usedByAppsInstances
+      .map((query) => query.data?.model)
+      .filter((model): model is string => !!model),
+  );
+
+  const isModelInstalledInApp = (model: BrickDetailModel): boolean =>
+    referencedModelIds.has(model.id) ||
+    (model.edgeImpulseProps?.impulses ?? []).some(
+      (impulse) =>
+        !!impulse.installedModelId &&
+        referencedModelIds.has(impulse.installedModelId),
+    );
 
   const readme = useMemo(
     () =>
@@ -153,27 +179,26 @@ export const useBrickDetailLogic: BrickDetailLogic = (
     const builtInModels: BrickDetailModel[] = (brick?.compatible_models || [])
       .map((m) => getInstalledModel(m.id ?? ''))
       .filter((m): m is AIModelItem => !!m && m.is_builtin === true)
-      .map((model) => ({
-        id: model.id ?? '',
-        name: model.name ?? '',
-        description: model.description ?? '',
-        source: 'edgeimpulse',
-        url: model.metadata?.['ei-model-url'],
-        isBuiltIn: !!model.is_builtin,
-      }));
+      .map(mapModelToBrickDetailModel);
 
-    if (hideEdgeImpulse) {
-      return builtInModels;
-    }
+    const customAiModels: BrickDetailModel[] = (brick?.compatible_models || [])
+      .map((m) => getInstalledModel(m.id ?? ''))
+      .filter(
+        (m): m is AIModelItem =>
+          !!m && !m.metadata?.['ei-project-id'] && !m.is_builtin === true,
+      )
+      .map(mapModelToBrickDetailModel);
 
     // Remote edge impulse studio models
     const currentRemoteEdgeImpulseProject = getEIProjectsByBrickType(
       brick?.id ?? '',
     );
+
     const remoteEgeImpulseModels: BrickDetailModel[] =
       currentRemoteEdgeImpulseProject.map((project: EIProject) => {
-        // If impulses are deleted from edge impulse studio,
-        // but downloaded on the board, show them in the project
+        // Impulses known to the board but missing from the remote project
+        // (e.g. deleted from Edge Impulse studio, or offered for download
+        // without being installed). Their installed state comes from `status`.
         const orphanImpulses = (installedModels || [])
           .filter(
             (model) =>
@@ -183,13 +208,18 @@ export const useBrickDetailLogic: BrickDetailLogic = (
                   impulse.id.toString() === model.metadata?.['ei-impulse-id'],
               ),
           )
-          .map((model) => ({
-            id: model.metadata?.['ei-impulse-id'] ?? '',
-            name: model.metadata?.['ei-impulse-name'] ?? '',
-            isInstalled: true,
-            installedModelId: model?.id,
-            isOutdated: false,
-          }));
+          .map((model) => {
+            const isInstalled = model.status === 'installed';
+            return {
+              id: model.metadata?.['ei-impulse-id'] ?? '',
+              name: model.metadata?.['ei-impulse-name'] ?? '',
+              isInstalled,
+              installedModelId: isInstalled ? model.id : undefined,
+              // Known to the board: downloadable by id without an EI login.
+              downloadModelId: model.id,
+              isOutdated: false,
+            };
+          });
 
         const remoteImpulses = (project.impulses || []).map((i) => {
           const installed = getInstalledModel(
@@ -213,6 +243,10 @@ export const useBrickDetailLogic: BrickDetailLogic = (
           description: project.description,
           isBuiltIn: false,
           source: 'edgeimpulse',
+          isInstalled:
+            remoteImpulses.some((i) => i.isInstalled) ||
+            orphanImpulses.some((i) => i.isInstalled),
+          metadata: project.metadata,
           edgeImpulseProps: {
             projectId: project.id.toString(),
             impulses: [...remoteImpulses, ...orphanImpulses],
@@ -225,7 +259,16 @@ export const useBrickDetailLogic: BrickDetailLogic = (
       remoteEgeImpulseModels.map((p) => p.edgeImpulseProps?.projectId),
     );
 
-    // Show installed models which project has been deleted in edge impulse
+    // Edge Impulse models known to the board but not backed by a linked remote
+    // EI project. This covers two cases now that the board can expose EI models
+    // without a linked EI account:
+    //   1. Orphans: a model installed on the board whose project was deleted /
+    //      is no longer available in Edge Impulse studio.
+    //   2. Unlinked: a model the board offers for download that has not been
+    //      installed yet (`status !== 'installed'`).
+    // Previously every EI model returned here implied installation had taken
+    // place, so we must derive the installed state from `status` rather than
+    // assume it.
     const orphanEdgeImpulseModels = (installedModels || []).reduce((acc, m) => {
       const projectId = m.metadata?.['ei-project-id'];
       if (
@@ -238,11 +281,16 @@ export const useBrickDetailLogic: BrickDetailLogic = (
         return acc;
       }
 
+      const isInstalled = m.status === 'installed';
+
       const impulse: BrickDetailModelImpulse = {
         id: m.metadata?.['ei-impulse-id'] ?? '',
         name: m.metadata?.['ei-impulse-name'] ?? '',
-        isInstalled: true,
-        installedModelId: m.id,
+        isInstalled,
+        // Only installed models can be selected/uninstalled by their model id.
+        installedModelId: isInstalled ? m.id : undefined,
+        // Known to the board: downloadable by id without an EI login.
+        downloadModelId: m.id,
         isOutdated: false,
       };
 
@@ -252,9 +300,14 @@ export const useBrickDetailLogic: BrickDetailLogic = (
           name: m.name ?? '',
           description: m.description ?? '',
           isBuiltIn: false,
+          isInstalled,
           source: 'edgeimpulse',
+          metadata: m.metadata ?? {},
           edgeImpulseProps: { projectId, impulses: [] },
         };
+      } else if (isInstalled) {
+        // A project is installed as soon as any of its impulses is.
+        acc[projectId].isInstalled = true;
       }
       acc[projectId].edgeImpulseProps!.impulses.push(impulse);
       return acc;
@@ -262,6 +315,7 @@ export const useBrickDetailLogic: BrickDetailLogic = (
 
     return [
       ...builtInModels,
+      ...customAiModels,
       ...remoteEgeImpulseModels,
       ...Object.values(orphanEdgeImpulseModels),
     ];
@@ -269,10 +323,42 @@ export const useBrickDetailLogic: BrickDetailLogic = (
     brick,
     getEIProjectsByBrickType,
     getInstalledModel,
-    hideEdgeImpulse,
     installedModels,
     isModelOutdated,
   ]);
+
+  const diskUsageWarning = useCallback(
+    (modelId: string) => {
+      const diskUsage = { used: homeDiskUsedGB, total: homeDiskTotalGB };
+      const model = models.find((m) => m.id === modelId);
+      if (!model) {
+        return undefined;
+      }
+      const modelSizeMB = parseFloat(model.metadata?.model_size_mb || '0');
+      const modelSizeGB = modelSizeMB / 1024;
+
+      // Show warning if the model size is larger than the available space
+      if (
+        modelSizeGB > 0 &&
+        homeDiskUsedGB &&
+        homeDiskTotalGB &&
+        parseFloat(homeDiskTotalGB) - parseFloat(homeDiskUsedGB) < modelSizeGB
+      ) {
+        return diskUsage;
+      }
+
+      // Otherwise, only show if less than 500MB free
+      if (
+        homeDiskUsedGB &&
+        homeDiskTotalGB &&
+        parseFloat(homeDiskTotalGB) - parseFloat(homeDiskUsedGB) < 0.5
+      ) {
+        return diskUsage;
+      }
+      return undefined;
+    },
+    [models, homeDiskTotalGB, homeDiskUsedGB],
+  );
 
   const updateModelInUse = useCallback(
     async (
@@ -290,6 +376,14 @@ export const useBrickDetailLogic: BrickDetailLogic = (
         model: modelId,
       });
       if (success) {
+        if (appDetail?.path) {
+          queryClient.invalidateQueries({
+            queryKey: [
+              GET_BATCH_FILE_CONTENT_QUERY_KEY,
+              appDetail.path + '/app.yaml',
+            ],
+          });
+        }
         !dismissSuccessNotification &&
           sendAppLabNotification({
             message: `AI model successfully added to ${
@@ -308,11 +402,40 @@ export const useBrickDetailLogic: BrickDetailLogic = (
         });
       }
     },
-    [appId, brick?.name, brickId, brickInstance?.model, queryClient],
+    [appId, appDetail, brick?.name, brickId, brickInstance?.model, queryClient],
   );
 
-  const downloadModel = useCallback(
+  const downloadGenericModel = useCallback(
+    async (modelId: string): Promise<void> => {
+      const success = await downloadAIModelSSE(modelId);
+      if (success && !readOnly) {
+        await updateModelInUse(modelId, true);
+      }
+    },
+    [downloadAIModelSSE, readOnly, updateModelInUse],
+  );
+
+  const downloadEIModel = useCallback(
     async (projectId: string, impulseId: string) => {
+      const impulse = models
+        .find((m) => m.edgeImpulseProps?.projectId === projectId)
+        ?.edgeImpulseProps?.impulses.find((i) => i.id === impulseId);
+
+      // Unlinked Edge Impulse models are already known to the board and can be
+      // downloaded by id through the generic, login-free path (no Edge Impulse
+      // account required). Progress is reported under `projectId` so the model
+      // card's progress bar keeps working.
+      if (impulse?.downloadModelId) {
+        const modelId = impulse.downloadModelId;
+        const success = await downloadAIModelSSE(modelId, projectId);
+        if (success && !readOnly) {
+          await updateModelInUse(modelId, true);
+        }
+        return;
+      }
+
+      // Linked Edge Impulse models are installed from the Edge Impulse cloud,
+      // which requires a linked account.
       const model = await downloadImpulse(projectId, impulseId);
       if (model) {
         queryClient.setQueryData(
@@ -333,19 +456,64 @@ export const useBrickDetailLogic: BrickDetailLogic = (
         }
       }
     },
-    [brick, brickId, readOnly, downloadImpulse, queryClient, updateModelInUse],
+    [
+      brick,
+      brickId,
+      models,
+      readOnly,
+      downloadAIModelSSE,
+      downloadImpulse,
+      queryClient,
+      updateModelInUse,
+    ],
   );
 
-  const removeModel = async (modelId: string): Promise<void> => {
+  const [uninstallingModels, setUninstallingModels] = useState<
+    Record<string, boolean>
+  >({});
+
+  // Synchronous re-entrancy guard: `uninstallingModels` state can't stop a
+  // rapid double-click (both calls read the same stale state before React
+  // re-renders), which would fire two "uninstalled" snackbars. A ref updates
+  // immediately, so a second call for the same model while one is in flight is
+  // ignored.
+  const uninstallingModelsRef = useRef<Record<string, boolean>>({});
+
+  const isModelUninstalling = useCallback(
+    (modelId: string): boolean => !!uninstallingModels[modelId],
+    [uninstallingModels],
+  );
+
+  const removeModel = async (
+    modelId: string,
+    isForced?: boolean,
+  ): Promise<void> => {
+    if (uninstallingModelsRef.current[modelId]) {
+      return;
+    }
+    uninstallingModelsRef.current[modelId] = true;
+    setUninstallingModels((prev) => ({ ...prev, [modelId]: true }));
     try {
       const modelName = getInstalledModel(modelId)?.name;
-      await deleteAIModel(modelId);
+      await deleteAIModel(modelId, isForced);
       queryClient.setQueryData(
         ['get-installed-models'],
         (prev: AIModelItem[] | undefined) => {
-          return prev?.filter((model) => model.id !== modelId);
+          // update the model just downloaded with id `modelId` to have `status: 'notinstalled'`
+          return (prev || []).map((model) => {
+            if (model.id === modelId) {
+              return {
+                ...model,
+                status: 'notinstalled',
+              };
+            }
+            return model;
+          });
         },
       );
+
+      queryClient.invalidateQueries(['get-installed-models']);
+
       sendAppLabNotification({
         message: `${modelName} successfully uninstalled`,
         variant: 'success',
@@ -359,6 +527,9 @@ export const useBrickDetailLogic: BrickDetailLogic = (
       } else {
         console.error(error);
       }
+    } finally {
+      uninstallingModelsRef.current[modelId] = false;
+      setUninstallingModels((prev) => ({ ...prev, [modelId]: false }));
     }
   };
 
@@ -388,7 +559,7 @@ export const useBrickDetailLogic: BrickDetailLogic = (
           url += `/impulse/${impulseId}/create-impulse`;
         }
       } else {
-        url = model?.url ?? '';
+        url = model?.url ?? model?.metadata?.['source-model-url'] ?? '';
       }
 
       openExternalLink(url);
@@ -425,6 +596,25 @@ export const useBrickDetailLogic: BrickDetailLogic = (
   );
 
   const [trainNewModelDialogOpen, setTrainNewModelDialogOpen] = useState(false);
+
+  /*
+   * TODO: fix this 
+   * THIS WOULD BE THE CORRECT LOGIC, if only had that `ai_frameworks_compatibility` field in the json feed 
+   *
+    const hideEdgeImpulse =
+      brick?.ai_frameworks_compatibility?.includes('edgeImpulse') === false;
+   * 
+   * BUT in the meanwhile, we will use a whitelist of bricks that we know are
+   * not compatible with Edge Impulse
+   */
+  const hideEdgeImpulse = [
+    'arduino:llm',
+    'arduino:vlm',
+    'arduino:gesture_recognition',
+    'arduino:asr',
+    'arduino:tts',
+  ].includes(brick?.id ?? '');
+
   const trainNewModelDialogProps:
     | ReturnType<BrickDetailLogic>['trainNewModelDialogProps']
     | undefined = useMemo(
@@ -472,6 +662,7 @@ export const useBrickDetailLogic: BrickDetailLogic = (
   return {
     board: selectedBoard,
     brick,
+    isBrickLoading,
     brickInstance,
     isCustomBrick: brick?.author !== 'Arduino',
     readOnly,
@@ -484,13 +675,17 @@ export const useBrickDetailLogic: BrickDetailLogic = (
     diskUsageWarning,
     isEdgeImpulseConnected,
     hideEdgeImpulse,
+    isExample,
     openExternalLink,
     openModelPage,
     onTrainNewModelClick,
     removeModel,
-    downloadModel,
+    downloadEIModel,
+    downloadGenericModel,
     getDownloadInfo,
     updateModelInUse,
+    isModelUninstalling,
+    isModelInstalledInApp,
   };
 };
 
@@ -528,3 +723,16 @@ export const useConfigureAppBrickDialog: ConfigureAppBrickDialogLogic = (
     confirmAction,
   };
 };
+
+function mapModelToBrickDetailModel(model: AIModelItem): BrickDetailModel {
+  return {
+    id: model.id ?? '',
+    name: model.name ?? '',
+    description: model.description ?? '',
+    source: model.metadata?.source || 'edgeimpulse',
+    url: model.metadata?.['ei-model-url'],
+    metadata: model.metadata ?? {},
+    isInstalled: model.status == 'installed' || false,
+    isBuiltIn: !!model.is_builtin,
+  };
+}

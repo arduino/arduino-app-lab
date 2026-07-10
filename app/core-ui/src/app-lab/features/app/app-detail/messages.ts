@@ -101,11 +101,24 @@ export const messages = defineMessages({
     defaultMessage: 'Failed to create file',
     description: 'Notification message shown when file creation fails',
   },
+  failedCreateFileStorageFull: {
+    id: 'app-detail.failed-create-file-storage-full',
+    defaultMessage: 'Failed to create file. The board storage is full.',
+    description:
+      'Notification message shown when file creation fails due to full storage',
+  },
   fileAlreadyExists: {
     id: 'app-detail.file-already-exists',
     defaultMessage: 'A file with this name already exists',
     description:
       'Notification message shown when trying to create a file with duplicate name',
+  },
+  fileAlreadyExistsFolder: {
+    id: 'app-detail.file-already-exists-folder',
+    defaultMessage:
+      "Can't create this file. A folder with the same name already exists.",
+    description:
+      'Notification message shown when trying to create a file with a folder of the same name',
   },
   successfullyCreatedFolder: {
     id: 'app-detail.successfully-created-folder',
@@ -117,11 +130,24 @@ export const messages = defineMessages({
     defaultMessage: 'Failed to create folder',
     description: 'Notification message shown when folder creation fails',
   },
+  failedCreateFolderStorageFull: {
+    id: 'app-detail.failed-create-folder-storage-full',
+    defaultMessage: 'Failed to create folder. The board storage is full.',
+    description:
+      'Notification message shown when folder creation fails due to full storage',
+  },
   folderAlreadyExists: {
     id: 'app-detail.folder-already-exists',
     defaultMessage: 'A folder with this name already exists',
     description:
       'Notification message shown when trying to create a folder with duplicate name',
+  },
+  folderAlreadyExistsFile: {
+    id: 'app-detail.folder-already-exists-file',
+    defaultMessage:
+      "Can't create this folder. A file with the same name already exists.",
+    description:
+      'Notification message shown when trying to create a folder with a file of the same name',
   },
   successfullyRenamedFile: {
     id: 'app-detail.successfully-renamed-file',
@@ -189,5 +215,19 @@ export const messages = defineMessages({
     id: 'app-detail.code-copied',
     defaultMessage: 'Code copied to clipboard',
     description: 'Notification message shown when code is copied to clipboard',
+  },
+  fileCannotBeMoved: {
+    id: 'app-detail.file-cannot-be-moved',
+    defaultMessage:
+      'File cannot be moved, doing so violates the Arduino App specification',
+    description:
+      'Notification shown when the user attempts to move a file or folder that the Arduino App specification protects (e.g. app.yaml, sketch/sketch.ino, the python folder).',
+  },
+  webUIFileCreationFailed: {
+    id: 'app-detail.webui-file-creation-failed',
+    defaultMessage:
+      'Failed to create WebUI files. Please create them manually.',
+    description:
+      'Notification message shown when automatic WebUI file creation fails',
   },
 });

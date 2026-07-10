@@ -24,16 +24,13 @@ export type ContentUpdateLogic = (
   resetSource?: Subject<void>, // Optional reset source for resetting content
 ) => void;
 
-//TODO: Add subject type
-export type SerialMonitorLogic = (subject?: any) => {
+export type SerialMonitorLogicResult = {
   deviceName?: string;
   portName?: string;
   contentUpdateLogic: ContentUpdateLogic;
   baudRates: number[];
-  selectedBaudRate: ReturnType<SerialMonitorLogic>['baudRates'][number];
-  onBaudRateSelected: (
-    baudRate: ReturnType<SerialMonitorLogic>['baudRates'][number],
-  ) => void;
+  selectedBaudRate: number;
+  onBaudRateSelected: (baudRate: number) => void;
   onPlayPause: () => void;
   onMessageSend: (message: string) => void;
   clearMessages: VoidFunction;
@@ -41,14 +38,22 @@ export type SerialMonitorLogic = (subject?: any) => {
   disabled: boolean;
 };
 
-export type SerialMonitorProps = {
+export type SerialMonitorLogic = <T = unknown>(
+  subject?: BehaviorSubject<T> | Subject<T>,
+) => SerialMonitorLogicResult;
+
+export type SerialMonitorProps<T = unknown> = {
   serialMonitorLogic: SerialMonitorLogic;
   classes?: {
     wrapper?: string;
-    contents?: { wrapper?: string; viewNewDataButton?: string };
+    contents?: {
+      content?: string;
+      wrapper?: string;
+      viewNewDataButton?: string;
+    };
     actions?: SerialMonitorActionsProps['classes'];
   };
-  logSource?: BehaviorSubject<any> | Subject<any>;
+  logSource?: BehaviorSubject<T> | Subject<T>;
   resetSource?: Subject<void>; // TODO: Specify type for resetSource
   hasToolbar?: boolean;
   hasActions?: boolean;
@@ -64,7 +69,7 @@ export type SerialMonitorProps = {
 };
 
 export type SerialMonitorToolbarProps = Pick<
-  ReturnType<SerialMonitorLogic>,
+  SerialMonitorLogicResult,
   'deviceName' | 'portName' | 'onPlayPause' | 'status' | 'disabled'
 > & {
   clearLog: VoidFunction;
@@ -77,19 +82,23 @@ export type SerialMonitorToolbarProps = Pick<
 };
 
 export type SerialMonitorContentsProps = Pick<
-  ReturnType<SerialMonitorLogic>,
+  SerialMonitorLogicResult,
   'status'
 > &
   Pick<
     ReturnType<UseMonitorCodeMirror>,
-    'lastLineIsVisible' | 'scrollToBottom'
+    'lastLineIsVisible' | 'scrollToBottom' | 'viewInstance'
   > & {
-    classes?: { wrapper?: string; viewNewDataButton?: string };
+    classes?: {
+      content?: string;
+      wrapper?: string;
+      viewNewDataButton?: string;
+    };
     codeMirrorRef: ReturnType<UseMonitorCodeMirror>['rootRef'];
   };
 
 export type SerialMonitorActionsProps = Pick<
-  ReturnType<SerialMonitorLogic>,
+  SerialMonitorLogicResult,
   | 'baudRates'
   | 'selectedBaudRate'
   | 'onBaudRateSelected'

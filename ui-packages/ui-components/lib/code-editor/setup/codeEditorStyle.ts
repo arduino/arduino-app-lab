@@ -78,6 +78,27 @@ export const editorViewStyle = {
     color: styles.editorLinesForegroundActive,
     opacity: 0.8,
   },
+  // Lift CodeMirror's bottom-panel host out of the editor's flex flow so
+  // the find-and-replace panel overlays the editor (top-right) instead of
+  // pushing content up. Find-and-replace is the only registered panel, so
+  // a blanket rule on `.cm-panels-bottom` is safe. `zIndex` mirrors
+  // `$zIndex1` (z-indexes.scss).
+  '& > .cm-panels-bottom': {
+    position: 'absolute !important',
+    top: '0 !important',
+    left: '0 !important',
+    right: '0 !important',
+    bottom: 'auto !important',
+    height: '0 !important',
+    border: 'none !important',
+    overflow: 'visible !important',
+    pointerEvents: 'none',
+    zIndex: 10000,
+  },
+  // Re-enable pointer events on the actual panel content (host div).
+  '& > .cm-panels-bottom > *': {
+    pointerEvents: 'auto',
+  },
 };
 
 export const foldGutterStyle = {

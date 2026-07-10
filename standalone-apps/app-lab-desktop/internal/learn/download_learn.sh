@@ -2,7 +2,21 @@
 
 set -e
 
-REPO_URL=https://github.com/bcmi-labs/app-bricks-example
+REPO_HOST=github.com
+REPO_PATH=bcmi-labs/app-bricks-example-temp
+
+# Use a token (if provided) to authenticate the clone of the private repo.
+# GITHUB_TOKEN is the conventional name; NPM_TOKEN is accepted as a fallback
+# because that is the secret currently available in CI.
+# GIT_TOKEN="${GITHUB_TOKEN:-${NPM_TOKEN:-}}"
+GIT_TOKEN="${NPM_TOKEN}"
+if [[ -n "$GIT_TOKEN" ]]; then
+    REPO_URL="https://x-access-token:${GIT_TOKEN}@${REPO_HOST}/${REPO_PATH}"
+else
+    echo "No GITHUB_TOKEN or NPM_TOKEN provided"
+    REPO_URL="https://${REPO_HOST}/${REPO_PATH}"
+fi
+
 SUB_DIR=learn-docs
 BRANCH=main
 ROOT=$(git rev-parse --show-toplevel)

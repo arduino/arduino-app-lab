@@ -79,6 +79,7 @@
       gap: 2px;
       flex: 1;
       align-items: flex-start;
+      min-width: 0;
     }
 
     .title-row {
@@ -89,10 +90,7 @@
     .title {
       max-width: 160px;
       min-width: 0;
-    }
-
-    .title.title--with-badge {
-      max-width: 250px;
+      flex: 1;
     }
 
     .trailing {
@@ -127,6 +125,7 @@
   display: flex;
   align-items: center;
   gap: 16px;
+  min-width: 0;
 }
 
 .title {

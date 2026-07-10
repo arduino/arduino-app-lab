@@ -1,0 +1,14 @@
+.button {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+
+  svg path {
+    fill: #ffffff;
+  }
+
+  &.disabled {
+    cursor: not-allowed;
+  }
+}

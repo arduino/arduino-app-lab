@@ -18,6 +18,18 @@
   justify-content: flex-end;
   gap: 16px;
 
+  &--split-view {
+    svg {
+      color: var(--text-subtle, #c9d2d2);
+    }
+
+    &-active {
+      svg {
+        color: var(--text-accent, #25c2c7);
+      }
+    }
+  }
+
   &--duplicate {
     @include bp.breakpoint(vars.$breakpoint-xl) {
       .actions--duplicate-text {

@@ -19,7 +19,6 @@ import {
   DropdownMenuButton,
   NetworkSettingsDialog,
   PasswordDialog,
-  ToggleButton,
   UnsupportedCarrierDialog,
   XXSmall,
   XXXSmall,
@@ -28,6 +27,7 @@ import { Fragment, useMemo } from 'react';
 
 import { AttachCarrierDialog } from '../../../dialogs/app-lab/attach-carrier-dialog/AttachCarrierDialog';
 import { useI18n } from '../../../i18n/useI18n';
+import { Toggle } from '../essential/toggle';
 import { SettingsSection } from '../settings-section';
 import {
   appMessages,
@@ -112,6 +112,8 @@ export const Settings: React.FC<SettingsProps> = ({
     openFlasher,
     startUpdate,
   } = systemSettingsLogic();
+
+  const isVentunoQ = board?.fqbn === 'arduino:zephyr:ventunoq';
 
   const keyboardLayoutItems = useMemo(
     () => [
@@ -222,77 +224,83 @@ export const Settings: React.FC<SettingsProps> = ({
           >
             <DeviceStorage
               boardResources={boardResources}
+              boardType={board?.type}
               bytesToGiB={bytesToGiB}
             />
           </SettingsSection.Row>
         </SettingsSection.Card>
       </section>
-      <section>
-        <SettingsSection.Title
-          title={formatMessage(carrierMessages.title)}
-          variant="secondary"
-        />
-        <SettingsSection.Card>
-          <UnsupportedCarrierDialog logic={unsupportedLogic} />
-          <AttachCarrierDialog logic={attachLogic} />
-          <SettingsSection.Row
-            label={formatMessage(carrierMessages.carrierToggle, {
-              boardType: board?.type.replace(/arduino/i, '').trim(),
-            })}
-          >
-            <ToggleButton
-              isSelected={isCarriersEnabled}
-              onChange={onCarriersEnabledChange}
-            />
-          </SettingsSection.Row>
-          {isCarriersEnabled &&
-            carriers.map((group, index) => (
-              <Fragment key={index}>
-                <SettingsSection.Divider />
-                <SettingsSection.Row
-                  label={formatMessage(carrierMessages.carrierType)}
-                >
-                  {group.name}
-                </SettingsSection.Row>
-                <SettingsSection.Row
-                  label={formatMessage(carrierMessages.carrierDescription)}
-                >
-                  <Fragment />
-                </SettingsSection.Row>
-                {group.devices.map((device, deviceIndex) => (
-                  <CarrierOption
-                    key={deviceIndex}
-                    carrierName={group.name}
-                    device={device}
-                    status={carriersStatus}
-                    onChange={setCarriersStatus}
-                  />
-                ))}
-              </Fragment>
-            ))}
-          {!isCarriersPristine && (
-            <SettingsSection.Banner
-              className={styles['carrier-banner-container']}
+      {!isVentunoQ && (
+        <section>
+          <SettingsSection.Title
+            title={formatMessage(carrierMessages.title)}
+            variant="secondary"
+          />
+          <SettingsSection.Card>
+            <UnsupportedCarrierDialog logic={unsupportedLogic} />
+            <AttachCarrierDialog logic={attachLogic} />
+            <SettingsSection.Row
+              label={formatMessage(carrierMessages.carrierToggle, {
+                boardType: board?.type.replace(/arduino/i, '').trim(),
+              })}
             >
-              <PasswordDialog logic={carriersPasswordLogic} />
-              <div className={styles['carrier-banner']}>
-                <div className={styles['carrier-banner-label']}>
-                  <InfoSetup />
-                  <XXSmall>
-                    {formatMessage(carrierMessages.carrierInfo)}
-                  </XXSmall>
+              <Toggle
+                className={styles['toggle-button']}
+                isSelected={isCarriersEnabled}
+                onChange={onCarriersEnabledChange}
+              />
+            </SettingsSection.Row>
+            {isCarriersEnabled &&
+              carriers.map((group, index) => (
+                <Fragment key={index}>
+                  <SettingsSection.Divider />
+                  <SettingsSection.Row
+                    label={formatMessage(carrierMessages.carrierType)}
+                  >
+                    {group.name}
+                  </SettingsSection.Row>
+                  <SettingsSection.Row
+                    label={formatMessage(carrierMessages.carrierDescription)}
+                  >
+                    <Fragment />
+                  </SettingsSection.Row>
+                  {group.devices.map((device, deviceIndex) => (
+                    <CarrierOption
+                      key={deviceIndex}
+                      carrierName={group.name}
+                      device={device}
+                      status={carriersStatus}
+                      onChange={setCarriersStatus}
+                    />
+                  ))}
+                </Fragment>
+              ))}
+            {!isCarriersPristine && (
+              <SettingsSection.Banner
+                className={styles['carrier-banner-container']}
+              >
+                <PasswordDialog logic={carriersPasswordLogic} />
+                <div className={styles['carrier-banner']}>
+                  <div className={styles['carrier-banner-label']}>
+                    <InfoSetup />
+                    <XXSmall>
+                      {formatMessage(carrierMessages.carrierInfo)}
+                    </XXSmall>
+                  </div>
+                  <Button
+                    size={ButtonSize.XXSmall}
+                    onClick={(): void =>
+                      carriersPasswordLogic.onOpenChange(true)
+                    }
+                  >
+                    {formatMessage(carrierMessages.carrierButton)}
+                  </Button>
                 </div>
-                <Button
-                  size={ButtonSize.XXSmall}
-                  onClick={(): void => carriersPasswordLogic.onOpenChange(true)}
-                >
-                  {formatMessage(carrierMessages.carrierButton)}
-                </Button>
-              </div>
-            </SettingsSection.Banner>
-          )}
-        </SettingsSection.Card>
-      </section>
+              </SettingsSection.Banner>
+            )}
+          </SettingsSection.Card>
+        </section>
+      )}
       <section>
         <SettingsSection.Title
           title={formatMessage(systemMessages.title)}
@@ -404,7 +412,7 @@ export const Settings: React.FC<SettingsProps> = ({
           <SettingsSection.Row label={formatMessage(osMessages.releaseDate)}>
             {osReleaseDate}
           </SettingsSection.Row>
-          {!isBoard && !needsImageUpdate && (
+          {!isBoard && !needsImageUpdate && !isVentunoQ && (
             <>
               <SettingsSection.Divider />
               <SettingsSection.Row

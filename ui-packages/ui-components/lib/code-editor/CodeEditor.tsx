@@ -24,6 +24,7 @@ interface CodeEditorProps {
   codeEditorLogic: CodeEditorLogic;
   getKeywords: () => KeywordMap | undefined;
   readOnlyBanner?: JSX.Element;
+  viewInstanceId?: ViewInstances;
   classes?: {
     container?: string;
   };
@@ -34,6 +35,7 @@ const CodeEditor: React.FC<CodeEditorProps> = (props: CodeEditorProps) => {
     codeEditorLogic,
     getKeywords,
     readOnlyBanner: readOnlyBannerContents,
+    viewInstanceId = ViewInstances.Editor,
     classes,
   } = props;
   const {
@@ -97,7 +99,7 @@ const CodeEditor: React.FC<CodeEditorProps> = (props: CodeEditorProps) => {
   }, [fontSize, gutter]);
 
   const { containerRef, clickHandlers, disabledKeys, setIsOpen } =
-    useContextMenu(viewInstances[ViewInstances.Editor].instance, setCode, code);
+    useContextMenu(viewInstances[viewInstanceId].instance, setCode, code);
 
   const { formatMessage } = useI18n();
 
@@ -116,7 +118,7 @@ const CodeEditor: React.FC<CodeEditorProps> = (props: CodeEditorProps) => {
         <ContextMenu.Trigger asChild disabled={readOnly}>
           <div className={styles['context-menu-trigger']}>
             <CodeEditorElement
-              viewInstanceId={ViewInstances.Editor}
+              viewInstanceId={viewInstanceId}
               valueInstanceIds={codeInstanceIds}
               getValueInstanceId={getCodeInstanceId}
               getValue={getCode}

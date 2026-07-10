@@ -74,6 +74,7 @@ export const useCreateAppTitleLogic: UseCreateAppTitleLogic = function (
           sendAppLabNotification({
             message: formatMessage(messages.successfullyDeletedApp),
             variant: 'success',
+            duration: 3000,
           });
         }
         return result;
@@ -220,7 +221,7 @@ export const useCreateAppTitleLogic: UseCreateAppTitleLogic = function (
     [updateApp],
   );
 
-  const appTitleLogic: AppTitleLogic = useCallback(
+  return useCallback(
     () => ({
       app,
       appStatus,
@@ -258,6 +259,4 @@ export const useCreateAppTitleLogic: UseCreateAppTitleLogic = function (
       exportAppDialogLogic,
     ],
   );
-
-  return appTitleLogic;
 };

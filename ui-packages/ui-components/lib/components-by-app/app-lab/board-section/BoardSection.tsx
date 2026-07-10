@@ -19,9 +19,10 @@ const BoardSection: React.FC<BoardSectionProps> = (
     isBoard,
     boards,
     selectedBoard,
-    autoSelectBoard,
+    selectBoard,
     onOpenTerminal,
     terminalError,
+    linuxCredentialsDialog,
   } = props;
 
   const handleOpenTerminal = async (): Promise<void> => {
@@ -37,7 +38,8 @@ const BoardSection: React.FC<BoardSectionProps> = (
         boards={boards}
         isBoard={isBoard}
         selectedBoard={selectedBoard}
-        autoSelectBoard={autoSelectBoard}
+        selectBoard={selectBoard}
+        linuxCredentialsDialog={linuxCredentialsDialog}
       />
       {!isBoard && (
         <IconButton

@@ -2,11 +2,14 @@ import {
   eventsEmit,
   importDroppedResourceToApp,
 } from '@cloud-editor-mono/domain/src/services/services-by-app/app-lab';
+import { BOARD_STORAGE_FULL_ERROR } from '@cloud-editor-mono/infrastructure';
 import {
   checkForDuplicates,
+  importResourceDialogMessages,
   ImportResourceLogic,
   ImportStatus,
   snackbar,
+  useI18n,
   UseImportResourceProps,
 } from '@cloud-editor-mono/ui-components/lib/components-by-app/app-lab';
 import { useMutation } from '@tanstack/react-query';
@@ -33,6 +36,8 @@ export const useImportResource = (
     onDuplicateConflict,
   } = props;
 
+  const { formatMessage } = useI18n();
+
   const [importStatus, setImportStatus] = useState<ImportStatus>(
     ImportStatus.Idle,
   );
@@ -58,10 +63,18 @@ export const useImportResource = (
   }, [setImportResourceDialogOpen, setImportStatus, setImportErrorMessage]);
 
   const { mutateAsync: handleImportFromPath } = useMutation({
-    mutationFn: async (data: { filePath: string; newFileName?: string }) => {
+    mutationFn: async (data: {
+      filePath: string;
+      isFolder: boolean;
+      newFileName?: string;
+    }) => {
       setImportStatus(ImportStatus.Uploading);
       setImportErrorMessage(undefined);
-      return importResourceFromPath(data.filePath, data.newFileName);
+      return importResourceFromPath(
+        data.filePath,
+        data.isFolder,
+        data.newFileName,
+      );
     },
     onSuccess: (result) => {
       setImportedResourceId(result.id);
@@ -86,24 +99,30 @@ export const useImportResource = (
       }
 
       setImportStatus(ImportStatus.UploadFailed);
-      setImportErrorMessage(message);
+      setImportErrorMessage(
+        message.includes(BOARD_STORAGE_FULL_ERROR)
+          ? formatMessage(
+              importResourceDialogMessages.uploadFailedStorageFullApp,
+            )
+          : message,
+      );
     },
   });
 
   const processImportPath = useCallback(
-    async (path: string) => {
+    async (path: string, isFolder: boolean) => {
       const fileName = path.split(/[/\\]/).pop() || '';
       const targetPath = targetFolderPath
         ? `${targetFolderPath}/${fileName}`
         : fileName;
 
+      const actualType = isFolder ? 'folder' : 'file';
       if (nodes.length > 0 && onDuplicateConflict) {
         const { hasDuplicate, conflictType } = checkForDuplicates(
           nodes,
           targetPath,
-          type === 'folder' ? 'folder' : 'file',
+          actualType,
         );
-
         if (hasDuplicate) {
           onDuplicateConflict({
             fileName,
@@ -116,32 +135,33 @@ export const useImportResource = (
           return;
         }
       }
-      await handleImportFromPath({ filePath: path });
+      await handleImportFromPath({ filePath: path, isFolder });
     },
-    [nodes, targetFolderPath, type, onDuplicateConflict, handleImportFromPath],
+    [nodes, targetFolderPath, onDuplicateConflict, handleImportFromPath],
   );
 
   useEffect(() => {
-    if (!importResourceDialogOpen) return;
+    const unsubscribe = importDroppedResourceToApp(
+      async (items: { path: string; isFolder: boolean }[]) => {
+        if (items && items.length > 0) {
+          setImportResourceDialogOpen(true);
+          try {
+            for (const { path, isFolder } of items) {
+              await processImportPath(path, isFolder);
+            }
 
-    const unsubscribe = importDroppedResourceToApp(async (paths: string[]) => {
-      if (paths && paths.length > 0) {
-        try {
-          for (const path of paths) {
-            await processImportPath(path);
+            closeDialog();
+          } catch (error) {
+            console.error(error);
           }
-
-          closeDialog();
-        } catch (error) {
-          console.error(error);
         }
-      }
-    });
+      },
+    );
 
     return () => {
       unsubscribe();
     };
-  }, [importResourceDialogOpen, processImportPath, closeDialog]);
+  }, [processImportPath, closeDialog, setImportResourceDialogOpen]);
 
   const startImport = useCallback(async () => {
     if (!selectResourcePath) return;
@@ -155,7 +175,7 @@ export const useImportResource = (
 
     try {
       for (const path of pathsToProcess) {
-        await processImportPath(path);
+        await processImportPath(path, type === 'folder');
       }
 
       closeDialog();

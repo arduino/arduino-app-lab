@@ -480,7 +480,7 @@ const mockedInstalledModel: AIModelItem = {
   brick_ids: ['arduino:object-detection'],
   name: 'My custom object detection',
   description: 'My custom made edge impulse model',
-  disk_usage: 50000,
+  size: 50000,
   id: '1',
   is_builtin: false,
   metadata: {
@@ -1099,6 +1099,10 @@ export const MockOrchestratorService: OrchestratorService = {
   },
 
   deleteAIModel() {
+    return Promise.resolve();
+  },
+
+  uploadAIModel() {
     return Promise.resolve();
   },
 };

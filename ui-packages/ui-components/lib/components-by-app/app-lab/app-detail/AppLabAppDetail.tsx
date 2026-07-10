@@ -1,5 +1,6 @@
 import { Duplicate } from '@cloud-editor-mono/images/assets/icons';
 import {
+  AiModelRequiredDialog,
   AppAction,
   AppLabEditSection,
   AppsSection,
@@ -37,6 +38,7 @@ const AppLabAppDetail: React.FC<AppLabAppDetailProps> = (
     fileTree,
     configureAppBricksDialogLogic,
     swapRunningAppDialogLogic,
+    aiModelRequiredDialogLogic,
     onAppAction,
     appTitleLogic,
     appLabEditSectionLogic,
@@ -50,6 +52,7 @@ const AppLabAppDetail: React.FC<AppLabAppDetailProps> = (
     <section className={styles['app-detail']}>
       <ConfigureAppBricksDialog logic={configureAppBricksDialogLogic} />
       <SwapRunningAppDialog logic={swapRunningAppDialogLogic} />
+      <AiModelRequiredDialog logic={aiModelRequiredDialogLogic} />
       <DeleteTreeItemDialog logic={deleteTreeItemDialogLogic} />
       <TopBar
         pathItems={[

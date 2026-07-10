@@ -15,7 +15,8 @@ import {
   ActionStatus,
   CONSOLE_SOURCE_KEYS,
 } from '@cloud-editor-mono/ui-components/lib/components-by-app/app-lab';
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { debounce } from 'lodash';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useAppSSE } from '../../features/app/app-detail/hooks/useAppSSE';
 import { useConsoleSources } from '../../features/app/app-detail/hooks/useConsoleSources';
@@ -24,6 +25,7 @@ import { sendAppLabNotification } from '../../features/notifications';
 import { useBoardLifecycleStore } from '../../store/boardLifecycle';
 import useAppsStatus from './hooks/useAppsStatus';
 import { RuntimeContextValue } from './runtimeContext';
+import { AiModelRequiredDialogState } from './runtimeContextProvider.type';
 import { UseRuntimeLogic } from './runtimeContextProvider.type';
 
 export const useRuntimeLogic: UseRuntimeLogic =
@@ -42,7 +44,23 @@ export const useRuntimeLogic: UseRuntimeLogic =
     //The activeApp is the app that the user is currently interacting with, not necessarily the one running/default.
     const [activeApp, setActiveApp] = useState<AppDetailedInfo | undefined>();
 
+    const [appStarted, setAppStarted] = useState<boolean>(false);
     const [isSwapping, setIsSwapping] = useState<boolean>(false);
+
+    const [aiModelRequiredDialog, setAiModelRequiredDialog] =
+      useState<AiModelRequiredDialogState>({ open: false });
+
+    const openAiModelRequired = useCallback(
+      (params: { brickId?: string; modelId?: string }): void =>
+        setAiModelRequiredDialog({ open: true, ...params }),
+      [],
+    );
+
+    const closeAiModelRequired = useCallback(
+      (): void =>
+        setAiModelRequiredDialog((prev) => ({ ...prev, open: false })),
+      [],
+    );
 
     const {
       consoleTabs,
@@ -50,6 +68,7 @@ export const useRuntimeLogic: UseRuntimeLogic =
       activeConsoleTab,
       addConsoleSource,
       setActiveConsoleTab,
+      setStyleToSource,
       resetAllSources,
       appendDataToSource: appendData,
       reset: resetConsoleSources,
@@ -113,35 +132,72 @@ export const useRuntimeLogic: UseRuntimeLogic =
       [selectedBoard?.connectionType],
     );
 
+    const notifyAppStatusChange = useMemo(
+      () =>
+        debounce((success: boolean) => {
+          if (activeApp) {
+            setStyleToSource(
+              activeApp.id,
+              CONSOLE_SOURCE_KEYS.STARTUP,
+              success ? 'success' : 'error',
+            );
+
+            if (success) {
+              openUIIfAvailable(activeApp);
+            }
+          }
+
+          sendCurrentAction({
+            type: success ? 'ACTION_SUCCEEDED' : 'ACTION_FAILED',
+          });
+
+          sendAppLabNotification({
+            message: `${activeApp?.name ?? ''} ${
+              success ? 'is now running' : 'failed to start'
+            }`,
+            variant: success ? 'success' : 'error',
+          });
+        }, 500),
+      [activeApp, openUIIfAvailable, sendCurrentAction, setStyleToSource],
+    );
+
+    useEffect(() => {
+      if (activeApp && activeApp?.id === failedApp?.id && appStarted) {
+        notifyAppStatusChange(false);
+      }
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [activeApp, failedApp, appStarted]);
+
+    useEffect(() => {
+      if (activeApp && activeApp?.id === runningApp?.id && appStarted) {
+        notifyAppStatusChange(true);
+      }
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [activeApp, runningApp, appStarted]);
+
     //On startup success if called after start/stop actions succeeded.
     const onStartupSuccess = useCallback(
       async (param?: { isStopped: boolean }): Promise<void> => {
-        if (activeApp?.id) {
-          appendData(
-            activeApp.id,
-            CONSOLE_SOURCE_KEYS.STARTUP,
-            undefined,
-            undefined,
-            {
-              className: 'success',
-              isGlobalStyle: true,
-            },
-          );
+        if (param?.isStopped) {
+          sendCurrentAction({
+            type: 'ACTION_SUCCEEDED',
+          });
+          if (activeApp?.id) {
+            setStyleToSource(
+              activeApp.id,
+              CONSOLE_SOURCE_KEYS.STARTUP,
+              'success',
+            );
+          }
+          sendAppLabNotification({
+            message: `${activeApp?.name ?? ''} has been stopped`,
+            variant: 'success',
+          });
+        } else {
+          setAppStarted(true);
         }
-        if (!param?.isStopped && activeApp) {
-          openUIIfAvailable(activeApp);
-        }
-        sendCurrentAction({
-          type: 'ACTION_SUCCEEDED',
-        });
-        sendAppLabNotification({
-          message: param?.isStopped
-            ? `${activeApp?.name ?? ''} has been stopped`
-            : `${activeApp?.name ?? ''} is now running`,
-          variant: 'success',
-        });
       },
-      [activeApp, appendData, sendCurrentAction, openUIIfAvailable],
+      [sendCurrentAction, activeApp?.id, activeApp?.name, setStyleToSource],
     );
 
     //On startup success if called after start/stop actions fail.
@@ -153,16 +209,33 @@ export const useRuntimeLogic: UseRuntimeLogic =
             CONSOLE_SOURCE_KEYS.STARTUP,
             data,
             undefined,
-            {
-              className: 'error',
-            },
           );
+          setStyleToSource(activeApp.id, CONSOLE_SOURCE_KEYS.STARTUP, 'error');
         }
+
+        //Detect "missing AI model" failures so we can prompt the user to
+        //select/download the model required by the offending brick.
+        const missingModelMatch = data?.message?.match(
+          /model "([^"]+)" for brick "([^"]+)" (?:not found|is not installed)/,
+        );
+        if (missingModelMatch) {
+          openAiModelRequired({
+            modelId: missingModelMatch[1],
+            brickId: missingModelMatch[2],
+          });
+        }
+
         sendCurrentAction({
           type: 'ACTION_FAILED',
         });
       },
-      [activeApp?.id, appendData, sendCurrentAction],
+      [
+        activeApp?.id,
+        appendData,
+        openAiModelRequired,
+        sendCurrentAction,
+        setStyleToSource,
+      ],
     );
 
     const startAppOnMessage = useCallback(
@@ -259,6 +332,7 @@ export const useRuntimeLogic: UseRuntimeLogic =
         app: AppDetailedInfo,
         displaySwapDialog?: (e: boolean) => void,
       ): Promise<void> => {
+        setAppStarted(false);
         cleanUp();
 
         if (displaySwapDialog) {
@@ -293,6 +367,7 @@ export const useRuntimeLogic: UseRuntimeLogic =
 
     const stopAction = useCallback(
       async (app: AppDetailedInfo) => {
+        setAppStarted(false);
         addConsoleSource(app.id, CONSOLE_SOURCE_KEYS.STARTUP);
 
         if (!activeApp?.id) {
@@ -336,6 +411,7 @@ export const useRuntimeLogic: UseRuntimeLogic =
 
     const swapAction = useCallback(
       async (app: AppDetailedInfo): Promise<void> => {
+        setAppStarted(false);
         if (!runningApp?.id || !app.id) return;
 
         startAppAbort();
@@ -423,9 +499,19 @@ export const useRuntimeLogic: UseRuntimeLogic =
       ],
     );
 
+    const aiModelRequired = useMemo(
+      () => ({
+        state: aiModelRequiredDialog,
+        open: openAiModelRequired,
+        close: closeAiModelRequired,
+      }),
+      [aiModelRequiredDialog, closeAiModelRequired, openAiModelRequired],
+    );
+
     return {
       appsStatus,
       runtimeActions,
       consoleLogic,
+      aiModelRequired,
     };
   };

@@ -62,7 +62,7 @@ describe('boardService.impl + MockBoardService – selectBoard / boardName', () 
     const boards = await getBoards();
     const target = boards[1];
 
-    await selectBoard(target.id);
+    await selectBoard(target.serial);
 
     const name = await getBoardName();
     expect(name).toBe(target.name);
@@ -71,14 +71,14 @@ describe('boardService.impl + MockBoardService – selectBoard / boardName', () 
   it('setBoardName aggiorna boardName e la board selezionata', async () => {
     const boards = await getBoards();
     const target = boards[0];
-    await selectBoard(target.id);
+    await selectBoard(target.serial);
     await setBoardName('NuovoNome');
 
     const name = await getBoardName();
     expect(name).toBe('NuovoNome');
 
     const updatedBoards = await getBoards();
-    const updated = updatedBoards.find((b) => b.id === target.id);
+    const updated = updatedBoards.find((b) => b.serial === target.serial);
     expect(updated).toBeDefined();
     expect(updated!.name).toBe('NuovoNome');
   });

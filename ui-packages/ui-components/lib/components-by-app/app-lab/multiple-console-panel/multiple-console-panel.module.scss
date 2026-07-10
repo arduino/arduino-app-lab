@@ -59,6 +59,7 @@ $consolePanelWithActionsHeight: 100%;
         flex-direction: column;
         border: 2px solid var(--surface-bg-below-2, #090f11);
         border-top: none;
+        overflow: hidden;
 
         .progress-bar {
             position: relative;
@@ -106,6 +107,13 @@ $consolePanelWithActionsHeight: 100%;
     display: flex;
     flex-direction: column;
 
+    > div:first-child {
+        flex: 1;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+    }
+
     :global(#code-mirror-wrapper) {
         flex: 1;
         min-height: 0;
@@ -125,6 +133,7 @@ $consolePanelWithActionsHeight: 100%;
         }
 
         [class~="cm-scroller"] {
+            overflow-y: auto !important;
             [class~="cm-gutters"] {
                 background: unset;
                 color: var(--text-default, #fff);
@@ -138,6 +147,16 @@ $consolePanelWithActionsHeight: 100%;
             height: 100%;
             flex: 1;
         }
+    }
+}
+
+.serial-monitor-contents-content {
+    &--success {
+        color: var(--feedback-success-default, #16a588);
+    }
+
+    &--error {
+        color: var(--feedback-error-default, #ff8878);
     }
 }
 

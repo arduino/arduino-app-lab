@@ -13,6 +13,7 @@ import (
 	"os"
 	"path"
 	"strings"
+	"syscall"
 
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 
@@ -38,6 +39,9 @@ func WriteFileContent(conn remote.RemoteConn, path string, content string) error
 	reader := strings.NewReader(content)
 	err := conn.WriteFile(reader, path)
 	if err != nil {
+		if errors.Is(err, syscall.ENOSPC) {
+			return fmt.Errorf("BOARD_STORAGE_FULL")
+		}
 		return err
 	}
 	return nil
@@ -187,7 +191,14 @@ func RemoveFile(conn remote.RemoteConn, path string) error {
 }
 
 func CreateFolder(conn remote.RemoteConn, path string) error {
-	return conn.MkDirAll(path)
+	err := conn.MkDirAll(path)
+	if err != nil {
+		if errors.Is(err, syscall.ENOSPC) {
+			return fmt.Errorf("BOARD_STORAGE_FULL")
+		}
+		return err
+	}
+	return nil
 }
 
 func IsDirectory(conn remote.RemoteConn, path string) (bool, error) {
@@ -196,6 +207,14 @@ func IsDirectory(conn remote.RemoteConn, path string) (bool, error) {
 		return false, err
 	}
 	return info.IsDir, nil
+}
+
+func IsLocalDirectory(path string) (bool, error) {
+	info, err := os.Stat(path)
+	if err != nil {
+		return false, err
+	}
+	return info.IsDir(), nil
 }
 
 func SelectFilesDialog(ctx context.Context, conn remote.RemoteConn, remoteDir string) ([]string, error) {
@@ -229,6 +248,9 @@ func ImportFileToAppFromPath(ctx context.Context, conn remote.RemoteConn, remote
 		if errors.Is(err, context.Canceled) {
 			_ = conn.Remove(remotePath)
 			return "", fmt.Errorf("import-cancelled: %w", err)
+		}
+		if errors.Is(err, syscall.ENOSPC) {
+			return "", fmt.Errorf("BOARD_STORAGE_FULL")
 		}
 		return "", fmt.Errorf("failed to import file: %w", err)
 	}
@@ -275,6 +297,9 @@ func ImportFolderToAppFromPath(ctx context.Context, conn remote.RemoteConn, remo
 		if errors.Is(err, context.Canceled) {
 			_ = conn.Remove(targetBaseDir)
 			return "", fmt.Errorf("import-cancelled: %w", err)
+		}
+		if errors.Is(err, syscall.ENOSPC) {
+			return "", fmt.Errorf("BOARD_STORAGE_FULL")
 		}
 		return "", fmt.Errorf("failed to import folder: %w", err)
 	}

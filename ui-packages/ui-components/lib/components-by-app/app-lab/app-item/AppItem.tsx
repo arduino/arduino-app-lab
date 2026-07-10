@@ -1,6 +1,4 @@
 import {
-  AppLabToggleOff,
-  AppLabToggleOn,
   Bin,
   Download,
   Duplicate,
@@ -20,6 +18,7 @@ import { XXSmall } from '../../../typography';
 import { getBackgroundIcon } from '../../../utils';
 import { AppAction } from '../app-title';
 import { EmojiPreview } from '../emoji-picker/sub-components/EmojiPreview';
+import { Toggle } from '../essential/toggle';
 import styles from './app-item.module.scss';
 import { AppItemProps } from './AppItem.type';
 import { appItemMessages } from './messages';
@@ -74,8 +73,6 @@ const AppItem: React.FC<AppItemProps> = (props: AppItemProps) => {
       : undefined,
     status,
   );
-
-  const SwitchIcon = isDefault ? AppLabToggleOn : AppLabToggleOff;
 
   const handleAction = (action: AppAction | string): void => {
     switch (action) {
@@ -254,7 +251,12 @@ const AppItem: React.FC<AppItemProps> = (props: AppItemProps) => {
                                               appItemMessages.actionRunAsStartup,
                                             )}
                                           </XXSmall>
-                                          <SwitchIcon />
+                                          <Toggle
+                                            className={
+                                              styles['default-app-toggle']
+                                            }
+                                            isSelected={isDefault}
+                                          />
                                         </div>
                                       </div>
                                     ),
@@ -378,7 +380,10 @@ const AppItem: React.FC<AppItemProps> = (props: AppItemProps) => {
                 <XXSmall>
                   {formatMessage(appItemMessages.actionRunAsStartup)}
                 </XXSmall>
-                <SwitchIcon />
+                <Toggle
+                  className={styles['default-app-toggle']}
+                  isSelected={isDefault}
+                />
               </ContextMenu.Item>
             )}
             {onDelete && !example && (

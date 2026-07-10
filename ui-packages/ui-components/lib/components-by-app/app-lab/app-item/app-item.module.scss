@@ -274,20 +274,14 @@ $skeleton-opacity: 0.1 !default;
   width: 100%;
 
   svg {
-    &:last-child {
-      margin-left: auto;
-      flex-shrink: 0;
-    }
-
     path {
       fill: var(--text-default, #ffffff);
     }
   }
 }
 
-.context-menu-item > svg:last-child {
+.default-app-toggle {
   margin-left: auto;
-  flex-shrink: 0;
 }
 
 .dropdownMenu {

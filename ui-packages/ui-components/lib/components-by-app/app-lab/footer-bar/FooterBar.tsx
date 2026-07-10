@@ -12,6 +12,7 @@ import {
 import clsx from 'clsx';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
+import { LinuxCredentialsDialog } from '../../../dialogs';
 import { BoardSection } from '../board-section';
 import { Action, ActionStatus } from '../runtime-actions';
 import styles from './footer-bar.module.scss';
@@ -39,7 +40,8 @@ const FooterBar: React.FC<FooterBarProps> = (props: FooterBarProps) => {
     isBoard,
     boards,
     selectedBoard,
-    autoSelectBoard,
+    selectBoard,
+    linuxCredentialsDialog,
   } = footerBarLogic();
 
   const showVersion = isFFEnabled('SHOW_VERSION_IN_FOOTER');
@@ -116,17 +118,10 @@ const FooterBar: React.FC<FooterBarProps> = (props: FooterBarProps) => {
               isBoard={isBoard}
               boards={boards}
               selectedBoard={selectedBoard}
-              autoSelectBoard={autoSelectBoard}
+              selectBoard={selectBoard}
               onOpenTerminal={onOpenTerminal}
               terminalError={terminalError}
             />
-          ) : null}
-
-          {/* Ip section */}
-          {boardIP ? (
-            <div className={clsx(styles['lg'], styles['footer-badge'])}>
-              {boardIP}
-            </div>
           ) : null}
         </div>
 
@@ -138,6 +133,12 @@ const FooterBar: React.FC<FooterBarProps> = (props: FooterBarProps) => {
             styles['xl'],
           )}
         >
+          {/* Ip section */}
+          {boardIP ? (
+            <div className={clsx(styles['lg'], styles['footer-badge'])}>
+              {boardIP}
+            </div>
+          ) : null}
           {systemResources.root?.label || systemResources.user?.label ? (
             <div>
               <span>{formatMessage(messages.storage)}</span>
@@ -164,6 +165,14 @@ const FooterBar: React.FC<FooterBarProps> = (props: FooterBarProps) => {
               className={clsx(styles[systemResources.ram?.state || 'default'])}
             >
               {systemResources.ram?.label}
+            </span>
+          ) : null}
+
+          {systemResources.npu?.label ? (
+            <span
+              className={clsx(styles[systemResources.npu?.state || 'default'])}
+            >
+              {systemResources.npu?.label}
             </span>
           ) : null}
 
@@ -247,6 +256,16 @@ const FooterBar: React.FC<FooterBarProps> = (props: FooterBarProps) => {
                   </span>
                 ) : null}
 
+                {systemResources.npu?.label ? (
+                  <span
+                    className={clsx(
+                      styles[systemResources.npu?.state || 'default'],
+                    )}
+                  >
+                    {systemResources.npu?.label}
+                  </span>
+                ) : null}
+
                 {systemResources.cpu ? (
                   <span
                     className={clsx(
@@ -324,6 +343,8 @@ const FooterBar: React.FC<FooterBarProps> = (props: FooterBarProps) => {
           <NetworkIcon networkItem={systemResources.network} />
         </div>
       </div>
+
+      <LinuxCredentialsDialog logic={linuxCredentialsDialog} />
     </footer>
   );
 };

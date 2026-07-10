@@ -12,7 +12,6 @@ import {
   ButtonVariant,
   ConfigureAppBrickDialog,
   getBackgroundIcon,
-  Medium,
   TrainNewModelDialog,
   useI18n,
   XSmall,
@@ -22,6 +21,7 @@ import { useNavigate } from '@tanstack/react-router';
 import { Key, useEffect, useState } from 'react';
 import { Item } from 'react-stately';
 
+import { ArduinoLoader } from '../../../essential/loader';
 import { Tabs } from '../../../essential/tab-list/Tabs';
 import BrickIcon from '../brick-icon/BrickIcon';
 import { EmojiPreview } from '../emoji-picker/sub-components/EmojiPreview';
@@ -68,6 +68,8 @@ interface BrickDetailProps {
   brickDetailLogic: BrickDetailLogic;
   preSelectedModelId?: string;
   preSelectedModelChange?: (id: string) => void;
+  selectedTab?: string;
+  onSelectedTabChange?: (tab: string) => void;
 }
 
 const BrickDetail: React.FC<BrickDetailProps> = ({
@@ -75,13 +77,21 @@ const BrickDetail: React.FC<BrickDetailProps> = ({
   brickDetailLogic,
   preSelectedModelId,
   preSelectedModelChange,
+  selectedTab: controlledSelectedTab,
+  onSelectedTabChange,
 }: BrickDetailProps) => {
   const { formatMessage } = useI18n();
   const navigate = useNavigate();
-  const [selectedTab, setSelectedTab] = useState('overview');
+  const [internalSelectedTab, setInternalSelectedTab] = useState('overview');
+  const selectedTab = controlledSelectedTab ?? internalSelectedTab;
+  const handleSelectedTabChange = (tab: string): void => {
+    setInternalSelectedTab(tab);
+    onSelectedTabChange?.(tab);
+  };
   const {
     board,
     brick,
+    isBrickLoading,
     brickInstance,
     isCustomBrick,
     readme,
@@ -90,48 +100,70 @@ const BrickDetail: React.FC<BrickDetailProps> = ({
     models,
     readOnly,
     hideEdgeImpulse,
+    isExample,
     diskUsageWarning,
     configureDialogProps,
     trainNewModelDialogProps,
     isEdgeImpulseConnected,
     onTrainNewModelClick,
-    downloadModel,
+    downloadEIModel,
+    downloadGenericModel,
     getDownloadInfo,
     removeModel,
     openModelPage,
     openExternalLink,
     updateModelInUse,
+    isModelUninstalling,
+    isModelInstalledInApp,
   } = brickDetailLogic(brickId);
 
   // Auto-select default model when no model is pre-selected and models are available
   useEffect(() => {
-    if (!readOnly && !preSelectedModelId && models && models.length > 0) {
-      // Use same logic as AiModel component for default selection
-      let defaultModelId: string | undefined;
+    if (readOnly || preSelectedModelId || !preSelectedModelChange) {
+      return;
+    }
+    // Edge Impulse projects can match bricks that don't take a model at all;
+    // only bricks with compatible models should get a default selection
+    if ((brick?.compatible_models ?? []).length === 0) {
+      return;
+    }
 
-      // Look for first model with an installed impulse
-      for (const model of models) {
-        if (model.edgeImpulseProps?.impulses) {
-          const installedImpulse = model.edgeImpulseProps.impulses.find(
-            (i) => i.isInstalled,
-          );
-          if (installedImpulse?.installedModelId) {
-            defaultModelId = installedImpulse.installedModelId;
-            break;
-          }
+    // Use same logic as AiModel component for default selection
+    let defaultModelId: string | undefined;
+
+    // Look for first model with an installed impulse
+    for (const model of models ?? []) {
+      if (model.edgeImpulseProps?.impulses) {
+        const installedImpulse = model.edgeImpulseProps.impulses.find(
+          (i) => i.isInstalled,
+        );
+        if (installedImpulse?.installedModelId) {
+          defaultModelId = installedImpulse.installedModelId;
+          break;
         }
       }
-
-      // If no installed impulse, use first model's ID
-      if (!defaultModelId && models.length > 0) {
-        defaultModelId = models[0].id;
-      }
-
-      if (defaultModelId && preSelectedModelChange) {
-        preSelectedModelChange(defaultModelId);
-      }
     }
-  }, [models, preSelectedModelId, preSelectedModelChange, readOnly]);
+
+    // If no installed impulse, fall back to a built-in model only: remote
+    // Edge Impulse entries carry the EI project id, which is not a model id
+    if (!defaultModelId) {
+      defaultModelId = models?.find((model) => model.isBuiltIn)?.id;
+    }
+
+    if (defaultModelId) {
+      preSelectedModelChange(defaultModelId);
+    }
+  }, [brick, models, preSelectedModelId, preSelectedModelChange, readOnly]);
+
+  if (isBrickLoading) {
+    return (
+      <div className={styles['container']}>
+        <div className={styles['loader']}>
+          <ArduinoLoader />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={styles['container']}>
@@ -142,9 +174,12 @@ const BrickDetail: React.FC<BrickDetailProps> = ({
           {...configureDialogProps}
         />
       )}
+
       <div className={styles['header']}>
-        <BrickIcon category={brick?.category} />
-        <Medium className={styles['title']}>{brick?.name}</Medium>
+        <BrickIcon category={brick?.category} size="small" />
+        <XSmall bold className={styles['title']}>
+          {brick?.name}
+        </XSmall>
         {(brick?.compatible_models ?? []).length !== 0 && <AiBadge />}
         <div className={styles['spacer']} />
         {configureDialogProps && (brick?.config_variables || []).length > 0 && (
@@ -161,7 +196,9 @@ const BrickDetail: React.FC<BrickDetailProps> = ({
       <Tabs
         selectedKey={selectedTab}
         defaultSelectedKey="overview"
-        onSelectionChange={(tab: Key): void => setSelectedTab(tab as string)}
+        onSelectionChange={(tab: Key): void =>
+          handleSelectedTabChange(tab as string)
+        }
         keyboardActivation="manual"
         classes={{
           tabs: styles['tabs'],
@@ -220,30 +257,32 @@ const BrickDetail: React.FC<BrickDetailProps> = ({
                     {(models || [])?.map((model) => (
                       <AiModel
                         key={model.id}
-                        inUseModelId={
-                          brickInstance?.model || preSelectedModelId
-                        }
+                        inUseModelId={brickInstance?.model}
+                        selectedModelId={preSelectedModelId}
                         model={model}
                         readOnly={readOnly}
-                        hideEdgeImpulse={hideEdgeImpulse}
-                        diskUsageWarning={diskUsageWarning}
-                        downloadModel={downloadModel}
+                        isExample={isExample}
+                        diskUsageWarning={diskUsageWarning(model.id)}
+                        downloadEIModel={downloadEIModel}
+                        downloadGenericModel={downloadGenericModel}
                         modelDownloadInfo={
                           model.edgeImpulseProps?.projectId
                             ? getDownloadInfo(model.edgeImpulseProps.projectId)
-                            : undefined
+                            : getDownloadInfo(model.id)
                         }
                         removeModel={removeModel}
                         openModelPage={openModelPage}
+                        isInstalledInApp={isModelInstalledInApp?.(model)}
                         onModelSelect={
                           readOnly
                             ? undefined
                             : preSelectedModelChange || updateModelInUse
                         }
+                        isUninstalling={isModelUninstalling}
                       />
                     ))}
 
-                    {!hideEdgeImpulse ? (
+                    {!hideEdgeImpulse && !isExample ? (
                       <div className={styles['new-models']}>
                         <div className={styles['new-models-icon']}>
                           <EdgeImpulseIcon />

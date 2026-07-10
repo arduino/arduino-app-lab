@@ -15,6 +15,7 @@ export interface SelectableFileData {
   Icon?: React.ReactNode;
   isFixed?: boolean;
   isMetadataReadOnly?: boolean;
+  isPreview?: boolean;
 }
 
 export type AddFileHandler = (
@@ -50,9 +51,14 @@ export type TabsBarLogic = () => {
   tabs: SelectableFileData[];
   selectableMainFile?: SelectableFileData;
   selectedTab?: SelectableFileData;
-  selectTab: (id?: string) => void;
+  selectTab: (params: {
+    fileId?: string;
+    openAtIndex?: number;
+    isPreview?: boolean;
+  }) => void;
   selectSecretsTab: () => void;
   closeTab: (id: string) => void;
+  previewFileId?: string;
   updateTabOrder: (ids: string[]) => void;
   sketchDataIsLoading?: boolean;
   unsavedFileIds?: UnsavedFileIds;
@@ -79,6 +85,33 @@ export type TabsBarLogic = () => {
   setDispatchNewFileAction?: (key: Key | null) => void;
   isRenderedMarkdownFile?: boolean;
   showFileSearch?: boolean;
+  /**
+   * Opens the given file in the split (right) pane, or pushes it to the
+   * existing split pane if one is already open. When undefined, the
+   * "Split Right" entry is hidden from the tab context menu (used by the
+   * right pane to suppress the action on its own tabs).
+   */
+  onSplitRight?: (fileId: string) => void;
+  /**
+   * Re-selects the given file in the left pane. When undefined, the
+   * "Split Left" entry is hidden from the tab context menu (used by the
+   * left pane to suppress the action on its own tabs).
+   */
+  onSplitLeft?: (fileId: string) => void;
+  /**
+   * Optional override for the "Close All" menu action. When provided it
+   * replaces the default behaviour (iterating `closeTab` over `tabs`),
+   * so consumers can perform atomic batch operations such as folding the
+   * right pane back into the left when collapsing the split.
+   */
+  onCloseAll?: () => void;
+  /**
+   * Commits a tab dropped onto this bar from the OTHER pane's bar: moves
+   * `fileId` out of its origin pane and inserts it at `insertIndex` in
+   * this pane's tab list. When undefined the bar does not accept
+   * cross-pane tab drops.
+   */
+  onCrossPaneDrop?: (fileId: string, insertIndex: number) => void;
 };
 
 export enum FileExtension {
@@ -118,6 +151,8 @@ export enum TabMenuItemIds {
   CloseToTheLeft = 'CloseToTheLeft',
   CloseToTheRight = 'CloseToTheRight',
   CloseAll = 'CloseAll',
+  SplitRight = 'SplitRight',
+  SplitLeft = 'SplitLeft',
   RenameFile = 'RenameFile',
   DeleteFile = 'DeleteFile',
 }
@@ -138,7 +173,18 @@ export type NewTabMenuItemDictionary = NewTabMenuDictionary<TabMenuItemType>;
 
 export type UnsavedFileIds = Set<string>;
 
-export const SUPPORTED_IMAGE_TYPES = ['.jpg', '.png', '.svg', '.webp', '.gif'];
+export const SUPPORTED_IMAGE_TYPES = [
+  '.jpg',
+  '.jpeg',
+  '.png',
+  '.gif',
+  '.webp',
+  '.svg',
+  '.bmp',
+  '.ico',
+  '.avif',
+  '.apng',
+];
 
 export const SUPPORTED_TYPES = [
   ...SUPPORTED_IMAGE_TYPES,

@@ -15,9 +15,12 @@ const BrickItem: React.FC<BrickItemProps> = (props: BrickItemProps) => {
     brick,
     selected,
     onClick,
+    onDoubleClick,
     onDelete,
     onRename,
     onAddBrick,
+    onDragStart,
+    onDragEnd,
     missingConfig,
   } = props;
 
@@ -28,6 +31,16 @@ const BrickItem: React.FC<BrickItemProps> = (props: BrickItemProps) => {
     timeout: 0,
   });
 
+  const handleDragStart = (e: React.DragEvent<HTMLDivElement>): void => {
+    if (!brick.id) {
+      e.preventDefault();
+      return;
+    }
+    e.dataTransfer.effectAllowed = 'copyMove';
+    e.dataTransfer.setData('text/plain', brick.id);
+    onDragStart?.(brick);
+  };
+
   return (
     <ContextMenu.Root>
       <ContextMenu.Trigger
@@ -37,15 +50,19 @@ const BrickItem: React.FC<BrickItemProps> = (props: BrickItemProps) => {
         <div
           role="button"
           tabIndex={0}
+          draggable={!!onDragStart}
+          onDragStart={onDragStart ? handleDragStart : undefined}
+          onDragEnd={onDragEnd}
           className={clsx(styles['brick-item'], {
             [styles['brick-item-selected']]: selected,
             [styles['missing-config']]: missingConfig,
           })}
           onClick={onClick}
+          onDoubleClick={onDoubleClick}
           onFocus={(e): void => e.stopPropagation()}
           onKeyDown={(e): void => {
             if (e.key === 'Enter') {
-              onClick?.();
+              onDoubleClick?.();
             }
           }}
         >

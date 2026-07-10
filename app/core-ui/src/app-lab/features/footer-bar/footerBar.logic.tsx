@@ -8,7 +8,6 @@ import { ArduinoLoop } from '@cloud-editor-mono/images/assets/icons';
 import { AppDetailedInfo } from '@cloud-editor-mono/infrastructure';
 import {
   FooterBarLogic,
-  Notification,
   SystemResources,
   useI18n,
 } from '@cloud-editor-mono/ui-components/lib/components-by-app/app-lab';
@@ -21,6 +20,7 @@ import { UseBoards } from '../../hooks/useBoards';
 import { useIsBoard } from '../../hooks/useIsBoard';
 import { useTerminal } from '../../hooks/useTerminal';
 import { BoardResourcesContext } from '../../providers/board-resources/boardResourcesContext';
+import { useFooterNotifications } from '../../providers/footer-notifications/footerNotificationsContext';
 import { NetworkContext } from '../../providers/network/networkContext';
 import { RuntimeContext } from '../../providers/runtime/runtimeContext';
 import { useBoardLifecycleStore } from '../../store/boardLifecycle';
@@ -46,7 +46,28 @@ export const createUseFooterBarLogic = function (
 
     const { boardItem } = useBoardItem();
 
-    const { boards, selectedBoard, autoSelectBoard } = boardsProps;
+    const {
+      boards,
+      selectedBoard,
+      selectBoard,
+      autoSelectBoard,
+      showBoardConnPswPrompt,
+      onConnPswCancel,
+      onConnPswSubmit,
+      isConnectingToBoard,
+      connToBoardError,
+    } = boardsProps;
+
+    const linuxCredentialsDialog = {
+      open: showBoardConnPswPrompt,
+      onOpenChange: (isOpen: boolean): void => {
+        if (!isOpen) onConnPswCancel();
+      },
+      onSubmit: onConnPswSubmit,
+      onCancel: onConnPswCancel,
+      isLoading: isConnectingToBoard,
+      error: connToBoardError,
+    };
 
     const { onOpenTerminal, terminalError } = useTerminal();
 
@@ -55,11 +76,16 @@ export const createUseFooterBarLogic = function (
       user: {},
       ram: {},
       cpu: {},
+      npu: {},
       network: {},
     });
 
-    const [notifications, setNotifications] = useState<Notification[]>([]);
-    const [newNotifications, setNewNotifications] = useState<number>(0);
+    const {
+      notifications,
+      newNotifications,
+      setNotification,
+      resetNewNotifications,
+    } = useFooterNotifications();
 
     const runtimeContext = useContext(RuntimeContext);
     const { resources } = useContext(BoardResourcesContext);
@@ -77,18 +103,14 @@ export const createUseFooterBarLogic = function (
         newVersion()
           .then((v: string) => {
             if (v !== '') {
-              setNewNotifications((prev) => prev + 1);
-              setNotifications((prev) => [
-                ...prev,
-                {
-                  icon: <ArduinoLoop />,
-                  label: formatMessage(messages.updateAvailable),
-                  tooltip: formatMessage(messages.updateAvailableTooltip, {
-                    v,
-                  }),
-                  onClick: checkAndApplyUpdate,
-                },
-              ]);
+              setNotification({
+                icon: <ArduinoLoop />,
+                label: formatMessage(messages.updateAvailable),
+                tooltip: formatMessage(messages.updateAvailableTooltip, {
+                  v,
+                }),
+                onClick: checkAndApplyUpdate,
+              });
             }
           })
           .catch((error: Error) => {
@@ -112,6 +134,14 @@ export const createUseFooterBarLogic = function (
               state: resources.cpuPercentage > 80 ? 'warning' : undefined,
             }
           : prev.cpu,
+        npu: resources.npuPercentage
+          ? {
+              label: formatMessage(messages.npu, {
+                used: (resources.npuPercentage as number).toFixed(0),
+              }),
+              state: resources.npuPercentage > 80 ? 'warning' : undefined,
+            }
+          : prev.npu,
         ...[
           { key: 'ram', value: resources.ram },
           { key: 'user', value: resources.homeDisk, path: 'USER' },
@@ -140,10 +170,6 @@ export const createUseFooterBarLogic = function (
         ),
       }));
     }, [formatMessage, resources]);
-
-    const resetNewNotifications = (): void => {
-      setNewNotifications(0);
-    };
 
     const { isConnected } = useContext(NetworkContext);
     const { data: connectingName } = useQuery(
@@ -215,7 +241,14 @@ export const createUseFooterBarLogic = function (
       terminalError,
       boards,
       selectedBoard,
+      selectBoard,
       autoSelectBoard,
+      showBoardConnPswPrompt,
+      onConnPswCancel,
+      onConnPswSubmit,
+      isConnectingToBoard,
+      connToBoardError,
+      linuxCredentialsDialog,
     };
   };
 };

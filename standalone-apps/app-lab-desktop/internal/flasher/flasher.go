@@ -38,6 +38,20 @@ var FlashDaemonService = sync.OnceValues(func() (*Flasher, error) {
 	return runFlasherCliDaemon()
 })
 
+var flasherInstance *Flasher = nil
+
+func CancelFlash() {
+	// Kill the daemon process to stop any ongoing flash operation
+	if flasherInstance != nil {
+		flasherInstance.DaemonShutDown()
+		flasherInstance = nil
+		// Reset the singleton so it can be recreated
+		FlashDaemonService = sync.OnceValues(func() (*Flasher, error) {
+			return runFlasherCliDaemon()
+		})
+	}
+}
+
 func runFlasherCliDaemon() (*Flasher, error) {
 	binPath := board.GetFlasherCli()
 
@@ -204,6 +218,7 @@ func Flash(serial string, imageVersion OSImageRelease, preserveUserPartition boo
 	if err != nil {
 		return fmt.Errorf("daemon initialization failed: %w", err)
 	}
+	flasherInstance = flasher
 
 	cacheDir, err := getCacheDir()
 	if err != nil {

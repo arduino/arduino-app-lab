@@ -34,6 +34,13 @@ const searchKeyMapExt = ViewPlugin.fromClass(
 
     constructor(view: EditorView) {
       this.searchKeymapHandler = (event: KeyboardEvent): void => {
+        // Only handle the shortcut for the editor that currently has focus.
+        // Without this guard, all active editor instances respond to a single
+        // Cmd+F / Ctrl+F, which opens (or toggles) all search panels at once.
+        if (!view.dom.contains(document.activeElement) && !view.hasFocus) {
+          return;
+        }
+
         if (
           (event.ctrlKey || (os === 'Mac OS' && event.metaKey)) &&
           event.key === 'f'
@@ -64,6 +71,9 @@ const createSearchConfig = (searchDep: SearchData): Extension =>
   search({
     createPanel: (view) => {
       const dom = document.createElement('div');
+      // Tagged so the surrounding `.cm-panels-bottom` host can be lifted out
+      // of CodeMirror's flex layout and the panel overlays the editor.
+      dom.className = 'cm-find-replace-host';
       const root = createRoot(dom);
 
       const renderReactComponent = (

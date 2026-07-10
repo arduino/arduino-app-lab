@@ -18,6 +18,7 @@ export interface ConsoleSource {
   id: string;
   subject: BehaviorSubject<ConsoleLogValue>;
   resetSubject?: Subject<void>;
+  style?: string;
 }
 export interface ConsoleSources {
   [key: ConsoleSourceKey | string]: ConsoleSource;
@@ -85,5 +86,10 @@ export type UseConsoleSources = () => {
   ) => void;
   addConsoleSource: AddConsoleSource;
   appendDataToSource: AppendDataToSource;
+  setStyleToSource: (
+    appId: string,
+    tab: ConsoleSourceKey | undefined,
+    style?: string,
+  ) => void;
   reset: (appId: string, keysToRetain: string[]) => void;
 };

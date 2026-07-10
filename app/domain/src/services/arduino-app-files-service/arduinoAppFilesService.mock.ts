@@ -496,12 +496,12 @@ export const MockArduinoAppFilesService: ArduinoAppFilesService = {
   },
 
   importDroppedResourceToApp: function (
-    callback: (paths: string[]) => void,
+    callback: (items: { path: string; isFolder: boolean }[]) => void,
   ): () => void {
     const timer = setTimeout(() => {
       callback([
-        '/Users/mock/Desktop/MockFile1.txt',
-        '/Users/mock/Desktop/README.md',
+        { path: '/Users/mock/Desktop/MockFile1.txt', isFolder: false },
+        { path: '/Users/mock/Desktop/README.md', isFolder: false },
       ]);
     }, 500);
 

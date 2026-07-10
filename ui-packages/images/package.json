@@ -7,7 +7,8 @@
     "build": "tsc && vite build",
     "preview": "vite preview",
     "buildDev": "tsc && vite build --mode development",
-    "watch": "yarn buildDev --watch"
+    "watch": "yarn buildDev --watch",
+    "sync-seti-icons": "node scripts/sync-seti-icons.js"
   },
   "peerDependencies": {
     "react": ">= 18.2.0",
@@ -45,6 +46,9 @@
     },
     "./assets/icons": {
       "import": "./assets/icons/index.ts"
+    },
+    "./assets/file-icons": {
+      "import": "./assets/file-icons/index.ts"
     },
     "./assets/images": {
       "import": "./assets/images/index.tsx"

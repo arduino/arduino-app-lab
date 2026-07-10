@@ -5,11 +5,9 @@ import clsx from 'clsx';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useBoardSerialTracker } from '../../../../common/utils';
-import { AppLabDialog } from '../../../../dialogs';
-import { Input, InputStyle } from '../../../../essential/input';
+import { LinuxCredentialsDialog } from '../../../../dialogs';
 import { useI18n } from '../../../../i18n/useI18n';
 import { Large, Small, XSmall } from '../../../../typography';
-import { Button, ButtonVariant } from '../../essential/button';
 import { welcomeMessages } from '../messages';
 import { Board } from '../setup.type';
 import BoardCard from './BoardCard';
@@ -61,7 +59,6 @@ const Welcome: React.FC<WelcomeProps> = (props: WelcomeProps) => {
   } = props;
 
   const { formatMessage } = useI18n();
-  const [boardConnPsw, setBoardConnPsw] = useState('');
   const [newBoardSerials, setNewBoardSerials] = useState<Set<string>>(
     new Set(),
   );
@@ -214,13 +211,19 @@ const Welcome: React.FC<WelcomeProps> = (props: WelcomeProps) => {
   const hasMultipleBoards = boards.length > 1;
 
   const closePasswordPrompt = useCallback((): void => {
-    setBoardConnPsw('');
     onConnPswCancel();
   }, [onConnPswCancel]);
 
-  const submitPassword = useCallback((): Promise<void> => {
-    return onConnPswSubmit(boardConnPsw);
-  }, [boardConnPsw, onConnPswSubmit]);
+  const linuxCredentialsDialog = {
+    open: showBoardConnPswPrompt,
+    onOpenChange: (isOpen: boolean): void => {
+      if (!isOpen) closePasswordPrompt();
+    },
+    onSubmit: onConnPswSubmit,
+    onCancel: closePasswordPrompt,
+    isLoading: isBoardConnectingOrChecking,
+    error: connToBoardError,
+  };
 
   const handleSelectBoard = useCallback(
     (board: Board) => {
@@ -228,32 +231,6 @@ const Welcome: React.FC<WelcomeProps> = (props: WelcomeProps) => {
     },
     [onSelectBoard],
   );
-
-  const handleKeyDown = useCallback(
-    (e: KeyboardEvent): void => {
-      switch (e.key) {
-        case 'Escape':
-          if (!isBoardConnectingOrChecking) closePasswordPrompt();
-          break;
-        case 'Enter':
-          if (boardConnPsw && !isBoardConnectingOrChecking) submitPassword();
-          break;
-      }
-    },
-    [
-      boardConnPsw,
-      closePasswordPrompt,
-      isBoardConnectingOrChecking,
-      submitPassword,
-    ],
-  );
-
-  useEffect(() => {
-    if (showBoardConnPswPrompt) {
-      window.addEventListener('keydown', handleKeyDown);
-    }
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [handleKeyDown, showBoardConnPswPrompt]);
 
   const renderBoardCard = (board: Board): JSX.Element => {
     const isLoading =
@@ -264,7 +241,7 @@ const Welcome: React.FC<WelcomeProps> = (props: WelcomeProps) => {
         board.checkingStatus);
     return (
       <BoardCard
-        key={board.id}
+        key={board.serial}
         isNew={newBoardSerials.has(board.serial)}
         title={board.name}
         chip={board.connectionType}
@@ -282,74 +259,7 @@ const Welcome: React.FC<WelcomeProps> = (props: WelcomeProps) => {
 
   return (
     <>
-      {showBoardConnPswPrompt && (
-        <AppLabDialog
-          open={showBoardConnPswPrompt}
-          title={formatMessage(welcomeMessages.linuxPasswordTitle)}
-          closeable={!isBoardConnectingOrChecking}
-          classes={{
-            root: styles['password-prompt'],
-            content: styles['password-prompt-content'],
-            body: styles['password-prompt-body'],
-            footer: styles['password-prompt-footer'],
-          }}
-          onOpenChange={(isOpen: boolean): void => {
-            if (!isOpen) closePasswordPrompt();
-          }}
-          onSubmit={submitPassword}
-          footer={
-            <>
-              <Button
-                variant={ButtonVariant.Secondary}
-                onClick={closePasswordPrompt}
-                disabled={isBoardConnectingOrChecking}
-              >
-                {formatMessage(welcomeMessages.cancelButton)}
-              </Button>
-              <Button
-                variant={ButtonVariant.Primary}
-                loading={isBoardConnectingOrChecking}
-                disabled={!boardConnPsw || isBoardConnectingOrChecking}
-                type="submit"
-              >
-                {formatMessage(welcomeMessages.confirmButton)}
-              </Button>
-            </>
-          }
-        >
-          <Input
-            inputStyle={InputStyle.AppLab}
-            type="text"
-            label={formatMessage(welcomeMessages.usernameLabel)}
-            value="arduino"
-            disabled
-            onChange={(): null => null}
-            classes={{
-              input: clsx([
-                styles['input'],
-                styles['username'],
-                styles['disabled'],
-              ]),
-            }}
-          />
-          <Input
-            inputRef={passwordRef}
-            inputStyle={InputStyle.AppLab}
-            value={boardConnPsw}
-            sensitive={true}
-            onChange={(value: string): void => setBoardConnPsw(value)}
-            error={connToBoardError ? new Error(connToBoardError) : undefined}
-            placeholder=""
-            label={formatMessage(welcomeMessages.passwordLabel)}
-            classes={{
-              input: clsx([styles['input'], styles['password']]),
-              inputContainer: clsx(styles['app-name-input-container']),
-              error: clsx(styles['app-name-input-error']),
-              inputError: clsx(styles['error-message']),
-            }}
-          />
-        </AppLabDialog>
-      )}
+      <LinuxCredentialsDialog logic={linuxCredentialsDialog} />
 
       {!isAutoSelectingBoard && (
         <div className={styles['welcome-container']}>

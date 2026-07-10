@@ -7,6 +7,7 @@ import {
   ImportFileToAppFromPath,
   ImportFolderToAppFromPath,
   IsDirectory,
+  IsLocalDirectory,
   RemoveFile,
   RenameFile,
   RenameFolder,
@@ -14,7 +15,7 @@ import {
   SelectFolderDialog,
   WriteFileContent,
 } from '../../wailsjs/go/app/App';
-import { OnFileDrop, OnFileDropOff } from '../../wailsjs/runtime/runtime';
+import { OnFileDrop, OnFileDropOff } from '../../wailsjs/runtime';
 import { mapFSNode, mapFSNodeToFlat } from './orchestratorService.mapper';
 
 const DEFAULT_EXTENSIONLESS_FILE_CONTENT =
@@ -136,14 +137,26 @@ export const importResourceToAppFromPath: ArduinoAppFilesService['importResource
 
 export const importDroppedResourceToApp: ArduinoAppFilesService['importDroppedResourceToApp'] =
   function (callback) {
-    OnFileDrop((x: number, y: number, paths: string[]) => {
+    OnFileDrop(async (x: number, y: number, paths: string[]) => {
       const element = document.elementFromPoint(x, y);
 
       if (!element || !element.closest('[data-native-dropzone="true"]')) {
         return;
       }
 
-      callback(paths);
+      const items = await Promise.all(
+        paths.map(async (path) => {
+          let isFolder = false;
+          try {
+            isFolder = await IsLocalDirectory(path);
+          } catch {
+            isFolder = false;
+          }
+          return { path, isFolder };
+        }),
+      );
+
+      callback(items);
     }, false);
 
     return () => {

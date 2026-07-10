@@ -38,7 +38,7 @@ export const useCodeEditorViewInstance: UseCodeEditorViewInstance = function (
         const position = linePos.from;
 
         if (fileToUpdate) {
-          selectFile(fileToUpdate.fileId);
+          selectFile({ fileId: fileToUpdate.fileId });
         }
 
         editor.dispatch({

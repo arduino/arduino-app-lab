@@ -1,10 +1,11 @@
 import { AppDetailedInfo } from '@cloud-editor-mono/infrastructure';
 
+import { LinuxCredentialsDialogLogic } from '../../../dialogs';
 import { BoardItem } from '../board-section';
 import { Action, ActionStatus } from '../runtime-actions';
 import { Board } from '../setup';
 
-type SystemResourcesId = 'root' | 'user' | 'ram' | 'cpu' | 'network';
+type SystemResourcesId = 'root' | 'user' | 'ram' | 'cpu' | 'npu' | 'network';
 
 export interface SystemResource {
   label?: string;
@@ -17,6 +18,7 @@ export type SystemResources = Record<SystemResourcesId, SystemResource>;
 
 export type BoardResources = {
   cpuPercentage?: number;
+  npuPercentage?: number;
   ram?: {
     used: number;
     total: number;
@@ -76,5 +78,12 @@ export type FooterBarLogic = () => {
   isBoard: boolean;
   boards: Board[];
   selectedBoard: Board | undefined;
-  autoSelectBoard: (boardId: string) => void;
+  selectBoard: (board: Board) => Promise<void>;
+  autoSelectBoard: (boardId: string) => Promise<void>;
+  showBoardConnPswPrompt: boolean;
+  onConnPswCancel: () => void;
+  onConnPswSubmit: (password: string) => Promise<void>;
+  isConnectingToBoard: boolean;
+  connToBoardError?: string;
+  linuxCredentialsDialog: LinuxCredentialsDialogLogic;
 };

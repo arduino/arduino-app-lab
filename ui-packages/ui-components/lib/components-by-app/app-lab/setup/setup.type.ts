@@ -104,8 +104,8 @@ export type UseSetupLogic = () => {
   boards: Board[];
   selectedBoard: Board | undefined;
   selectingBoard?: Board;
-  selectBoard: (board: Board) => void;
-  autoSelectBoard: (boardId: string) => void;
+  selectBoard: (board: Board) => Promise<void>;
+  autoSelectBoard: (boardId: string) => Promise<void>;
   isAutoSelectingBoard: boolean;
   showLoader: boolean;
   showBoardSelectionPage: boolean;

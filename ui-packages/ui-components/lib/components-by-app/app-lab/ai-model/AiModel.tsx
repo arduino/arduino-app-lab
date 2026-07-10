@@ -1,120 +1,98 @@
+import { useI18n } from '@cloud-editor-mono/ui-components';
 import {
-  Bin,
-  Checkmark,
-  ChevronDown,
-  Download,
-  OpenInNewTab,
-  Reload,
-  ThreeDots,
-  Warning,
-} from '@cloud-editor-mono/images/assets/icons';
-import { AIModelItem } from '@cloud-editor-mono/infrastructure';
-import {
+  AiModelUninstallDialog,
   Badge,
   BadgeSize,
   BadgeStyle,
   BadgeVariant,
-  Button,
-  ButtonSize,
-  ButtonVariant,
-  DropdownMenuButton,
-  DropdownMenuItemType,
-  ProgressBar,
   useTooltip,
 } from '@cloud-editor-mono/ui-components/lib/components-by-app/app-lab';
 import clsx from 'clsx';
-import { Key, useEffect, useMemo, useState } from 'react';
+import { useState } from 'react';
 
-import { useI18n } from '../../../i18n/useI18n';
 import { XSmall, XXSmall } from '../../../typography';
-import { aiModelMessages, messages } from '../brick-detail/messages';
 import styles from './ai-model.module.scss';
 import { AiModelProps } from './AiModel.type';
+import { canDownloadModel, getAiModelCardState } from './helpers';
+import { messages } from './messages';
+import { AiModelEdgeImpulseActions } from './subcomponents/ai-model-edge-impulse/AiModelEdgeImpulseActions';
+import { useEdgeImpulseModel } from './subcomponents/ai-model-edge-impulse/useEdgeImpulseModel';
+import { AiModelStandardActions } from './subcomponents/ai-model-standard-actions/AiModelStandardActions';
+import { AiModelTags } from './subcomponents/ai-model-tags/AiModelTags';
+import { AiModelMenu } from './subcomponents/AiModelMenu';
 
 export const AiModel: React.FC<AiModelProps> = (props: AiModelProps) => {
   const { formatMessage } = useI18n();
   const {
     inUseModelId,
+    selectedModelId,
     model,
     onModelSelect,
-    downloadModel,
+    downloadEIModel,
+    downloadGenericModel,
     removeModel,
     openModelPage,
     diskUsageWarning,
     modelDownloadInfo,
     readOnly,
-    hideEdgeImpulse,
+    isExample,
+    isUninstalling,
+    isInstalledInApp,
   } = props;
 
-  const [moreInfoIsOpen, setMoreInfoIsOpen] = useState(false);
+  const [isModelUninstallDialogOpen, setIsModelUninstallDialogOpen] =
+    useState(false);
 
-  const impulses = useMemo(
-    () => model.edgeImpulseProps?.impulses || [],
-    [model.edgeImpulseProps?.impulses],
-  );
-  const [selectedImpulseId, setSelectedImpulseId] = useState<
-    string | undefined
-  >();
-  const selectedImpulse = impulses.find((i) => i.id === selectedImpulseId);
+  const { impulses, setSelectedImpulseId, selectedImpulse, impulseInUse } =
+    useEdgeImpulseModel(model, inUseModelId, readOnly);
 
-  const impulseInUse = useMemo(
-    () => impulses.find((i) => i.installedModelId === inUseModelId),
-    [impulses, inUseModelId],
-  );
-
-  useEffect(() => {
-    if (!selectedImpulseId) {
-      setSelectedImpulseId(
-        impulseInUse?.id ||
-          impulses.find((i) => i.isInstalled)?.id ||
-          impulses[0]?.id,
-      );
-    }
-  }, [
-    hideEdgeImpulse,
-    impulseInUse,
-    impulseInUse?.id,
-    impulses,
+  const {
+    isEdgeImpulse,
+    isModelInstalled,
+    isModelInUse,
+    isModelSelected,
+    isSelectable,
+    isDisabled,
+    allowsInstallActions,
+  } = getAiModelCardState({
+    model,
+    inUseModelId,
+    selectedModelId,
+    isExample,
     readOnly,
-    selectedImpulseId,
-  ]);
+    impulses,
+    selectedImpulse,
+    impulseInUse,
+  });
 
-  const isDownloading = modelDownloadInfo && modelDownloadInfo.isDownloading;
+  const isDownloading = !!modelDownloadInfo?.isDownloading;
+  const isUninstallingModel = !!isUninstalling?.(model.id);
+  const hideRadio = readOnly; // brick list view
 
-  const isModelInUse =
-    inUseModelId && (model.id === inUseModelId || !!impulseInUse);
-
-  const isSelectable =
-    !readOnly &&
-    !hideEdgeImpulse &&
-    !isModelInUse &&
-    (model.isBuiltIn || selectedImpulse?.isInstalled);
-
-  const isDisabled =
-    readOnly ||
-    hideEdgeImpulse ||
-    (!model.isBuiltIn && selectedImpulse && !selectedImpulse.isInstalled);
-  const hideRadio = readOnly && !hideEdgeImpulse; // brick list view
+  const showMenu =
+    allowsInstallActions && !isUninstallingModel && !isDownloading;
+  const showStandardActions =
+    allowsInstallActions && (canDownloadModel(model) || isUninstallingModel);
+  const showEdgeImpulseActions = isEdgeImpulse && allowsInstallActions;
 
   const { props: tooltipProps, renderTooltip } = useTooltip({
-    content: hideEdgeImpulse
-      ? "Models can't be changed in examples"
-      : 'Download the model to enable',
+    content: formatMessage(
+      isExample
+        ? messages.aiModelExampleTooltip
+        : messages.aiModelDownloadToEnableTooltip,
+    ),
     direction: 'right',
     timeout: 0,
   });
-  const showTooltip =
-    hideEdgeImpulse ||
-    readOnly ||
-    (!model.isBuiltIn && !selectedImpulse?.isInstalled);
+  const showTooltip = isExample || !isModelInstalled;
 
   return (
     <div
       className={clsx(styles['ai-model-card'], {
-        [styles['selectable']]: !!isSelectable,
-        [styles['selected']]: isModelInUse,
+        [styles['selectable']]: isSelectable,
+        [styles['selected']]: isModelInUse || isModelSelected,
         [styles['disabled']]: isDisabled,
-        [styles['disabled-radio-only']]: readOnly || hideEdgeImpulse,
+        [styles['disabled-radio-only']]: readOnly || isExample,
       })}
       {...(isSelectable &&
         onModelSelect && {
@@ -122,260 +100,99 @@ export const AiModel: React.FC<AiModelProps> = (props: AiModelProps) => {
             onModelSelect(selectedImpulse?.installedModelId || model.id),
         })}
     >
-      {!hideRadio && (
-        <div className={styles['radio']} {...tooltipProps}>
-          {showTooltip && renderTooltip(styles['radio-tooltip'])}
-        </div>
-      )}
-      <div className={styles['ai-model-card-container']}>
-        <div className={styles['ai-model-card-header']}>
-          <XSmall className={styles['ai-model-name']}>{model.name}</XSmall>
-          {isModelInUse && (
-            <Badge
-              size={BadgeSize.Small}
-              style={BadgeStyle.Solid}
-              variant={BadgeVariant.Positive}
-              classes={{ container: styles['ai-model-in-use'] }}
-            >
-              {formatMessage(messages.aiModelInUse)}
-            </Badge>
-          )}
-          {isModelInUse && !!impulseInUse && (
-            <Badge
-              size={BadgeSize.Small}
-              style={BadgeStyle.Light}
-              variant={BadgeVariant.Neutral}
-              classes={{ container: styles['ai-impulse-in-use'] }}
-            >
-              {impulseInUse.name}
-            </Badge>
-          )}
-          {model.edgeImpulseProps && (
-            <DropdownMenuButton
-              title={'Model options'}
-              sections={[
-                {
-                  name: 'Actions',
-                  items: [
-                    {
-                      id: 'edit-model',
-                      label: 'Edit model',
-                      labelPrefix: <OpenInNewTab />,
-                    } as DropdownMenuItemType<string, string>,
-                  ].concat(
-                    selectedImpulse?.isInstalled
-                      ? [
-                          {
-                            id: 'remove-model',
-                            label: 'Uninstall',
-                            labelPrefix: <Bin />,
-                            itemClassName: styles['remove-model'],
-                          },
-                        ]
-                      : [],
-                  ),
-                },
-              ]}
-              buttonChildren={<ThreeDots />}
-              onAction={(key): void => {
-                key === 'edit-model'
-                  ? openModelPage?.(model.id, selectedImpulse?.id)
-                  : removeModel?.(selectedImpulse?.installedModelId ?? '');
-              }}
-              classes={{
-                dropdownMenuButtonWrapper:
-                  styles['dropdown-menu-button-wrapper'],
-                dropdownMenuButton: styles['dropdown-menu-button'],
-                dropdownMenu: styles['dropdown-menu'],
-                dropdownMenuItem: styles['dropdown-menu-item'],
-              }}
-            />
-          )}
-        </div>
-        <XXSmall className={styles['ai-model-description']}>
-          {model.description}
-        </XXSmall>
-        <details
-          onToggle={async (e): Promise<void> => {
-            setMoreInfoIsOpen(e.currentTarget.open);
-          }}
-          className={clsx(styles['more-info'], {
-            [styles['is-open']]: moreInfoIsOpen,
-          })}
-        >
-          <summary
-            className={styles['more-info-summary']}
-            onClick={(e): void => e.stopPropagation()}
-          >
-            {moreInfoIsOpen
-              ? formatMessage(aiModelMessages.lessInfo)
-              : formatMessage(aiModelMessages.moreInfo)}
-          </summary>
-          <ul className={styles['more-info-list']}>
-            <Button
-              size={ButtonSize.XXSmall}
-              variant={ButtonVariant.Tertiary}
-              onClick={(e): void => {
-                e.stopPropagation();
-                if (model.edgeImpulseProps) {
-                  openModelPage?.(
-                    model.edgeImpulseProps.projectId,
-                    selectedImpulse?.id,
-                  );
-                } else {
-                  openModelPage?.(model.id);
-                }
-              }}
-              classes={{
-                button: styles['button'],
-              }}
-            >
-              {formatMessage(aiModelMessages.modelCard)}
-            </Button>
-            <XXSmall>
-              {formatMessage(aiModelMessages.source, {
-                source:
-                  (model as AIModelItem)?.metadata?.['source'] ?? 'edgeimpulse',
-              })}
-            </XXSmall>
-            <XXSmall>
-              {formatMessage(aiModelMessages.eiProjectID, {
-                id:
-                  (model as AIModelItem)?.metadata?.['ei-project-id'] ??
-                  model.id,
-              })}
-            </XXSmall>
-          </ul>
-        </details>
-        {model.edgeImpulseProps && (
-          <div className={styles['ai-model-impulse']}>
-            {!isDownloading && (
-              <>
-                {diskUsageWarning && (
-                  <div className={styles['disk-warning']}>
-                    <Warning />
-                    Used: {diskUsageWarning.used} GB of {diskUsageWarning.total}{' '}
-                    GB
-                  </div>
-                )}
-                {impulses.length > 1 && (
-                  <DropdownMenuButton
-                    sections={[
-                      {
-                        name: 'Select Impulse',
-                        items: impulses.map((impulse) => ({
-                          id: impulse.id,
-                          label: impulse.name,
-                          node: (
-                            <>
-                              <div className={styles['impulse-item-name']}>
-                                {impulse.name}
-                              </div>
-                              {selectedImpulse &&
-                                selectedImpulse.id === impulse.id && (
-                                  <Checkmark />
-                                )}
-                            </>
-                          ),
-                        })),
-                      },
-                    ]}
-                    classes={{
-                      dropdownMenuButtonWrapper:
-                        styles['dropdown-menu-button-wrapper'],
-                      dropdownMenuButton: styles['dropdown-menu-button'],
-                      dropdownMenu: styles['dropdown-menu'],
-                      dropdownMenuItem: styles['dropdown-menu-item'],
-                    }}
-                    onAction={(key: Key): void => {
-                      setSelectedImpulseId(key as string);
-                      if (isModelInUse) {
-                        const impulse = impulses.find((i) => i.id === key);
-                        if (
-                          impulse &&
-                          impulse.installedModelId &&
-                          impulse.installedModelId !== inUseModelId
-                        ) {
-                          onModelSelect?.(impulse.installedModelId);
-                        }
-                      }
-                    }}
-                    buttonChildren={
-                      <div className={styles['impulse-select']}>
-                        <div className={styles['impulse-select-name']}>
-                          {selectedImpulse?.name}
-                        </div>
-                        {selectedImpulse?.isInstalled && (
-                          <span className={styles['impulse-select-installed']}>
-                            <Checkmark /> Installed
-                          </span>
-                        )}
-                        <ChevronDown />
-                      </div>
-                    }
-                  ></DropdownMenuButton>
-                )}
-                {impulses.length === 1 &&
-                selectedImpulse?.isInstalled &&
-                !selectedImpulse.isOutdated ? (
-                  <span className={styles['ai-model-impulse-installed']}>
-                    <Checkmark /> Installed
-                  </span>
-                ) : (
-                  <Button
-                    variant={ButtonVariant.Primary}
-                    size={ButtonSize.XSmall}
-                    title={
-                      selectedImpulse?.isOutdated
-                        ? 'Update model'
-                        : 'Download model'
-                    }
-                    onClick={(e): void => {
-                      e.stopPropagation();
-                      model.id &&
-                        selectedImpulse &&
-                        model.edgeImpulseProps &&
-                        downloadModel &&
-                        downloadModel(
-                          model.edgeImpulseProps.projectId,
-                          selectedImpulse.id,
-                        );
-                    }}
-                    classes={{
-                      button: clsx(
-                        styles['download-button'],
-                        !(impulses.length > 1) &&
-                          styles['download-button-text'],
-                      ),
-                    }}
-                    disabled={
-                      !selectedImpulse ||
-                      (selectedImpulse.isInstalled &&
-                        !selectedImpulse.isOutdated)
-                    }
-                  >
-                    {impulses.length > 1
-                      ? ''
-                      : selectedImpulse?.isOutdated
-                      ? 'Update'
-                      : 'Download'}{' '}
-                    {selectedImpulse?.isOutdated ? <Reload /> : <Download />}
-                  </Button>
-                )}
-              </>
-            )}
-            {isDownloading && (
-              <div className={styles['impulse-download-progress']}>
-                <XXSmall>Installing model...</XXSmall>
-                <ProgressBar
-                  classes={{ progressBar: styles['progress-bar'] }}
-                  active={true}
-                />
-              </div>
-            )}
+      <AiModelUninstallDialog
+        open={isModelUninstallDialogOpen}
+        isEdgeImpulse={isEdgeImpulse}
+        modelId={model.id}
+        selectedImpulse={selectedImpulse}
+        onOpenChange={setIsModelUninstallDialogOpen}
+        removeModel={removeModel}
+      />
+      <div className={styles['ai-model-container']}>
+        {!hideRadio ? (
+          <div className={styles['radio']} {...tooltipProps}>
+            {showTooltip && renderTooltip(styles['radio-tooltip'])}
           </div>
-        )}
+        ) : null}
+        <div className={styles['ai-model-details']}>
+          <div className={styles['ai-model-header']}>
+            <XSmall className={styles['ai-model-name']}>{model.name}</XSmall>
+            {isModelInUse && isModelInstalled && (
+              <Badge
+                size={BadgeSize.Small}
+                style={BadgeStyle.Solid}
+                variant={BadgeVariant.Positive}
+                classes={{ container: styles['ai-model-in-use'] }}
+              >
+                {formatMessage(messages.aiModelInUse)}
+              </Badge>
+            )}
+            {/*
+              Only badge the in-use impulse when it has a name. Unlinked
+              "special" Edge Impulse models exposed by the board have no
+              `ei-impulse-name`, so this would otherwise render an empty badge.
+            */}
+            {isModelInUse && !!impulseInUse?.name ? (
+              <Badge
+                size={BadgeSize.Small}
+                style={BadgeStyle.Light}
+                variant={BadgeVariant.Neutral}
+                classes={{ container: styles['ai-impulse-in-use'] }}
+              >
+                {impulseInUse.name}
+              </Badge>
+            ) : null}
+          </div>
+          <div className={styles['ai-model-description-container']}>
+            <XXSmall truncate className={styles['ai-model-description']}>
+              {model.description}
+            </XXSmall>
+          </div>
+          <AiModelTags
+            model={model}
+            selectedImpulseId={selectedImpulse?.id}
+            openModelPage={openModelPage}
+          />
+        </div>
+        {showMenu ? (
+          <AiModelMenu
+            model={model}
+            isEdgeImpulse={isEdgeImpulse}
+            selectedImpulse={selectedImpulse}
+            openModelPage={openModelPage}
+            removeModel={removeModel}
+            forceRemove={isModelInUse || isModelSelected || !!isInstalledInApp}
+            openForceRemoveDialog={(): void =>
+              setIsModelUninstallDialogOpen(true)
+            }
+          />
+        ) : null}
+        {showStandardActions ? (
+          <div className={styles['ai-model-download-container']}>
+            <AiModelStandardActions
+              model={model}
+              modelDownloadInfo={modelDownloadInfo}
+              downloadGenericModel={downloadGenericModel}
+              diskUsageWarning={diskUsageWarning}
+              isUninstalling={isUninstalling}
+            />
+          </div>
+        ) : null}
       </div>
+      {showEdgeImpulseActions ? (
+        <AiModelEdgeImpulseActions
+          model={model}
+          impulses={impulses}
+          selectedImpulse={selectedImpulse}
+          inUseModelId={inUseModelId}
+          isModelInUse={isModelInUse}
+          isDownloading={isDownloading}
+          diskUsageWarning={diskUsageWarning}
+          setSelectedImpulseId={setSelectedImpulseId}
+          onModelSelect={isExample ? undefined : onModelSelect}
+          downloadEIModel={downloadEIModel}
+        />
+      ) : null}
     </div>
   );
 };

@@ -308,12 +308,12 @@ export const useFileHandlers: UseFileHandlers = function (
       code?: string,
     ) => {
       const prevSelectedFileId = selectedFile?.fileId;
-      selectFile(fileId);
+      selectFile({ fileId });
       try {
         await addSketchFile(fileId, fileName, fileExtension, code);
       } catch {
         if (prevSelectedFileId) {
-          selectFile(prevSelectedFileId);
+          selectFile({ fileId: prevSelectedFileId });
         }
         sendErrorNotification();
       }
@@ -328,7 +328,7 @@ export const useFileHandlers: UseFileHandlers = function (
         closeFile(fileId);
         await deleteSketchFile(fileId);
       } catch {
-        selectFile(fileId, fileIndex);
+        selectFile({ fileId, openAtIndex: fileIndex });
       }
     },
     [closeFile, deleteSketchFile, openFiles, selectFile],

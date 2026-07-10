@@ -13,7 +13,7 @@ $roboto-mono-font-family: "Roboto Mono", "monospace", "Courier New", "Lucida Con
 :root {
   @extend %arduino-typography-small;
 
-  font-synthesis: none;
+  font-synthesis: style weight;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;

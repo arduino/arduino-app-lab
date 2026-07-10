@@ -12,15 +12,18 @@ export enum ImportStatus {
   UploadFailed = 'upload-failed',
 }
 
+export type ResourceType = 'app' | 'file' | 'folder';
+
 export type UseImportResourceProps = {
   importResourceDialogOpen: boolean;
   setImportResourceDialogOpen: (open: boolean) => void;
   setImportedResourceId: (id: string | undefined) => void;
   importResourceFromPath: (
     filePath: string,
+    isFolder: boolean,
     newFileName?: string,
   ) => Promise<ImportResourceResult>;
-  type: 'app' | 'file' | 'folder';
+  type: ResourceType;
   invalidateQueries: () => void;
   nodes?: TreeNode[];
   targetFolderPath?: string;
@@ -38,5 +41,5 @@ export type ImportResourceLogic = () => {
   errorMessage?: string;
   onOpenChange: (open: boolean) => void;
   startImport: (remoteDir?: string) => void;
-  type: 'app' | 'file' | 'folder';
+  type: ResourceType;
 };

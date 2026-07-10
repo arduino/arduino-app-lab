@@ -1,5 +1,4 @@
-import { UAParser } from 'ua-parser-js';
-
+import { getShortcutCommand } from '../common/utils';
 import {
   ContextMenuItemDictionary,
   ContextMenuItemIds,
@@ -7,8 +6,7 @@ import {
 } from './contextMenu.type';
 import { messages } from './messages';
 
-const parser = new UAParser();
-const shortcutCommand = parser.getOS().name === 'Windows' ? 'ctrl' : '⌘';
+const shortcutCommand = getShortcutCommand();
 
 const contextMenuItems: ContextMenuItemDictionary = {
   [ContextMenuItemIds.Copy]: {

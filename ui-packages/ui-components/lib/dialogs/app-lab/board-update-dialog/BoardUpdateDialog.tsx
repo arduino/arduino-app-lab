@@ -78,6 +78,7 @@ export const BoardUpdateDialog: React.FC<BoardUpdateDialogProps> = ({
     <AppLabDialog
       open={open}
       closeable={false}
+      disableAutoFocus
       classes={{
         body: clsx(styles['dialog-body'], {
           [styles['checking']]: status === UpdaterStatus.Checking,

@@ -1,5 +1,8 @@
 export * from './add-app-brick-dialog/AddAppBrickDialog';
 export * from './add-sketch-library-dialog/AddSketchLibraryDialog';
+export * from './ai-model-required-dialog/AiModelRequiredDialog';
+export * from './ai-model-required-dialog/aiModelRequiredDialog.type';
+export * from './ai-model-uninstall-dialog/AiModelUninstallDialog';
 export * from './app-lab-dialog/AppLabDialog';
 export * from './app-lab-whats-new-ad-hoc';
 export * from './app-welcome-dialog/app-welcome-dialog.type';
@@ -19,6 +22,8 @@ export * from './export-app-dialog/ExportAppDialog';
 export * from './flash-board-dialog/FlashBoardDialog';
 export * from './import-resource-dialog/ImportResourceDialog';
 export * from './import-resource-dialog/ImportResourceDialog.type';
+export * from './linux-credentials-dialog/LinuxCredentialsDialog';
+export * from './messages';
 export * from './network-settings-dialog/NetworkSettingsDialog';
 export * from './offline-warning-dialog/OfflineWarningDialog';
 export * from './offline-warning-dialog/OfflineWarningDialog.type';

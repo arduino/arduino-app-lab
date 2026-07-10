@@ -51,6 +51,7 @@ export type UseMonitorCodeMirror = (
   toggleTimestamps: () => void;
   exportFile: () => void;
   toggleSearchPanel: () => void;
+  viewInstance: EditorView | null;
 };
 
 function useAutoScroll(
@@ -112,6 +113,12 @@ function useAutoScroll(
       if (!view) return;
 
       const scrollTop = view.scrollDOM.scrollTop;
+
+      if (codeMirrorIsScrollingToBottom.current) {
+        lastScrollTop.current = scrollTop <= 0 ? 0 : scrollTop;
+        return;
+      }
+
       const isAtBottom =
         Math.abs(
           view.scrollDOM.scrollHeight - view.scrollDOM.clientHeight - scrollTop,
@@ -443,5 +450,6 @@ export const useMonitorCodeMirror: UseMonitorCodeMirror = (
     toggleTimestamps: handleToggleTimestamps,
     exportFile,
     toggleSearchPanel: handleToggleSearchPanel,
+    viewInstance: viewInstanceRef.current,
   };
 };

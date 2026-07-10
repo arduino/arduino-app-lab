@@ -28,7 +28,7 @@ export const messages = defineMessages({
   },
   aiModelInUse: {
     id: 'brickDetail.aiModelInUse',
-    defaultMessage: 'IN USE',
+    defaultMessage: 'Model in use',
     description: 'Label indicating the AI model currently in use',
   },
   fileNotFound: {
@@ -64,6 +64,21 @@ export const messages = defineMessages({
       'Create and train your own AI model using Edge Impulse Studio. An Arduino account login is required.',
     description: 'Description for the action to train a new AI model',
   },
+  linkHuggingFace: {
+    id: 'aiModel.linkHuggingFace',
+    defaultMessage: 'Link model from Hugging Face',
+    description: 'Label for the link to view the model on Hugging Face',
+  },
+  customAIModelTitle: {
+    id: 'brickDetail.customAIModelTitle',
+    defaultMessage: 'Bring your own model',
+    description: 'Title for custom AI models that can be linked to the brick',
+  },
+  uploadGGUF: {
+    id: 'aiModel.uploadGGUF',
+    defaultMessage: 'Upload Model .GGUF',
+    description: 'Label for the button to upload a GGUF model',
+  },
 });
 
 export const aiModelMessages = defineMessages({
@@ -89,7 +104,7 @@ export const aiModelMessages = defineMessages({
   },
   eiProjectID: {
     id: 'aiModel.eiProjectID',
-    defaultMessage: 'EI Project ID: {id}',
+    defaultMessage: '{isEI}Project ID: {id}',
     description: 'Label for the EI Project ID',
   },
 });

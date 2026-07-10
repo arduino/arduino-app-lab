@@ -4,11 +4,13 @@ export enum BadgeVariant {
   Warning = 'warning',
   Error = 'error',
   Accent = 'accent',
+  Alert = 'alert',
 }
 
 export enum BadgeStyle {
   Solid = 'solid',
   Light = 'light',
+  Ghost = 'ghost',
 }
 
 export enum BadgeSize {

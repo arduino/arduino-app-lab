@@ -28,6 +28,7 @@ type AppLabDialogProps = ComponentProps<typeof BaseModal> & {
   footer?: React.ReactNode;
   bottomExtension?: React.ReactNode;
   onSubmit?: () => unknown;
+  disableAutoFocus?: boolean;
 };
 
 export const AppLabDialog = forwardRef(
@@ -47,6 +48,7 @@ export const AppLabDialog = forwardRef(
       footer,
       onSubmit,
       bottomExtension,
+      disableAutoFocus = false,
       ...rest
     } = props;
 
@@ -58,6 +60,7 @@ export const AppLabDialog = forwardRef(
         trigger={trigger}
         modal={modal}
         closeable={closeable}
+        disableAutoFocus={disableAutoFocus}
         contentProps={{
           ...contentProps,
           'aria-describedby': typeof title === 'string' ? title : undefined,

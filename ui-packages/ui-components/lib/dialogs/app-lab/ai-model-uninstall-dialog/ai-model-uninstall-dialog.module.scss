@@ -1,0 +1,16 @@
+.body {
+  width: 720px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+
+  .warning-icon {
+    width: 56px;
+    height: 56px;
+
+    path {
+      fill: var(--feedback-warning-default, #c1ab15);
+    }
+  }
+}

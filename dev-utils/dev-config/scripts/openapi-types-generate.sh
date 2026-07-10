@@ -3,9 +3,11 @@
 CONVERTER_URL=https://converter.swagger.io/api/convert
 # Required: uncomment the definition url you want to use, or add your own
 # DEFINITION_URL=<YOUR_DEFINITION_URL>
+# e.g.
+DEFINITION_URL=https://raw.githubusercontent.com/arduino/arduino-app-cli/refs/heads/rename-to-builtin/internal/api/docs/openapi.yaml
 
 # Required: Add your desidered service name
-SERVICE_NAME=your-service-name # e.g. iot-api, users-api, etc.
+SERVICE_NAME=orchestrator-api # e.g. iot-api, users-api, etc.
 OUTPUT_FILE_NAME=$SERVICE_NAME.d.ts
 PROJECT_ROOT=$(git rev-parse --show-toplevel)
 
@@ -21,6 +23,6 @@ $PROJECT_ROOT/node_modules/.bin/prettier --write ./temp/$OUTPUT_FILE_NAME
 sed -i -e 's/{}/never/g' ./temp/$OUTPUT_FILE_NAME
 
 # Move to infrastructure
-mv ./temp/$OUTPUT_FILE_NAME ../../../app/infrastructure/src/$SERVICE_NAME/$OUTPUT_FILE_NAME
+mv ./temp/$OUTPUT_FILE_NAME ../../app/infrastructure/src/$SERVICE_NAME/$OUTPUT_FILE_NAME
 
 rm -rf ./temp
