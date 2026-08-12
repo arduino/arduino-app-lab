@@ -48,4 +48,11 @@ export const messages = defineMessages({
     description:
       'Context menu item for deleting a file or folder in the file tree',
   },
+  invalidCharactersInName: {
+    id: 'fileTree.invalidCharactersInName',
+    defaultMessage:
+      'Invalid name. Can\'t contain $ ` / \\ < > : " | ? *, end with a dot or space.',
+    description:
+      'Tooltip on the file tree rename/create input when the typed name is not allowed',
+  },
 });

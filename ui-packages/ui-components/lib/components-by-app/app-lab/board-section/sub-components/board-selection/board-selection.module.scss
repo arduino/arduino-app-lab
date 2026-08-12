@@ -74,22 +74,30 @@
     width: 28px;
 }
 
+// Same footprint and the same hover/focus states as the terminal button next to
+// it, so the two footer-left controls don't read as different kinds of button.
 .dropdown-menu-button {
     height: 28px;
     width: 28px;
     padding: 7px;
     border-radius: 8px;
+    background: var(--component-bg-flexible, #aeb8b826) !important;
 
     &:hover {
-        background: var(--component-bg-flexible, #aeb8b826);
+        background:
+            linear-gradient(0deg, var(--component-bg-flexible, #aeb8b826) 0%, var(--component-bg-flexible, #aeb8b826) 100%),
+            var(--component-bg-flexible, #aeb8b826) !important;
     }
 
     &:focus {
         outline: 2px solid var(--border-strong, #7f8c8d);
+        outline-offset: -2px;
     }
 
+    // the open state keeps the ring; inset so it doesn't double up with :focus
     &-open {
         outline: 2px solid var(--border-strong, #7f8c8d);
+        outline-offset: -2px;
 
         svg {
             transform: rotate(180deg);
@@ -148,6 +156,15 @@
                 text-overflow: ellipsis;
                 white-space: nowrap;
             }
+        }
+
+        // the board type column; min-width:0 lets it shrink as a flex item
+        &-type {
+            min-width: 0;
+            max-width: 160px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
     }
 

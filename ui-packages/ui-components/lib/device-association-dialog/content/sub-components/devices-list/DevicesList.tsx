@@ -1,7 +1,7 @@
 import { ArrayElement } from '@cloud-editor-mono/common';
 import { NoResults } from '@cloud-editor-mono/images/assets/icons';
 import clsx from 'clsx';
-import { orderBy } from 'lodash';
+import { orderBy } from 'lodash-es';
 import React, { forwardRef, useCallback } from 'react';
 
 import {
@@ -62,7 +62,7 @@ const DevicesList = forwardRef(
         if (query && query.length >= MIN_QUERY_LENGTH) {
           const filteredDevices = filterDeviceList(query, items);
 
-          onListFiltered && onListFiltered();
+          onListFiltered?.();
           return filteredDevices;
         }
 

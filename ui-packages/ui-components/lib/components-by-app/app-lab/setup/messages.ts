@@ -259,3 +259,31 @@ export const tooltipMessages = defineMessages({
       'Tooltip content showing the connection method for the board chip',
   },
 });
+
+export const sectionContainerMessages = defineMessages({
+  backButton: {
+    id: 'appLabSetup.sectionContainer.backButton',
+    defaultMessage: 'Back',
+    description: 'Label for the back button',
+  },
+  stepLabel: {
+    id: 'appLabSetup.sectionContainer.stepLabel',
+    defaultMessage: 'STEP {current}/{total}',
+    description: 'Label showing the current step number',
+  },
+  skipButton: {
+    id: 'appLabSetup.sectionContainer.skipButton',
+    defaultMessage: 'Skip',
+    description: 'Label for the skip button',
+  },
+  networkSetupSubtitle: {
+    id: 'appLabSetup.sectionContainer.networkSetupSubtitle',
+    defaultMessage: 'Select a network to connect your board',
+    description: 'Subtitle for the network setup section',
+  },
+  linuxCredentialsSubtitle: {
+    id: 'appLabSetup.sectionContainer.linuxCredentialsSubtitle',
+    defaultMessage: 'Please choose a password for your Board',
+    description: 'Subtitle for the linux credentials section',
+  },
+});

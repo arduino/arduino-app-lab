@@ -12,7 +12,7 @@ import {
   ReferenceSearchItem,
   ReferenceSearchResult,
 } from '@cloud-editor-mono/ui-components';
-import { get, set } from 'lodash';
+import { get, set } from 'lodash-es';
 
 import { cleanReferenceItemTemplate, isReferenceCategory } from './utils';
 

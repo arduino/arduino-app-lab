@@ -48,7 +48,7 @@ import {
   useQueryClient,
 } from '@tanstack/react-query';
 import { get, set } from 'idb-keyval';
-import { debounce, uniqueId } from 'lodash';
+import { debounce, uniqueId } from 'lodash-es';
 import {
   Key,
   useCallback,

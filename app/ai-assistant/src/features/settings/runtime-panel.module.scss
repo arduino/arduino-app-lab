@@ -1,0 +1,235 @@
+@use "@cloud-editor-mono/arduino-sass/src/fonts" as fonts;
+@use "@cloud-editor-mono/arduino-sass/src/typography" as typography;
+@use "@cloud-editor-mono/arduino-sass/src/variables" as variables;
+
+.runtime {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  border-top: 1px solid var(--border-inverted, #232b2e);
+  font-family: variables.$font-sans;
+
+  .runtime-progress-label {
+    flex: 1;
+    color: var(--text-default, #ffffff);
+    font-size: typography.$font-size-x-small;
+    font-weight: fonts.$font-weight-semibold;
+  }
+}
+
+.runtime-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  padding-top: 16px;
+  color: var(--text-default, #ffffff);
+  font-family: inherit;
+}
+
+.runtime-header-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-subtle, #c9d2d2);
+  font-size: typography.$font-size-xx-small;
+  font-weight: fonts.$font-weight-bold;
+  text-transform: uppercase;
+}
+
+.runtime-header-summary {
+  color: var(--text-subtle, #c9d2d2);
+  font-size: typography.$font-size-xx-small;
+  font-weight: fonts.$font-weight-semibold;
+  letter-spacing: 0.06em;
+}
+
+.runtime-chevron {
+  width: 6px;
+  transition: transform 0.2s ease;
+  transform: rotate(-90deg);
+
+  path {
+    fill: var(--text-subtle, #c9d2d2);
+  }
+
+  &--expanded {
+    transform: rotate(0deg);
+  }
+}
+
+.runtime-body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.runtime-stats {
+  margin: 0;
+  display: flex;
+  gap: 48px;
+}
+
+.runtime-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+
+  dt {
+    color: var(--text-inverted-subtle, #5D6A6B);
+    font-size: typography.$font-size-xx-small;
+    font-weight: fonts.$font-weight-bold;
+    text-transform: uppercase;
+  }
+
+  dd {
+    margin: 0;
+    color: var(--text-default, #ffffff);
+    font-size: typography.$font-size-x-small;
+    font-weight: fonts.$font-weight-normal;
+  }
+
+  // Nested so the green wins over the generic dd color above.
+  .runtime-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--feedback-success-default, #16A588);
+
+    &::before {
+      content: '';
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--feedback-success-default, #16A588);
+      position: relative;
+      top: 1px;
+    }
+  }
+}
+
+.runtime-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 16px;
+  margin-top: 2px;
+}
+
+.runtime-link {
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  color: var(--text-default, #ffffff);
+  font-family: inherit;
+  font-size: typography.$font-size-xx-small;
+  font-weight: fonts.$font-weight-semibold;
+
+  &:not(:disabled):hover {
+    text-decoration: underline;
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: default;
+  }
+}
+
+.checking-dots {
+  flex: none;
+  display: inline-block;
+  vertical-align: bottom;
+  position: relative;
+  top: 4px;
+  margin-left: 1px;
+}
+
+.checking-dots circle {
+  fill: var(--text-default, #ffffff);
+  animation: checking-dot-pulse 1.4s infinite;
+
+  &:nth-of-type(2) {
+    animation-delay: 0.2s;
+  }
+
+  &:nth-of-type(3) {
+    animation-delay: 0.4s;
+  }
+}
+
+@keyframes checking-dot-pulse {
+  0%,
+  60%,
+  100% {
+    opacity: 0.5;
+  }
+
+  30% {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .checking-dots circle {
+    animation: none;
+  }
+}
+
+.runtime-note {
+  color: var(--text-subtle, #c9d2d2);
+  font-size: typography.$font-size-xx-small;
+  font-weight: fonts.$font-weight-semibold;
+}
+
+.runtime-progress {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.runtime-progress-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.runtime-progress-pct {
+  color: var(--text-subtle, #c9d2d2);
+  font-size: typography.$font-size-x-small;
+  font-weight: fonts.$font-weight-normal;
+  font-variant-numeric: tabular-nums;
+}
+
+.runtime-progress-bar {
+  width: 100%;
+  margin-top: 20px;
+}
+
+.runtime-progress-cancel {
+  align-self: flex-end;
+  color: var(--text-default, #ffffff) !important;
+  font-size: typography.$font-size-xx-small !important;
+  font-weight: fonts.$font-weight-semibold !important;
+}
+
+.runtime-spinner {
+  display: inline-block;
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  border: 2px solid var(--component-bg-flexible, rgba(174, 184, 184, 0.15));
+  border-top-color: var(--text-default, #ffffff);
+  animation: runtime-spin 0.9s linear infinite;
+}
+
+@keyframes runtime-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

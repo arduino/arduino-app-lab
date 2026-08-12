@@ -24,9 +24,15 @@ export const networkMessages = defineMessages({
   networkError: {
     id: 'appLabSettings.network.networkError',
     defaultMessage:
-      'No networks found. Ensure your router is on, the credentials are right and the board is within range, then try again.',
+      'Failed to connect. Check your router, credentials, and that the board is within range.',
     description:
       'Message displayed when there is an error connecting to the Wi-Fi network',
+  },
+  incorrectPassword: {
+    id: 'appLabSettings.network.incorrectPassword',
+    defaultMessage:
+      'Incorrect password. Please check your Wi-Fi password and try again.',
+    description: 'Message displayed when the Wi-Fi password is incorrect',
   },
   changeNetwork: {
     id: 'appLabSettings.network.changeNetwork',

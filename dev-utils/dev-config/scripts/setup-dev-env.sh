@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 
-PROJECT_ROOT=$(git rev-parse --show-toplevel)
+# On Git Bash, `git rev-parse` reports a Windows path (C:/...) whose colon would
+# be read as a PATH separator; `pwd` normalises it to the POSIX form (/c/...).
+PROJECT_ROOT=$(cd "$(git rev-parse --show-toplevel)" && pwd)
 NODE_VERSION='v18.15.0'
 YARN_VERSION='3.5.0'
 

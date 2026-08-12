@@ -1,0 +1,18 @@
+@use "@cloud-editor-mono/arduino-sass/src/typography" as typography;
+
+.list {
+  margin: 0;
+  padding-left: 20px;
+
+  li::marker {
+    font-size: typography.$font-size-x-small;
+  }
+
+  &--ul {
+    list-style-type: disc;
+  }
+
+  &--ol {
+    list-style-type: decimal;
+  }
+}

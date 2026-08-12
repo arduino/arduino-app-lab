@@ -49,5 +49,17 @@ func GetFlasherCli() string {
 		panic(err)
 	}
 
+	// The flasher is GPL-3.0; its LICENSE ships in the embed (extracted from
+	// the upstream archive by download_resources.sh) and travels with the
+	// binary wherever it is unpacked. 0644: a document, not an executable.
+	licenseSrc := fmt.Sprintf("resources_%s_%s/arduino-flasher-cli.LICENSE", runtime.GOOS, runtime.GOARCH)
+	license, err := packagesFS.ReadFile(licenseSrc)
+	if err != nil {
+		panic(err)
+	}
+	if err := os.WriteFile(filepath.Join(tmpDir, "arduino-flasher-cli.LICENSE"), license, 0644); err != nil {
+		panic(err)
+	}
+
 	return destDir
 }

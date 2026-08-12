@@ -1,0 +1,19 @@
+@use "@cloud-editor-mono/ui-components/public/shared.module.scss";
+
+.progress-bar {
+  position: relative;
+  height: 2px;
+  width: 100%;
+  background: color-mix(
+    in srgb,
+    var(--accent-default-strong, #7FCBCD) 20%,
+    transparent
+  );
+  overflow: hidden;
+}
+
+.progress-bar-fill {
+  display: block;
+  height: 100%;
+  background: var(--accent-default-strong, #7FCBCD);
+}

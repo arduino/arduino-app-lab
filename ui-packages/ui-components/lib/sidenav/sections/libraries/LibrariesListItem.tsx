@@ -172,7 +172,7 @@ const LibrariesListItem = forwardRef((props: LibraryListItemProps, ref) => {
         getLibraryDetailsId !== pinnedVersionData?.originalId) ||
       pinnedVersion
     ) {
-      refetch && refetch();
+      refetch?.();
     }
   }, [
     defaultVersionData?.originalId,

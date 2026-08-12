@@ -1,7 +1,10 @@
+import type { AgentSidePanelProps } from '@cloud-editor-mono/ai-assistant/panel';
 import {
   AppLabWelcomeDialogLogic,
   BoardUpdateDialogLogic,
+  CreateAppDialogLogic,
   FlashBoardDialogLogic,
+  ImportResourceLogic,
   NetworkSettingsDialogLogic,
   OfflineWarningDialogLogic,
   SidePanelLogic,
@@ -11,6 +14,9 @@ import { UseBoards } from '../../hooks/useBoards';
 
 export type UseMainLogic = () => {
   sidePanelLogic: SidePanelLogic;
+  agentSidePanelLogic: AgentSidePanelProps;
+  createAppDialogLogic: CreateAppDialogLogic;
+  importAppDialogLogic: ImportResourceLogic;
   boardUpdateDialogLogic: BoardUpdateDialogLogic;
   flashBoardDialogLogic: FlashBoardDialogLogic;
   appLabWelcomeDialogLogic: AppLabWelcomeDialogLogic;

@@ -1,0 +1,38 @@
+.button-wrapper {
+  width: 20px;
+  height: 20px;
+  pointer-events: all;
+}
+
+// Carries the low-contrast secondary button treatment (resting fill, darker on
+// hover, focus ring) at the 20px footprint the sidebar row reserves for it.
+.button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: unset;
+  border-radius: 4px;
+  background: var(--component-bg-flexible, rgba(174, 184, 184, 0.15));
+  color: var(--icon-subtle, #c9d2d2);
+  cursor: pointer;
+
+  svg {
+    width: 16px;
+    height: 16px;
+    fill: currentColor;
+  }
+
+  &:hover {
+    background:
+      linear-gradient(0deg, var(--component-bg-flexible, rgba(174, 184, 184, 0.15)) 0%, var(--component-bg-flexible, rgba(174, 184, 184, 0.15)) 100%),
+      var(--component-bg-flexible, rgba(174, 184, 184, 0.15));
+  }
+
+  &:focus {
+    outline: 2px solid var(--border-strong, #7f8c8d);
+    outline-offset: -2px;
+  }
+}

@@ -1,4 +1,4 @@
-import { memoize } from 'lodash';
+import { memoize } from 'lodash-es';
 
 export const highlightText = memoize(
   (
@@ -29,8 +29,46 @@ export const highlightText = memoize(
   (arg1, arg2) => arg1 + arg2,
 );
 
+// The soft colour wash behind a card's icon is produced by blurring the icon
+// inside this SVG (feGaussianBlur), not with a CSS `filter: blur()` on the
+// element. A CSS filter promotes the element to an accelerated compositing
+// layer, and on WebKitGTK those layers fail to import when a page has many of
+// them: they render as empty rectangles parked at the container's top-left
+// corner (the "black square" on Examples, grey on brick detail). Blurring
+// inside the image keeps it in the image raster, so no layer is created.
+//
+// Notes for anyone editing this:
+//   - The payload MUST be percent-encoded. A raw `#` in `url(#blur)` would
+//     terminate the data URI at the fragment and the filter would silently do
+//     nothing.
+//   - A CSS `filter` inside the SVG is ignored by WebKit; only feGaussianBlur
+//     is honoured for SVG-as-image.
+//   - stdDeviation is in SVG user units, so the effective blur scales with the
+//     size the image is drawn at.
+
+// Blur radius of the wash, in SVG user units. ~21 matches the 32px CSS blur this
+// replaced, given the image is drawn at `background-size: 200%`.
+const WASH_BLUR = 21;
+
+// Opacity of the blurred wash. The CSS version was implicitly dimmed because
+// blurring pulled in transparent pixels at the element's edges, letting the dark
+// card background through; blurring inside the image has no such edge, so we dim
+// it explicitly. Tuned so the wash reads at the same tone as before and the emoji
+// drawn on top keeps its contrast — raise it for a more saturated wash, lower it
+// for more contrast.
+const WASH_OPACITY = 0.55;
+
 export const getBackgroundIcon = (icon?: string): string => {
-  return `url("data:image/svg+xml;charset=UTF-8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100'><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' font-size='124'>${icon}</text></svg>")`;
+  const svg =
+    `<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100'>` +
+    `<filter id='blur' x='-100%' y='-100%' width='300%' height='300%'>` +
+    `<feGaussianBlur stdDeviation='${WASH_BLUR}'/>` +
+    `<feComponentTransfer><feFuncA type='linear' slope='${WASH_OPACITY}'/></feComponentTransfer>` +
+    `</filter>` +
+    `<text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' font-size='124' filter='url(#blur)'>${icon}</text>` +
+    `</svg>`;
+
+  return `url("data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}")`;
 };
 
 export const formatBytes = (

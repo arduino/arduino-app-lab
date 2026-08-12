@@ -1,0 +1,11 @@
+.header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 0;
+}
+
+.title {
+  margin-right: auto;
+  color: var(--text-default, #ffffff);
+}

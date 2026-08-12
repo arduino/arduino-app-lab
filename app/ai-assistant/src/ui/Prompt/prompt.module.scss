@@ -1,0 +1,64 @@
+@use "@cloud-editor-mono/arduino-sass/src/fonts" as fonts;
+@use "@cloud-editor-mono/arduino-sass/src/typography" as typography;
+@use "@cloud-editor-mono/arduino-sass/src/variables" as variables;
+
+.prompt {
+  width: 100%;
+  max-width: var(--chat-content-max-width, 800px);
+  margin-inline: auto;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 12px;
+  border: 1px solid var(--border-inverted, #232b2e);
+  border-radius: 8px;
+  background: var(--surface-bg-below-1, #171e21);
+
+  &--error {
+    border: 1px solid var(--feedback-error-default, #FF8878);
+    background: var(--surface-bg-below-1, #171E21);
+  }
+
+  .prompt-title {
+    flex: 1;
+    font-weight: fonts.$font-weight-semibold;
+  }
+}
+
+.prompt-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.prompt-icon {
+  flex: none;
+  width: 13px;
+  height: auto;
+  color: var(--feedback-error-default, #ff6b6b);
+}
+
+.prompt-description {
+  color: var(--text-subtle, #c9d2d2);
+  font-family: variables.$font-roboto;
+  font-size: typography.$font-size-x-small;
+  font-weight: fonts.$font-weight-normal;
+  line-height: var(--chat-line-height, 1.5) !important;
+}
+
+.prompt-footer {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.prompt .prompt-footer button {
+  padding-inline: 6px;
+}
+
+.prompt-footer-group {
+  display: flex;
+  gap: 8px;
+}

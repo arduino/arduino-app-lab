@@ -8,7 +8,7 @@ import { Info } from './Info';
 export interface RowProps {
   label?: React.ReactNode;
   info?: React.ReactNode;
-  children: React.ReactNode;
+  children?: React.ReactNode;
   classes?: {
     wrapper?: string;
     label?: string;

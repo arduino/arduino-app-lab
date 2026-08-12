@@ -5,7 +5,7 @@ import {
   ConsoleSources,
   UseConsoleSources,
 } from '@cloud-editor-mono/ui-components/lib/components-by-app/app-lab';
-import { uniqueId } from 'lodash';
+import { uniqueId } from 'lodash-es';
 import { useCallback, useRef, useState } from 'react';
 import { BehaviorSubject, Subject } from 'rxjs';
 

@@ -1,4 +1,4 @@
-import { AddBrick, Bin, Pencil } from '@cloud-editor-mono/images/assets/icons';
+import { Bin, Pencil } from '@cloud-editor-mono/images/assets/icons';
 import * as ContextMenu from '@radix-ui/react-context-menu';
 import clsx from 'clsx';
 
@@ -18,7 +18,6 @@ const BrickItem: React.FC<BrickItemProps> = (props: BrickItemProps) => {
     onDoubleClick,
     onDelete,
     onRename,
-    onAddBrick,
     onDragStart,
     onDragEnd,
     missingConfig,
@@ -94,18 +93,6 @@ const BrickItem: React.FC<BrickItemProps> = (props: BrickItemProps) => {
               <Bin />
               <XXSmall>{formatMessage(messages.removeBrickLabel)}</XXSmall>
             </ContextMenu.Item>
-            {onAddBrick ? (
-              <>
-                <ContextMenu.Separator />
-                <ContextMenu.Item
-                  className={styles['brick-item-context-menu-item']}
-                  onSelect={onAddBrick}
-                >
-                  <AddBrick />
-                  <XXSmall>{formatMessage(messages.addBrickLabel)}</XXSmall>
-                </ContextMenu.Item>
-              </>
-            ) : null}
           </ContextMenu.Content>
         </ContextMenu.Portal>
       ) : null}

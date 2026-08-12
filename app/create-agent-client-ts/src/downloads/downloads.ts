@@ -8,7 +8,7 @@ import {
   httpHeadRaw,
   httpPostRaw,
 } from '@cloud-editor-mono/infrastructure';
-import { uniqueId } from 'lodash';
+import { uniqueId } from 'lodash-es';
 
 import { getAgentUrl } from '../daemon/agent';
 import { daemonState, setAgentDaemonState } from '../daemon/state';

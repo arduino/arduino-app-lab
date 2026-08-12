@@ -1,0 +1,41 @@
+@use "@cloud-editor-mono/arduino-sass/src/fonts" as fonts;
+@use "@cloud-editor-mono/arduino-sass/src/typography" as typography;
+@use "@cloud-editor-mono/ui-components/public/shared.module.scss";
+
+.dialog-body {
+  padding-bottom: 8px !important;
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 16px;
+
+  .heading {
+    font-size: typography.$font-size-medium;
+    font-weight: fonts.$font-weight-bold !important;
+    line-height: 1.4;
+  }
+
+  .description {
+    font-size: typography.$font-size-x-small;
+    color: var(--text-default, #ffffff);
+    line-height: 1.6;
+  }
+}
+
+.icon {
+  width: auto;
+  height: 42px;
+  color: var(--text-accent, #008184);
+
+  path {
+    fill: currentColor;
+  }
+
+  &--destructive {
+    color: var(--feedback-error-default, #da5b4a);
+  }
+}

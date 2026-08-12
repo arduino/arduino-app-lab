@@ -38,6 +38,7 @@ export const BoardUpdateDialog: React.FC<BoardUpdateDialogProps> = ({
   const {
     board,
     open,
+    isBoard,
     status,
     newAppVersion,
     releaseNotes,
@@ -141,7 +142,12 @@ export const BoardUpdateDialog: React.FC<BoardUpdateDialogProps> = ({
                   <div className={styles['release-notes']}>
                     <img src={releaseNotes.image} alt="Release notes" />
                     <div className={styles['notes']}>
-                      <MarkdownReader content={releaseNotes.content} />
+                      {/* Our own release notes, from the App Lab bucket: they
+                          style themselves, so they get the trusted schema. */}
+                      <MarkdownReader
+                        content={releaseNotes.content}
+                        trustedSource
+                      />
                     </div>
                   </div>
                 )}
@@ -351,13 +357,15 @@ export const BoardUpdateDialog: React.FC<BoardUpdateDialogProps> = ({
                       {formatMessage(messages.updateCompleted)}
                     </XXXSmall>
                   </div>
-                  <Button
-                    variant={ButtonVariant.Primary}
-                    size={ButtonSize.XSmall}
-                    onClick={reloadApp}
-                  >
-                    {formatMessage(messages.restart)}
-                  </Button>
+                  {!isBoard && (
+                    <Button
+                      variant={ButtonVariant.Primary}
+                      size={ButtonSize.XSmall}
+                      onClick={reloadApp}
+                    >
+                      {formatMessage(messages.restart)}
+                    </Button>
+                  )}
                 </>
               )}
 

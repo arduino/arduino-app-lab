@@ -61,8 +61,8 @@ export const useTabsBarScroll: UseTabsBarScroll = ({
   // Auto-scroll to selected tab when selectedFileId changes
   useEffect(() => {
     if (!selectedFileId || !scrollRef.current) return;
-
-    const selector = `[data-file-id="${selectedFileId}"]`;
+    const escapedFileId = CSS.escape(selectedFileId);
+    const selector = `[data-file-id="${escapedFileId}"]`;
 
     const scrollIfFound = (container: HTMLElement): boolean => {
       const target = container.querySelector(selector) as HTMLElement;

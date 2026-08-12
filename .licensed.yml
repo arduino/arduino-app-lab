@@ -21,6 +21,14 @@ ignored:
     - "fsevents"                              # optional package for file watching, released under MIT license (https://www.npmjs.com/package/fsevents)
     - "@img/sharp-**"                         # optional packages for image processing, released under Apache-2.0 license (https://github.com/lovell/sharp/blob/main/LICENSE)
 
+    # Transitive dependencies of the platform-native optionals above, present in
+    # node_modules only on macOS installs. Ignored so a cache refresh run on a Mac
+    # matches the Linux-canonical cache the check-cache job regenerates and diffs
+    # (all three MIT).
+    - "bindings"
+    - "file-uri-to-path"
+    - "nan"
+
     - "spdx-exceptions"                       # list of SPDX standard license exceptions, released under CC-BY-3.0 (https://github.com/jslicense/spdx-exceptions.json?tab=readme-ov-file#copyright-and-licensing)
 
 # Source: https://github.com/arduino/tooling-project-assets/blob/main/workflow-templates/assets/check-dependencies/GPL-3.0/.licensed.yml

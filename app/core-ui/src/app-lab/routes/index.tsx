@@ -11,7 +11,7 @@ export const Route = createFileRoute('/')({
       Record<string, { appId: string; section: string }>
     >(BOARD_APP_MAPPING);
 
-    // If there's a saved board serial or app mapping, don't redirect to examples
+    // If there's a saved board serial or app mapping, don't redirect
     // Let useReloadApp handle the navigation
     if (
       boardSerial ||
@@ -20,9 +20,9 @@ export const Route = createFileRoute('/')({
       return null;
     }
 
-    // Otherwise redirect to examples as default behavior
+    // Otherwise open Inspirations, the landing page for a board with no apps
     throw redirect({
-      to: '/examples',
+      to: '/inspirations',
     });
   },
 });

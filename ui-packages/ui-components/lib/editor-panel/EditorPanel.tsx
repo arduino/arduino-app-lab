@@ -1,11 +1,11 @@
 import { SplitView } from '@cloud-editor-mono/images/assets/icons';
 import clsx from 'clsx';
-import debounce from 'lodash/debounce';
+import { debounce } from 'lodash-es';
 import { memo, useCallback, useEffect, useMemo } from 'react';
 import type { Layout } from 'react-resizable-panels';
 import { Group, Panel, Separator } from 'react-resizable-panels';
 
-import { CodeEditor } from '../code-editor';
+import { CodeEditor, EditorBannerKind } from '../code-editor';
 import { KeywordMap } from '../code-mirror';
 import {
   linkSplitEditors,
@@ -14,12 +14,16 @@ import {
 } from '../code-mirror/codeMirrorViewInstances';
 import { BrickDetail, MarkdownReader } from '../components-by-app/app-lab';
 import SplitEditorPane from '../components-by-app/app-lab/editor-panel/SplitEditorPane';
+import { useTooltip } from '../components-by-app/app-lab/essential/tooltip';
 import EditorControls from '../editor-controls/EditorControls';
 import EditorImage from '../editor-image/EditorImage';
 import { EditorStatus } from '../editor-status';
-import { EditorTabsBar, SUPPORTED_IMAGE_TYPES } from '../editor-tabs-bar';
+import {
+  BRICK_FILE_EXTENSION,
+  EditorTabsBar,
+  SUPPORTED_IMAGE_TYPES,
+} from '../editor-tabs-bar';
 import EditorToolbar from '../editor-toolbar/EditorToolbar';
-import { WrapperTitle } from '../essential/wrapper-title';
 import { useI18n } from '../i18n/useI18n';
 import { SecretsEditor } from '../secrets-editor';
 import styles from './editor-panel.module.scss';
@@ -31,8 +35,9 @@ import { messages } from './messages';
 interface EditorPanelProps {
   editorPanelLogic: EditorPanelLogic;
   getKeywords: () => KeywordMap | undefined;
-  readOnlyBanner?: JSX.Element;
+  renderBanner?: (kind: EditorBannerKind) => JSX.Element | undefined;
   onCopyCode?: () => void;
+  onFileError?: (error: Error) => void;
   classes?: {
     container?: string;
     tabsBar?: string;
@@ -44,8 +49,14 @@ interface EditorPanelProps {
 }
 
 const EditorPanel: React.FC<EditorPanelProps> = (props: EditorPanelProps) => {
-  const { editorPanelLogic, classes, getKeywords, readOnlyBanner, onCopyCode } =
-    props;
+  const {
+    editorPanelLogic,
+    classes,
+    getKeywords,
+    renderBanner,
+    onCopyCode,
+    onFileError,
+  } = props;
   const { formatMessage } = useI18n();
   const {
     brickDetailLogic,
@@ -130,7 +141,7 @@ const EditorPanel: React.FC<EditorPanelProps> = (props: EditorPanelProps) => {
   );
 
   const handleSplitToggleClick = useCallback(() => {
-    openOrPushToSplit && openOrPushToSplit();
+    openOrPushToSplit?.();
   }, [openOrPushToSplit]);
 
   const handleSplitToggleClickFromB = useCallback(() => {
@@ -153,10 +164,12 @@ const EditorPanel: React.FC<EditorPanelProps> = (props: EditorPanelProps) => {
   const rightIsImage =
     !!splitPaneFile && SUPPORTED_IMAGE_TYPES.includes(`.${splitPaneFile.ext}`);
   const leftIsBrick =
-    !!selectedFile && selectedFile.ext === 'brick' && !!brickDetailLogic;
+    !!selectedFile &&
+    selectedFile.ext === BRICK_FILE_EXTENSION &&
+    !!brickDetailLogic;
   const rightIsBrick =
     !!splitPaneFile &&
-    splitPaneFile.ext === 'brick' &&
+    splitPaneFile.ext === BRICK_FILE_EXTENSION &&
     !!splitPaneBrickDetailLogic;
   const leftShowsCodeEditor =
     !leftIsImage &&
@@ -191,6 +204,13 @@ const EditorPanel: React.FC<EditorPanelProps> = (props: EditorPanelProps) => {
     leftShowsCodeEditor,
     rightShowsCodeEditor,
   ]);
+
+  const { props: splitTooltipProps, renderTooltip: renderSplitTooltip } =
+    useTooltip({
+      content: formatMessage(messages.splitViewButton),
+      timeout: 0,
+      renderDelay: 500,
+    });
 
   const renderContent = (): JSX.Element => {
     if (selectedFile && selectedFile.ext === 'secrets') {
@@ -248,9 +268,9 @@ const EditorPanel: React.FC<EditorPanelProps> = (props: EditorPanelProps) => {
                 />
               )}
               {openOrPushToSplit && !isSplit && (
-                <WrapperTitle
-                  title={formatMessage(messages.splitViewButton)}
-                  classNames={{ container: styles['split-toggle-wrapper'] }}
+                <div
+                  {...splitTooltipProps}
+                  className={styles['split-toggle-wrapper']}
                 >
                   <button
                     type="button"
@@ -260,7 +280,8 @@ const EditorPanel: React.FC<EditorPanelProps> = (props: EditorPanelProps) => {
                   >
                     <SplitView />
                   </button>
-                </WrapperTitle>
+                  {renderSplitTooltip()}
+                </div>
               )}
               {selectedFile?.ext === 'md' && markdownCanBeRendered && (
                 <EditorToolbar
@@ -315,8 +336,9 @@ const EditorPanel: React.FC<EditorPanelProps> = (props: EditorPanelProps) => {
                   }}
                   codeEditorLogic={codeEditorLogic}
                   getKeywords={getKeywords}
-                  readOnlyBanner={readOnlyBanner}
+                  renderBanner={renderBanner}
                   viewInstanceId={ViewInstances.Editor}
+                  onFileError={onFileError}
                 />
               )}
             </div>
@@ -338,7 +360,7 @@ const EditorPanel: React.FC<EditorPanelProps> = (props: EditorPanelProps) => {
                   codeEditorLogic={splitPaneCodeEditorLogic}
                   tabsBarLogic={splitPaneTabsBarLogic}
                   getKeywords={getKeywords}
-                  readOnlyBanner={readOnlyBanner}
+                  renderBanner={renderBanner}
                   selectedFile={splitPaneFile}
                   onActivate={(): void => setActivePane?.('B')}
                   shouldRenderMarkdown={splitPaneShouldRenderMarkdown}
@@ -350,6 +372,7 @@ const EditorPanel: React.FC<EditorPanelProps> = (props: EditorPanelProps) => {
                   openExternalLink={openExternalLink}
                   onCopyCode={onCopyCode}
                   readOnly={readOnly}
+                  onFileError={onFileError}
                   onSplitClick={
                     splitToOtherPane ? handleSplitToggleClickFromB : undefined
                   }

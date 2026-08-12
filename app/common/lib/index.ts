@@ -1,4 +1,5 @@
 export { Config, LocalConfig, setGlobalConfig } from '../config';
+export * from '../consts/consts';
 export * from '../locales';
 export * from '../types/types';
 export * from '../utils/rxjs/state';

@@ -1,11 +1,12 @@
 import {
   APP_NAME_IN_USE_ERROR,
+  APP_NAME_INVALID_CHARACTERS_REGEX,
   AppDetailedInfo,
   BOARD_STORAGE_FULL_ERROR,
   CreateAppRequest,
 } from '@cloud-editor-mono/infrastructure';
 import { useMutation } from '@tanstack/react-query';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
 import {
@@ -43,6 +44,7 @@ export const CreateAppDialog: React.FC<CreateAppDialogProps> = ({
   const [errorMessage, setErrorMessage] = useState<string | undefined>(
     undefined,
   );
+  const isSubmittingRef = useRef(false);
 
   useEffect(() => {
     if (app) {
@@ -63,11 +65,25 @@ export const CreateAppDialog: React.FC<CreateAppDialogProps> = ({
     setErrorMessage(undefined);
   };
 
-  const { mutateAsync: handleCreateApp, isLoading } = useMutation(
+  const validateAppName = (name: string): boolean => {
+    // Not the file/folder rule: the app directory is slug.Make(name) server
+    // side, so the raw name never becomes a path. Spaces are fine here.
+    if (APP_NAME_INVALID_CHARACTERS_REGEX.test(name)) {
+      setErrorMessage(formatMessage(messages.appNameInvalidChars));
+      return false;
+    }
+    return true;
+  };
+
+  const { mutateAsync: createApp, isLoading } = useMutation(
     ['crate-app'],
     async () => {
       if (name.length === 0) {
         setErrorMessage(formatMessage(messages.appNameRequired));
+        return;
+      }
+
+      if (!validateAppName(name)) {
         return;
       }
 
@@ -109,6 +125,16 @@ export const CreateAppDialog: React.FC<CreateAppDialogProps> = ({
     },
   );
 
+  const handleCreateApp = async (): Promise<void> => {
+    if (isSubmittingRef.current) return;
+    isSubmittingRef.current = true;
+    try {
+      await createApp();
+    } finally {
+      isSubmittingRef.current = false;
+    }
+  };
+
   return (
     <>
       {createPortal(
@@ -128,7 +154,7 @@ export const CreateAppDialog: React.FC<CreateAppDialogProps> = ({
               <Button
                 variant={ButtonVariant.Primary}
                 loading={isLoading}
-                disabled={name.length === 0}
+                disabled={name.length === 0 || isLoading}
                 type="submit"
               >
                 {formatMessage(messages.confirmButton)}

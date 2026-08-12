@@ -1,0 +1,86 @@
+@use "@cloud-editor-mono/arduino-sass/src/_fonts" as fonts;
+
+$arrow-size: 8px;
+
+.tooltip {
+    position: absolute;
+    bottom: calc(100% + 22px);
+    right: 0;
+    z-index: 1;
+    width: 237px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px;
+    border: 1px solid var(--border-default, #434f54);
+    border-radius: 8px;
+    background: var(--surface-bg-below-1, #171e21);
+    text-align: left;
+
+    &::after {
+        content: "";
+        position: absolute;
+        top: 100%;
+        right: 8px;
+        width: 0;
+        height: 0;
+        border-left: $arrow-size solid transparent;
+        border-right: $arrow-size solid transparent;
+        border-top: $arrow-size solid var(--border-default, #434f54);
+    }
+
+    .header {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .icon {
+        display: block;
+        flex-shrink: 0;
+        width: 16px;
+        height: 16px;
+        color: var(--text-default, #ffffff);
+
+        path {
+            fill: currentColor;
+        }
+    }
+
+    .title {
+        flex: 1;
+        color: var(--text-default, #ffffff);
+        font-weight: fonts.$font-weight-bold;
+        line-height: 1;
+    }
+
+    .dismiss {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        width: 16px;
+        height: 16px;
+        padding: 0;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        background: transparent;
+        color: var(--text-subtle, #c9d2d2);
+
+        &:hover {
+            color: var(--text-default, #ffffff);
+        }
+
+        &:focus-visible {
+            outline: 2px solid var(--border-default, #434f54);
+            outline-offset: 0;
+        }
+    }
+
+    .description {
+        color: var(--text-subtle, #c9d2d2);
+        font-weight: fonts.$font-weight-semibold;
+        line-height: 1.6;
+    }
+}

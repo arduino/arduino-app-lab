@@ -55,6 +55,12 @@
   align-items: center;
 }
 
+// Portaled popovers live at the end of the body, outside of any stacking
+// context of the trigger, so they need their own z-index to stay on top.
+.dropdown-menu-popover-portal {
+  z-index: shared.$zIndexMax;
+}
+
 .dropdown-menu {
   z-index: shared.$zIndex4;
   background-color: shared.theme-var(--dropdown-background);

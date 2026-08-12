@@ -1,4 +1,4 @@
-import React, { forwardRef } from 'react';
+import { forwardRef } from 'react';
 
 import { GetLibrary, SidenavStandardLibrary } from '../../sidenav.type';
 import NoResults from '../common/NoResults';

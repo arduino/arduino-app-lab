@@ -10,6 +10,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useReducer, useState } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 
+import { BoardScopedQuery } from '../../boardScopedQuery';
 import { useBoardLifecycleStore } from '../../store/boardLifecycle';
 import { BoardConfigurationContextValue } from './boardConfigurationContext';
 
@@ -84,7 +85,7 @@ export function useBoardConfiguration(): BoardConfigurationContextValue {
     data: boardName,
     isError: getBoardNameIsError,
     isSuccess: boardNameChecked,
-  } = useQuery(['get-board-name'], getBoardName, {
+  } = useQuery([BoardScopedQuery.GET_BOARD_NAME], getBoardName, {
     enabled: boardIsReachable,
   });
 
@@ -92,12 +93,12 @@ export function useBoardConfiguration(): BoardConfigurationContextValue {
     data: keyboardLayout,
     isError: getKeyboardLayoutIsError,
     isSuccess: keyboardLayoutChecked,
-  } = useQuery(['get-keyboard-layout'], getKeyboardLayout, {
+  } = useQuery([BoardScopedQuery.GET_KEYBOARD_LAYOUT], getKeyboardLayout, {
     enabled: boardIsReachable,
   });
 
   const { data: keyboardLayouts } = useQuery(
-    ['list-keyboard-layouts'],
+    [BoardScopedQuery.LIST_KEYBOARD_LAYOUTS],
     listKeyboardLayouts,
     {
       enabled: boardIsReachable,
@@ -116,7 +117,7 @@ export function useBoardConfiguration(): BoardConfigurationContextValue {
   } = useMutation({
     mutationFn: apiSetBoardName,
     onSuccess: (_, boardName) => {
-      queryClient.setQueryData(['get-board-name'], boardName);
+      queryClient.setQueryData([BoardScopedQuery.GET_BOARD_NAME], boardName);
       dispatch({ type: 'RESET_ERROR' });
       if (selectedConnectedBoard) {
         useBoardLifecycleStore.setState({
@@ -131,10 +132,12 @@ export function useBoardConfiguration(): BoardConfigurationContextValue {
     },
     onError: (error) => {
       console.error('Failed to set board name', error);
-      dispatch({ type: 'SET_BOARD_NAME_ERROR' });
+      const errorMessage =
+        error instanceof Error ? error.message : 'Failed to set board name';
+      dispatch({ type: 'SET_BOARD_NAME_ERROR', payload: errorMessage });
     },
     onSettled: () => {
-      queryClient.invalidateQueries(['get-board-name']);
+      queryClient.invalidateQueries([BoardScopedQuery.GET_BOARD_NAME]);
     },
   });
 
@@ -145,7 +148,10 @@ export function useBoardConfiguration(): BoardConfigurationContextValue {
   } = useMutation({
     mutationFn: apiSetKeyboardLayout,
     onSuccess: (_, keyboardLayout) => {
-      queryClient.setQueryData(['get-keyboard-layout'], keyboardLayout);
+      queryClient.setQueryData(
+        [BoardScopedQuery.GET_KEYBOARD_LAYOUT],
+        keyboardLayout,
+      );
       dispatch({ type: 'RESET_ERROR' });
     },
     onError: (error) => {
@@ -153,19 +159,18 @@ export function useBoardConfiguration(): BoardConfigurationContextValue {
       dispatch({ type: 'SET_KEYBOARD_LAYOUT_ERROR' });
     },
     onSettled: () => {
-      queryClient.invalidateQueries(['get-keyboard-layout']);
+      queryClient.invalidateQueries([BoardScopedQuery.GET_KEYBOARD_LAYOUT]);
     },
   });
 
   const checkBoardName = useCallback(
     (boardName: string | undefined): boolean => {
       if (!boardName) return false;
-      const name = boardName
-        .trim()
-        .toLowerCase()
-        .replace('-', '')
-        .replace('_', '');
-      return name.length > 0 && name !== 'unoq';
+      const name = boardName.trim();
+      const isValidHostname =
+        /^[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?$/.test(name);
+      if (!isValidHostname) return false;
+      return name.toLowerCase().replaceAll('-', '') !== 'unoq';
     },
     [],
   );

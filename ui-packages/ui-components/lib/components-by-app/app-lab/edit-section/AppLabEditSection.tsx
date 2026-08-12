@@ -2,8 +2,11 @@ import { ArduinoLogo } from '@cloud-editor-mono/images/assets/icons';
 import type { BrickInstance } from '@cloud-editor-mono/infrastructure';
 import {
   AppLabEditorPanel,
+  Banner,
+  BRICK_FILE_EXTENSION,
   isFileNode,
   MultipleConsolePanel,
+  useI18n,
   WorkspaceLayout,
 } from '@cloud-editor-mono/ui-components/lib/components-by-app/app-lab';
 import clsx from 'clsx';
@@ -17,6 +20,7 @@ import {
 } from './appLabEditSection.type';
 import FileTreeDropOverlay from './FileTreeDropOverlay';
 import { GlobalDragPreview } from './GlobalDragPreview';
+import { messages } from './messages';
 import { FilesManagerSection } from './subcomponents/FilesManagerSection';
 
 interface AppEditSectionProps {
@@ -66,7 +70,11 @@ const AppFilesSection: React.FC<AppEditSectionProps> = (
     openImportFileDialog,
     onMoveBlocked,
     onDragOverFolderChange,
+    onValidationError,
   } = appLabEditSectionLogic();
+
+  const { lspState } = appLabEditorPanelLogic();
+  const { formatMessage } = useI18n();
 
   const draggingFileNodesRef = useRef<TreeNode[] | null>(null);
   const onFileDragStart = useCallback((nodes: TreeNode[]): void => {
@@ -125,6 +133,7 @@ const AppFilesSection: React.FC<AppEditSectionProps> = (
       onBrickDragStart,
       onBrickDragEnd,
       onDragOverFolderChange,
+      onValidationError,
     }),
     [
       app,
@@ -167,6 +176,7 @@ const AppFilesSection: React.FC<AppEditSectionProps> = (
       onBrickDragStart,
       onBrickDragEnd,
       onDragOverFolderChange,
+      onValidationError,
     ],
   );
 
@@ -294,11 +304,14 @@ const AppFilesSection: React.FC<AppEditSectionProps> = (
 
   const editorHasOpenFile =
     (selectedNode && isFileNode(selectedNode)) ||
-    selectedFile?.fileExtension === 'brick';
+    selectedFile?.fileExtension === BRICK_FILE_EXTENSION;
 
   return (
     <>
       <WorkspaceLayout
+        // Remount when the app loads so persisted panel sizes are read from
+        // the per-app storage key at mount.
+        key={app?.id}
         appId={app?.id}
         sideContent={(api): React.ReactNode => (
           <FilesManagerSection
@@ -330,6 +343,15 @@ const AppFilesSection: React.FC<AppEditSectionProps> = (
               <FileTreeDropOverlay
                 containerRef={editorRef}
                 pointer={dragPointer}
+              />
+            )}
+            {lspState?.type === 'initializing' && (
+              <Banner
+                type="waiting"
+                title={formatMessage(messages.lspBannerWaitingTitle)}
+                description={formatMessage(
+                  messages.lspBannerWaitingDescription,
+                )}
               />
             )}
           </div>

@@ -9,7 +9,7 @@ import {
 } from '@codemirror/search';
 import { EditorState, Extension } from '@codemirror/state';
 import { EditorView, ViewPlugin, ViewUpdate } from '@codemirror/view';
-import { throttle } from 'lodash';
+import { throttle } from 'lodash-es';
 import { createRoot } from 'react-dom/client';
 import UAParser from 'ua-parser-js';
 
@@ -19,7 +19,11 @@ import {
 } from '../../../common/utils/utils';
 import FindAndReplaceSection from '../../../find-and-replace/FindAndReplaceSection';
 import { CodeMirrorEventAnnotation } from '../../codeMirror.type';
-import { SearchData } from '../../codeMirrorViewInstances';
+import {
+  SearchData,
+  ViewInstances,
+  viewInstances,
+} from '../../codeMirrorViewInstances';
 import {
   codeMirrorAnnotation,
   codeMirrorAnnotationMap,
@@ -28,32 +32,83 @@ import {
 
 const parser = new UAParser();
 const os = parser.getOS().name;
+
+// Each search-enabled editor installs its own keydown listener, and split view
+// mounts two at once. Every listener resolves the same target and only that
+// view acts, so one Cmd+F can never toggle both panels.
+const searchViews = new Set<EditorView>();
+let lastFocusedSearchView: EditorView | null = null;
+
+// Hidden or detached instances have zero dimensions and must never react.
+const isViewVisible = (view: EditorView): boolean => {
+  const rect = view.dom.getBoundingClientRect();
+  return rect.width > 0 && rect.height > 0;
+};
+
+/** Focused editor, else the last focused one, else panel A (left). */
+const resolveShortcutTarget = (): EditorView | null => {
+  const candidates = [...searchViews].filter(isViewVisible);
+  if (candidates.length <= 1) {
+    return candidates[0] ?? null;
+  }
+
+  const focused = candidates.find(
+    (candidate) =>
+      candidate.hasFocus || candidate.dom.contains(document.activeElement),
+  );
+  if (focused) {
+    return focused;
+  }
+
+  if (lastFocusedSearchView && candidates.includes(lastFocusedSearchView)) {
+    return lastFocusedSearchView;
+  }
+
+  const panelA = viewInstances[ViewInstances.Editor].instance;
+  return panelA && candidates.includes(panelA) ? panelA : candidates[0];
+};
+
 const searchKeyMapExt = ViewPlugin.fromClass(
   class {
+    view: EditorView;
     searchKeymapHandler: (event: KeyboardEvent) => void;
+    focusHandler: () => void;
 
     constructor(view: EditorView) {
+      this.view = view;
+      searchViews.add(view);
+
+      // `focusin` on view.dom, so focus in the Find & Replace inputs counts too.
+      this.focusHandler = (): void => {
+        lastFocusedSearchView = view;
+      };
+      view.dom.addEventListener('focusin', this.focusHandler);
+
       this.searchKeymapHandler = (event: KeyboardEvent): void => {
-        // Only handle the shortcut for the editor that currently has focus.
-        // Without this guard, all active editor instances respond to a single
-        // Cmd+F / Ctrl+F, which opens (or toggles) all search panels at once.
-        if (!view.dom.contains(document.activeElement) && !view.hasFocus) {
+        const isFindShortcut =
+          (event.ctrlKey || (os === 'Mac OS' && event.metaKey)) &&
+          event.key === 'f';
+        const isEscape = event.key === 'Escape';
+
+        if (!isFindShortcut && !isEscape) {
           return;
         }
 
-        if (
-          (event.ctrlKey || (os === 'Mac OS' && event.metaKey)) &&
-          event.key === 'f'
-        ) {
+        if (resolveShortcutTarget() !== view) {
+          return;
+        }
+
+        if (isFindShortcut) {
           event.preventDefault();
           if (searchPanelOpen(view.state)) {
             cmCloseSearchPanel(view);
           } else {
             cmOpenSearchPanel(view);
           }
+          return;
         }
 
-        if (event.key === 'Escape' && searchPanelOpen(view.state)) {
+        if (searchPanelOpen(view.state)) {
           cmCloseSearchPanel(view);
         }
       };
@@ -63,6 +118,11 @@ const searchKeyMapExt = ViewPlugin.fromClass(
 
     destroy(): void {
       window.removeEventListener('keydown', this.searchKeymapHandler);
+      this.view.dom.removeEventListener('focusin', this.focusHandler);
+      searchViews.delete(this.view);
+      if (lastFocusedSearchView === this.view) {
+        lastFocusedSearchView = null;
+      }
     }
   },
 );
@@ -71,8 +131,8 @@ const createSearchConfig = (searchDep: SearchData): Extension =>
   search({
     createPanel: (view) => {
       const dom = document.createElement('div');
-      // Tagged so the surrounding `.cm-panels-bottom` host can be lifted out
-      // of CodeMirror's flex layout and the panel overlays the editor.
+      // Tagged so this panel can be floated as a top-right overlay
+      // anchored to `.cm-editor`. See codeEditorStyle.ts.
       dom.className = 'cm-find-replace-host';
       const root = createRoot(dom);
 

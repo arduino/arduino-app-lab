@@ -77,6 +77,10 @@ export let getBricks: OrchestratorService['getBricks'] = async function () {
   throw new Error('getBricks service not implemented');
 };
 
+export let getExamples: OrchestratorService['getExamples'] = async function () {
+  throw new Error('getExamples service not implemented');
+};
+
 export let getBrickDetails: OrchestratorService['getBrickDetails'] =
   async function () {
     throw new Error('getBrickDetails service not implemented');
@@ -229,6 +233,7 @@ export const setOrchestratorService = (service: OrchestratorService): void => {
   applyBoardUpdate = service.applyBoardUpdate;
   getVersion = service.getVersion;
   getBricks = service.getBricks;
+  getExamples = service.getExamples;
   getAppBrickInstance = service.getAppBrickInstance;
   getBrickDetails = service.getBrickDetails;
   addAppBrick = service.addAppBrick;

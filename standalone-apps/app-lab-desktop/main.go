@@ -5,7 +5,6 @@ import (
 	"app-lab-desktop/internal/learn"
 	"embed"
 	"fmt"
-	"os"
 	"runtime"
 
 	"github.com/wailsapp/wails/v2"
@@ -23,10 +22,14 @@ var (
 
 func main() {
 
-	if runtime.GOOS == "linux" {
-		// prevent WebKitGTK DMA-BUF renderer issue which cause black square on Linux
-		_ = os.Setenv("WEBKIT_DISABLE_DMABUF_RENDERER", "1")
-	}
+	// Note: we used to force WEBKIT_DISABLE_DMABUF_RENDERER=1 on Linux to hide a
+	// WebKitGTK rendering artifact (the "black square"). That artifact was caused
+	// by our own `filter: blur(32px)` on app-card artwork creating accelerated
+	// compositing layers; it is now blurred inside the SVG instead (see
+	// getBackgroundIcon), so the DMA-BUF renderer can stay enabled. Keeping it
+	// enabled cuts scroll CPU roughly in half on the Arduino SBCs. The variable
+	// is no longer set here, so it can still be exported externally to
+	// A/B the renderer without a rebuild.
 
 	learnSvc := learn.New()
 

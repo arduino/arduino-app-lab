@@ -281,6 +281,88 @@ export const networkMessages = defineMessages({
   },
 });
 
+export const cloudConnectorMessages = defineMessages({
+  title: {
+    id: 'appLabSettings.cloudConnector.title',
+    defaultMessage: 'Arduino Cloud',
+    description: 'Title for the App Cloud section',
+  },
+  connectTitle: {
+    id: 'appLabSettings.cloudConnector.connectTitle',
+    defaultMessage: 'Connect your device to Arduino Cloud',
+    description: 'Subtitle for the App Cloud section',
+  },
+  connectDescription: {
+    id: 'appLabSettings.cloudConnector.connectDescription',
+    defaultMessage: 'Remote monitoring, dashboards and OTA updates.',
+    description: 'Subtitle for the App Cloud section',
+  },
+  moreInfoButton: {
+    id: 'appLabSettings.cloudConnector.moreInfoButton',
+    defaultMessage: 'More info',
+    description: 'Button text to get more information about the App Cloud',
+  },
+  connectAction: {
+    id: 'appLabSettings.cloudConnector.connectAction',
+    defaultMessage: 'Connect device',
+    description: 'Button text to register for the App Cloud',
+  },
+  connectingTitle: {
+    id: 'appLabSettings.cloudConnector.connectingTitle',
+    defaultMessage: 'Connecting device to Arduino Cloud',
+    description: 'Subtitle for the App Cloud section when connecting',
+  },
+  connectingDescription: {
+    id: 'appLabSettings.cloudConnector.connectingDescription',
+    defaultMessage:
+      "Your device is connecting to the Cloud. We'll notify you when it's done.",
+    description: 'Subtitle for the App Cloud section when connecting',
+  },
+  connectedTitle: {
+    id: 'appLabSettings.cloudConnector.connectedTitle',
+    defaultMessage: 'Arduino Cloud status',
+    description: 'Subtitle for the App Cloud section when connected',
+  },
+  connectedDescription: {
+    id: 'appLabSettings.cloudConnector.connectedDescription',
+    defaultMessage: 'Manage your device on Arduino Cloud.',
+    description: 'Subtitle for the App Cloud section when connected',
+  },
+  connectedBadge: {
+    id: 'appLabSettings.cloudConnector.connected',
+    defaultMessage: 'Connected',
+    description:
+      'Message indicating that the device is connected to the App Cloud',
+  },
+  openArduinoCloudButton: {
+    id: 'appLabSettings.cloudConnector.openArduinoCloudButton',
+    defaultMessage: 'Open Arduino Cloud',
+    description:
+      'Button text to open the Arduino Cloud dashboard for the connected device',
+  },
+  disconnectTitle: {
+    id: 'appLabSettings.cloudConnector.disconnectTitle',
+    defaultMessage: 'Delete device',
+    description: 'Button text to disconnect from the App Cloud',
+  },
+  disconnectAction: {
+    id: 'appLabSettings.cloudConnector.disconnectAction',
+    defaultMessage: 'Delete this device',
+    description: 'Button text to confirm disconnection from the App Cloud',
+  },
+  disconnectingTitle: {
+    id: 'appLabSettings.cloudConnector.disconnectingTitle',
+    defaultMessage: 'Deleting device from Arduino Cloud',
+    description: 'Subtitle for the App Cloud section when disconnecting',
+  },
+  disconnectingDescription: {
+    id: 'appLabSettings.cloudConnector.disconnectingDescription',
+    defaultMessage:
+      "Your device is being deleted from the Cloud. We'll notify you when it's done.",
+    description: 'Subtitle for the App Cloud section when disconnecting',
+  },
+});
+
 export const settingsMessages = defineMessages({
   copyright: {
     id: 'appLabSettings.copyright',

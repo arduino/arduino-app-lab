@@ -1,0 +1,17 @@
+.system-stats {
+    padding: 0 8px;
+}
+
+.system-stat {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 6px;
+    font-size: 10px;
+    font-weight: 500;
+    text-transform: uppercase;
+
+    .warning {
+        color: var(--feedback-warning-default, #c1ab15) !important;
+    }
+}

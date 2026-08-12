@@ -3,7 +3,7 @@ import '@testing-library/jest-dom';
 import { act, render, screen, waitFor } from '@testing-library/react';
 import { http, HttpResponse } from 'msw';
 import { setupServer } from 'msw/node';
-import React, { Component, ErrorInfo, ReactNode, useEffect } from 'react';
+import { Component, ErrorInfo, ReactNode, useEffect } from 'react';
 import { describe, expect, it } from 'vitest';
 
 import App from '../App';
@@ -17,7 +17,7 @@ interface State {
 }
 // Error boundary to be used as a wrapper for a failing app (here, a mock of <App />)
 class SimpleErrorBoundary extends Component<Props, State> {
-  public state: State = {
+  public override state: State = {
     hasError: false,
   };
 
@@ -25,11 +25,11 @@ class SimpleErrorBoundary extends Component<Props, State> {
     return { hasError: true };
   }
 
-  public componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
+  public override componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
     console.error('Uncaught error:', error, errorInfo);
   }
 
-  public render(): ReactNode {
+  public override render(): ReactNode {
     if (this.state.hasError) {
       return <h1>Something went wrong</h1>;
     }

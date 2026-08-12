@@ -80,7 +80,6 @@ import {
   SOURCE_LIBRARY_ID_PARAM,
 } from '../../../routing/routing.type';
 import { queryClient } from '../../providers/data-fetching/QueryProvider';
-import { getDefaultFileContent } from '../../utils';
 import {
   SaveSketchFileMutation,
   SketchDataBaseQueryKey,
@@ -664,15 +663,13 @@ export const useRetrieveBatchFileContents: UseRetrieveBatchFileContents =
         fileExtension: string,
         code?: string,
       ) => {
-        const defaultContent = getDefaultFileContent(fileExtension);
-
         const newFile: RetrieveFileContentsResult = {
-          fullName: `${fileName}.${fileExtension}`,
+          fullName: fileExtension ? `${fileName}.${fileExtension}` : fileName,
           name: fileName,
-          data: code ?? defaultContent,
+          data: code ?? '',
           path: fileId,
           href: '',
-          content: code ?? defaultContent,
+          content: code ?? '',
           extension: fileExtension ?? '',
           mimetype: '',
         };

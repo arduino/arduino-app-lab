@@ -21,11 +21,11 @@ class ErrorNullBoundary extends Component<
     this.state = initialErrorBoundaryState;
   }
 
-  componentDidCatch(): void {
+  override componentDidCatch(): void {
     this.setState({ hasError: true });
   }
 
-  render(): React.ReactNode {
+  override render(): React.ReactNode {
     if (this.state.hasError) {
       return null;
     }

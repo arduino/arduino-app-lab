@@ -1,0 +1,40 @@
+@use "../../../typography/typography.module.scss" as typography;
+
+.empty-state {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  padding-bottom: 80px;
+  box-sizing: border-box;
+}
+
+.empty-state-icon {
+  display: flex;
+  width: 40px;
+  height: 40px;
+  justify-content: center;
+  align-items: center;
+  border-radius: 8px;
+  background: var(--component-bg-flexible, rgba(174, 184, 184, 0.15));
+  margin: 0 0 16px 0;
+}
+
+.empty-state-title {
+  font-family: typography.$open-sans-font-family;
+  font-weight: 700;
+  font-size: 12px;
+  text-align: center;
+  color: var(--text-subtle, #c9d2d2);
+}
+
+.empty-state-description {
+  font-family: typography.$open-sans-font-family;
+  font-weight: 400;
+  font-size: 12px;
+  text-align: center;
+  color: var(--text-subtle, #c9d2d2);
+  margin: 8px;
+}

@@ -10,6 +10,7 @@ interface EditorPanelFile {
   id: string;
   ext: string;
   getData: () => string | undefined;
+  error?: Error;
 }
 
 export type EditorControlsProps =
@@ -103,6 +104,7 @@ export type EditorPanelLogic = () => {
     id: string;
     ext: string;
     getData: () => string | undefined;
+    error?: Error;
   };
   splitPaneShouldRenderMarkdown?: boolean;
   splitPaneSetShouldRenderMarkdown?: (value: boolean) => void;

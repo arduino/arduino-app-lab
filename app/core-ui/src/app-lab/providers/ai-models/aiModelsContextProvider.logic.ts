@@ -1,4 +1,8 @@
-import { Config } from '@cloud-editor-mono/common';
+import {
+  Config,
+  EI_LATENCY_DEVICE,
+  EI_LATENCY_DEVICE_BY_FQBN,
+} from '@cloud-editor-mono/common';
 import {
   getAIModels,
   getEIProjects,
@@ -31,6 +35,7 @@ import {
 } from 'react';
 
 // import { useNotificationsLogic } from '../../../cloud-editor/features/notifications/notifications.logic';
+import { BoardScopedQuery } from '../../boardScopedQuery';
 import { sendAppLabNotification } from '../../features/notifications';
 import { useBoardLifecycleStore } from '../../store/boardLifecycle';
 import { EdgeImpulseContext } from '../edge-impulse/edgeImpulseContext';
@@ -61,10 +66,13 @@ export function useAiModelsLogic(
   const boardIsReachable = useBoardLifecycleStore(
     (state) => state.boardIsReachable,
   );
+  const selectedConnectedBoard = useBoardLifecycleStore(
+    (state) => state.selectedConnectedBoard,
+  );
 
   const queryClient = useQueryClient();
 
-  const [unoQProjects, setUnoQProjects] = useState<EIProject[]>([]);
+  const [qBoardProjects, setQBoardProjects] = useState<EIProject[]>([]);
   const { data: projects, isLoading: projectsLoading } = useQuery({
     queryKey: ['edge-impulse-projects', isAuthenticated],
     queryFn: getEIProjects,
@@ -72,15 +80,22 @@ export function useAiModelsLogic(
     refetchOnWindowFocus: true,
   });
   useEffect(() => {
-    setUnoQProjects(projects?.filter((p) => p.hasUnoQLatencyDevice) || []);
+    setQBoardProjects(projects?.filter((p) => p.hasQBoardLatencyDevice) || []);
   }, [projects]);
 
   const eiModels = useMemo(
-    () => unoQProjects.map(mapProjectToModel),
-    [unoQProjects],
+    () => qBoardProjects.map(mapProjectToModel),
+    [qBoardProjects],
   );
 
-  const installedModelsQueryKey = useMemo(() => ['get-installed-models'], []);
+  // Installed AI models live on the board itself; `getAIModels()` resolves
+  // against whichever board is currently connected. Like every other
+  // board-scoped query, this cache is dropped on a board switch by
+  // useBoardScopedQueryReset, so the key itself stays board-agnostic.
+  const installedModelsQueryKey = useMemo(
+    () => [BoardScopedQuery.GET_INSTALLED_MODELS],
+    [],
+  );
   const { data: installedModels } = useQuery({
     queryKey: installedModelsQueryKey,
     queryFn: getAIModels,
@@ -182,12 +197,12 @@ export function useAiModelsLogic(
   );
   const getEIProjectsByBrickType = useCallback(
     (brickType: string) => {
-      return unoQProjects.filter((p) => {
+      return qBoardProjects.filter((p) => {
         const match = isCompatibleEICategory(brickType, p.category, p.impulses);
         return match;
       });
     },
-    [unoQProjects],
+    [qBoardProjects],
   );
 
   const updateDownload = (
@@ -317,7 +332,7 @@ export function useAiModelsLogic(
 
       if (
         createdDate < twoHoursAgo ||
-        project.hasUnoQLatencyDevice ||
+        project.hasQBoardLatencyDevice ||
         project.hasOtherNonDefaultLatencyDevice ||
         !project.id
       ) {
@@ -325,7 +340,12 @@ export function useAiModelsLogic(
         return;
       }
 
-      await setEILatencyDevice(project.id.toString());
+      const latencyDevice = selectedConnectedBoard?.fqbn
+        ? EI_LATENCY_DEVICE_BY_FQBN[selectedConnectedBoard.fqbn] ??
+          EI_LATENCY_DEVICE.UNO_Q
+        : EI_LATENCY_DEVICE.UNO_Q;
+
+      await setEILatencyDevice(project.id.toString(), latencyDevice);
       openLinkExternal(url);
     },
 
@@ -358,11 +378,15 @@ export function useAiModelsLogic(
 
       let downloadSucceeded = false;
 
+      // True while `downloadStreamsRef` still points at this stream. A stream
+      // that has been superseded (the same model was restarted) must not touch
+      // the progress state, which now belongs to the newer stream.
+      const isCurrent = (): boolean =>
+        downloadStreamsRef.current.get(modelId)?.abortController ===
+        abortController;
+
       const cleanup = (): void => {
-        if (
-          downloadStreamsRef.current.get(modelId)?.abortController ===
-          abortController
-        ) {
+        if (isCurrent()) {
           downloadStreamsRef.current.delete(modelId);
         }
       };
@@ -417,27 +441,33 @@ export function useAiModelsLogic(
       const handlers: EventSourceHandlers = {
         onopen: undefined,
         onclose: cleanup,
-        // Don't notify here: a fatal error re-throws and is surfaced by the
-        // catch below (with the specific message, e.g. "HTTP 409"), and
-        // transient errors are still being retried. Notifying here would
-        // duplicate the catch's banner and fire on every retry attempt.
-        onerror: (_error: Error) => {
-          updateDownload(
-            {
-              isDownloading: false,
-              error: true,
-              success: false,
-              percentage: 0,
-            },
-            progressId,
-          );
-          cleanup();
-        },
+        // `onerror` runs on *every* failed attempt, including ones the event
+        // source is about to retry, so it deliberately leaves the download
+        // state alone: tearing it down here would drop the card back to its
+        // "Download" CTA while the stream is still alive, and would also
+        // untrack the abort controller mid-flight. Giving up for good either
+        // rejects `uploadAIModel` (fatal error or max retries exceeded) or ends
+        // the stream, both handled below.
+        onerror: undefined,
         // TODO: refactor this to use a only the 'done' event to mark the download as complete
         // and send the download notification to the footer
         onmessage: (event: EventSourceMessage) => {
           const messageType = event.event;
-          const data = JSON.parse(event.data);
+          // Keep-alive events (`heartbeat`) carry no payload, and an unknown
+          // event may not carry JSON at all. Throwing out of `onmessage` aborts
+          // the stream and makes the event source re-issue the request — i.e. a
+          // heartbeat mid-download would restart the whole install — so ignore
+          // anything we can't parse instead.
+          if (!event.data) {
+            return;
+          }
+          let data;
+          try {
+            data = JSON.parse(event.data);
+          } catch (parseError) {
+            console.warn(parseError);
+            return;
+          }
           switch (messageType) {
             case StreamEventType.Error:
               // A normal end-of-stream is signalled as a SERVER_CLOSED error.
@@ -496,23 +526,33 @@ export function useAiModelsLogic(
 
       try {
         await uploadAIModel(modelId, handlers, abortController);
+        if (!downloadSucceeded && isCurrent()) {
+          // The stream ended without a terminal success event; don't leave the
+          // card stuck on a live progress bar.
+          updateDownload(
+            { isDownloading: false, success: false, percentage: 0 },
+            progressId,
+          );
+        }
       } catch (error: unknown) {
-        updateDownload(
-          {
-            isDownloading: false,
-            error: true,
-            success: false,
-            percentage: 0,
-          },
-          progressId,
-        );
-        sendAppLabNotification({
-          message:
-            error instanceof Error
-              ? `Error downloading model: ${error.message}`
-              : 'An error occurred while downloading model',
-          variant: 'error',
-        });
+        if (isCurrent()) {
+          updateDownload(
+            {
+              isDownloading: false,
+              error: true,
+              success: false,
+              percentage: 0,
+            },
+            progressId,
+          );
+          sendAppLabNotification({
+            message:
+              error instanceof Error
+                ? `Error downloading model: ${error.message}`
+                : 'An error occurred while downloading model',
+            variant: 'error',
+          });
+        }
         downloadSucceeded = false;
       } finally {
         cleanup();

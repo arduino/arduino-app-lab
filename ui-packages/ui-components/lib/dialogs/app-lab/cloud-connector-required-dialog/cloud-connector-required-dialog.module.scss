@@ -1,0 +1,21 @@
+.body {
+  align-items: center;
+
+  &-icon {
+    width: 56px;
+    height: 56px;
+    path {
+      fill: var(--text-subtle, #c9d2d2);
+    }
+  }
+
+  &-title {
+    text-align: center;
+    font-weight: 700 !important;
+    white-space: pre;
+  }
+
+  &-description {
+    text-align: center;
+  }
+}

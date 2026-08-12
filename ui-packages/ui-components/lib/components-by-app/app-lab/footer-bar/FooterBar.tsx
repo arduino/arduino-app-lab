@@ -1,5 +1,12 @@
 import { isFFEnabled } from '@cloud-editor-mono/domain/src/services/services-by-app/app-lab';
-import { Spinner, Stats } from '@cloud-editor-mono/images/assets/icons';
+import {
+  HardwareCpu,
+  HardwareNpu,
+  HardwareRam,
+  Spinner,
+  StatusError,
+  Stop,
+} from '@cloud-editor-mono/images/assets/icons';
 import {
   Button,
   ButtonAppearance,
@@ -7,20 +14,25 @@ import {
   ButtonVariant,
   useI18n,
   useTooltip,
-  XSmall,
+  XXSmall,
 } from '@cloud-editor-mono/ui-components/lib/components-by-app/app-lab';
 import clsx from 'clsx';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback } from 'react';
 
 import { LinuxCredentialsDialog } from '../../../dialogs';
+import { ArcSpinner } from '../../../essential/loader';
 import { BoardSection } from '../board-section';
 import { Action, ActionStatus } from '../runtime-actions';
 import styles from './footer-bar.module.scss';
 import { FooterBarProps } from './FooterBar.type';
 import { messages } from './messages';
-import BellIcon from './sub-components/bell-icon/BellIcon';
-import { NetworkIcon } from './sub-components/network-icon/NetworkIcon';
-import NotificationPanel from './sub-components/notification-panel/NotificationPanel';
+import { AgentModeTooltip } from './sub-components/agent-mode-tooltip/AgentModeTooltip';
+import { AiAssistantEntry } from './sub-components/ai-assistant-entry/AiAssistantEntry';
+import { BoardHardware } from './sub-components/board-hardware/BoardHardware';
+import { BoardStorage } from './sub-components/board-storage/BoardStorage';
+import { Network } from './sub-components/network/Network';
+import { Notification } from './sub-components/notification/Notification';
+import { System } from './sub-components/system/System';
 
 const FooterBar: React.FC<FooterBarProps> = (props: FooterBarProps) => {
   const { formatMessage } = useI18n();
@@ -35,16 +47,24 @@ const FooterBar: React.FC<FooterBarProps> = (props: FooterBarProps) => {
     currentVersion,
     notifications,
     onOpenApp,
+    onOpenAiAssistant,
+    aiAssistantActive,
+    agentModeTooltip,
+    agentModeEntryShine,
     onOpenTerminal,
     terminalError,
     isBoard,
     boards,
     selectedBoard,
+    lspId,
+    lspState,
+    bytesToGiB,
     selectBoard,
     linuxCredentialsDialog,
   } = footerBarLogic();
 
   const showVersion = isFFEnabled('SHOW_VERSION_IN_FOOTER');
+  const showAiAssistant = isFFEnabled('AI_ASSISTANT');
 
   const {
     appsStatus: { runningApp },
@@ -56,46 +76,6 @@ const FooterBar: React.FC<FooterBarProps> = (props: FooterBarProps) => {
     stopAction(runningApp);
   }, [runningApp, stopAction]);
 
-  const [isMenuVisible, setMenuVisible] = useState(false);
-  const [isSystemStatsVisible, setSystemStatsVisible] = useState(false);
-
-  // Create a ref to attach to the menu container
-  const menuRef = useRef<HTMLDivElement>(null);
-  const menuTriggerRef = useRef<HTMLDivElement>(null);
-
-  // This effect handles clicks outside of the menu
-  useEffect(() => {
-    // Only add listener if menu is visible
-    if (!isMenuVisible) return;
-    function handleClickOutside(event: MouseEvent): void {
-      // If the click is outside the menuRef, close the menu
-      if (
-        menuRef.current &&
-        menuTriggerRef.current &&
-        !menuRef.current.contains(event.target as Node) &&
-        !menuTriggerRef.current.contains(event.target as Node)
-      ) {
-        setMenuVisible(false);
-      }
-    }
-
-    // Bind the event listener
-    document.addEventListener('mousedown', handleClickOutside);
-    // Unbind the event listener on clean up
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [isMenuVisible]); // Re-run effect only if isMenuVisible changes
-
-  function clickHandlerNotifications(): void {
-    setMenuVisible(!isMenuVisible);
-    resetNewNotifications();
-  }
-
-  const clickHandlerSystemStats = (): void => {
-    setSystemStatsVisible((prev) => !prev);
-  };
-
   const stopDisabled =
     currentActionStatus === ActionStatus.Pending &&
     currentAction === Action.Stop;
@@ -103,6 +83,27 @@ const FooterBar: React.FC<FooterBarProps> = (props: FooterBarProps) => {
   const { props: tooltipPropsAppName, renderTooltip: renderTooltipAppName } =
     useTooltip({
       content: runningApp?.name,
+      timeout: 0,
+    });
+
+  const { props: tooltipLspLoading, renderTooltip: renderTooltipLspLoading } =
+    useTooltip({
+      content: formatMessage(messages.lspLoadingTooltip, {
+        progress: lspState?.type === 'progress' ? lspState.progress : 0,
+      }),
+      timeout: 0,
+    });
+
+  // Mirrors the loading tooltip: the failure occupies the same footer slot, so
+  // the reason belongs on hover rather than in a banner over the editor.
+  const { props: tooltipLspError, renderTooltip: renderTooltipLspError } =
+    useTooltip({
+      content:
+        lspState?.type === 'error' && lspState.message
+          ? formatMessage(messages.lspErrorTooltip, {
+              reason: lspState.message,
+            })
+          : formatMessage(messages.lspErrorTooltipNoReason),
       timeout: 0,
     });
 
@@ -133,155 +134,69 @@ const FooterBar: React.FC<FooterBarProps> = (props: FooterBarProps) => {
             styles['xl'],
           )}
         >
-          {/* Ip section */}
-          {boardIP ? (
-            <div className={clsx(styles['lg'], styles['footer-badge'])}>
-              {boardIP}
-            </div>
-          ) : null}
-          {systemResources.root?.label || systemResources.user?.label ? (
-            <div>
-              <span>{formatMessage(messages.storage)}</span>
-              <span
-                className={clsx(
-                  styles[systemResources.root?.state || 'default'],
-                )}
-              >
-                {systemResources.root?.label}
-              </span>
-              <span> - </span>
-              <span
-                className={clsx(
-                  styles[systemResources.user?.state || 'default'],
-                )}
-              >
-                {systemResources.user?.label}
-              </span>
-            </div>
+          {systemResources.root || systemResources.user ? (
+            <BoardStorage
+              boardType={selectedBoard?.type}
+              systemResources={systemResources}
+              bytesToGiB={bytesToGiB}
+            />
           ) : null}
 
           {systemResources.ram ? (
-            <span
-              className={clsx(styles[systemResources.ram?.state || 'default'])}
-            >
-              {systemResources.ram?.label}
-            </span>
+            <BoardHardware
+              icon={<HardwareRam />}
+              title={`${bytesToGiB(
+                systemResources.ram?.value?.used ?? 0,
+              )}/${bytesToGiB(systemResources.ram?.value?.total ?? 0)} GB`}
+              label={systemResources.ram?.label}
+              warning={systemResources.ram?.state === 'warning'}
+            />
           ) : null}
 
           {systemResources.npu?.label ? (
-            <span
-              className={clsx(styles[systemResources.npu?.state || 'default'])}
-            >
-              {systemResources.npu?.label}
-            </span>
+            <BoardHardware
+              icon={<HardwareNpu />}
+              title={`${systemResources.npu.value?.used?.toFixed(0)}%`}
+              label={systemResources.npu?.label}
+              warning={systemResources.npu?.state === 'warning'}
+            />
           ) : null}
 
           {systemResources.cpu ? (
-            <span
-              className={clsx(styles[systemResources.cpu?.state || 'default'])}
-            >
-              {systemResources.cpu?.label}
-            </span>
-          ) : null}
-        </div>
-
-        {/*Center - System Stats Section */}
-        <div
-          className={clsx(styles['system-stats-container'], {
-            [styles['button-active']]: isSystemStatsVisible,
-          })}
-        >
-          <Button
-            appearance={ButtonAppearance.LowContrast}
-            variant={ButtonVariant.Tertiary}
-            onClick={clickHandlerSystemStats}
-            size={ButtonSize.XSmall}
-            Icon={Stats}
-            title={formatMessage(messages.systemStats)}
-          >
-            {formatMessage(messages.systemStats)}
-          </Button>
-
-          {isSystemStatsVisible ? (
-            // eslint-disable-next-line jsx-a11y/no-static-element-interactions
-            <div
-              className={styles['system-stats-overlay']}
-              onMouseDown={(
-                e: React.MouseEvent<HTMLDivElement, MouseEvent>,
-              ): void => e.preventDefault()}
-            >
-              <div className={styles['system-stats-overlay--header']}>
-                <Stats /> {formatMessage(messages.systemInfo)}
-              </div>
-              <div
-                className={clsx(
-                  styles['system-stats-overlay--content'],
-                  styles['footer-badge'],
-                )}
-              >
-                {boardIP ? (
-                  <div className={clsx(styles['ip'])}>{boardIP}</div>
-                ) : null}
-
-                {systemResources.root?.label ? (
-                  <div>
-                    <span>{formatMessage(messages.storage)}</span>
-                    <span
-                      className={clsx(
-                        styles[systemResources.root?.state || 'default'],
-                      )}
-                    >
-                      {systemResources.root?.label}
-                    </span>
-                  </div>
-                ) : null}
-
-                {systemResources.user?.label ? (
-                  <span
-                    className={clsx(
-                      styles[systemResources.user?.state || 'default'],
-                    )}
-                  >
-                    {systemResources.user?.label}
-                  </span>
-                ) : null}
-
-                {systemResources.ram ? (
-                  <span
-                    className={clsx(
-                      styles[systemResources.ram?.state || 'default'],
-                    )}
-                  >
-                    {systemResources.ram?.label}
-                  </span>
-                ) : null}
-
-                {systemResources.npu?.label ? (
-                  <span
-                    className={clsx(
-                      styles[systemResources.npu?.state || 'default'],
-                    )}
-                  >
-                    {systemResources.npu?.label}
-                  </span>
-                ) : null}
-
-                {systemResources.cpu ? (
-                  <span
-                    className={clsx(
-                      styles[systemResources.cpu?.state || 'default'],
-                    )}
-                  >
-                    {systemResources.cpu?.label}
-                  </span>
-                ) : null}
-              </div>
-            </div>
+            <BoardHardware
+              icon={<HardwareCpu />}
+              title={`${systemResources.cpu.value?.used?.toFixed(0)}%`}
+              label={systemResources.cpu?.label}
+              warning={systemResources.cpu?.state === 'warning'}
+            />
           ) : null}
         </div>
 
         {/* Right section */}
         <div className={styles['footer-section--right']}>
+          {lspState?.type === 'progress' && (
+            <div
+              className={styles['lsp-loading-container']}
+              {...tooltipLspLoading}
+            >
+              <ArcSpinner />
+              <XXSmall className={styles['lsp-loading-title']}>{lspId}</XXSmall>
+              {renderTooltipLspLoading()}
+            </div>
+          )}
+          {lspState?.type === 'error' && (
+            <div
+              className={clsx(
+                styles['lsp-loading-container'],
+                styles['lsp-error-container'],
+              )}
+              {...tooltipLspError}
+            >
+              <StatusError />
+              <XXSmall className={styles['lsp-loading-title']}>{lspId}</XXSmall>
+              {renderTooltipLspError()}
+            </div>
+          )}
           {runningApp ? (
             <div className={styles['footer-section']}>
               <div
@@ -293,9 +208,9 @@ const FooterBar: React.FC<FooterBarProps> = (props: FooterBarProps) => {
                 onClick={(): void => onOpenApp(runningApp)}
               >
                 <span>{runningApp.icon}</span>
-                <XSmall className={styles['app-name']}>
+                <XXSmall className={styles['app-name']}>
                   {runningApp.name}
-                </XSmall>
+                </XXSmall>
                 {renderTooltipAppName(styles['app-name-tooltip-content'])}
               </div>
               {currentActionStatus === ActionStatus.Pending && (
@@ -306,11 +221,17 @@ const FooterBar: React.FC<FooterBarProps> = (props: FooterBarProps) => {
               <Button
                 onClick={stopApp}
                 variant={ButtonVariant.Secondary}
-                size={ButtonSize.XSmall}
+                size={ButtonSize.XXSmall}
                 appearance={ButtonAppearance.Destructive}
+                Icon={Stop}
+                iconPosition="left"
                 disabled={stopDisabled}
+                classes={{
+                  button: styles['stop-button'],
+                  textButtonText: styles['stop-button-text'],
+                }}
               >
-                Stop
+                {formatMessage(messages.stopButton)}
               </Button>
             </div>
           ) : null}
@@ -323,24 +244,35 @@ const FooterBar: React.FC<FooterBarProps> = (props: FooterBarProps) => {
             </div>
           ) : null}
 
-          <div
-            ref={menuTriggerRef}
-            role="button"
-            tabIndex={0}
-            className={styles['notifications-container']}
-            onClick={clickHandlerNotifications}
-            onKeyUp={clickHandlerNotifications}
-          >
-            <BellIcon
-              active={isMenuVisible}
-              newNotifications={newNotifications}
-            />
-            {isMenuVisible && (
-              <NotificationPanel ref={menuRef} items={notifications || []} />
-            )}
+          <div className={styles['system-stats-container']}>
+            <System systemResources={systemResources} />
           </div>
 
-          <NetworkIcon networkItem={systemResources.network} />
+          <Notification
+            notifications={notifications}
+            newNotifications={newNotifications}
+            resetNewNotifications={resetNewNotifications}
+          />
+
+          <Network networkItem={systemResources.network} boardIP={boardIP} />
+
+          {showAiAssistant ? (
+            <div className={styles['ai-assistant-entry']}>
+              <AiAssistantEntry
+                agentLabel={formatMessage(messages.aiAssistantEntryAgent)}
+                editorLabel={formatMessage(messages.aiAssistantEntryEditor)}
+                agentModeActive={aiAssistantActive}
+                onClick={onOpenAiAssistant}
+                shine={agentModeEntryShine}
+              />
+              {agentModeTooltip.variant ? (
+                <AgentModeTooltip
+                  variant={agentModeTooltip.variant}
+                  onDismiss={agentModeTooltip.onDismiss}
+                />
+              ) : null}
+            </div>
+          ) : null}
         </div>
       </div>
 

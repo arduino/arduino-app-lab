@@ -10,28 +10,23 @@ import {
   BoardUpdateDialogLogic,
   FlashBoardDialogLogic,
   OfflineWarningDialogLogic,
-  SidePanelItemId,
-  SidePanelItemInterface,
-  sidePanelItems,
-  SidePanelLogic,
-  SidePanelSectionId,
   snackbar,
   Themes,
   UpdaterStatus,
 } from '@cloud-editor-mono/ui-components/lib/components-by-app/app-lab';
 import { useQuery } from '@tanstack/react-query';
-import { useLocation, useParams } from '@tanstack/react-router';
+import { useParams } from '@tanstack/react-router';
 import {
   useCallback,
   useContext,
   useEffect,
   useLayoutEffect,
-  useMemo,
   useState,
 } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 
 import { ThemeContext } from '../../../common/providers/theme/themeContext';
+import { BoardScopedQuery } from '../../boardScopedQuery';
 import { useBoards } from '../../hooks/useBoards';
 import { useCurrentSection } from '../../hooks/useCurrentSection';
 import { useIsBoard } from '../../hooks/useIsBoard';
@@ -41,7 +36,13 @@ import { NetworkContext } from '../../providers/network/networkContext';
 import { SetupContext } from '../../providers/setup/setupContext';
 import { UpdaterContext } from '../../providers/updater/updaterContext';
 import { useBoardLifecycleStore } from '../../store/boardLifecycle';
+import { useCreateAppDialogStore } from '../../store/createAppDialog';
+import { useImportAppDialogStore } from '../../store/importAppDialog';
 import { useSystemPropsStore } from '../../store/systemProps';
+import { useCreateAppDialogLogic } from '../app/app-list/useCreateAppDialogLogic';
+import { useImportAppDialogLogic } from '../app/app-list/useImportAppDialogLogic';
+import { useAgentSidePanelLogic } from '../side-panel/agentSidePanel.logic';
+import { createUseSidePanelLogic } from '../side-panel/sidePanel.logic';
 import { UseMainLogic } from './main.type';
 
 const FLASHER_TOOL_URL = 'https://www.arduino.cc/en/software/#flasher-tool';
@@ -49,64 +50,8 @@ const ARDUINO_SUPPORT_URL = 'https://www.arduino.cc/en/contact-us/';
 const FLASHER_TUTORIAL_URL =
   'https://docs.arduino.cc/tutorials/BOARD_TYPE/update-image/';
 
-const ROUTES_WITHOUT_SIDE_PANEL = ['/settings'];
-
 export const useMainLogic: UseMainLogic =
   function (): ReturnType<UseMainLogic> {
-    const useSidePanelLogic = (): ReturnType<SidePanelLogic> => {
-      const { pathname } = useLocation();
-
-      const isVisible =
-        pathname.split('/').length <= 2 &&
-        !ROUTES_WITHOUT_SIDE_PANEL.includes(pathname);
-
-      const { user } = useContext(AuthContext);
-
-      const activeItem = pathname
-        .split('/')
-        .filter((it) => it.length > 0)
-        .shift();
-
-      const { items: sidePanelItemsBySection } = useMemo(
-        () =>
-          sidePanelItems.reduce(
-            (acc, item) => {
-              const { sectionId, enabled } = item;
-
-              if (!sectionId || !enabled) {
-                return acc;
-              }
-              const currentItem = { ...item };
-
-              currentItem.active = activeItem === item.id;
-
-              if (!acc.items[sectionId]) {
-                acc.items[sectionId] = [];
-              }
-
-              if (currentItem.id === SidePanelItemId.Account && user) {
-                currentItem.Icon = user.picture;
-              }
-
-              acc.items[sectionId].push(currentItem);
-              return acc;
-            },
-            {
-              items: {} as Record<SidePanelSectionId, SidePanelItemInterface[]>,
-            },
-          ),
-        [activeItem, user],
-      );
-
-      return {
-        sidePanelItemsBySection,
-        activeItem,
-        user,
-        visible: isVisible,
-      };
-    };
-    const sidePanelLogic = useCallback(useSidePanelLogic, []);
-
     const useBoardUpdateDialogLogic =
       (): ReturnType<BoardUpdateDialogLogic> => {
         const [open, setOpen] = useState(false);
@@ -267,11 +212,20 @@ export const useMainLogic: UseMainLogic =
         );
 
       useEffect(() => {
+        // Switching boards re-runs this effect, but the checks are slow
+        // per-board SSH round-trips: an in-flight check started for the
+        // previous board can resolve *after* the switch. Without this guard a
+        // slow `true` for board A lands once we're already on board B and pops
+        // the flash dialog for a board that doesn't need it.
+        let cancelled = false;
+
         const setNeedsOSUpdateAsync = async (): Promise<void> => {
           const isR0Build = await boardNeedsImageUpdate();
-          if (!isR0Build) return;
+          if (cancelled || !isR0Build) return;
 
           const needsUpdate = await boardNeedsOSUpdate();
+          if (cancelled) return;
+
           setOpen(needsUpdate);
         };
 
@@ -280,8 +234,15 @@ export const useMainLogic: UseMainLogic =
           selectedConnectedBoard &&
           boardIsFlashing === undefined
         ) {
+          // Clear any dialog left open for the previously selected board before
+          // re-evaluating for the new one.
+          setOpen(false);
           setNeedsOSUpdateAsync();
         }
+
+        return () => {
+          cancelled = true;
+        };
       }, [selectedConnectedBoard, boardIsFlashing, isBoard]);
 
       return {
@@ -424,6 +385,9 @@ export const useMainLogic: UseMainLogic =
         isConnecting,
         wasClosedByUser,
         setOfflineWarningOpen,
+        setupCompleted,
+        networkStepSkipped,
+        offlineWarningChoiceMade,
       ]);
 
       const onContinue = useCallback(() => {
@@ -470,6 +434,35 @@ export const useMainLogic: UseMainLogic =
 
     const boardsProps = useBoards();
 
+    const createAppDialogOpen = useCreateAppDialogStore((state) => state.open);
+    const setCreateAppDialogOpen = useCreateAppDialogStore(
+      (state) => state.setOpen,
+    );
+    const createAppDialogLogic = useCreateAppDialogLogic(
+      createAppDialogOpen,
+      setCreateAppDialogOpen,
+    );
+
+    const importAppDialogOpen = useImportAppDialogStore((state) => state.open);
+    const setImportAppDialogOpen = useImportAppDialogStore(
+      (state) => state.setOpen,
+    );
+    const setImportedAppId = useImportAppDialogStore(
+      (state) => state.setImportedAppId,
+    );
+    const importAppDialogLogic = useImportAppDialogLogic(
+      importAppDialogOpen,
+      setImportAppDialogOpen,
+      setImportedAppId,
+    );
+
+    const sidePanelLogic = useCallback(
+      () => createUseSidePanelLogic(boardsProps)(),
+      [boardsProps],
+    );
+
+    const agentSidePanelLogic = useAgentSidePanelLogic(boardsProps);
+
     // get app params to undestand if we are in details or not
     const params = useParams({ strict: false });
     const currentAppId = params.appId || params.resourceId;
@@ -485,7 +478,7 @@ export const useMainLogic: UseMainLogic =
     );
 
     const { data: apps } = useQuery(
-      ['check-apps-to-redirect'],
+      [BoardScopedQuery.CHECK_APPS_TO_REDIRECT],
       () => {
         return getApps({
           query: { filter: 'apps' },
@@ -517,6 +510,9 @@ export const useMainLogic: UseMainLogic =
 
     return {
       sidePanelLogic,
+      agentSidePanelLogic,
+      createAppDialogLogic,
+      importAppDialogLogic,
       boardUpdateDialogLogic,
       flashBoardDialogLogic,
       appLabWelcomeDialogLogic,

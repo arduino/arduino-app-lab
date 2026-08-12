@@ -12,6 +12,7 @@ export interface BasicFileData {
   fullName: string;
   path: string;
   extension: string;
+  error?: Error;
 }
 
 export interface BrickFileData {

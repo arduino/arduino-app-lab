@@ -1,3 +1,4 @@
+@use "sass:color";
 @use "../../../public/shared.module.scss";
 
 :root {
@@ -82,7 +83,7 @@ $dropdownRoundedItemHeight: 44px;
             @for $i from 0 through 100 {
                 li:nth-child(#{$i * 2}) {
                     button {
-                        background-color: lighten(rgb(236, 241, 241), 1 * $i);
+                        background-color: color.adjust(rgb(236, 241, 241), $lightness: ($i * 1%));
                     }
                 }
             }

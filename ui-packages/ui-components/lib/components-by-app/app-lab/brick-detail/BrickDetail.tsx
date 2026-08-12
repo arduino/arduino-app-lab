@@ -1,8 +1,8 @@
 import {
   BrickSettings as BrickSettingsIcon,
   EdgeImpulse as EdgeImpulseIcon,
-  InfoIconOutline,
   OpenInNewTab,
+  UsedByAppLink as UsedByAppLinkIcon,
 } from '@cloud-editor-mono/images/assets/icons';
 import {
   AiModel,
@@ -30,24 +30,9 @@ import styles from './brick-detail.module.scss';
 import { BrickDetailLogic } from './BrickDetail.type';
 import { messages } from './messages';
 import { AiBadge } from './sub-components/ai-badge/AiBadge';
+import { BrickExampleSnippet } from './sub-components/brick-example-snippet/BrickExampleSnippet';
 
 const DEFAULT_ICON = '⚪'; // Default icon if none is provided
-
-const UsedByAppLinkIcon = ({ className }: { className?: string }) => (
-  <svg
-    className={className}
-    width="16"
-    height="16"
-    viewBox="0 0 16 16"
-    fill="none"
-    xmlns="http://www.w3.org/2000/svg"
-  >
-    <path
-      d="M12.5012 4V10.5C12.5012 10.6326 12.4486 10.7598 12.3548 10.8536C12.261 10.9473 12.1339 11 12.0012 11C11.8686 11 11.7415 10.9473 11.6477 10.8536C11.5539 10.7598 11.5012 10.6326 11.5012 10.5V5.21L4.35624 12.355C4.26145 12.4479 4.13399 12.5 4.00124 12.5C3.86849 12.5 3.74103 12.4479 3.64624 12.355C3.55257 12.2606 3.5 12.133 3.5 12C3.5 11.867 3.55257 11.7394 3.64624 11.645L10.7912 4.5H5.50124C5.36863 4.5 5.24146 4.44732 5.14769 4.35355C5.05392 4.25979 5.00124 4.13261 5.00124 4C5.00124 3.86739 5.05392 3.74021 5.14769 3.64645C5.24146 3.55268 5.36863 3.5 5.50124 3.5H12.0012C12.1337 3.50038 12.2607 3.55318 12.3544 3.64687C12.4481 3.74055 12.5009 3.86751 12.5012 4Z"
-      fill="#C9D2D2"
-    />
-  </svg>
-);
 
 const getUsedByAppPath = (appId: string): string => {
   const decodedAppId = window.atob(appId);
@@ -70,6 +55,7 @@ interface BrickDetailProps {
   preSelectedModelChange?: (id: string) => void;
   selectedTab?: string;
   onSelectedTabChange?: (tab: string) => void;
+  hideExampleHeader?: boolean;
 }
 
 const BrickDetail: React.FC<BrickDetailProps> = ({
@@ -79,6 +65,7 @@ const BrickDetail: React.FC<BrickDetailProps> = ({
   preSelectedModelChange,
   selectedTab: controlledSelectedTab,
   onSelectedTabChange,
+  hideExampleHeader = false,
 }: BrickDetailProps) => {
   const { formatMessage } = useI18n();
   const navigate = useNavigate();
@@ -89,7 +76,6 @@ const BrickDetail: React.FC<BrickDetailProps> = ({
     onSelectedTabChange?.(tab);
   };
   const {
-    board,
     brick,
     isBrickLoading,
     brickInstance,
@@ -104,7 +90,6 @@ const BrickDetail: React.FC<BrickDetailProps> = ({
     diskUsageWarning,
     configureDialogProps,
     trainNewModelDialogProps,
-    isEdgeImpulseConnected,
     onTrainNewModelClick,
     downloadEIModel,
     downloadGenericModel,
@@ -186,7 +171,7 @@ const BrickDetail: React.FC<BrickDetailProps> = ({
           <Button
             onClick={(): void => configureDialogProps.setOpen(true)}
             Icon={BrickSettingsIcon}
-            size={ButtonSize.Small}
+            size={ButtonSize.XSmall}
             variant={ButtonVariant.Secondary}
           >
             {formatMessage(messages.configureButton)}
@@ -223,13 +208,24 @@ const BrickDetail: React.FC<BrickDetailProps> = ({
             <Item key={item.id} title={formatMessage(item.label)}>
               <div className={styles['tab-item-container']}>
                 {item.id === 'examples' && examples ? (
-                  examples.map(({ content, path }) => (
-                    <MarkdownReader
-                      key={path}
-                      content={content}
-                      onOpenExternalLink={openExternalLink}
-                    />
-                  ))
+                  examples.map(({ content, path, exampleName, exampleId }) =>
+                    exampleName && exampleId ? (
+                      <BrickExampleSnippet
+                        key={path}
+                        title={exampleName}
+                        exampleId={exampleId}
+                        content={content}
+                        onOpenExternalLink={openExternalLink}
+                        hideHeader={hideExampleHeader}
+                      />
+                    ) : (
+                      <MarkdownReader
+                        key={path}
+                        content={content}
+                        onOpenExternalLink={openExternalLink}
+                      />
+                    ),
+                  )
                 ) : item.id !== 'aiModels' ? (
                   <MarkdownReader
                     content={
@@ -243,17 +239,6 @@ const BrickDetail: React.FC<BrickDetailProps> = ({
                   />
                 ) : (
                   <div className={styles['ai-models-container']}>
-                    {!hideEdgeImpulse && isEdgeImpulseConnected && (
-                      <div className={styles['ai-models-info']}>
-                        <InfoIconOutline />
-                        <p>
-                          {formatMessage(messages.missingModel, {
-                            boardModel: board?.type.toUpperCase(),
-                            bold: (text: string) => <b>{text}</b>,
-                          })}
-                        </p>
-                      </div>
-                    )}
                     {(models || [])?.map((model) => (
                       <AiModel
                         key={model.id}

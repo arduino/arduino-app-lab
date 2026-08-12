@@ -16,7 +16,7 @@ import {
   ViewPlugin,
   ViewUpdate,
 } from '@codemirror/view';
-import { throttle } from 'lodash';
+import { throttle } from 'lodash-es';
 import { UAParser } from 'ua-parser-js';
 
 import {

@@ -13,7 +13,19 @@ RUN apt-get update && \
 	build-essential \
 	libgtk-3-dev \
 	libwebkit2gtk-4.1-dev \
-	npm 
+	ca-certificates \
+	curl \
+	xz-utils
+
+# Install a pinned Node.js version so the frontend build behaves consistently
+# with the other platform builds. Node 18 does not enable require(ESM), which
+# avoids the ERR_REQUIRE_CYCLE_MODULE failure that newer Node versions hit when
+# Vite loads its config through @vitejs/plugin-react.
+ENV NODE_VERSION=18.15.0
+RUN curl -fsSL "https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-arm64.tar.xz" -o /tmp/node.tar.xz && \
+    tar -xJf /tmp/node.tar.xz -C /usr/local --strip-components=1 && \
+    rm /tmp/node.tar.xz && \
+    node --version && npm --version
 
 RUN go install github.com/wailsapp/wails/v2/cmd/wails@latest
 RUN npm install -g yarn
@@ -49,6 +61,12 @@ ARG REVISION="1"
 RUN apt-get update && apt-get install -y sed
 
 COPY ./standalone-apps/app-lab-desktop/build/debian/${DEB_NAME} /${DEB_NAME}/
+# The copyright file is assembled by dev-utils/al-license/licensed.sh and
+# gitignored, so a plain COPY of the tree happily omits it. Refuse to build a
+# .deb without it: Debian policy requires the file, and local builds go
+# straight onto boards via `yarn install:arduino-app-lab:deb`.
+RUN test -s /${DEB_NAME}/usr/share/doc/arduino-app-lab/copyright \
+  || (echo "copyright missing - run: yarn build-copyright:arduino-app-lab-desktop" && exit 1)
 COPY --from=go /app/standalone-apps/app-lab-desktop/build/bin/${BINARY_NAME} /${DEB_NAME}/usr/bin/${BINARY_NAME}
 COPY --from=go /app/standalone-apps/app-lab-desktop/internal/app/ArduinoAppLab.desktop /${DEB_NAME}/usr/share/applications/ArduinoAppLab.desktop
 

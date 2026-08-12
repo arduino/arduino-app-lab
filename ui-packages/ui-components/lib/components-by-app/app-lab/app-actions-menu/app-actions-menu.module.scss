@@ -1,0 +1,41 @@
+.tooltip-trigger {
+  display: flex;
+}
+
+.menu {
+  background: var(--component-bg-above, #374146);
+  border-radius: 8px;
+  padding: 4px;
+
+  .menu-item {
+    color: white;
+    height: 28px;
+    padding: 4px 8px;
+    border-radius: 4px;
+    background-color: transparent;
+
+    &:hover {
+      background-color: var(--component-bg-hover, #aeb8b826);
+    }
+
+    &:not(:last-child) {
+      border-bottom: 1px solid var(--grayscale-dust, #434f54);
+    }
+
+    span {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+
+      svg {
+        width: 16px;
+        height: 16px;
+        fill: white !important;
+
+        path {
+          fill: white !important;
+        }
+      }
+    }
+  }
+}

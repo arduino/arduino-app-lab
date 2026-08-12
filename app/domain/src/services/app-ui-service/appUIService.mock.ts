@@ -27,4 +27,6 @@ export const MockAppUIService: AppUIService = {
     console.info('[MockAppUIService] forwardNonUIPort called', { port });
     return;
   },
+
+  onAgentStartedApp: () => () => undefined,
 };

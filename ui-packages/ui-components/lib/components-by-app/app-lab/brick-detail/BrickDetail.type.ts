@@ -46,7 +46,14 @@ export type BrickDetailLogic = (
   brickInstance?: BrickInstance;
   readme?: string | null;
   apiDocs?: string | null;
-  examples?: { content: string; path: string }[] | null;
+  examples?:
+    | {
+        content: string;
+        path: string;
+        exampleName?: string;
+        exampleId?: string;
+      }[]
+    | null;
   models?: BrickDetailModel[];
   readOnly?: boolean;
   hideEdgeImpulse?: boolean;

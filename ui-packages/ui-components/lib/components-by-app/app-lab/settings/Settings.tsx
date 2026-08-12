@@ -1,4 +1,6 @@
+import { BOARD_FQBN, Config } from '@cloud-editor-mono/common';
 import {
+  AccountArduinoCloud,
   Board2,
   Download,
   InfoSetup,
@@ -7,15 +9,23 @@ import {
   Pencil,
   Reload,
   Sort,
+  Success,
   Tools,
   World,
   WorldDisconnected,
 } from '@cloud-editor-mono/images/assets/icons';
 import {
+  Badge,
+  BadgeStyle,
+  BadgeVariant,
+  Banner,
   Button,
   ButtonAppearance,
   ButtonSize,
+  ButtonVariant,
   ChangePasswordDialog,
+  CloudConnectorConnectDialog,
+  CloudConnectorDisconnectDialog,
   DropdownMenuButton,
   NetworkSettingsDialog,
   PasswordDialog,
@@ -32,6 +42,7 @@ import { SettingsSection } from '../settings-section';
 import {
   appMessages,
   carrierMessages,
+  cloudConnectorMessages,
   deviceMessages,
   networkMessages,
   osMessages,
@@ -48,6 +59,7 @@ import { NetworkMode } from './subcomponents/NetworkMode';
 
 export const Settings: React.FC<SettingsProps> = ({
   settingsLogic,
+  agentSection,
 }: SettingsProps) => {
   const { formatMessage } = useI18n();
 
@@ -55,8 +67,10 @@ export const Settings: React.FC<SettingsProps> = ({
   const ARDUINO_DOCS_BASE_URL = 'https://docs.arduino.cc/software/app-lab';
   const DOCUMENTATION_URL = `${ARDUINO_DOCS_BASE_URL}/`;
   const RELEASE_NOTES_URL = `${ARDUINO_DOCS_BASE_URL}/getting-started/release-notes/`;
+  const ARDUINO_CLOUD_URL = 'https://docs.arduino.cc/arduino-cloud/';
 
   const {
+    cloudConnectorSettingsLogic,
     boardSettingsLogic,
     carrierSettingsLogic,
     networkModeLogic,
@@ -113,7 +127,17 @@ export const Settings: React.FC<SettingsProps> = ({
     startUpdate,
   } = systemSettingsLogic();
 
-  const isVentunoQ = board?.fqbn === 'arduino:zephyr:ventunoq';
+  const isVentunoQ = board?.fqbn === BOARD_FQBN.VENTUNO_Q;
+
+  const {
+    isConnecting,
+    isDisconnecting,
+    status: cloudConnectorStatus,
+    connectBoard,
+    connectDialogLogic: cloudConnectorConnectDialogLogic,
+    disconnectBoard,
+    disconnectDialogLogic: cloudConnectorDisconnectDialogLogic,
+  } = cloudConnectorSettingsLogic();
 
   const keyboardLayoutItems = useMemo(
     () => [
@@ -151,52 +175,52 @@ export const Settings: React.FC<SettingsProps> = ({
 
   return (
     <>
-      {!isBoard ? (
-        <>
-          <section>
-            <SettingsSection.Title
-              title={formatMessage(appMessages.title)}
-              icon={<NavigationGroupOutline />}
-            />
-            <SettingsSection.Card>
-              <SettingsSection.Row
-                label={formatMessage(appMessages.appLabVersion)}
-              >
-                {!newAppVersion && (
-                  <div className={styles['app-lab-version']}>
-                    {currentAppVersion}
-                    <SettingsSection.UpToDateBadge
-                      label={formatMessage(appMessages.appLabUpToDate)}
-                    />
-                  </div>
-                )}
-                {newAppVersion && (
-                  <Button
-                    Icon={Download}
-                    iconPosition="right"
-                    size={ButtonSize.XXSmall}
-                    onClick={startUpdate}
-                  >
-                    {formatMessage(appMessages.appLabUpdateAvailable, {
-                      newAppVersion,
-                    })}
-                  </Button>
-                )}
-              </SettingsSection.Row>
-              <SettingsSection.Row
-                label={formatMessage(appMessages.documentation)}
-              >
-                <SettingsSection.ExternalLink
-                  href={DOCUMENTATION_URL}
-                  onOpenExternal={onOpenExternal}
-                  label={formatMessage(appMessages.viewDocumentation)}
+      <section>
+        <SettingsSection.Title
+          title={formatMessage(appMessages.title)}
+          icon={<NavigationGroupOutline />}
+        />
+        <SettingsSection.Card>
+          <SettingsSection.Row label={formatMessage(appMessages.appLabVersion)}>
+            {!newAppVersion && (
+              <div className={styles['app-lab-version']}>
+                {currentAppVersion}
+                <SettingsSection.UpToDateBadge
+                  label={formatMessage(appMessages.appLabUpToDate)}
                 />
-              </SettingsSection.Row>
-            </SettingsSection.Card>
-          </section>
-          <SettingsSection.Divider space={40} />
-        </>
-      ) : null}
+              </div>
+            )}
+            {newAppVersion && !isBoard && (
+              <Button
+                Icon={Download}
+                iconPosition="right"
+                size={ButtonSize.XXSmall}
+                onClick={startUpdate}
+              >
+                {formatMessage(appMessages.appLabUpdateAvailable, {
+                  newAppVersion,
+                })}
+              </Button>
+            )}
+            {newAppVersion && isBoard && (
+              <div className={styles['app-lab-version']}>
+                {currentAppVersion}
+                <SettingsSection.UpToDateBadge
+                  label={formatMessage(appMessages.appLabUpToDate)}
+                />
+              </div>
+            )}
+          </SettingsSection.Row>
+          <SettingsSection.Row label={formatMessage(appMessages.documentation)}>
+            <SettingsSection.ExternalLink
+              href={DOCUMENTATION_URL}
+              onOpenExternal={onOpenExternal}
+              label={formatMessage(appMessages.viewDocumentation)}
+            />
+          </SettingsSection.Row>
+        </SettingsSection.Card>
+      </section>
+      <SettingsSection.Divider space={40} />
       <section>
         <SettingsSection.Title
           title={formatMessage(deviceMessages.title)}
@@ -230,6 +254,136 @@ export const Settings: React.FC<SettingsProps> = ({
           </SettingsSection.Row>
         </SettingsSection.Card>
       </section>
+      {cloudConnectorStatus && (
+        <section
+          id="cloud-connector"
+          className={styles['cloud-connector-section']}
+        >
+          {isConnecting && (
+            <Banner
+              type="waiting"
+              title={formatMessage(cloudConnectorMessages.connectingTitle)}
+              description={formatMessage(
+                cloudConnectorMessages.connectingDescription,
+              )}
+            />
+          )}
+          {isDisconnecting && (
+            <Banner
+              type="waiting"
+              title={formatMessage(cloudConnectorMessages.disconnectingTitle)}
+              description={formatMessage(
+                cloudConnectorMessages.disconnectingDescription,
+              )}
+            />
+          )}
+          <SettingsSection.Title
+            title={formatMessage(cloudConnectorMessages.title)}
+            variant="secondary"
+          />
+          <SettingsSection.Card>
+            {cloudConnectorStatus.provisioning === 'provisioned' ? (
+              <>
+                <CloudConnectorDisconnectDialog
+                  logic={cloudConnectorDisconnectDialogLogic}
+                />
+                <SettingsSection.Row
+                  label={formatMessage(cloudConnectorMessages.connectedTitle)}
+                >
+                  <Badge
+                    classes={{
+                      container: styles['cloud-connector-section-badge'],
+                    }}
+                    uppercase={false}
+                    icon={<Success />}
+                    style={BadgeStyle.Light}
+                    variant={BadgeVariant.Positive}
+                  >
+                    {formatMessage(cloudConnectorMessages.connectedBadge)}
+                  </Badge>
+                </SettingsSection.Row>
+                <SettingsSection.Row
+                  classes={{
+                    label: styles['cloud-connector-section-description'],
+                  }}
+                  label={formatMessage(
+                    cloudConnectorMessages.connectedDescription,
+                  )}
+                >
+                  <SettingsSection.ExternalLink
+                    href={`${Config.CLOUD_HOME_URL}/devices/${cloudConnectorStatus.device_id}`}
+                    onOpenExternal={onOpenExternal}
+                    label={formatMessage(
+                      cloudConnectorMessages.openArduinoCloudButton,
+                    )}
+                  />
+                </SettingsSection.Row>
+                <SettingsSection.Divider />
+                <SettingsSection.Row
+                  label={formatMessage(cloudConnectorMessages.disconnectTitle)}
+                >
+                  <Button
+                    disabled={isDisconnecting}
+                    appearance={ButtonAppearance.LowContrast}
+                    variant={ButtonVariant.Primary}
+                    size={ButtonSize.XXSmall}
+                    onClick={disconnectBoard}
+                  >
+                    {formatMessage(cloudConnectorMessages.disconnectAction)}
+                  </Button>
+                </SettingsSection.Row>
+              </>
+            ) : (
+              <>
+                <CloudConnectorConnectDialog
+                  logic={cloudConnectorConnectDialogLogic}
+                />
+                <SettingsSection.Row
+                  label={
+                    <div className={styles['cloud-connector-section-connect']}>
+                      <AccountArduinoCloud
+                        className={
+                          styles['cloud-connector-section-connect-icon']
+                        }
+                      />
+                      <XXSmall
+                        className={
+                          styles['cloud-connector-section-connect-title']
+                        }
+                      >
+                        {formatMessage(cloudConnectorMessages.connectTitle)}
+                      </XXSmall>
+                    </div>
+                  }
+                >
+                  <Button
+                    disabled={isConnecting}
+                    variant={ButtonVariant.Secondary}
+                    size={ButtonSize.XXSmall}
+                    onClick={connectBoard}
+                  >
+                    {formatMessage(cloudConnectorMessages.connectAction)}
+                  </Button>
+                </SettingsSection.Row>
+                <SettingsSection.Row
+                  classes={{
+                    label: styles['cloud-connector-section-description'],
+                  }}
+                  label={formatMessage(
+                    cloudConnectorMessages.connectDescription,
+                  )}
+                >
+                  <SettingsSection.ExternalLink
+                    href={ARDUINO_CLOUD_URL}
+                    onOpenExternal={onOpenExternal}
+                    label={formatMessage(cloudConnectorMessages.moreInfoButton)}
+                  />
+                </SettingsSection.Row>
+              </>
+            )}
+          </SettingsSection.Card>
+        </section>
+      )}
       {!isVentunoQ && (
         <section>
           <SettingsSection.Title
@@ -476,6 +630,12 @@ export const Settings: React.FC<SettingsProps> = ({
           </SettingsSection.Row>
         </SettingsSection.Card>
       </section>
+      {agentSection ? (
+        <>
+          <SettingsSection.Divider space={40} />
+          {agentSection}
+        </>
+      ) : null}
       <section className={styles['copyright']}>
         <XXXSmall>{formatMessage(settingsMessages.copyright)}</XXXSmall>
       </section>

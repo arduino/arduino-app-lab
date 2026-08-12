@@ -3,7 +3,7 @@ import {
   BrickCreateUpdateRequest,
   BrickInstance,
 } from '@cloud-editor-mono/infrastructure';
-import { capitalize } from 'lodash';
+import { capitalize } from 'lodash-es';
 import { useEffect, useState } from 'react';
 
 import { Button, ButtonVariant } from '../../../components-by-app/app-lab';

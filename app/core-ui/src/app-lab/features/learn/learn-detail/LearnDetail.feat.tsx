@@ -1,8 +1,8 @@
 import {
   MarkdownReader,
+  PageLayout,
   Skeleton,
   TopBar,
-  TopBarBack,
   TutorialIcon,
 } from '@cloud-editor-mono/ui-components/lib/components-by-app/app-lab';
 
@@ -19,51 +19,42 @@ const LearnDetail: React.FC<LearnDetailProps> = (props: LearnDetailProps) => {
     resource,
     isLoading,
     contentRef,
-    goBack,
     openExternalLink,
     openInternalLink,
   } = useLearnDetailLogic(resourceId);
 
   return (
-    <section className={styles['main']}>
+    <PageLayout header={<TopBar pathItems={['learn', resource?.title]} />}>
       {isLoading ? (
         <div className={styles['loading-container']}>
           <Skeleton variant="rounded" count={50} />
         </div>
       ) : (
-        <>
-          <TopBar
-            pathItems={[
-              <TopBarBack label="Learn" onClick={goBack} key={0} />,
-              resource?.title,
-            ]}
-          />
-          <div className={styles['resource-container']} ref={contentRef}>
-            <div className={styles['resource-header']}>
-              <div className={styles['resource-title']}>
-                <TutorialIcon icon={resource?.icon} variant="self-aligned" />
-                <h1>{resource?.title}</h1>
+        <div className={styles['resource-container']} ref={contentRef}>
+          <div className={styles['resource-header']}>
+            <div className={styles['resource-title']}>
+              <TutorialIcon icon={resource?.icon} variant="self-aligned" />
+              <h1>{resource?.title}</h1>
+            </div>
+            <div className={styles['resource-description']}>
+              <div className={styles['description']}>
+                {resource?.description}
               </div>
-              <div className={styles['resource-description']}>
-                <div className={styles['description']}>
-                  {resource?.description}
-                </div>
-                <div className={styles['last-revision']}>
-                  {resource?.lastRevision &&
-                    `Last revision ${resource.lastRevision.toLocaleDateString()}`}
-                </div>
+              <div className={styles['last-revision']}>
+                {resource?.lastRevision &&
+                  `Last revision ${resource.lastRevision.toLocaleDateString()}`}
               </div>
             </div>
-            <MarkdownReader
-              classes={{ reader: styles['markdown-reader'] }}
-              content={resource?.content || ''}
-              onOpenExternalLink={openExternalLink}
-              onOpenInternalLink={openInternalLink}
-            />
           </div>
-        </>
+          <MarkdownReader
+            classes={{ reader: styles['markdown-reader'] }}
+            content={resource?.content || ''}
+            onOpenExternalLink={openExternalLink}
+            onOpenInternalLink={openInternalLink}
+          />
+        </div>
       )}
-    </section>
+    </PageLayout>
   );
 };
 

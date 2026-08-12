@@ -30,18 +30,18 @@ class ErrorPageBoundary extends Component<
   ErrorPageBoundaryState
 > {
   declare context: React.ContextType<typeof ComponentContext>;
-  static contextType = ComponentContext;
+  static override contextType = ComponentContext;
 
   constructor(props: ErrorPageBoundaryProps) {
     super(props);
     this.state = initialErrorBoundaryState;
   }
 
-  componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
+  override componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
     this.setState({ hasError: true, errorInfo, errorMsg: error.message });
   }
 
-  render(): React.ReactNode {
+  override render(): React.ReactNode {
     if (this.state.hasError) {
       return (
         <ErrorPage

@@ -15,6 +15,9 @@ const ReplaceSection: React.FC<ReplaceSectionProps> = (
   const { replaceValue, setReplaceValue, replaceHandler, replaceAllHandler } =
     useReplace(view, searchState, selectNextMatch);
 
+  const isReadOnly = view.state.readOnly;
+  const isDisabled = !totalOccurrences || isReadOnly;
+
   return (
     <div className={styles['row']}>
       <div className={styles['replace']}>
@@ -25,18 +28,18 @@ const ReplaceSection: React.FC<ReplaceSectionProps> = (
         />
       </div>
       <button
-        disabled={!totalOccurrences}
+        disabled={isDisabled}
         className={clsx(styles['actions-first'], styles['button'], {
-          [styles['disable']]: !totalOccurrences,
+          [styles['disable']]: isDisabled,
         })}
         onClick={(): void => replaceHandler(replaceValue)}
       >
         {formatMessage(messages.replace)}
       </button>
       <button
-        disabled={!totalOccurrences}
+        disabled={isDisabled}
         className={clsx(styles['actions-second'], styles['button'], {
-          [styles['disable']]: !totalOccurrences,
+          [styles['disable']]: isDisabled,
         })}
         onClick={(): void => replaceAllHandler(replaceValue)}
       >

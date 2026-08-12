@@ -1,0 +1,240 @@
+@use "@cloud-editor-mono/ui-components/public/shared.module.scss";
+@use "@cloud-editor-mono/arduino-sass/src/fonts" as fonts;
+@use "@cloud-editor-mono/arduino-sass/src/typography" as typography;
+
+.chat-input {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px 24px 24px;
+  position: relative;
+}
+
+.chat-input-box {
+  position: relative;
+  display: flex;
+  flex-direction: row;
+  align-items: flex-end;
+  width: 100%;
+  max-width: var(--chat-content-max-width);
+  margin-inline: auto;
+  border-radius: 7px;
+  border: 1px solid var(--border-default, #434F54);
+  background: var(--surface-bg-below-1, #171E21);
+}
+
+.chat-input-action {
+  position: absolute;
+  right: 12px;
+  bottom: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-default, #ffffff);
+  cursor: pointer;
+  transition: color 0.1s, background 0.1s;
+
+  &:hover:not(:disabled) {
+    background: var(--component-bg-flexible, rgba(174, 184, 184, 0.15));
+  }
+
+  &:disabled {
+    color: var(--text-inverted-subtle, #5d6a6b);
+    cursor: default;
+  }
+}
+
+.chat-input-action-icon {
+  flex-shrink: 0;
+  width: auto;
+  height: 7px;
+
+  path {
+    fill: currentColor;
+  }
+}
+
+.chat-input-field {
+  flex: 1;
+  min-width: 0;
+  box-sizing: border-box;
+  resize: none;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: var(--text-subtle, #c9d2d2);
+  font-family: inherit;
+  font-size: typography.$font-size-x-small;
+  font-weight: fonts.$font-weight-normal;
+  line-height: 22px;
+  padding: 12px 44px 12px 16px;
+  max-height: 160px;
+  overflow-y: hidden;
+
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+  scrollbar-color: var(--component-bg-below-2, #090F11)
+    var(--component-bg-below-2, #090F11);
+
+  &::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: var(--component-bg-below-2, #090F11);
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: var(--component-bg-below-2, #090F11);
+    background-clip: padding-box;
+    border: 2px solid transparent;
+    border-radius: 10px;
+  }
+
+  &::placeholder {
+    color: var(--text-subtle, #c9d2d2);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+  }
+}
+
+.chat-input-toolbar {
+  display: flex;
+  width: 100%;
+  max-width: var(--chat-content-max-width);
+  margin-inline: auto;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  padding-inline: 2px;
+  // Reserve the picker row's height so it doesn't collapse to 0 while the models/modes load and
+  // then push the thread up when the pickers appear (avoids the on-open layout shift).
+  min-height: 32px;
+}
+
+.chat-input-toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.chat-input-picker {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.chat-input-picker-trigger-wrapper {
+  display: inline-flex;
+}
+
+.chat-input-picker-tooltip {
+  pointer-events: none !important;
+}
+
+.chat-input-picker-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  border: 2px solid transparent;
+  color: var(--text-default, #ffffff);
+  font-family: inherit;
+  font-size: typography.$font-size-xx-small;
+  font-weight: fonts.$font-weight-normal;
+  cursor: pointer;
+  padding: 6px 12px;
+  border-radius: 8px;
+  line-height: 1;
+  transition: border-color 0.1s, background 0.1s, color 0.1s;
+
+  &:hover {
+    background: var(--component-bg-flexible, rgba(174, 184, 184, 0.15));
+    color: var(--text-default, #ffffff);
+  }
+
+  &[aria-expanded='true'] {
+    background: transparent;
+    border-color: var(--border-strong, #7F8C8D);
+    color: var(--text-default, #ffffff);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: default;
+  }
+}
+
+.chat-input-picker-value {
+  white-space: nowrap;
+}
+
+.chat-input-picker-icon {
+  width: 7px;
+  height: 4px;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.chat-input-picker-menu {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  right: 0;
+  min-width: 180px;
+  list-style: none;
+  margin: 0;
+  padding: 4px;
+  background: var(--surface-bg-above, #374146);
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  z-index: 100;
+
+  display: flex;
+  flex-direction: column;
+
+  li {
+    display: flex;
+  }
+}
+
+.chat-input-picker-option-wrapper {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+}
+
+.chat-input-picker-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  background: transparent;
+  border: none;
+  color: var(--text-default, #ffffff);
+  font-family: inherit;
+  font-size: typography.$font-size-x-small;
+  text-align: left;
+  cursor: pointer;
+  padding: 8px 12px;
+  border-radius: 6px;
+  line-height: 1.6;
+
+  &:hover {
+    background: linear-gradient(0deg, var(--component-bg-selected, rgba(37, 194, 199, 0.20)) 0%, var(--component-bg-selected, rgba(37, 194, 199, 0.20)) 100%), var(--component-bg-flexible, rgba(174, 184, 184, 0.15));
+  }
+}
+
+.chat-input-picker-check {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  color: var(--text-default, #ffffff);
+}

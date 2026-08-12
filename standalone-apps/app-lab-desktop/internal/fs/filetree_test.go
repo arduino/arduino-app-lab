@@ -50,9 +50,17 @@ func deepCompareTree(t *testing.T, got, expected *FSNode) {
 		(got.Extension != nil && *got.Extension != *expected.Extension) {
 		t.Errorf("Extension mismatch\n\tGot: %v\n\tExpected: %v", got.Extension, expected.Extension)
 	}
-	if (got.MimeType == nil) != (expected.MimeType == nil) ||
-		(got.MimeType != nil && *got.MimeType != *expected.MimeType) {
-		t.Errorf("MimeType mismatch\n\tGot: %v\n\tExpected: %v", got.MimeType, expected.MimeType)
+	// MimeType is derived from mime.TypeByExtension, whose result depends on the
+	// host OS's MIME database (per the Go docs it is augmented by the system's
+	// mime.types files on unix and the registry on Windows). Its exact value
+	// therefore varies across environments, so we only verify the structural
+	// expectation (files get a populated MIME type, directories get none) rather
+	// than asserting an exact, environment-dependent string.
+	switch {
+	case expected.MimeType == nil && got.MimeType != nil:
+		t.Errorf("Unexpected MimeType on node %s\n\tGot: %q", got.Path, *got.MimeType)
+	case expected.MimeType != nil && (got.MimeType == nil || *got.MimeType == ""):
+		t.Errorf("Missing MimeType on node %s", got.Path)
 	}
 
 	// Variable fields, only check is got is correct format

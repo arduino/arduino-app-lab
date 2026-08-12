@@ -1,17 +1,21 @@
 import { CaretDown as CaretDownIcon } from '@cloud-editor-mono/images/assets/icons';
+import { isValidResourceName } from '@cloud-editor-mono/infrastructure';
 import clsx from 'clsx';
 import { memo, useCallback, useEffect, useRef, useState } from 'react';
 import { NodeRendererProps } from 'react-arborist';
 
+import { useI18n } from '../i18n/useI18n';
 import { XXSmall } from '../typography';
 import styles from './file-tree.module.scss';
 import { TreeNode } from './fileTree.type';
+import { messages } from './messages';
 
 type FileNodeProps = NodeRendererProps<TreeNode> & {
   isEditing: boolean;
   isReadOnly: boolean;
   onEditSubmit: (newName: string) => Promise<void>;
   onEditCancel: () => void;
+  onValidationError?: () => void;
   onDelete: () => Promise<void>;
   renderNodeIcon: (node: TreeNode) => JSX.Element;
 };
@@ -23,6 +27,7 @@ const FileNode: React.FC<FileNodeProps> = ({
   isEditing,
   onEditSubmit,
   onEditCancel,
+  onValidationError,
   renderNodeIcon,
 }: FileNodeProps) => {
   const inputRef = useRef<HTMLInputElement>(null);
@@ -33,22 +38,64 @@ const FileNode: React.FC<FileNodeProps> = ({
 
   const [value, setValue] = useState<string>(node.data.name);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const { formatMessage } = useI18n();
 
-  const preSubmit = useCallback((): void => {
-    if (isSubmitting) {
-      return;
+  useEffect(() => {
+    if (isEditing) {
+      setValue(node.data.name);
     }
+  }, [isEditing, node.data.name]);
 
-    const isNewNode = node.data.name === '';
-    if (value && (isNewNode || value !== node.data.name)) {
+  const trimmedValue = value.trim();
+  // Derived per node from this row's own input, rather than held as one flag for
+  // the whole tree: it is this input that is invalid, and the state has to
+  // follow the input's lifetime. Checked as you type so the row can show which
+  // name is being refused, instead of the name silently disappearing on submit.
+  const hasInvalidName =
+    trimmedValue !== '' && !isValidResourceName(trimmedValue);
+
+  const preSubmit = useCallback(
+    (trigger: 'enter' | 'blur'): void => {
+      if (isSubmitting) {
+        return;
+      }
+
+      const isNewNode = node.data.name === '';
+      const isUnchanged = !isNewNode && trimmedValue === node.data.name;
+      if (!trimmedValue || isUnchanged) {
+        onEditCancel();
+        return;
+      }
+
+      if (hasInvalidName) {
+        // Enter holds the input open so the name can be corrected in place. A
+        // deliberate blur means the user is leaving, so cancel — otherwise the
+        // row is stuck in an input that can never be submitted and Escape is
+        // the only way out.
+        if (trigger === 'blur') {
+          onEditCancel();
+        } else {
+          onValidationError?.();
+          inputRef.current?.focus();
+        }
+        return;
+      }
+
       setIsSubmitting(true);
-      onEditSubmit(value).finally(() => {
+      onEditSubmit(trimmedValue).finally(() => {
         setIsSubmitting(false);
       });
-    } else {
-      onEditCancel();
-    }
-  }, [isSubmitting, node.data.name, onEditCancel, onEditSubmit, value]);
+    },
+    [
+      hasInvalidName,
+      isSubmitting,
+      node.data.name,
+      onEditCancel,
+      onEditSubmit,
+      onValidationError,
+      trimmedValue,
+    ],
+  );
 
   useEffect(() => {
     if (isEditing && inputRef.current) {
@@ -91,12 +138,20 @@ const FileNode: React.FC<FileNodeProps> = ({
       {isEditing && (
         <input
           ref={inputRef}
-          className={styles['tree-node-input']}
+          className={clsx(styles['tree-node-input'], {
+            [styles['tree-node-input--error']]: hasInvalidName,
+          })}
           autoCorrect="off"
           autoCapitalize="off"
           spellCheck="false"
           value={value}
           disabled={isSubmitting}
+          aria-invalid={hasInvalidName}
+          title={
+            hasInvalidName
+              ? formatMessage(messages.invalidCharactersInName)
+              : undefined
+          }
           onChange={(e): void => {
             if (!isSubmitting) {
               setValue(e.target.value);
@@ -126,7 +181,7 @@ const FileNode: React.FC<FileNodeProps> = ({
               return;
             }
 
-            preSubmit();
+            preSubmit('blur');
           }}
           onClick={(e): void => e.stopPropagation()}
           onFocus={(): void => {
@@ -136,7 +191,7 @@ const FileNode: React.FC<FileNodeProps> = ({
             e.stopPropagation();
 
             if (e.key === 'Enter' && !isSubmitting) {
-              preSubmit();
+              preSubmit('enter');
             } else if (e.key === 'Escape') {
               onEditCancel();
             }

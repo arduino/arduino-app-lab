@@ -16,6 +16,7 @@ export type ConfigDirs = components['schemas']['ConfigDirectories'];
 export type BrickInstance = components['schemas']['BrickInstance'];
 export type BrickListItem = components['schemas']['BrickListItem'];
 export type BrickDetails = components['schemas']['BrickDetailsResult'];
+export type AppReference = components['schemas']['AppReference'];
 export type BrickCreateUpdateRequest =
   components['schemas']['BrickCreateUpdateRequest'];
 export type BrickConfigVariable = components['schemas']['BrickConfigVariable'];
@@ -42,6 +43,31 @@ export type ListAppBrickInstancesResult =
 export type ListAppPortsResult = components['schemas']['AppPortResponse'];
 
 export type GetConfigResult = components['schemas']['ConfigResponse'];
+
+// GET /v1/examples (arduino-app-cli PR #537). Hand-written until the endpoint
+// lands in the generated OpenAPI spec, then swap these for components['schemas'].
+export interface ExampleInfo {
+  id: string;
+  encoded_id?: string;
+  name?: string;
+  description?: string;
+}
+
+export interface ExampleCategory {
+  category?: string;
+  examples?: ExampleInfo[] | null;
+}
+
+export interface ExampleBrick {
+  brick?: string;
+  brick_category?: string;
+  examples?: ExampleInfo[] | null;
+}
+
+export interface ExampleCatalogResult {
+  'core-and-foundational'?: ExampleCategory[] | null;
+  bricks?: ExampleBrick[] | null;
+}
 
 export type ListBrickResult = components['schemas']['BrickListResult'];
 

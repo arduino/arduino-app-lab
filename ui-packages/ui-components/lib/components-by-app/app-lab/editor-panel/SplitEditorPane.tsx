@@ -2,19 +2,27 @@ import { SplitView } from '@cloud-editor-mono/images/assets/icons';
 import clsx from 'clsx';
 import { memo } from 'react';
 
-import { CodeEditor } from '../../../code-editor';
-import { CodeEditorLogic } from '../../../code-editor';
+import {
+  CodeEditor,
+  CodeEditorLogic,
+  EditorBannerKind,
+} from '../../../code-editor';
 import { KeywordMap } from '../../../code-mirror';
 import { ViewInstances } from '../../../code-mirror/codeMirrorViewInstances';
 import EditorImage from '../../../editor-image/EditorImage';
 import panelStyles from '../../../editor-panel/editor-panel.module.scss';
 import { messages as panelMessages } from '../../../editor-panel/messages';
-import { EditorTabsBar, SUPPORTED_IMAGE_TYPES } from '../../../editor-tabs-bar';
-import { TabsBarLogic } from '../../../editor-tabs-bar';
+import {
+  BRICK_FILE_EXTENSION,
+  EditorTabsBar,
+  SUPPORTED_IMAGE_TYPES,
+  TabsBarLogic,
+} from '../../../editor-tabs-bar';
 import EditorToolbar from '../../../editor-toolbar/EditorToolbar';
 import { useI18n } from '../../../i18n/useI18n';
-import BrickDetail from '../brick-detail/BrickDetail';
 import { BrickDetailLogic } from '../brick-detail';
+import BrickDetail from '../brick-detail/BrickDetail';
+import { useTooltip } from '../essential/tooltip';
 import { MarkdownReader } from '../markdown-reader';
 import styles from './app-lab-editor-panel.module.scss';
 
@@ -22,7 +30,7 @@ interface SplitEditorPaneProps {
   codeEditorLogic: CodeEditorLogic;
   tabsBarLogic: TabsBarLogic;
   getKeywords: () => KeywordMap | undefined;
-  readOnlyBanner?: JSX.Element;
+  renderBanner?: (kind: EditorBannerKind) => JSX.Element | undefined;
   selectedFile?: { id: string; ext: string; getData: () => string | undefined };
   shouldRenderMarkdown?: boolean;
   setShouldRenderMarkdown?: (value: boolean) => void;
@@ -33,6 +41,7 @@ interface SplitEditorPaneProps {
   openExternalLink?: (url: string) => void;
   onCopyCode?: () => void;
   readOnly?: boolean;
+  onFileError?: (error: Error) => void;
   /**
    * Called when the user clicks the Split CTA inside panel B. Receiver
    * should mirror the current panel-B selection into panel A (Split
@@ -63,7 +72,7 @@ const SplitEditorPane: React.FC<SplitEditorPaneProps> = ({
   codeEditorLogic,
   tabsBarLogic,
   getKeywords,
-  readOnlyBanner,
+  renderBanner,
   selectedFile,
   shouldRenderMarkdown,
   setShouldRenderMarkdown,
@@ -74,6 +83,7 @@ const SplitEditorPane: React.FC<SplitEditorPaneProps> = ({
   openExternalLink,
   onCopyCode,
   readOnly,
+  onFileError,
   onSplitClick,
   onActivate,
   classes,
@@ -82,9 +92,19 @@ const SplitEditorPane: React.FC<SplitEditorPaneProps> = ({
   const isImage =
     !!selectedFile && SUPPORTED_IMAGE_TYPES.includes(`.${selectedFile.ext}`);
   const isBrick =
-    !!selectedFile && selectedFile.ext === 'brick' && !!brickDetailLogic;
+    !!selectedFile &&
+    selectedFile.ext === BRICK_FILE_EXTENSION &&
+    !!brickDetailLogic;
   const isMarkdownRendered =
     selectedFile?.ext === 'md' && !!shouldRenderMarkdown;
+
+  const { props: tooltipProps, renderTooltip: renderSplitTooltip } = useTooltip(
+    {
+      content: formatMessage(panelMessages.splitViewButton),
+      timeout: 0,
+      renderDelay: 500,
+    },
+  );
 
   return (
     <div
@@ -102,18 +122,20 @@ const SplitEditorPane: React.FC<SplitEditorPaneProps> = ({
         }}
       />
       {onSplitClick && (
-        <button
-          type="button"
-          className={clsx(
-            panelStyles['split-toggle'],
-            panelStyles['split-toggle--disabled'],
-          )}
-          disabled
-          aria-label={formatMessage(panelMessages.splitViewButton)}
-          title={formatMessage(panelMessages.splitViewButton)}
-        >
-          <SplitView />
-        </button>
+        <div {...tooltipProps} className={panelStyles['split-toggle-wrapper']}>
+          <button
+            type="button"
+            className={clsx(
+              panelStyles['split-toggle'],
+              panelStyles['split-toggle--disabled'],
+            )}
+            disabled
+            aria-label={formatMessage(panelMessages.splitViewButton)}
+          >
+            <SplitView />
+          </button>
+          {renderSplitTooltip()}
+        </div>
       )}
       {selectedFile?.ext === 'md' && (
         <EditorToolbar
@@ -165,8 +187,9 @@ const SplitEditorPane: React.FC<SplitEditorPaneProps> = ({
           viewInstanceId={ViewInstances.Editor2}
           codeEditorLogic={codeEditorLogic}
           getKeywords={getKeywords}
-          readOnlyBanner={readOnlyBanner}
+          renderBanner={renderBanner}
           classes={{ container: classes?.editorCode }}
+          onFileError={onFileError}
         />
       )}
     </div>

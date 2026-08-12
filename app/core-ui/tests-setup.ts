@@ -1,6 +1,6 @@
 import { MappedPort } from '@cloud-editor-mono/domain';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { isEqual } from 'lodash';
+import { isEqual } from 'lodash-es';
 import { createElement, FC, useCallback, useState } from 'react';
 import { BehaviorSubject, Subject } from 'rxjs';
 import { AudioContext as MockAudioContext } from 'standardized-audio-context-mock';

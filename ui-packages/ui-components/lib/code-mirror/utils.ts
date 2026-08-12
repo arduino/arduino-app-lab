@@ -1,4 +1,9 @@
-import { Annotation, EditorSelection, Extension } from '@codemirror/state';
+import {
+  Annotation,
+  EditorSelection,
+  Extension,
+  Text,
+} from '@codemirror/state';
 import { EditorView, ViewUpdate } from '@codemirror/view';
 
 import { SelectedStrings } from '../code-editor/codeEditor.type';
@@ -118,3 +123,14 @@ export const DEFAULT_LINE_NUMBERS_GUTTER_WIDTH = 30;
 // a value injection, with a value instance id containing this suffix will
 // be revertible by avoiding state/history wipe in `createUseCodeMirrorHook.ts`
 export const REVERTIBLE_INJECT_ID_SUFFIX = '_FROM_ASSIST';
+
+/**
+ * Convert a content-store string to a CodeMirror `Text`, splitting lines the
+ * way `EditorState.create` does (\r\n, \r, or \n — CodeMirror's default line
+ * separators). Use this whenever comparing store content against an editor
+ * doc: a plain split('\n') keeps the \r on every line of a CRLF file, so the
+ * comparison fails unconditionally even when the content is identical.
+ */
+export function contentToText(value: string): Text {
+  return Text.of(value.split(/\r\n?|\n/));
+}

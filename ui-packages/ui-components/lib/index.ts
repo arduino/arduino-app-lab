@@ -80,6 +80,7 @@ export {
 export { NumberField } from './essential/number-field';
 export { default as ProgressBar } from './essential/progress-bar/ProgressBar';
 export { Radio, RadioGroup } from './essential/radio-group';
+export { default as SearchField } from './essential/search-field/SearchField';
 export { ToggleButton } from './essential/toggle-button';
 export { type GenAiBannerLogic, GenAiBanner } from './gen-ai-banner';
 export { type FormatMessage, useI18n } from './i18n/useI18n';

@@ -1,4 +1,4 @@
-import { uniqueId } from 'lodash';
+import { uniqueId } from 'lodash-es';
 import { BehaviorSubject, filter, shareReplay, Subject } from 'rxjs';
 
 import {

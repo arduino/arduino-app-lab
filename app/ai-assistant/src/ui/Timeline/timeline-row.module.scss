@@ -1,0 +1,183 @@
+@use "@cloud-editor-mono/ui-components/public/shared.module.scss";
+@use "@cloud-editor-mono/arduino-sass/src/fonts" as fonts;
+@use "@cloud-editor-mono/arduino-sass/src/variables" as variables;
+@use "@cloud-editor-mono/arduino-sass/src/typography" as typography;
+
+// Horizontal center of the 16px marker column — the rail line and every marker sit on it.
+$rail-x: 8px;
+// Vertical center of a marker within its row (row padding-top 0 + half the 18px marker).
+$rail-top: 9px;
+
+.timeline-row {
+  position: relative;
+  display: grid;
+  grid-template-columns: 16px 1fr;
+  gap: 10px;
+  align-items: start;
+  padding-bottom: 14px;
+}
+
+// The rail: a full-height line behind the marker column. Spans row-to-row so it
+// stays continuous even when a row expands; trimmed to the marker centers at the ends.
+.timeline-row::before {
+  content: '';
+  position: absolute;
+  left: $rail-x;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  transform: translateX(-50%);
+  background: var(--border-inverted, #232b2e);
+}
+
+.timeline-row:first-child::before {
+  top: $rail-top;
+}
+
+.timeline-row:last-child::before {
+  bottom: calc(100% - #{$rail-top});
+}
+
+.timeline-row:only-child::before {
+  display: none;
+}
+
+.timeline-marker {
+  position: relative;
+  z-index: 1;
+  width: 16px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-default, #ffffff);
+  background: var(--surface-bg-below-2, #090f11);
+
+  svg [fill]:not([fill='none']) {
+    fill: currentColor;
+  }
+
+  &--thinking {
+    color: var(--text-accent, #25c2c7);
+  }
+
+  &--done {
+    color: var(--feedback-success-default, #4caf7d);
+  }
+
+  &--failed {
+    color: var(--feedback-error-default, #ff8878);
+  }
+}
+
+// Normalize icons by height so mixed viewBoxes read as one size. The wide, short
+// Checkmark is normalized by width instead, so "Done" doesn't dwarf the others.
+.timeline-icon {
+  width: auto;
+  height: 12px;
+  max-width: 16px;
+
+  &--done {
+    width: 12px;
+    height: auto;
+  }
+
+  // FileOutline (read) and Run (task) are tall, solid glyphs — trim their height so they read as one size with the others.
+  &--read,
+  &--task {
+    height: 10px;
+  }
+}
+
+.timeline-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: currentColor;
+}
+
+.timeline-content {
+  min-width: 0;
+}
+
+.timeline-row-header {
+  position: relative; 
+  width: fit-content;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font-family: variables.$font-sans;
+  display: flex;
+  align-items: center;
+  min-height: 18px;
+  gap: 8px;
+  text-align: left;
+  cursor: pointer;
+  padding: 0;
+
+  &--static {
+    cursor: default;
+  }
+}
+
+.timeline-toggle {
+  display: flex;
+  align-items: center;
+  flex: none;
+  padding: 4px;
+  margin: -4px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+  }
+
+  &:focus-visible {
+    outline: 1px solid var(--text-accent, #25c2c7);
+    outline-offset: 1px;
+    border-radius: 2px;
+  }
+}
+
+.timeline-chevron {
+  width: 7px;
+  height: 7px;
+  flex: none;
+  margin-top: 1px;
+  color: var(--text-default, #ffffff);
+  transition: transform 0.2s ease;
+  transform: rotate(-90deg);
+
+  &--expanded {
+    transform: rotate(0deg);
+  }
+}
+
+.timeline-title {
+  flex: 0 1 auto;
+  min-width: 0;
+  font-size: typography.$font-size-x-small;
+  font-weight: fonts.$font-weight-semibold;
+  line-height: 18px;
+  color: var(--text-default, #ffffff);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transition: color 0.3s ease;
+
+  .timeline-file-link {
+    position: relative;
+    z-index: 1;
+    color: inherit;
+  }
+}
+
+.timeline-details {
+  margin-top: 8px;
+}
+

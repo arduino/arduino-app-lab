@@ -1,0 +1,103 @@
+.board-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  height: 56px;
+  padding: 0 8px;
+  border-radius: 4px;
+
+  // hover affordance covers the whole board rectangle, not just the switcher button
+  &:hover {
+    background: var(--component-bg-flexible, rgba(174, 184, 184, 0.15));
+  }
+}
+
+.thumbnail {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 8px;
+  border-radius: 4px;
+  background: var(--surface-bg-below-1, #171e21);
+
+  svg {
+    width: 32px;
+    height: 32px;
+  }
+}
+
+.text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+// Tooltip wrapper around each line. Must not be a block container: the line box
+// would then get a strut from the inherited :root line-height (170% of 16px),
+// which is taller than the XXSmall/XXXSmall lines inside it and pads both rows
+// apart. Flex sizes to the child's own line-height instead.
+.text-line {
+  display: flex;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.name {
+  color: var(--text-default, #ffffff);
+}
+
+.family {
+  color: var(--text-inverted-subtle, #5d6a6b);
+}
+
+.switcher-tooltip-trigger {
+  display: flex;
+  flex-shrink: 0;
+}
+
+.dropdown-menu-button-wrapper {
+  flex-shrink: 0;
+}
+
+// low-contrast tertiary icon button, like the bottom bar buttons
+.dropdown-menu-button {
+  box-sizing: border-box;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 2px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  cursor: pointer;
+  color: var(--text-default, #ffffff);
+  transition: all 0.1s;
+
+  svg {
+    width: 16px;
+    height: 16px;
+
+    path {
+      fill: var(--text-default, #ffffff);
+    }
+  }
+
+  &:hover {
+    background-color: var(--component-bg-flexible, rgba(174, 184, 184, 0.15));
+  }
+
+  &:focus {
+    outline: unset;
+  }
+}
+
+// open/selected: the same border ring the bottom bar buttons use when selected
+.dropdown-menu-button-open {
+  border-color: var(--border-strong, #7f8c8d);
+  box-shadow: inset 0 0 0 2px var(--component-bg-baseline, #232b2e);
+}

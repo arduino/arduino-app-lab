@@ -1,12 +1,12 @@
 ---
 name: github.com/wailsapp/wails/v2/pkg/menu/keys
-version: v2.12.0
+version: v2.13.0
 type: go
-summary:
+summary: 
 homepage: https://pkg.go.dev/github.com/wailsapp/wails/v2/pkg/menu/keys
 license: mit
 licenses:
-- sources: v2@v2.12.0/LICENSE
+- sources: v2@v2.13.0/LICENSE
   text: |
     MIT License
 

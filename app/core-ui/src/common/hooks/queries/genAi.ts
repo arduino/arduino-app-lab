@@ -30,7 +30,7 @@ import { EventSourceMessage } from '@microsoft/fetch-event-source';
 import { useNavigate, useSearch } from '@tanstack/react-location';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { get, set } from 'idb-keyval';
-import { uniqueId } from 'lodash';
+import { uniqueId } from 'lodash-es';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import {

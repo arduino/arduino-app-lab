@@ -18,12 +18,11 @@ import { FunctionComponent, SVGProps, useCallback } from 'react';
 import { BasicFileData, BasicFilesData } from './hooks/files.type';
 import { useRetrieveSketches } from './hooks/queries/createShared';
 
-export const DEFAULT_EXTENSIONLESS_FILE_CONTENT =
-  'Switch the .txt extension to something like .py or .ino to unlock syntax highlighting.';
-
-export function getDefaultFileContent(fileExtension: string): string {
-  return !fileExtension ? DEFAULT_EXTENSIONLESS_FILE_CONTENT : '';
-}
+// Fire-and-forget a promise, logging rejections instead of leaving them as
+// unhandled promise rejections. `label` names the operation for the log line.
+export const catchLogError = (label: string, op: Promise<unknown>): void => {
+  void op.catch((error) => console.error(`${label} failed`, error));
+};
 
 export function getMainLibraryFile<
   T extends

@@ -16,12 +16,29 @@
   }
 
   .body {
+    &.bricks {
+      padding: 0 !important;
+
+      .container {
+        padding: 16px 16px 0;
+        height: calc(100% - 16px);
+      }
+    }
+
     &.succeeded {
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
     }
+  }
+
+  .bricks-footer {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    margin: 0 16px;
+    width: calc(100% - 32px);
+    border-top: 1px solid #434f54;
   }
 }
 

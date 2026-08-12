@@ -1,3 +1,304 @@
+export namespace agent {
+	
+	export class AgentMode {
+	    id: string;
+	    name: string;
+	    description?: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new AgentMode(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.id = source["id"];
+	        this.name = source["name"];
+	        this.description = source["description"];
+	    }
+	}
+	export class AgentModel {
+	    id: string;
+	    name: string;
+	    description?: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new AgentModel(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.id = source["id"];
+	        this.name = source["name"];
+	        this.description = source["description"];
+	    }
+	}
+	export class AuthMethod {
+	    id: string;
+	    name: string;
+	    description?: string;
+	    type?: string;
+	    args?: string[];
+	
+	    static createFrom(source: any = {}) {
+	        return new AuthMethod(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.id = source["id"];
+	        this.name = source["name"];
+	        this.description = source["description"];
+	        this.type = source["type"];
+	        this.args = source["args"];
+	    }
+	}
+	export class AuthStatus {
+	    authenticated: boolean;
+	    agentId?: string;
+	    isDefault?: boolean;
+	    method?: string;
+	    account?: string;
+	    connectedAt?: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new AuthStatus(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.authenticated = source["authenticated"];
+	        this.agentId = source["agentId"];
+	        this.isDefault = source["isDefault"];
+	        this.method = source["method"];
+	        this.account = source["account"];
+	        this.connectedAt = source["connectedAt"];
+	    }
+	}
+	export class ChoiceSubmission {
+	    selectedIds: string[];
+	    other?: string;
+	    cancelled?: boolean;
+	
+	    static createFrom(source: any = {}) {
+	        return new ChoiceSubmission(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.selectedIds = source["selectedIds"];
+	        this.other = source["other"];
+	        this.cancelled = source["cancelled"];
+	    }
+	}
+	export class PermissionOption {
+	    id: string;
+	    label: string;
+	    kind: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new PermissionOption(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.id = source["id"];
+	        this.label = source["label"];
+	        this.kind = source["kind"];
+	    }
+	}
+	export class PermissionOutcome {
+	    optionId?: string;
+	    cancelled?: boolean;
+	
+	    static createFrom(source: any = {}) {
+	        return new PermissionOutcome(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.optionId = source["optionId"];
+	        this.cancelled = source["cancelled"];
+	    }
+	}
+	export class ToolCall {
+	    id: string;
+	    title: string;
+	    kind?: string;
+	    status: string;
+	    input?: any;
+	    output?: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new ToolCall(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.id = source["id"];
+	        this.title = source["title"];
+	        this.kind = source["kind"];
+	        this.status = source["status"];
+	        this.input = source["input"];
+	        this.output = source["output"];
+	    }
+	}
+	export class PermissionRequest {
+	    id: string;
+	    sessionId: string;
+	    toolCall?: ToolCall;
+	    options: PermissionOption[];
+	    timeoutMs?: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new PermissionRequest(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.id = source["id"];
+	        this.sessionId = source["sessionId"];
+	        this.toolCall = this.convertValues(source["toolCall"], ToolCall);
+	        this.options = this.convertValues(source["options"], PermissionOption);
+	        this.timeoutMs = source["timeoutMs"];
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class SessionState {
+	    sessionId: string;
+	    status: string;
+	    modelId?: string;
+	    models?: AgentModel[];
+	    modeId?: string;
+	    modes?: AgentMode[];
+	    pendingPermission?: PermissionRequest;
+	
+	    static createFrom(source: any = {}) {
+	        return new SessionState(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.sessionId = source["sessionId"];
+	        this.status = source["status"];
+	        this.modelId = source["modelId"];
+	        this.models = this.convertValues(source["models"], AgentModel);
+	        this.modeId = source["modeId"];
+	        this.modes = this.convertValues(source["modes"], AgentMode);
+	        this.pendingPermission = this.convertValues(source["pendingPermission"], PermissionRequest);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class SessionSummary {
+	    id: string;
+	    title?: string;
+	    updatedAt?: string;
+	    status?: string;
+	    pinned?: boolean;
+	
+	    static createFrom(source: any = {}) {
+	        return new SessionSummary(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.id = source["id"];
+	        this.title = source["title"];
+	        this.updatedAt = source["updatedAt"];
+	        this.status = source["status"];
+	        this.pinned = source["pinned"];
+	    }
+	}
+
+}
+
+export namespace airuntime {
+	
+	export class Status {
+	    installed: boolean;
+	    version?: string;
+	    diskUsageBytes?: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new Status(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.installed = source["installed"];
+	        this.version = source["version"];
+	        this.diskUsageBytes = source["diskUsageBytes"];
+	    }
+	}
+	export class UpdateCheck {
+	    updateAvailable: boolean;
+	    latestVersion?: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new UpdateCheck(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.updateAvailable = source["updateAvailable"];
+	        this.latestVersion = source["latestVersion"];
+	    }
+	}
+
+}
+
+export namespace app {
+	
+	export class AgentFileLocation {
+	    appId: string;
+	    file: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new AgentFileLocation(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.appId = source["appId"];
+	        this.file = source["file"];
+	    }
+	}
+
+}
+
 export namespace board {
 	
 	export class BoardInfo {
@@ -292,6 +593,27 @@ export namespace fs {
 		    }
 		    return a;
 		}
+	}
+
+}
+
+export namespace httpclient {
+	
+	export class Response {
+	    statusCode: number;
+	    body: string;
+	    headers: Record<string, string>;
+	
+	    static createFrom(source: any = {}) {
+	        return new Response(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.statusCode = source["statusCode"];
+	        this.body = source["body"];
+	        this.headers = source["headers"];
+	    }
 	}
 
 }

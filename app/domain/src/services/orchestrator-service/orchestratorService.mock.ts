@@ -12,6 +12,7 @@ import {
   CloneAppRequest,
   CreateAppRequest,
   EventSourceHandlers,
+  ExampleCatalogResult,
   LibraryListResponse,
   ListAppParams,
   ListLibrariesParams,
@@ -924,6 +925,10 @@ export const MockOrchestratorService: OrchestratorService = {
 
   async getBricks(): Promise<BrickListItem[]> {
     return mockBricks;
+  },
+
+  async getExamples(): Promise<ExampleCatalogResult> {
+    return { 'core-and-foundational': [], bricks: [] };
   },
 
   async getBrickDetails(id: string): Promise<BrickDetails> {

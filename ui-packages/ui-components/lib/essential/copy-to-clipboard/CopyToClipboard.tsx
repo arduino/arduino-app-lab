@@ -49,7 +49,7 @@ const CopyToClipboard = ({
         onPress={(): void => {
           onClick && onClick(text);
           copyContent();
-          onTriggerPress && onTriggerPress();
+          onTriggerPress?.();
         }}
         {...tooltipHoverProps}
         {...tooltipClickProps}

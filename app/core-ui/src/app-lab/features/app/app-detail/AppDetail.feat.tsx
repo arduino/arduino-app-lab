@@ -9,15 +9,17 @@ import { useAppDetailLogic } from './appDetail.logic';
 interface AppDetailProps {
   appId: string;
   section: AppsSection;
+  breadcrumbId?: string;
 }
 
 const AppDetailFeat: React.FC<AppDetailProps> = (props: AppDetailProps) => {
-  const { appId, section } = props;
+  const { appId, section, breadcrumbId } = props;
 
   return (
     <AppLabAppDetail
       appId={appId}
       section={section}
+      breadcrumbId={breadcrumbId}
       appLabAppDetailLogic={useAppDetailLogic}
     />
   );

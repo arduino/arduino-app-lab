@@ -23,12 +23,12 @@ export const messages = defineMessages({
   },
   memory: {
     id: 'footer.memory',
-    defaultMessage: 'RAM: {used}/{total}GB',
+    defaultMessage: 'RAM: {used}/{total} GB',
     description: 'Label for the memory usage',
   },
   disk: {
     id: 'footer.disk',
-    defaultMessage: '{path} {used}/{total}GB',
+    defaultMessage: '{path}: {used}/{total} GB',
     description: 'Label for the disk space usage',
   },
   ip: {

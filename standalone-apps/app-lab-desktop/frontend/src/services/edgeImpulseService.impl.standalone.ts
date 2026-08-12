@@ -1,3 +1,4 @@
+import { isQBoardLatencyDevice } from '@cloud-editor-mono/common';
 import {
   EdgeImpulseService,
   getEIAccessToken,
@@ -34,14 +35,15 @@ export const getEIProjects: EdgeImpulseService['getEIProjects'] =
           }
 
           const targetConstraints = infoResp.targetConstraints;
-          const hasUnoQLatencyDevice = !!targetConstraints?.targetDevices.some(
-            (d) => d.latencyDevice === 'arduino-unoq',
-          );
+          const hasQBoardLatencyDevice =
+            !!targetConstraints?.targetDevices.some((d) =>
+              isQBoardLatencyDevice(d.latencyDevice),
+            );
           const hasOtherNonDefaultLatencyDevice = !!(
             targetConstraints &&
             targetConstraints.selectedTargetBasedOn !== 'default' &&
             targetConstraints.targetDevices.some(
-              (d) => d.latencyDevice !== 'arduino-unoq',
+              (d) => !isQBoardLatencyDevice(d.latencyDevice),
             )
           );
 
@@ -49,7 +51,7 @@ export const getEIProjects: EdgeImpulseService['getEIProjects'] =
             ...project,
             category: infoResp.project.category,
             impulses: impulsesResp.impulses,
-            hasUnoQLatencyDevice,
+            hasQBoardLatencyDevice,
             hasOtherNonDefaultLatencyDevice,
           } as EIProject;
         }),
@@ -81,10 +83,10 @@ export const getEIProjectAPIKey: EdgeImpulseService['getEIProjectAPIKey'] =
   };
 
 export const setEILatencyDevice: EdgeImpulseService['setEILatencyDevice'] =
-  async function (projectId: string) {
+  async function (projectId, latencyDevice) {
     const token = await getEIAccessToken();
     const body = {
-      latencyDevice: 'arduino-unoq',
+      latencyDevice,
     };
 
     const response = await postEIUpdateProjectV1Request(token, projectId, body);

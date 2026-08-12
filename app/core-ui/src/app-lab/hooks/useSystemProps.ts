@@ -7,6 +7,7 @@ import { SystemPropertyValue } from '@cloud-editor-mono/infrastructure';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useShallow } from 'zustand/react/shallow';
 
+import { BoardScopedQuery } from '../boardScopedQuery';
 import { useBoardLifecycleStore } from '../store/boardLifecycle';
 import { SystemPropKey, useSystemPropsStore } from '../store/systemProps';
 
@@ -44,7 +45,7 @@ export const useSystemProps: UseSystemProps = () => {
     isLoading: getPropsLoading,
     refetch: refetchSystemProps,
   } = useQuery<Record<string, string | undefined>>(
-    ['system-properties'],
+    [BoardScopedQuery.SYSTEM_PROPERTIES],
     async () => {
       const storedKeys = await getSystemPropertyKeys();
       const obj = {} as Record<string, SystemPropertyValue>;
@@ -75,7 +76,7 @@ export const useSystemProps: UseSystemProps = () => {
     }) => upsertSystemProperty(prop.key, prop.value),
     onSuccess: (_, { key, value }) => {
       queryClient.setQueryData<Record<string, SystemPropertyValue>>(
-        ['system-properties'],
+        [BoardScopedQuery.SYSTEM_PROPERTIES],
         (prevProps) => ({ ...prevProps, [key]: value }),
       );
     },

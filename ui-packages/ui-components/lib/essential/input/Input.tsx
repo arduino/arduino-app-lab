@@ -6,7 +6,7 @@ import {
   AccountViewFilledCrossed,
 } from '@cloud-editor-mono/images/assets/icons';
 import clsx from 'clsx';
-import { isNil } from 'lodash';
+import { isNil } from 'lodash-es';
 import {
   forwardRef,
   Ref,

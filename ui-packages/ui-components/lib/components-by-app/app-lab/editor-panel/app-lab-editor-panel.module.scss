@@ -1,6 +1,7 @@
 @use "@cloud-editor-mono/ui-components/public/shared.module.scss";
 
-.editor-read-only-banner {
+// Shared pill for any editor banner kind (see `renderBanner`).
+.editor-banner {
     display: flex;
     align-items: center;
     gap: 12px;

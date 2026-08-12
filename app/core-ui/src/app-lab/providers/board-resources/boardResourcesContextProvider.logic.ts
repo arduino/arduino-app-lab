@@ -1,3 +1,4 @@
+import { BOARD_FQBN } from '@cloud-editor-mono/common';
 import { getSystemResources } from '@cloud-editor-mono/domain/src/services/services-by-app/app-lab';
 import { SystemResourcesStreamMessageType } from '@cloud-editor-mono/infrastructure';
 import { BoardResources } from '@cloud-editor-mono/ui-components/lib/components-by-app/app-lab';
@@ -30,7 +31,7 @@ export function useBoardResourcesLogic(): BoardResourcesContextValue {
       })),
     );
 
-  const isVentunoQ = selectedConnectedBoard?.fqbn === 'arduino:zephyr:ventunoq';
+  const isVentunoQ = selectedConnectedBoard?.fqbn === BOARD_FQBN.VENTUNO_Q;
 
   const openStream = useCallback(() => {
     if (streamIsConnecting.current) {

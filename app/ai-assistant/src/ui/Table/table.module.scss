@@ -1,0 +1,65 @@
+@use "@cloud-editor-mono/arduino-sass/src/fonts" as fonts;
+@use "@cloud-editor-mono/ui-components/public/shared.module.scss";
+
+$cell-padding: 8px 12px;
+
+.table {
+  width: 100%;
+  overflow-x: auto;
+  border-radius: 8px;
+  border: 1px solid var(--border-inverted, #232b2e);
+  background: var(--surface-bg-baseline, #232B2E);
+
+  scrollbar-width: thin;
+  scrollbar-color: var(--component-bg-below-2, #090F11)
+    var(--component-bg-below-2, #090F11);
+
+  &::-webkit-scrollbar {
+    height: 8px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: var(--component-bg-below-2, #090F11);
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: var(--component-bg-below-2, #090F11);
+    background-clip: padding-box;
+    border: 2px solid transparent;
+    border-radius: 10px;
+  }
+
+  .table-header-text {
+    font-weight: fonts.$font-weight-semibold;
+    color: var(--text-default, #fff);
+  }
+
+  .table-cell-text {
+    color: var(--text-subtle, #c9d2d2);
+  }
+}
+
+.table-grid {
+  min-width: 100%;
+  width: max-content;
+  border-collapse: separate;
+  border-spacing: 0;
+  text-align: left;
+}
+
+.table-caption {
+  padding: $cell-padding;
+  text-align: left;
+  color: var(--text-subtle, #c9d2d2);
+}
+
+.table-th {
+  padding: $cell-padding;
+  white-space: nowrap;
+  background: var(--component-bg-below-1, #171e21);
+}
+
+.table-td {
+  padding: $cell-padding;
+  white-space: nowrap;
+}

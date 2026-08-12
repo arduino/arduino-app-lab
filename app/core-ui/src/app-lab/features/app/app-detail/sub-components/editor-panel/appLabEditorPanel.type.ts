@@ -2,14 +2,20 @@ import {
   BrickCreateUpdateRequest,
   BrickInstance,
 } from '@cloud-editor-mono/infrastructure';
-import { SelectableFileData } from '@cloud-editor-mono/ui-components/lib/components-by-app/app-lab';
+import {
+  FileNode,
+  LspId,
+  LspState,
+  SelectableFileData,
+} from '@cloud-editor-mono/ui-components/lib/components-by-app/app-lab';
 
 import {
   OpenFilesStoreItem,
   OpenFilesStorePatch,
 } from '../../../../../../common/hooks/files';
+import { UseLSP } from '../../hooks/useLSP';
 
-export interface EditorPanelLogicParams {
+export type EditorPanelLogicParams = {
   appId?: string;
   appPath?: string;
   appBricks?: BrickInstance[];
@@ -40,7 +46,6 @@ export interface EditorPanelLogicParams {
     brickId: string,
     params: BrickCreateUpdateRequest,
   ) => Promise<boolean>;
-  sketchDataIsLoading: boolean;
   openFiles: SelectableFileData[];
   /**
    * Full catalogue of files that can be opened in the editor (project
@@ -53,12 +58,11 @@ export interface EditorPanelLogicParams {
   allFiles?: SelectableFileData[];
   readOnly: boolean;
   /**
-   * Called by the editor panel when a file needs to be loaded into the
-   * batch file-contents query (eg. when a never-selected tab is dragged
-   * into the split pane). Removes the file from the pending list so its
-   * code subject is instantiated and the editor can render its contents.
+   * Ensures a file's content is loaded into the editor's content store.
+   * Called when a tab is opened or dragged into a pane before its content
+   * has been fetched. No-op if the content is already cached.
    */
-  removeFileFromPending?: (fileId: string) => void;
+  fetchFile?: (fileId: string) => Promise<unknown>;
   /**
    * Persisted per-app open-files record. Used (alongside
    * `filesContentLoaded`) by the split-view hydration effect to restore
@@ -67,9 +71,9 @@ export interface EditorPanelLogicParams {
    */
   openFilesStore?: OpenFilesStoreItem | null;
   /**
-   * True once `filesContents` are fully loaded. Hydration of split-view
-   * state is gated on this so we resolve file ids against the real
-   * `allFiles` catalogue (dropping entries that no longer exist).
+   * True once the file tree (catalogue) is known. Gates split-view
+   * hydration so persisted pane references can be pruned against the
+   * current `allFiles` catalogue.
    */
   filesContentLoaded?: boolean;
   /**
@@ -79,4 +83,15 @@ export interface EditorPanelLogicParams {
    * the panel-resize handler.
    */
   storeSplitState?: (patch: OpenFilesStorePatch) => Promise<void>;
-}
+  filesList?: FileNode[];
+  onLspStateChange?: (lspId: LspId, state: LspState) => void;
+} & Pick<
+  UseLSP,
+  | 'isLspEnabled'
+  | 'lspWorkspaceDir'
+  | 'lspClients'
+  | 'startLSP'
+  | 'sendLspMessage'
+  | 'subscribeLspMessages'
+  | 'getLspWorkspaceFile'
+>;

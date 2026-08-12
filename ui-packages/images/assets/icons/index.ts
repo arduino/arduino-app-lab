@@ -1,6 +1,7 @@
 import AccountArduinoCloud from '../account-arduino-cloud.svg?react';
 import AccountConnectedBoards from '../account-connected-boards.svg?react';
 import AccountCustomAiModels from '../account-custom-ai-models.svg?react';
+import AccountSettings from '../account-settings.svg?react';
 import AccountStarEmpty from '../account-star-empty.svg?react';
 import AccountStarFilled from '../account-star-filled.svg?react';
 import AccountView from '../account-view.svg?react';
@@ -49,30 +50,37 @@ import Board from '../board.svg?react';
 import Board2 from '../board-2.svg?react';
 import BoardUnoQ from '../board-unoq.svg?react';
 import BoardVentunoQ from '../board-ventunoq.svg?react';
+import Brick from '../brick.svg?react';
 import BrickSettings from '../brick-settings.svg?react';
 import Bricks from '../bricks.svg?react';
 import CaretDown from '../caret-down.svg?react';
 import CaseSensitive from '../case-sensitive.svg?react';
+import ChatEnter from '../chat-enter.svg?react';
 import ChatSend from '../chat-send.svg?react';
 import ChatStop from '../chat-stop.svg?react';
+import ChatStopFilled from '../chat-stop-filled.svg?react';
 import Checkbox from '../checkbox.svg?react';
 import Checkmark from '../checkmark.svg?react';
 import ChevronDown from '../chevron-down.svg?react';
 import ChevronRight from '../chevron-right.svg?react';
 import ChevronRightNoPad from '../chevron-right-no-pad.svg?react';
 import ChevronUp from '../chevron-up.svg?react';
+import Claude from '../claude.svg?react';
 import Clear from '../clear.svg?react';
 import Close from '../close.svg?react';
 import CloseX from '../close-x.svg?react';
+import CloudConnectorIllustration from '../cloud-connector-illustration.svg?react';
 import CloudPortIcon from '../cloud-port-icon.svg?react';
 import CloudPortOff from '../cloud-port-off.svg?react';
 import CodeIcon from '../code-icon.svg?react';
+import Codex from '../codex.svg?react';
 import ConnectionLostIcon from '../connection-lost-icon.svg?react';
 import Copy from '../copy.svg?react';
 import CreateNewModel from '../create-new-model.svg?react';
 import DarkTheme from '../dark-theme.svg?react';
 import Decrement from '../decrement.svg?react';
 import Device from '../device.svg?react';
+import Disconnect from '../disconnect.svg?react';
 import Dots from '../dots.svg?react';
 import Download from '../download.svg?react';
 import Duplicate from '../duplicate.svg?react';
@@ -106,6 +114,10 @@ import GenAISendArrow from '../gen-ai-send-arrow.svg?react';
 import GoToError from '../go-to-error.svg?react';
 import GoogleClassroom from '../google-classroom.svg?react';
 import Hardware from '../hardware.svg?react';
+import HardwareCpu from '../hardware-cpu.svg?react';
+import HardwareNpu from '../hardware-npu.svg?react';
+import HardwareRam from '../hardware-ram.svg?react';
+import HardwareStorage from '../hardware-storage.svg?react';
 import Increment from '../increment.svg?react';
 import IndentCode from '../indent-code.svg?react';
 import InfoIconI from '../info-icon-i.svg?react';
@@ -132,19 +144,23 @@ import NavigationArrow from '../navigation-arrow.svg?react';
 import NavigationChevron from '../navigation-chevron.svg?react';
 import NavigationGroup from '../navigation-group.svg?react';
 import NavigationGroupOutline from '../navigation-group-outline.svg?react';
+import NavigationTable from '../navigation-table.svg?react';
 import NoResults from '../no-results.svg?react';
 import NotFoundPageImage from '../not-found-page-image.svg?react';
 import NotificationSuccessCheck from '../notification-success-check.svg?react';
 import OnboardingBack from '../onboarding-back.svg?react';
 import OnboardingNext from '../onboarding-next.svg?react';
+import OpenCode from '../open-code.svg?react';
 import OpenInNewTab from '../open-in-new-tab.svg?react';
 import OperationListOutline from '../operation-list-outline.svg?react';
 import OperationSort from '../operation-sort.svg?react';
 import Pause from '../pause.svg?react';
 import Pencil from '../pencil.svg?react';
+import Pin from '../pin.svg?react';
 import Play from '../play.svg?react';
 import PluginCables from '../plugin-cables.svg?react';
 import Plus from '../plus.svg?react';
+import PlusSmall from '../plus-small.svg?react';
 import Power from '../power.svg?react';
 import PrivateDataIcon from '../private-data-icon.svg?react';
 import Puzzle from '../puzzle.svg?react';
@@ -179,6 +195,7 @@ import StopWatch from '../stopwatch.svg?react';
 import StopWatchDisable from '../stopwatch-disable.svg?react';
 import SubtractMinus from '../subtract-minus.svg?react';
 import Success from '../success.svg?react';
+import Switch from '../switch.svg?react';
 import TechReference from '../tech-reference.svg?react';
 import Terminal from '../terminal.svg?react';
 import Text from '../text.svg?react';
@@ -203,13 +220,17 @@ import UploadLight from '../upload-light.svg?react';
 import Usb from '../usb.svg?react';
 import UsbPort from '../usb-port.svg?react';
 import UsbPortDisconnected from '../usb-port-disconnected.svg?react';
+import UsedByAppLink from '../used-by-app-link.svg?react';
 import User from '../user.svg?react';
 import UserCommunity from '../user-community.svg?react';
+import UserProfileOutline from '../user-profile-outline.svg?react';
 import Verify from '../verify.svg?react';
 import VerifyAndUpload from '../verify-and-upload.svg?react';
 import Warning from '../warning.svg?react';
 import WholeWords from '../whole-words.svg?react';
 import Wifi from '../wifi.svg?react';
+import WifiConnected from '../wifi-connected.svg?react';
+import WifiDisconnected from '../wifi-disconnected.svg?react';
 import WifiWarning from '../wifi-warning.svg?react';
 import World from '../world.svg?react';
 import WorldDisconnected from '../world-disconnected.svg?react';
@@ -218,6 +239,7 @@ export {
   AccountArduinoCloud,
   AccountConnectedBoards,
   AccountCustomAiModels,
+  AccountSettings,
   AccountStarEmpty,
   AccountStarFilled,
   AccountView,
@@ -267,30 +289,37 @@ export {
   Board2,
   BoardUnoQ,
   BoardVentunoQ,
+  Brick,
   Bricks,
   BrickSettings,
   CaretDown,
   CaseSensitive,
+  ChatEnter,
   ChatSend,
   ChatStop,
+  ChatStopFilled,
   Checkbox,
   Checkmark,
   ChevronDown,
   ChevronRight,
   ChevronRightNoPad,
   ChevronUp,
+  Claude,
   Clear,
   Close,
   CloseX,
+  CloudConnectorIllustration,
   CloudPortIcon,
   CloudPortOff,
   CodeIcon,
+  Codex,
   ConnectionLostIcon,
   Copy,
   CreateNewModel,
   DarkTheme,
   Decrement,
   Device,
+  Disconnect,
   Dots,
   Download,
   Duplicate,
@@ -324,6 +353,10 @@ export {
   GoogleClassroom,
   GoToError,
   Hardware,
+  HardwareCpu,
+  HardwareNpu,
+  HardwareRam,
+  HardwareStorage,
   Increment,
   IndentCode,
   InfoIconI,
@@ -350,19 +383,23 @@ export {
   NavigationChevron,
   NavigationGroup,
   NavigationGroupOutline,
+  NavigationTable,
   NoResults,
   NotFoundPageImage,
   NotificationSuccessCheck,
   OnboardingBack,
   OnboardingNext,
+  OpenCode,
   OpenInNewTab,
   OperationListOutline,
   OperationSort,
   Pause,
   Pencil,
+  Pin,
   Play,
   PluginCables,
   Plus,
+  PlusSmall,
   Power,
   PrivateDataIcon,
   Puzzle,
@@ -396,6 +433,7 @@ export {
   StopWatchDisable,
   SubtractMinus,
   Success,
+  Switch,
   TechReference,
   Terminal,
   Text,
@@ -420,13 +458,17 @@ export {
   Usb,
   UsbPort,
   UsbPortDisconnected,
+  UsedByAppLink,
   User,
   UserCommunity,
+  UserProfileOutline,
   Verify,
   VerifyAndUpload,
   Warning,
   WholeWords,
   Wifi,
+  WifiConnected,
+  WifiDisconnected,
   WifiWarning,
   World,
   WorldDisconnected,

@@ -733,7 +733,7 @@ export const useCompileComputeAndUploadQueries: UseCompileComputeAndUploadQuerie
         setWebSerialState({
           [WebSerialStateKeys.UploadStatus]: UploadStatus.IN_PROG,
         });
-        onUploadStart && onUploadStart();
+        onUploadStart?.();
       },
       onSuccess: (
         result: UploadStatus,

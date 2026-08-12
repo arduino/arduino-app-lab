@@ -1,15 +1,18 @@
 @use "../../../../../public/shared.module.scss";
 
 .emoji-picker-container {
+  --emoji-picker-translate-x: 0px;
+  --emoji-picker-translate-y: 28px;
+
   position: fixed;
   z-index: shared.$zIndex5 !important;
   pointer-events: auto;
-  transform: translateY(28px);
+  transform: translate(var(--emoji-picker-translate-x), var(--emoji-picker-translate-y));
   margin-top: 10px;
 
   .emoji-picker-arrow {
     position: absolute;
-    left: calc(50% - 18px);
+    left: calc(50% - 18px - var(--emoji-picker-translate-x));
     top: -9px;
     path {
       fill: #374146;

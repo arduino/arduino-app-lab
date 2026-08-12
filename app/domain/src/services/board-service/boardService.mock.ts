@@ -1,3 +1,4 @@
+import { BOARD_FQBN } from '@cloud-editor-mono/common';
 import {
   Board,
   Carrier,
@@ -11,7 +12,7 @@ const mockBoards: Board[] = [
   {
     id: '1',
     name: 'Pippo',
-    fqbn: 'arduino:zephyr:unoq',
+    fqbn: BOARD_FQBN.UNO_Q,
     type: 'Arduino Uno Q',
     connectionType: 'USB',
     protocol: 'serial',
@@ -21,7 +22,7 @@ const mockBoards: Board[] = [
   {
     id: '2',
     name: 'Pluto',
-    fqbn: 'arduino:zephyr:unoq',
+    fqbn: BOARD_FQBN.UNO_Q,
     type: 'Arduino Uno Q',
     connectionType: 'USB',
     protocol: 'serial',
@@ -31,7 +32,7 @@ const mockBoards: Board[] = [
   {
     id: '3',
     name: 'Paperino',
-    fqbn: 'arduino:zephyr:unoq',
+    fqbn: BOARD_FQBN.UNO_Q,
     type: 'Arduino Uno Q',
     connectionType: 'USB',
     protocol: 'serial',

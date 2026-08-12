@@ -5,7 +5,7 @@ import {
   UploadStatus,
 } from '@cloud-editor-mono/board-communication-tools';
 import { ArduinoBuilderBoardscomputev3Tool_BuilderApi } from '@cloud-editor-mono/infrastructure';
-import { uniqueId } from 'lodash';
+import { uniqueId } from 'lodash-es';
 
 import { daemonState, setAgentDaemonState } from '../daemon/state';
 import { listenForAgentStateCondition } from '../daemon/state.reactive';

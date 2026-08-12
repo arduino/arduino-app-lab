@@ -29,16 +29,27 @@
   padding: 0 28px;
   flex: 1;
 
+  // inputs don't inherit the family, so without this they fall back to the
+  // browser's default UI font instead of the app's
+  font-family: inherit;
+
   &:focus-visible {
-    outline: 2px solid #7fcbcd;
+    outline: none;
   }
 
   &.disabled {
     opacity: 0.5;
   }
 
-  &::-webkit-search-cancel-button {
+  // the field already renders its own clear button; suppress every native
+  // search decoration so Linux/WebKit doesn't draw a second one next to it
+  &::-webkit-search-cancel-button,
+  &::-webkit-search-decoration,
+  &::-webkit-search-results-button,
+  &::-webkit-search-results-decoration {
     -webkit-appearance: none;
+    appearance: none;
+    display: none;
   }
 }
 

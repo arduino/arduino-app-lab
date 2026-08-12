@@ -169,3 +169,17 @@ export function getPropertyByName(obj: unknown, prop: string): string | null {
   }
   return maybeProp as string;
 }
+
+export const objectKeys = <T extends object>(obj: T): (keyof T)[] => {
+  return Object.keys(obj) as (keyof T)[];
+};
+
+export const objectValues = <T extends object>(obj: T): T[keyof T][] => {
+  return Object.values(obj) as T[keyof T][];
+};
+
+export const objectEntries = <T extends object>(
+  obj: T,
+): [keyof T, T[keyof T]][] => {
+  return Object.entries(obj) as [keyof T, T[keyof T]][];
+};

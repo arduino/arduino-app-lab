@@ -1,12 +1,15 @@
 import {
   cloneApp,
+  decodeBase64ToString,
   deleteApp,
   exportApp,
   getApps,
-  selectAppPathToImport,
+  getConfig,
+  onWatcherRefresh,
+  unwatchAppsDir,
   updateAppDetail,
+  watchAppsDir,
 } from '@cloud-editor-mono/domain/src/services/services-by-app/app-lab';
-import { importAppFromPath } from '@cloud-editor-mono/domain/src/services/services-by-app/app-lab';
 import { AppDetailedInfo, AppInfo } from '@cloud-editor-mono/infrastructure';
 import {
   AppsSection,
@@ -18,25 +21,25 @@ import {
 } from '@cloud-editor-mono/ui-components/lib/components-by-app/app-lab';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { queryClient } from '../../../../common/providers/data-fetching/QueryProvider';
-import { useImportResource } from '../../../hooks/useImportResource';
+import { BoardScopedQuery } from '../../../boardScopedQuery';
 import { useBoardLifecycleStore } from '../../../store/boardLifecycle';
+import { useCreateAppDialogStore } from '../../../store/createAppDialog';
+import { useImportAppDialogStore } from '../../../store/importAppDialog';
+import { getBoardCacheId } from '../../../utils/board';
 import { sendAppLabNotification } from '../../notifications';
 import { UseAppListLogic } from './appList.type';
 import { appListMessages } from './messages';
-import { useCreateAppDialogLogic } from './useCreateAppDialogLogic';
 
 export const useAppListLogic = function (
   section: AppsSection,
+  breadcrumbId?: string,
 ): UseAppListLogic {
   const navigate = useNavigate();
   const { formatMessage } = useI18n();
 
-  const [createAppDialogOpen, setCreateAppDialogOpen] = useState(false);
-  const [importAppDialogOpen, setImportAppDialogOpen] = useState(false);
-  const [importedAppId, setImportedAppId] = useState<string | undefined>();
   const [deleteAppDialogOpen, setDeleteAppDialogOpen] = useState(false);
   const [duplicateAppDialogOpen, setDuplicateAppDialogOpen] = useState(false);
   const [renameAppDialogOpen, setRenameAppDialogOpen] = useState(false);
@@ -46,9 +49,15 @@ export const useAppListLogic = function (
   const boardIsReachable = useBoardLifecycleStore(
     (state) => state.boardIsReachable,
   );
+  const boardSerial = useBoardLifecycleStore(
+    (state) => state.selectedConnectedBoard?.serial,
+  );
+  const connectedBoardCacheId = useBoardLifecycleStore((state) =>
+    getBoardCacheId(state.selectedConnectedBoard),
+  );
 
   const { data: apps, isLoading: getAppsLoading } = useQuery(
-    ['list-my-apps', section],
+    [BoardScopedQuery.LIST_MY_APPS, section],
     () =>
       getApps({
         query: { filter: section === 'my-apps' ? 'apps' : 'examples' },
@@ -56,19 +65,81 @@ export const useAppListLogic = function (
     { enabled: boardIsReachable },
   );
 
+  // Filter out examples starting with excludedPrefixes
+  const filteredApps = useMemo(() => {
+    if (section !== 'examples' || !apps) return apps;
+
+    const excludedPrefixes = ['bricks/', 'core-and-foundational/'];
+
+    return apps.filter((app) => {
+      if (!app.id) return true;
+
+      const path = decodeBase64ToString(app.id).replace(/^examples:/, '');
+      return !excludedPrefixes.some((prefix) => path.startsWith(prefix));
+    });
+  }, [apps, section]);
+
+  // Reads the unfiltered list: which app is default is independent of what the
+  // list chooses to show, and a filtered-out default would invert the toggle.
   const defaultApp = useMemo(() => apps?.find((app) => app.default), [apps]);
 
+  // Watch the apps root (ArduinoApps) while the my-apps list is open, so apps
+  // added/removed/renamed outside App Lab show up without a manual refresh.
+  const { data: appConfig } = useQuery(
+    [BoardScopedQuery.APP_CONFIG, boardSerial],
+    () => getConfig(),
+    { enabled: boardIsReachable && section === 'my-apps' },
+  );
+  const appsRootDir = appConfig?.directories?.apps;
+
+  // Watch the apps root while the my-apps list is open: a spec-correct rename
+  // moves the folder, so add/remove/rename under ArduinoApps (the `apps` kind)
+  // is all the list needs.
+  useEffect(() => {
+    if (section !== 'my-apps' || !appsRootDir) return;
+
+    watchAppsDir(appsRootDir).catch((e) =>
+      console.error('[file-watch] watch apps dir failed', e),
+    );
+    const unsubscribe = onWatcherRefresh((event) => {
+      if (event.kind === 'apps') {
+        queryClient.invalidateQueries([BoardScopedQuery.LIST_MY_APPS]);
+      }
+    });
+
+    return () => {
+      unsubscribe();
+      unwatchAppsDir(appsRootDir).catch((e) =>
+        console.error('[file-watch] unwatch apps dir failed', e),
+      );
+    };
+    // connectedBoardCacheId: the backend drops all watches on a board switch,
+    // and appsRootDir is board-independent, so re-run to re-establish the watch
+    // against the newly connected board.
+  }, [section, appsRootDir, connectedBoardCacheId]);
+
+  // the create-app dialog is owned by main; open it through the shared store
+  const openCreateAppDialog = useCreateAppDialogStore((state) => state.setOpen);
+
   const handleOpenCreateAppDialog = useCallback(() => {
-    setCreateAppDialogOpen(true);
-  }, []);
+    openCreateAppDialog(true);
+  }, [openCreateAppDialog]);
+
+  // the import-app dialog is owned by main too; the shared store carries the
+  // open-state and the imported id used to highlight the fresh card below
+  const openImportAppDialog = useImportAppDialogStore((state) => state.setOpen);
+  const importedAppId = useImportAppDialogStore((state) => state.importedAppId);
+  const setImportedAppId = useImportAppDialogStore(
+    (state) => state.setImportedAppId,
+  );
 
   const handleOpenImportAppDialog = useCallback(() => {
-    setImportAppDialogOpen(true);
-  }, []);
+    openImportAppDialog(true);
+  }, [openImportAppDialog]);
 
   const resetImportedAppId = useCallback(() => {
     setImportedAppId(undefined); // Reset importedAppId to prevent ripple retrigger
-  }, []);
+  }, [setImportedAppId]);
 
   const createAppActionHandler = useCallback(
     (dialogSetter: (open: boolean) => void, action?: () => void) =>
@@ -121,7 +192,9 @@ export const useAppListLogic = function (
       return result !== undefined;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['list-my-apps', section] });
+      queryClient.invalidateQueries({
+        queryKey: [BoardScopedQuery.LIST_MY_APPS, section],
+      });
     },
   });
 
@@ -151,30 +224,24 @@ export const useAppListLogic = function (
         if (isContextMenu) return;
       }
 
+      // Inspirations lists example apps and shares the /examples/$appId detail
+      // route; carry the origin so the breadcrumb goes back to Inspirations.
+      if (breadcrumbId === 'inspirations') {
+        navigate({
+          to: '/examples/$appId',
+          params: { appId },
+          search: { from: 'inspirations' },
+        });
+        return;
+      }
+
       navigate({
         to: `/${section}/$appId`,
         params: { appId },
       });
     },
-    [navigate, section],
+    [navigate, section, breadcrumbId],
   );
-
-  const createAppDialogLogic = useCreateAppDialogLogic(
-    createAppDialogOpen,
-    setCreateAppDialogOpen,
-  );
-
-  const importAppDialogLogic = useImportResource({
-    importResourceDialogOpen: importAppDialogOpen,
-    setImportResourceDialogOpen: setImportAppDialogOpen,
-    setImportedResourceId: setImportedAppId,
-    selectResourcePath: selectAppPathToImport,
-    importResourceFromPath: (filePath: string) => importAppFromPath(filePath),
-    type: 'app',
-    invalidateQueries: () => {
-      queryClient.invalidateQueries(['list-my-apps']);
-    },
-  });
 
   const { mutateAsync: handleDeleteApp } = useMutation({
     mutationFn: async (): Promise<boolean> => {
@@ -190,7 +257,9 @@ export const useAppListLogic = function (
       return result;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['list-my-apps', section] });
+      queryClient.invalidateQueries({
+        queryKey: [BoardScopedQuery.LIST_MY_APPS, section],
+      });
     },
   });
 
@@ -237,11 +306,25 @@ export const useAppListLogic = function (
       name: string;
     }): Promise<boolean> => {
       if (!selectedApp?.id) return false;
-      const result = await updateAppDetail(selectedApp.id, request);
+
+      const body: {
+        icon?: string;
+        name?: string;
+      } = {
+        ...(request.icon !== undefined &&
+          request.icon !== selectedApp.icon && { icon: request.icon }),
+        ...(request.name !== selectedApp.name && { name: request.name }),
+      };
+
+      if (Object.keys(body).length === 0) return true;
+
+      const result = await updateAppDetail(selectedApp.id, body);
       return result !== undefined;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['list-my-apps', section] });
+      queryClient.invalidateQueries({
+        queryKey: [BoardScopedQuery.LIST_MY_APPS, section],
+      });
     },
   });
 
@@ -303,13 +386,11 @@ export const useAppListLogic = function (
   );
 
   return {
-    apps: apps || [],
+    apps: filteredApps || [],
     isLoading: getAppsLoading,
     sendNotification: sendAppLabNotification,
     openCreateAppDialog: handleOpenCreateAppDialog,
     openImportAppDialog: handleOpenImportAppDialog,
-    createAppDialogLogic,
-    importAppDialogLogic,
     importedAppId,
     appActions: appActions(),
     deleteAppDialogLogic,

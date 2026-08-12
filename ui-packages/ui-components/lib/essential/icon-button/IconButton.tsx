@@ -5,7 +5,7 @@ import { AriaButtonProps, useButton, VisuallyHidden } from 'react-aria';
 import { WrapperTitle } from '../wrapper-title';
 import styles from './icon-button.module.scss';
 
-type IconButtonProps = AriaButtonProps & {
+export type IconButtonProps = AriaButtonProps & {
   label: string;
   title?: string;
   Icon: React.FC<React.SVGProps<SVGSVGElement>>;

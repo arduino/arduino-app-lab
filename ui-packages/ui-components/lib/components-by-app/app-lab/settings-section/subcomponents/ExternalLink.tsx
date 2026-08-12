@@ -4,6 +4,7 @@ import clsx from 'clsx';
 import styles from '../settings-section.module.scss';
 
 export interface ExternalLinkProps {
+  icon?: React.ReactNode;
   href: string;
   onOpenExternal: (url: string) => void;
   label?: string;
@@ -12,6 +13,7 @@ export interface ExternalLinkProps {
 }
 
 export const ExternalLink = ({
+  icon,
   href,
   label,
   className,
@@ -22,6 +24,9 @@ export const ExternalLink = ({
     e.preventDefault();
     onOpenExternal(href);
   };
+
+  const linkIcon = icon ?? <TextLink />;
+
   return (
     <a
       href={href}
@@ -32,7 +37,7 @@ export const ExternalLink = ({
       className={clsx(styles['settings-section-external-link'], className)}
     >
       {label}
-      <TextLink />
+      {linkIcon}
     </a>
   );
 };

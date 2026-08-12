@@ -52,7 +52,12 @@ export type AppLabEditSectionLogic = () => {
     path: string,
     nodeType?: 'file' | 'folder',
   ) => Promise<void>;
-  moveFileHandler: (fromPath: string, toPath: string) => Promise<void>;
+  moveFileHandler: (
+    fromPath: string,
+    toPath: string,
+    nodeType?: 'file' | 'folder',
+    filesToUpdate?: Array<{ oldPath: string; newPath: string }>,
+  ) => Promise<void>;
   addSketchLibraryDialogLogic: AddSketchLibraryDialogLogic;
   openAddSketchLibraryDialog: () => void;
   deleteSketchLibrary: (libRef: string) => Promise<void>;
@@ -92,6 +97,11 @@ export type AppLabEditSectionLogic = () => {
    */
   onMoveBlocked?: (node: TreeNode) => void;
   onDragOverFolderChange: (path: string) => void;
+  /**
+   * Called when inline validation fails in the file tree (e.g. invalid characters).
+   * Consumers wire this to a notification.
+   */
+  onValidationError?: () => void;
 };
 
 export type FilesManagerSectionLogic = () => {
@@ -144,7 +154,12 @@ export type FilesManagerSectionLogic = () => {
     brickId: string,
     params: { name: string },
   ) => Promise<boolean>;
-  moveFileHandler: (fromPath: string, toPath: string) => Promise<void>;
+  moveFileHandler: (
+    fromPath: string,
+    toPath: string,
+    nodeType?: 'file' | 'folder',
+    filesToUpdate?: Array<{ oldPath: string; newPath: string }>,
+  ) => Promise<void>;
   updateOpenFile?: (currFileId: string, nextFileId: string) => void;
   appLabEditorPanelLogic: AppLabEditorPanelLogic;
   onDuplicateConflict?: (params: OnDuplicateConflictParams) => void;
@@ -162,4 +177,6 @@ export type FilesManagerSectionLogic = () => {
   onBrickDragStart?: (brick: BrickInstance) => void;
   onBrickDragEnd?: () => void;
   onDragOverFolderChange: (path: string) => void;
+  /** See `AppLabEditSectionLogic.onValidationError`. */
+  onValidationError?: () => void;
 };

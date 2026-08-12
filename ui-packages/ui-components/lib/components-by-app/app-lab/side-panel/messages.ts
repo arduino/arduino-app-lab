@@ -1,39 +1,64 @@
 import { defineMessages } from 'react-intl';
 
 export const messages = defineMessages({
-  myAppsLabel: {
-    id: 'sidePanel.myApps',
-    defaultMessage: 'My Apps',
-    description: 'Label for the My Apps side panel item',
+  appsLabel: {
+    id: 'sidePanel.apps',
+    defaultMessage: 'Apps',
+    description: 'Label for the Apps sidebar item',
   },
   examplesLabel: {
     id: 'sidePanel.examples',
     defaultMessage: 'Examples',
-    description: 'Label for the examples side panel item',
+    description: 'Label for the Examples sidebar item',
   },
-  aiModelsLabel: {
-    id: 'sidePanel.aiModels',
-    defaultMessage: 'AI Models',
-    description: 'Label for the models side panel item',
+  inspirationsLabel: {
+    id: 'sidePanel.inspirations',
+    defaultMessage: 'Inspirations',
+    description: 'Label for the Inspirations sidebar item',
+  },
+  resourcesLabel: {
+    id: 'sidePanel.resources',
+    defaultMessage: 'Resources',
+    description: 'Label for the Resources sidebar item',
   },
   bricksLabel: {
     id: 'sidePanel.bricks',
     defaultMessage: 'Bricks',
-    description: 'Label for the bricks side panel item',
+    description: 'Label for the Bricks sidebar item',
   },
-  learnLabel: {
-    id: 'sidePanel.learn',
-    defaultMessage: 'Learn',
-    description: 'Label for the learn side panel item',
+  learnAndExploreLabel: {
+    id: 'sidePanel.learnAndExplore',
+    defaultMessage: 'Learn and Explore',
+    description: 'Label for the Learn and Explore accordion',
   },
-  settingsLabel: {
-    id: 'sidePanel.settings',
-    defaultMessage: 'Settings',
-    description: 'Label for the settings side panel item',
+  bricksManagerLabel: {
+    id: 'sidePanel.bricksManager',
+    defaultMessage: 'Bricks Manager',
+    description: 'Label for the Bricks Manager accordion',
+  },
+  createAppTooltip: {
+    id: 'sidePanel.createApp',
+    defaultMessage: 'Create new app',
+    description: 'Tooltip for the create app trailing action on the Apps item',
+  },
+  boardSwitcherTooltip: {
+    id: 'sidePanel.boardSwitcher',
+    defaultMessage: 'Switch board',
+    description: 'Tooltip for the board switcher trailing button',
+  },
+  noBoardConnectedLabel: {
+    id: 'sidePanel.noBoardConnected',
+    defaultMessage: 'No board connected',
+    description: 'Board item name fallback when no board is connected',
   },
   accountLabel: {
     id: 'sidePanel.account',
     defaultMessage: 'Account',
-    description: 'Label for the account side panel item',
+    description: 'Tooltip for the account bottom button',
+  },
+  settingsLabel: {
+    id: 'sidePanel.settings',
+    defaultMessage: 'Settings',
+    description: 'Tooltip for the settings bottom button',
   },
 });

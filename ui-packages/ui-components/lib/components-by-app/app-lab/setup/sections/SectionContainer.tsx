@@ -18,6 +18,7 @@ import { useRef } from 'react';
 
 import {
   sectionActionMessages,
+  sectionContainerMessages,
   sectionTitleMessages,
   tooltipMessages,
 } from '../messages';
@@ -53,6 +54,7 @@ export function SectionContainer<T extends SetupItem>(
   const stepRef = useRef<{
     confirm: () => void;
     skip?: () => void;
+    canSkip?: () => boolean;
   }>(null);
 
   const { formatMessage } = useI18n();
@@ -66,6 +68,8 @@ export function SectionContainer<T extends SetupItem>(
     unlockAutoFlow?.();
     stepRef.current?.skip?.();
   };
+
+  const canSkipStep = stepRef.current?.canSkip?.() ?? true;
 
   const step = currentStep as T['id'];
   const [stepIsLoading, stepContent] = renderSection(
@@ -103,14 +107,19 @@ export function SectionContainer<T extends SetupItem>(
                 classes={{ button: styles['back-button'] }}
                 disabled={stepIsLoading}
               >
-                Back
+                {formatMessage(sectionContainerMessages.backButton)}
               </Button>
             )}
           </div>
         </div>
 
         <div className={styles['section-content']}>
-          <XXSmall>{`STEP ${step + 1}/${itemsLength}`}</XXSmall>
+          <XXSmall>
+            {formatMessage(sectionContainerMessages.stepLabel, {
+              current: step + 1,
+              total: itemsLength,
+            })}
+          </XXSmall>
 
           <div>
             <div className={styles['title-row']}>
@@ -123,11 +132,7 @@ export function SectionContainer<T extends SetupItem>(
                   </span>
 
                   <XXSmall>
-                    {
-                      formatMessage(
-                        tooltipMessages.wifiTooltipTitle,
-                      ) /* "Why we ask for this" */
-                    }
+                    {formatMessage(tooltipMessages.wifiTooltipTitle)}
                   </XXSmall>
                 </div>
               ) : null}
@@ -148,7 +153,9 @@ export function SectionContainer<T extends SetupItem>(
             </div>
             {isNetworkSetup ? (
               <div className={styles['sub-title']}>
-                <XSmall>{'Select a network to connect your board'}</XSmall>
+                <XSmall>
+                  {formatMessage(sectionContainerMessages.networkSetupSubtitle)}
+                </XSmall>
                 {renderTooltip(styles['tooltip-content'])}
               </div>
             ) : null}
@@ -156,7 +163,11 @@ export function SectionContainer<T extends SetupItem>(
 
           {currentStep === SetupItemId.LinuxCredentials ? (
             <div className={styles['sub-title']}>
-              <Small bold>{'Please choose a password for your Board '}</Small>
+              <Small bold>
+                {formatMessage(
+                  sectionContainerMessages.linuxCredentialsSubtitle,
+                )}
+              </Small>
             </div>
           ) : null}
 
@@ -171,9 +182,9 @@ export function SectionContainer<T extends SetupItem>(
               variant={ButtonVariant.Secondary}
               size={ButtonSize.Small}
               onClick={handleSkip}
-              disabled={stepIsLoading}
+              disabled={stepIsLoading || !canSkipStep}
             >
-              Skip
+              {formatMessage(sectionContainerMessages.skipButton)}
             </Button>
           )}
           {showConfirmButton && (

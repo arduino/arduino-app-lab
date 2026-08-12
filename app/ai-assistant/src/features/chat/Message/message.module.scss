@@ -1,0 +1,116 @@
+@use "@cloud-editor-mono/arduino-sass/src/typography" as typography;
+@use "@cloud-editor-mono/arduino-sass/src/fonts" as fonts;
+@use "@cloud-editor-mono/ui-components/public/shared.module.scss";
+@use "@cloud-editor-mono/arduino-sass/src/variables" as variables;
+
+.message {
+  max-width: 80%;
+  padding: 12px 14px;
+  border-radius: 8px;
+
+  &--user {
+    align-self: flex-end;
+    max-width: 75%;
+    padding: 8px 12px;
+    background: var(--component-bg-below-1, #171E21);
+    line-height: var(--chat-line-height, 1.5);
+    margin-block: 8px;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
+  &--assistant {
+    align-self: stretch;
+    max-width: 100%;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--chat-gap, 10px);
+  }
+}
+
+.choice-answer {
+  align-self: flex-end;
+  max-width: 75%;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 12px 14px;
+  border-radius: 8px;
+  background: var(--component-bg-below-1, #171e21);
+  line-height: var(--chat-line-height, 1.5);
+}
+
+.choice-answer-question {
+  font-size: typography.$font-size-xx-small;
+  color: var(--text-subtle, #c9d2d2);
+}
+
+.choice-answer-value {
+  font-weight: fonts.$font-weight-semibold;
+  color: var(--text-default, #fff);
+}
+
+.typing {
+  color: var(--text-subtle, #c9d2d2);
+}
+
+.cancelled {
+  font-style: italic;
+  font-size: typography.$font-size-xx-small;
+  color: var(--text-subtle, #c9d2d2);
+}
+
+.markdown {
+  display: flex;
+  flex-direction: column;
+  gap: var(--chat-gap, 10px);
+  line-height: var(--chat-line-height, 1.5);
+  min-width: 0;
+}
+
+.message--user span,
+.choice-answer span,
+.markdown span {
+  line-height: var(--chat-line-height, 1.5) !important;
+}
+
+.markdown :first-child {
+  margin-top: 0;
+}
+
+.markdown :last-child {
+  margin-bottom: 0;
+}
+
+.markdown :not(pre) > code {
+  display: inline-flex;
+  align-items: center;
+  font-size: typography.$font-size-xx-small;
+  font-weight: fonts.$font-weight-normal;
+  line-height: 1.7;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.08);
+  padding: 1px 6px;
+  color: #f2f5f5;
+}
+
+.timeline-output {
+  margin: 0;
+  padding: 8px 10px;
+  border-radius: 6px;
+  background: var(--component-bg-below-1, #171e21);
+  font-family: variables.$font-roboto;
+  font-size: typography.$font-size-xx-small;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+// ExitPlanMode's plan: a persistent card in the thread, distinct from plain narration.
+.plan {
+  padding: 12px 16px;
+  border-radius: 8px;
+  background: var(--component-bg-below-1, #171e21);
+  border: 1px solid var(--border-default, #232b2e);
+}

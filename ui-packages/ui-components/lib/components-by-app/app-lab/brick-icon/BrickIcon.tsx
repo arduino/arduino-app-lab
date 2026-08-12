@@ -1,7 +1,5 @@
 import {
-  AppLabBrickApi,
   AppLabBrickAudio,
-  AppLabBrickIot,
   AppLabBrickMiscellaneous,
   AppLabBrickStorage,
   AppLabBrickText,
@@ -19,12 +17,8 @@ const BrickIcon: React.FC<BrickIconProps> = (props: BrickIconProps) => {
 
   const Icon = useMemo(() => {
     switch (category) {
-      case 'api':
-        return AppLabBrickApi;
       case 'audio':
         return AppLabBrickAudio;
-      case 'iot':
-        return AppLabBrickIot;
       case 'storage':
         return AppLabBrickStorage;
       case 'text':

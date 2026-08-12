@@ -9,16 +9,21 @@ import {
 import {
   NetworkCredentials,
   NetworkItem,
+  WiFiConnectionErrorCode,
 } from '@cloud-editor-mono/ui-components/lib/components-by-app/app-lab';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 
+import { BoardScopedQuery } from '../../boardScopedQuery';
 import { useBoardLifecycleStore } from '../../store/boardLifecycle';
 import { NetworkContextValue } from './networkContext';
 
 export function useNetwork(): NetworkContextValue {
   const queryClient = useQueryClient();
+
+  const [connectRequestErrorCode, setConnectRequestErrorCode] =
+    useState<WiFiConnectionErrorCode>();
 
   const {
     mutate: connectToWifiNetwork,
@@ -32,17 +37,25 @@ export function useNetwork(): NetworkContextValue {
       await connectToWiFi(name, password);
     },
     onMutate: () => {
-      queryClient.setQueryData(['wifi-status'], 'connecting');
+      setConnectRequestErrorCode(undefined);
+      queryClient.setQueryData([BoardScopedQuery.WIFI_STATUS], 'connecting');
     },
     onSuccess: () => {
-      queryClient.setQueryData(['wifi-status'], 'connected');
+      setConnectRequestErrorCode(undefined);
+      queryClient.setQueryData([BoardScopedQuery.WIFI_STATUS], 'connected');
     },
-    onError: () => {
-      queryClient.setQueryData(['wifi-status'], 'disconnected');
+    onError: (error) => {
+      const code = error instanceof Error ? error.message : undefined;
+      setConnectRequestErrorCode(
+        code === WiFiConnectionErrorCode.IncorrectPassword
+          ? WiFiConnectionErrorCode.IncorrectPassword
+          : WiFiConnectionErrorCode.ConnectionFailed,
+      );
+      queryClient.setQueryData([BoardScopedQuery.WIFI_STATUS], 'disconnected');
     },
     onSettled: () => {
       queryClient.invalidateQueries({
-        queryKey: ['wifi-status'],
+        queryKey: [BoardScopedQuery.WIFI_STATUS],
       });
     },
   });
@@ -63,14 +76,14 @@ export function useNetwork(): NetworkContextValue {
     },
     onMutate: () => {
       resetConnectRequest();
-      queryClient.setQueryData(['wifi-status'], 'disconnected');
+      queryClient.setQueryData([BoardScopedQuery.WIFI_STATUS], 'disconnected');
     },
     onSettled: () => {
       queryClient.invalidateQueries({
-        queryKey: ['wifi-status'],
+        queryKey: [BoardScopedQuery.WIFI_STATUS],
       });
       queryClient.invalidateQueries({
-        queryKey: ['internet-status'],
+        queryKey: [BoardScopedQuery.INTERNET_STATUS],
       });
     },
   });
@@ -79,7 +92,7 @@ export function useNetwork(): NetworkContextValue {
     data: wiFiStatus,
     isLoading: isWiFiStatusLoading,
     isSuccess: wiFiStatusChecked,
-  } = useQuery(['wifi-status'], async () => getWiFiStatus(), {
+  } = useQuery([BoardScopedQuery.WIFI_STATUS], async () => getWiFiStatus(), {
     retry: 3,
     refetchInterval: 3000,
     enabled:
@@ -93,15 +106,19 @@ export function useNetwork(): NetworkContextValue {
     data: ethernetStatus,
     isLoading: isEthernetStatusLoading,
     isSuccess: ethernetStatusChecked,
-  } = useQuery(['ethernet-status'], async () => getEthernetStatus(), {
-    retry: 3,
-    refetchInterval: 3000,
-    enabled:
-      !boardIsFlashing &&
-      boardIsReachable &&
-      !connectRequestIsLoading &&
-      !disconnectRequestIsLoading,
-  });
+  } = useQuery(
+    [BoardScopedQuery.ETHERNET_STATUS],
+    async () => getEthernetStatus(),
+    {
+      retry: 3,
+      refetchInterval: 3000,
+      enabled:
+        !boardIsFlashing &&
+        boardIsReachable &&
+        !connectRequestIsLoading &&
+        !disconnectRequestIsLoading,
+    },
+  );
 
   const networkDeviceConnected =
     wiFiStatus === 'connected' || ethernetStatus === 'connected';
@@ -110,11 +127,15 @@ export function useNetwork(): NetworkContextValue {
     data: internetIsReachable,
     isLoading: isInternetStatusLoading,
     isSuccess: internetStatusChecked,
-  } = useQuery(['internet-status'], async () => getInternetStatus(), {
-    retry: 3,
-    refetchInterval: 3000,
-    enabled: !boardIsFlashing && networkDeviceConnected,
-  });
+  } = useQuery(
+    [BoardScopedQuery.INTERNET_STATUS],
+    async () => getInternetStatus(),
+    {
+      retry: 3,
+      refetchInterval: 3000,
+      enabled: !boardIsFlashing && networkDeviceConnected,
+    },
+  );
 
   const [scanCount, setScanCount] = useState(0);
   const [scanningIsEnabled, setScanningIsEnabled] = useState(false);
@@ -123,7 +144,7 @@ export function useNetwork(): NetworkContextValue {
     data: networkList,
     isFetching: isScanning,
     refetch: scanNetworkList,
-  } = useQuery(['networkList'], getNetworkList, {
+  } = useQuery([BoardScopedQuery.NETWORK_LIST], getNetworkList, {
     onSuccess: (data) => {
       const list = data || [];
       setScanCount(list.length > 0 ? 8 : (c): number => c + 1);
@@ -164,6 +185,7 @@ export function useNetwork(): NetworkContextValue {
       (connectRequestIsSuccess && !internetIsReachable),
     connectRequestIsSuccess,
     connectRequestIsError,
+    connectRequestErrorCode,
     selectedNetwork,
     setSelectedNetwork,
     manualNetworkSetup,

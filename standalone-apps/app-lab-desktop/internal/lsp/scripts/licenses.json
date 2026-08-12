@@ -1,0 +1,132 @@
+{
+  "_comment": [
+    "Provenance for every executable App Lab redistributes out of internal/lsp.",
+    "One entry per component in versions.json. `download_licenses.sh` turns this into",
+    "the committed texts in internal/notices/licenses/, which ship in every dist;",
+    "`check_licenses.sh` fails the build if the two drift apart or if a component",
+    "in versions.json has no entry here.",
+    "",
+    "`text_url` placeholders, resolved against the version pinned in versions.json:",
+    "  {version}         the pinned string verbatim      5.8-arduino11-abc8fca...",
+    "  {version_base}    up to the first hyphen          5.8",
+    "  {version_suffix}  after the last hyphen           abc8fca...",
+    "",
+    "`text_member` marks `text_url` as an archive to extract that member from,",
+    "rather than a file to download directly."
+  ],
+
+  "components": {
+    "arduino-cli": {
+      "spdx": "GPL-3.0-only",
+      "license_name": "GNU General Public License, version 3",
+      "origin": "https://github.com/arduino/arduino-cli",
+      "text_url": "https://raw.githubusercontent.com/arduino/arduino-cli/v{version}/LICENSE.txt",
+      "text_file": "arduino-cli.LICENSE.txt",
+      "source_url": "https://github.com/arduino/arduino-cli/tree/v{version}",
+      "modified": false,
+      "note": "Copyleft. Upstream ships this same text inside the release archive; artifacts.go keeps it next to the extracted binary."
+    },
+
+    "arduino-language-server": {
+      "spdx": "AGPL-3.0-only",
+      "license_name": "GNU Affero General Public License, version 3",
+      "origin": "https://github.com/arduino/arduino-language-server",
+      "text_url": "https://raw.githubusercontent.com/arduino/arduino-language-server/{version}/LICENSE.txt",
+      "text_file": "arduino-language-server.LICENSE.txt",
+      "source_url": "https://github.com/arduino/arduino-language-server/tree/{version}",
+      "modified": false,
+      "note": "Copyleft. Unlike arduino-cli the upstream tag carries no 'v' prefix. Upstream ships this same text inside the release archive; artifacts.go keeps it next to the extracted binary."
+    },
+
+    "clangd": {
+      "spdx": "Apache-2.0 WITH LLVM-exception",
+      "license_name": "Apache License 2.0 with LLVM Exceptions",
+      "origin": "https://github.com/arduino/clang-static-binaries",
+      "text_url": "https://raw.githubusercontent.com/llvm/llvm-project/llvmorg-{version_base}/LICENSE.TXT",
+      "text_file": "clangd.LICENSE.txt",
+      "source_url": "https://github.com/llvm/llvm-project/tree/llvmorg-{version_base}",
+      "modified": false,
+      "note": "Covers the clangd binary and the clang-resource/ headers shipped beside it. arduino/clang-static-binaries only rebuilds LLVM and carries no license file of its own, so the text comes from llvm-project at the matching tag: the pinned version 22.1.8-2-rc2 is LLVM 22.1.8 plus an Arduino build revision, hence {version_base}."
+    },
+
+    "ctags": {
+      "spdx": "GPL-2.0-only",
+      "license_name": "GNU General Public License, version 2",
+      "origin": "https://github.com/arduino/ctags",
+      "text_url": "https://raw.githubusercontent.com/arduino/ctags/{version_suffix}/COPYING",
+      "text_file": "ctags.COPYING.txt",
+      "source_url": "https://github.com/arduino/ctags/tree/{version_suffix}",
+      "modified": true,
+      "note": "Copyleft, and we patch it. build_ctags.sh applies one mechanical rename (__unused__ -> CTAGS_UNUSED) so it compiles against a modern macOS SDK; that script plus the pinned commit are the complete corresponding source. macOS arm64 only."
+    },
+
+    "node": {
+      "spdx": "MIT AND Apache-2.0 AND BSD-3-Clause AND ISC",
+      "license_name": "Node.js license (MIT) with bundled third-party notices",
+      "origin": "https://github.com/nodejs/node",
+      "text_url": "https://raw.githubusercontent.com/nodejs/node/{version}/LICENSE",
+      "text_file": "node.LICENSE.txt",
+      "source_url": "https://github.com/nodejs/node/tree/{version}",
+      "modified": false,
+      "note": "Node's LICENSE is itself an aggregate: Node's own MIT grant followed by the notices for everything statically linked into the binary (V8, OpenSSL, ICU, zlib, llhttp and more). It has to ship whole; the SPDX expression above is indicative, the file is authoritative."
+    },
+
+    "ruff": {
+      "spdx": "MIT",
+      "license_name": "MIT License",
+      "origin": "https://github.com/astral-sh/ruff",
+      "text_url": "https://raw.githubusercontent.com/astral-sh/ruff/{version}/LICENSE",
+      "text_file": "ruff.LICENSE.txt",
+      "source_url": "https://github.com/astral-sh/ruff/tree/{version}",
+      "modified": false
+    },
+
+    "basedpyright": {
+      "spdx": "MIT",
+      "license_name": "MIT License",
+      "origin": "https://github.com/detachhead/basedpyright",
+      "text_url": "https://registry.npmjs.org/basedpyright/-/basedpyright-{version}.tgz",
+      "text_member": "package/LICENSE.txt",
+      "text_file": "basedpyright.LICENSE.txt",
+      "source_url": "https://github.com/detachhead/basedpyright",
+      "modified": false,
+      "note": "Shipped as a node_modules tree run by our bundled node. Its own dependencies keep their individual LICENSE files inside that tree, which we archive intact."
+    },
+
+    "typescript-language-server": {
+      "spdx": "Apache-2.0",
+      "license_name": "Apache License 2.0",
+      "origin": "https://github.com/typescript-language-server/typescript-language-server",
+      "text_url": "https://registry.npmjs.org/typescript-language-server/-/typescript-language-server-{version}.tgz",
+      "text_member": "package/LICENSE",
+      "text_file": "typescript-language-server.LICENSE.txt",
+      "source_url": "https://github.com/typescript-language-server/typescript-language-server",
+      "modified": false,
+      "note": "Shipped as a node_modules tree run by our bundled node. Its own dependencies keep their individual LICENSE files inside that tree, which we archive intact."
+    },
+
+    "typescript": {
+      "spdx": "Apache-2.0",
+      "license_name": "Apache License 2.0",
+      "origin": "https://github.com/microsoft/TypeScript",
+      "text_url": "https://registry.npmjs.org/typescript/-/typescript-{version}.tgz",
+      "text_member": "package/LICENSE.txt",
+      "text_file": "typescript.LICENSE.txt",
+      "source_url": "https://github.com/microsoft/TypeScript",
+      "modified": false,
+      "note": "Installed alongside typescript-language-server, which needs a tsserver to drive."
+    },
+
+    "vscode-langservers-extracted": {
+      "spdx": "MIT",
+      "license_name": "MIT License",
+      "origin": "https://github.com/hrsh7th/vscode-langservers-extracted",
+      "text_url": "https://registry.npmjs.org/vscode-langservers-extracted/-/vscode-langservers-extracted-{version}.tgz",
+      "text_member": "package/LICENSE",
+      "text_file": "vscode-langservers-extracted.LICENSE.txt",
+      "source_url": "https://github.com/hrsh7th/vscode-langservers-extracted",
+      "modified": false,
+      "note": "Provides the HTML and CSS language servers, repackaged from MIT-licensed VS Code sources. Shipped as a node_modules tree run by our bundled node."
+    }
+  }
+}

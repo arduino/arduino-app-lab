@@ -1,19 +1,20 @@
 package board
 
 import (
+	"app-lab-desktop/internal/tunnel"
 	"bufio"
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"strings"
+	"time"
 
 	"github.com/arduino/arduino-app-cli/pkg/board"
 	"github.com/arduino/arduino-app-cli/pkg/board/remote"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
-
-	"app-lab-desktop/internal/tunnel"
 )
 
 const (
@@ -21,7 +22,17 @@ const (
 	boardOrchestratorPort = 8800
 )
 
-var supportedBoards = []string{"arduino:zephyr:unoq", "arduino:zephyr:ventunoq"}
+const (
+	FQBNUnoQ     = "arduino:zephyr:unoq"
+	FQBNVentunoQ = "arduino:zephyr:ventunoq"
+)
+
+var supportedBoards = []string{FQBNUnoQ, FQBNVentunoQ}
+
+const (
+	cloudConnectorTunnelTag = "cloud-connector"
+	boardCloudConnectorPort = 5683
+)
 
 // This type is needed to avoid Wails name clash during JS bindings generation.
 // Without this, the type github.com/arduino/arduino-app-cli/pkg/board.Board is lost
@@ -128,6 +139,9 @@ func (b *Board) EstablishConnection(ctx context.Context, optPassword string) err
 		if _, err := b.StartTunnel(ctx, conn, orchestratorTunnelTag, boardOrchestratorPort); err != nil {
 			return fmt.Errorf("failed to start tunnel: %w", err)
 		}
+		if _, err := b.StartTunnel(ctx, conn, cloudConnectorTunnelTag, boardCloudConnectorPort); err != nil {
+			runtime.LogErrorf(ctx, "failed to start tunnel: %v", err)
+		}
 
 	case board.NetworkProtocol:
 		var err error
@@ -140,6 +154,9 @@ func (b *Board) EstablishConnection(ctx context.Context, optPassword string) err
 		}
 		if _, err := b.StartTunnel(ctx, conn, orchestratorTunnelTag, boardOrchestratorPort); err != nil {
 			return fmt.Errorf("failed to start tunnel: %w", err)
+		}
+		if _, err := b.StartTunnel(ctx, conn, cloudConnectorTunnelTag, boardCloudConnectorPort); err != nil {
+			runtime.LogErrorf(ctx, "failed to start tunnel: %v", err)
 		}
 
 	case board.LocalProtocol:
@@ -157,12 +174,35 @@ func (b *Board) EstablishConnection(ctx context.Context, optPassword string) err
 	return nil
 }
 
+// HasConn reports a live connection (not the Noop placeholder) — the real "board reachable" signal, since network boards report no serial.
+func (b *Board) HasConn() bool {
+	if b == nil || b.Conn == nil {
+		return false
+	}
+	_, noop := b.Conn.(*noopConnection)
+	return !noop
+}
+
+// IsLocalFS reports whether the board's filesystem is local to this process
+// (SBC/on-board mode, or a board reached over the local protocol). When true,
+// filesystem watching can use fsnotify directly; otherwise it must be streamed
+// over the board shell.
+func (b *Board) IsLocalFS() bool {
+	return IsSBC() || b.Info.Protocol == board.LocalProtocol
+}
+
 func (b *Board) GetName(ctx context.Context) (string, error) {
 	return board.GetCustomName(ctx, b.Conn)
 }
 
 func (b *Board) SetName(ctx context.Context, name string) error {
-	return board.SetCustomName(ctx, b.Conn, name)
+	if err := board.SetCustomName(ctx, b.Conn, name); err != nil {
+		return err
+	}
+	// Keep the in-memory info in sync: discovery (e.g. mDNS) can return a
+	// stale name until the board re-announces itself.
+	b.Info.CustomName = name
+	return nil
 }
 
 func (b *Board) IsUserPasswordSet(ctx context.Context) (bool, error) {
@@ -231,8 +271,53 @@ func (b *Board) GetOrchestratorURL() (string, error) {
 	return fmt.Sprintf("http://localhost:%d", port), nil
 }
 
+func (b *Board) InferOrchestratorURL() (string, error) {
+	if IsSBC() {
+		return fmt.Sprintf("http://localhost:%d", boardOrchestratorPort), nil
+	}
+	return b.GetOrchestratorURL()
+}
+
+func (b *Board) GetCloudConnectorURL() (string, error) {
+	if len(b.tunnels) == 0 {
+		return "", fmt.Errorf("no active tunnels")
+	}
+
+	var port int
+	for _, t := range b.tunnels {
+		if t.Tag() == cloudConnectorTunnelTag {
+			p, err := t.Port()
+			if err != nil {
+				return "", fmt.Errorf("failed to get cloud connector tunnel port: %w", err)
+			}
+			port = p
+			break
+		}
+	}
+
+	if port == 0 {
+		return "", fmt.Errorf("no cloud connector tunnel found")
+	}
+	return fmt.Sprintf("http://localhost:%d", port), nil
+}
+
+const (
+	r0CheckRetries = 4
+	r0CheckDelay   = 300 * time.Millisecond
+)
+
 func (b *Board) IsR0Build() bool {
-	return board.GetOSImageVersion(b.Conn) == board.R0_IMAGE_VERSION_ID
+	var version string
+	for attempt := 0; attempt < r0CheckRetries; attempt++ {
+		version = board.GetOSImageVersion(b.Conn)
+		if version != board.R0_IMAGE_VERSION_ID {
+			return false
+		}
+		if attempt < r0CheckRetries-1 {
+			time.Sleep(r0CheckDelay)
+		}
+	}
+	return true
 }
 
 // GetOSImageVersion returns the OS image version of the board.
@@ -278,4 +363,61 @@ func (b *Board) RebootBoard(conn remote.RemoteConn, password string) error {
 		return fmt.Errorf("reboot failed: %w", err)
 	}
 	return nil
+}
+
+// orchestratorConfig is what GET /v1/config tells us about the machine running
+// the orchestrator: where it keeps app files, and which python-runner it ships.
+type orchestratorConfig struct {
+	Directories struct {
+		Apps     string `json:"apps"`
+		Data     string `json:"data"`
+		Examples string `json:"examples"`
+	} `json:"directories"`
+	PythonRunner string `json:"python_runner"`
+}
+
+// The asset route reads this while serving a request, so a stalled orchestrator
+// must not hold the response open indefinitely.
+const orchestratorConfigTimeout = 3 * time.Second
+
+func fetchOrchestratorConfig(ctx context.Context, origin string) (*orchestratorConfig, error) {
+	ctx, cancel := context.WithTimeout(ctx, orchestratorConfigTimeout)
+	defer cancel()
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, origin+"/v1/config", nil)
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("orchestrator /v1/config returned %s", resp.Status)
+	}
+
+	var config orchestratorConfig
+	if err := json.NewDecoder(resp.Body).Decode(&config); err != nil {
+		return nil, err
+	}
+	return &config, nil
+}
+
+// GetPythonRunnerVersion fetches the python-runner (app-bricks) version exposed
+// by the on-board orchestrator at GET /v1/config. Returns "" when the field is
+// missing or empty.
+func (b *Board) GetPythonRunnerVersion(ctx context.Context) (string, error) {
+	origin, err := b.InferOrchestratorURL()
+	if err != nil {
+		return "", err
+	}
+
+	config, err := fetchOrchestratorConfig(ctx, origin)
+	if err != nil {
+		return "", err
+	}
+	return config.PythonRunner, nil
 }

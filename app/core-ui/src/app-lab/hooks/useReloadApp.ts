@@ -1,9 +1,13 @@
 import { AppInfo } from '@cloud-editor-mono/infrastructure';
 import { AppsSection } from '@cloud-editor-mono/ui-components/lib/components-by-app/app-lab';
-import { useNavigate } from '@tanstack/react-router';
+import { useNavigate, useRouterState } from '@tanstack/react-router';
 import { useEffect, useRef, useState } from 'react';
 
+import { clearPeekedApp, isPeekedApp } from '../openAppFile';
 import { UseBoards } from './useBoards';
+
+const getFallbackRoute = (appsCount?: number): string =>
+  appsCount && appsCount > 0 ? '/my-apps' : '/inspirations';
 
 export type UseReloadApp = (props: {
   boardsProps: ReturnType<UseBoards>;
@@ -26,6 +30,13 @@ export const useReloadApp: UseReloadApp = ({
   const navigateRef = useRef(navigate);
   navigateRef.current = navigate;
 
+  // Agent mode is a top-level sibling route with no $appId, so currentAppId/currentSection read as
+  // undefined there even though the user never left their app. It has to be excluded from the
+  // resume state machine below, or entering agent mode looks like "the user closed the app".
+  const agentModeActive = useRouterState({
+    select: (state) => state.location.pathname.startsWith('/ai-assistant'),
+  });
+
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [boardJustChanged, setBoardJustChanged] = useState(false);
   const hasNavigatedToSavedAppRef = useRef(false);
@@ -45,6 +56,13 @@ export const useReloadApp: UseReloadApp = ({
   const appsLength = apps?.length;
   const lastAppId = lastAppInfo?.appId;
   const lastAppSection = lastAppInfo?.section;
+  // The saved app id is no longer in the list — e.g. the agent renamed it, minting a new id. Decided only once the
+  // list is loaded: while apps is undefined we don't know, so we don't treat it as missing.
+  const savedAppMissing =
+    lastAppId !== undefined &&
+    lastAppSection !== 'examples' &&
+    apps !== undefined &&
+    !apps.some((a) => a.id === lastAppId);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -98,8 +116,14 @@ export const useReloadApp: UseReloadApp = ({
     }
 
     if (currentAppId && currentSection) {
+      if (isPeekedApp(currentAppId)) {
+        return; // opened via a chip peek — don't record it as the board's resume app
+      }
+      clearPeekedApp();
       saveAppId(currentAppId, currentSection).catch(console.error);
-    } else if (!isInitialLoad) {
+    } else if (!isInitialLoad && !agentModeActive) {
+      // In agent mode the app is still the board's current one — keep it as the resume app.
+      clearPeekedApp();
       resetAppId().catch(console.error);
     }
   }, [
@@ -109,6 +133,7 @@ export const useReloadApp: UseReloadApp = ({
     boardJustChanged,
     selectedBoard,
     isInitialLoad,
+    agentModeActive,
     saveAppId,
     resetAppId,
   ]);
@@ -116,6 +141,10 @@ export const useReloadApp: UseReloadApp = ({
   useEffect(() => {
     const navigateToSavedApp = async (): Promise<void> => {
       if (!showRoutes || hasNavigatedToSavedAppRef.current) return;
+
+      // In agent mode currentAppId is undefined while lastAppId is still set, so resuming from here
+      // would navigate the user out of the agent panel and back into the editor.
+      if (agentModeActive) return;
 
       if (!selectedBoard) {
         return;
@@ -145,9 +174,7 @@ export const useReloadApp: UseReloadApp = ({
         if (boardJustChanged && currentAppId) {
           setBoardJustChanged(false);
           hasNavigatedToSavedAppRef.current = true;
-          const hasUserApps = appsLength && appsLength > 0;
-          const fallbackRoute = hasUserApps ? '/my-apps' : '/examples';
-          await navigateRef.current({ to: fallbackRoute });
+          await navigateRef.current({ to: getFallbackRoute(appsLength) });
           return;
         }
 
@@ -159,6 +186,11 @@ export const useReloadApp: UseReloadApp = ({
 
         if (lastAppId && lastAppId !== currentAppId) {
           hasNavigatedToSavedAppRef.current = true;
+          // Renamed away (see savedAppMissing): opening the editor on the gone id breaks, so fall back to the list.
+          if (savedAppMissing) {
+            await navigateRef.current({ to: getFallbackRoute(appsLength) });
+            return;
+          }
           const route =
             lastAppSection === 'examples'
               ? '/examples/$appId'
@@ -177,9 +209,7 @@ export const useReloadApp: UseReloadApp = ({
         if (!lastAppId) {
           if (lastAppInfoLoaded) {
             hasNavigatedToSavedAppRef.current = true;
-            const hasUserApps = appsLength && appsLength > 0;
-            const fallbackRoute = hasUserApps ? '/my-apps' : '/examples';
-            await navigateRef.current({ to: fallbackRoute });
+            await navigateRef.current({ to: getFallbackRoute(appsLength) });
             return;
           }
           hasNavigatedToSavedAppRef.current = false;
@@ -193,8 +223,10 @@ export const useReloadApp: UseReloadApp = ({
     navigateToSavedApp();
   }, [
     showRoutes,
+    agentModeActive,
     lastAppId,
     lastAppSection,
+    savedAppMissing,
     lastAppInfoLoaded,
     currentAppId,
     appsLength,

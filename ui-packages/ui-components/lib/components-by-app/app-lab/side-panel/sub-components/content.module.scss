@@ -1,0 +1,33 @@
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  overflow-y: auto;
+  min-height: 0;
+
+  // Thin, subtle scrollbar that darkens while the region is hovered.
+  scrollbar-width: thin;
+  scrollbar-color: var(--component-bg-flexible, rgba(174, 184, 184, 0.15))
+    transparent;
+
+  &::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  // 2px transparent border keeps the visible thumb inset and rounded.
+  &::-webkit-scrollbar-thumb {
+    background-color: var(--component-bg-flexible, rgba(174, 184, 184, 0.15));
+    background-clip: padding-box;
+    border: 2px solid transparent;
+    border-radius: 10px;
+  }
+
+  &:hover::-webkit-scrollbar-thumb {
+    background-color: var(--icon-subtle, rgba(174, 184, 184, 0.4));
+  }
+}

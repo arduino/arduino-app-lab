@@ -18,11 +18,11 @@ interface EditorImageProps {
 const EditorImage: React.FC<EditorImageProps> = (props: EditorImageProps) => {
   const { data, extension, classes } = props;
 
-  let imageData = data
+  let imageData = data;
 
   // temporary fallback/safety net to process images with or without a data/image protocol
-  if (!data?.startsWith("data:image/")) {
-    imageData = `data:image/${extension};base64, ${data}`
+  if (!data?.startsWith('data:image/')) {
+    imageData = `data:image/${extension};base64, ${data}`;
   }
 
   const [isZoomed, setIsZoomed] = useState(false);

@@ -1,7 +1,8 @@
+@use "sass:map";
 @use "../themes/light-theme";
 
 @function theme-var($key, $fallback: null, $map: light-theme.$map-light-theme) {
-    @if not map-has-key($map, $key) {
+    @if not map.has-key($map, $key) {
         @error "key: '#{$key}', is not a key in map: #{$map}";
     }
     @if ($fallback) {

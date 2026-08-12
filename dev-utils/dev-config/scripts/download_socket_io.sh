@@ -42,6 +42,25 @@ fi
 
 mkdir -p "$DEST_DIR"
 
+# The bundle is vendored into the frontend (and embedded into user-generated
+# WebUI projects), so it is attributed in vendored-assets.txt from the licence
+# text committed beside this script. A version bump that changes the upstream
+# licence must update that copy — verify it here, where the network is already
+# being used, so a mismatch fails the download instead of shipping stale
+# attribution. (The socket.io-client in npm-dependencies.txt is a different,
+# npm-installed copy; it does not cover this bundle.)
+LICENSE_URL="https://cdn.jsdelivr.net/npm/socket.io-client@${SOCKET_IO_VERSION}/LICENSE"
+LICENSE_COMMITTED="$(dirname "$0")/socket.io-client.LICENSE.txt"
+wget --no-verbose -O "$DEST_DIR/.license-check.tmp" "$LICENSE_URL"
+if ! cmp -s "$DEST_DIR/.license-check.tmp" "$LICENSE_COMMITTED"; then
+    rm -f "$DEST_DIR/.license-check.tmp"
+    echo "Error: socket.io-client.LICENSE.txt no longer matches upstream at ${SOCKET_IO_VERSION} —" >&2
+    echo "copy ${LICENSE_URL} over it, commit, and regenerate the notices with:" >&2
+    echo "  task general:cache-dep-licenses" >&2
+    exit 1
+fi
+rm -f "$DEST_DIR/.license-check.tmp"
+
 echo "Downloading Socket.IO ${SOCKET_IO_VERSION} from ${SOCKET_IO_URL}"
 wget --no-verbose -O "$DEST.tmp" "$SOCKET_IO_URL"
 

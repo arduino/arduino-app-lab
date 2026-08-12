@@ -7,6 +7,7 @@ import { TextProps } from './typography.type';
 export function classNameFrom({
   className,
   bold,
+  semibold,
   italic,
   uppercase,
   truncate,
@@ -17,6 +18,7 @@ export function classNameFrom({
     styles['text'],
     {
       [styles.bold]: bold,
+      [styles.semibold]: semibold,
       [styles.italic]: italic,
       [styles.uppercase]: uppercase,
       [styles.truncate]: truncate,

@@ -1,0 +1,30 @@
+.bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px;
+}
+
+.account-tooltip-trigger {
+  display: flex;
+}
+
+// square 36px footprint so the x-small text Button matches the icon button
+.account-button {
+  width: 36px;
+  min-width: 36px;
+  height: 36px !important;
+  padding: 0 !important;
+}
+
+// 16px glyph in the 36px button (10px padding), outranking the base button's 14px svg
+.bottom .settings-icon {
+  width: 16px;
+  height: 16px;
+}
+
+// selected route mirrors the button's focus ring so both states look identical
+.bottom .selected {
+  border: 2px solid var(--border-strong, #7f8c8d);
+  box-shadow: inset 0 0 0 2px var(--component-bg-baseline, #232b2e);
+}

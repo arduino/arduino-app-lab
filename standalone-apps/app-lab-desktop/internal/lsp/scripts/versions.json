@@ -1,0 +1,12 @@
+{
+  "arduino-language-server": "0.8.0-rc.1",
+  "arduino-cli": "1.5.2-rc.1",
+  "clangd": "22.1.8-2-rc2",
+  "ctags": "5.8-arduino11-abc8fca7499f44c725122881cd380a88c37abe0e",
+  "node": "v24.18.0",
+  "basedpyright": "1.39.9",
+  "ruff": "0.15.21",
+  "typescript-language-server": "5.3.0",
+  "typescript": "6.0.3",
+  "vscode-langservers-extracted": "4.10.0"
+}

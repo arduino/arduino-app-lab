@@ -1,13 +1,13 @@
 ---
 name: github.com/wailsapp/wails/v2/pkg/menu
-version: v2.12.0
+version: v2.13.0
 type: go
 summary: Package menu provides all the functions and structs related to menus in a
   Wails application.
 homepage: https://pkg.go.dev/github.com/wailsapp/wails/v2/pkg/menu
 license: mit
 licenses:
-- sources: v2@v2.12.0/LICENSE
+- sources: v2@v2.13.0/LICENSE
   text: |
     MIT License
 

@@ -1,0 +1,37 @@
+.network-button {
+    height: 20px !important;
+    border-radius: 4px !important;
+    padding: 2px 6px !important;
+    outline: 0 !important;
+
+    &-text {
+        font-size: 10px !important;
+        font-weight: 600 !important;
+    }
+}
+
+.network-menu-content {
+    padding: 6px 12px;
+    gap: 12px;
+    display: flex;
+    flex-direction: column;
+}
+
+.network-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 10px;
+    font-weight: 500;
+}
+
+.network-status {
+    font-size: 10px;
+    font-weight: 500;
+    text-transform: uppercase;
+    color: var(--feedback-warning-default, #c1ab15);
+    
+    &.connected {
+        color: var(--feedback-success-default, #15c1ab);
+    }
+}

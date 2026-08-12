@@ -2,7 +2,7 @@ import {
   CodeEditorText,
   REVERTIBLE_INJECT_ID_SUFFIX,
 } from '@cloud-editor-mono/ui-components/lib/components-by-app/app-lab';
-import { uniqueId } from 'lodash';
+import { uniqueId } from 'lodash-es';
 import {
   BehaviorSubject,
   debounce,
@@ -20,18 +20,23 @@ import {
 } from 'rxjs';
 
 import { addToSet, removeFromSet } from '../utils';
+import { eventsOn } from '../wails-service/wailsService.impl';
 import {
-  ArduinoAppFile,
   ArduinoAppFilesService,
   BaseCodeChange,
   CodeChange,
   CodeChangeWithCtx,
+  CodeReloadCause,
+  CodeReloadEvent,
   CodeSubjectById,
   CodeSubjectIdParam,
   CodeSubjectInjection,
+  CodeSubjectSeed,
   FileId,
   isCodeChangeWithCtx,
   isEffectualEmission,
+  REFRESH_EVENT,
+  RefreshEvent,
   SaveCode,
   SetUnsavedFileTuple,
   valueHasChanged,
@@ -41,6 +46,10 @@ interface AppFilesState {
   codeSubjects?: Map<FileId, BehaviorSubject<CodeChange>>;
   unsavedFiles$?: Subject<SetUnsavedFileTuple> | Subject<Set<FileId>>;
   codeSubjectInjections$?: Subject<CodeSubjectInjection>;
+  // Emits once per in-place buffer reload; the editor observes it to re-render
+  // so CodeMirror can reconcile the new instanceId, and other consumers can
+  // react to the reload cause.
+  codeReload$?: BehaviorSubject<CodeReloadEvent | undefined>;
 }
 
 let appFilesState: AppFilesState = {};
@@ -197,6 +206,24 @@ export function getCodeInjectionsSubject(): Subject<CodeSubjectInjection> {
   return codeSubjectInjections$;
 }
 
+// A stable, always-present signal the editor subscribes to (see
+// `useCodeReloadEvent`). It emits once per in-place buffer reload so the editor
+// re-renders and CodeMirror reconciles the file's new instanceId; the payload
+// also lets other consumers react to the reload cause. Being a dedicated
+// subject (not the per-file code subject) means the editor can observe it with
+// no retry/lifecycle handling.
+export function getCodeReloadSubject(): BehaviorSubject<
+  CodeReloadEvent | undefined
+> {
+  let { codeReload$ } = appFilesState;
+  if (codeReload$) return codeReload$;
+
+  codeReload$ = new BehaviorSubject<CodeReloadEvent | undefined>(undefined);
+  setAppFilesState({ codeReload$ });
+
+  return codeReload$;
+}
+
 export function codeInjectionsSubjectNext(
   fileId: CodeSubjectInjection['fileId'],
   value: CodeSubjectInjection['value'],
@@ -205,15 +232,22 @@ export function codeInjectionsSubjectNext(
   lineToScroll?: number,
   fromAssist?: boolean,
 ): boolean {
-  const subjectValue = getCodeSubjectById(fileId).getValue();
-
-  if (subjectValue.value.indexOf(value) !== -1) {
+  const codeSubjects = getCodeSubjects();
+  const subject$ = codeSubjects.get(fileId);
+  if (!subject$) {
+    console.warn(
+      `codeInjectionsSubjectNext: no code subject for ${fileId}; skipping injection`,
+    );
     return false;
   }
 
-  const subject$ = getCodeInjectionsSubject();
+  if (subject$.getValue().value.indexOf(value) !== -1) {
+    return false;
+  }
 
-  subject$.next({
+  const injectionsSubject$ = getCodeInjectionsSubject();
+
+  injectionsSubject$.next({
     fileId,
     value,
     initialContext,
@@ -243,18 +277,20 @@ function lastChangeInTimeFrame(duration: number) {
 }
 
 export function createCodeSubject(
-  data: ArduinoAppFile,
+  data: CodeSubjectSeed,
   debounceInterval = codeSubjectDebounceInterval,
 ): BehaviorSubject<CodeChange> {
   const fileId = data.path;
   const initialCode = data.content;
+  const dotIdx = fileId.lastIndexOf('.');
+  const ext = dotIdx === -1 ? '' : fileId.slice(dotIdx + 1);
 
   const initialValue: BaseCodeChange = {
     fileId,
     meta: {
       initialChange: true,
       instanceId: uniqueId(),
-      ext: data.extension,
+      ext,
       hash: data.hash,
     },
     value: initialCode,
@@ -280,19 +316,21 @@ export function createCodeSubject(
 
   // subscribe to a not-initial code change in a time frame of 1s,
   // save it if is different from the previous one.
+  // Read the fileId from the emission rather than the closure so a renamed
+  // buffer (see `renameCodeSubject`) saves to its new path, not the old one.
   const lastCodeUpdateSub = lastCodeUpdate$.subscribe(
-    async ({ context, value, meta }) => {
-      unsavedFiles$.next([fileId, true]);
+    async ({ context, value, meta, fileId: currentFileId }) => {
+      unsavedFiles$.next([currentFileId, true]);
 
       try {
-        const result = await context.saveCode(fileId, value, meta.hash);
+        const result = await context.saveCode(currentFileId, value, meta.hash);
 
         if (result && 'isUnsaved' in result && result?.isUnsaved) return;
-        unsavedFiles$.next([fileId, false]);
+        unsavedFiles$.next([currentFileId, false]);
 
         if (result && 'newHash' in result) {
           codeSubjectNext(
-            fileId,
+            currentFileId,
             value,
             context.saveCode,
             undefined,
@@ -312,11 +350,13 @@ export function createCodeSubject(
       (prev, curr) => ({
         isSameCode: !valueHasChanged(prev, curr),
         value: curr.value,
+        fileId: curr.fileId,
         meta: { doc: curr.meta.doc },
       }),
       {
         isSameCode: false,
         value: initialCode,
+        fileId,
         meta: {},
       },
     ),
@@ -327,8 +367,8 @@ export function createCodeSubject(
   );
 
   const lastIneffectualCodeChangeSub = lastIneffectualCodeChange$.subscribe(
-    () => {
-      unsavedFiles$.next([fileId, false]);
+    ({ fileId: currentFileId }) => {
+      unsavedFiles$.next([currentFileId, false]);
     },
   );
 
@@ -336,12 +376,53 @@ export function createCodeSubject(
 }
 
 export function setCodeSubjects(
-  data: ArduinoAppFile,
+  data: CodeSubjectSeed,
   debounceInterval = codeSubjectDebounceInterval,
 ): void {
   const codeSubjects = getCodeSubjects();
   const subject = createCodeSubject(data, debounceInterval);
   codeSubjects.set(data.path, subject);
+}
+
+// reloadCodeSubject overrides an already-open file's buffer with freshly fetched
+// content, in place on its existing subject. It mints a new instanceId so
+// CodeMirror reloads its doc (the editor observes the subject and reconciles on
+// instanceId change), and marks the emission as an initial change so the save
+// pipeline ignores it — no save-back, no unsaved flag. Use when content changed
+// underneath us (external change / refetch), never for user edits. No-op if the
+// file isn't currently open, or if the fetched content matches the buffer.
+export function reloadCodeSubject(
+  path: string,
+  content: string,
+  cause: CodeReloadCause,
+): void {
+  const codeSubjects = getCodeSubjects();
+  const subject$ = codeSubjects.get(path);
+  if (!subject$) return;
+
+  const prev = subject$.getValue();
+  // Identical content needs no reload, and the new instanceId is not free:
+  // it makes CodeMirror rebuild the editor state, resetting cursor and
+  // scroll. Every file selection triggers a refetch, so that rebuild races
+  // whatever positioned the cursor after the switch — the LSP reference
+  // panel's selection dispatch loses that race on slow disks and lands the
+  // user at the top of the file.
+  if (prev.value === content) return;
+
+  subject$.next({
+    fileId: path,
+    value: content,
+    meta: {
+      initialChange: true,
+      instanceId: uniqueId(),
+      ext: prev.meta.ext,
+      hash: prev.meta.hash,
+    },
+  });
+
+  // Signal the editor to re-render so CodeMirror reconciles the new instanceId,
+  // and let other consumers react to why the reload happened.
+  getCodeReloadSubject().next({ id: uniqueId(), fileId: path, cause });
 }
 
 export function removeCodeSubjectBySketchPath(sketchPath: string): void {
@@ -359,11 +440,25 @@ export function removeCodeSubjectBySketchPath(sketchPath: string): void {
 }
 
 export function removeCodeSubject(path: string): void {
-  const codeSubject$ = getCodeSubjectById(path);
-  codeSubject$.complete();
-
   const codeSubjects = getCodeSubjects();
+  const codeSubject$ = codeSubjects.get(path);
+  // Idempotent: removing a path with no open buffer (a folder, an
+  // already-removed file) is a no-op, not an error — mirrors renameCodeSubject.
+  if (!codeSubject$) return;
+
+  codeSubject$.complete();
   codeSubjects.delete(path);
+}
+
+export function renameCodeSubject(oldPath: string, newPath: string): void {
+  if (oldPath === newPath) return;
+  const codeSubjects = getCodeSubjects();
+  const subject = codeSubjects.get(oldPath);
+  if (!subject) return;
+  codeSubjects.set(newPath, subject);
+  codeSubjects.delete(oldPath);
+  const current = subject.getValue();
+  subject.next({ ...current, fileId: newPath });
 }
 
 export function codeSubjectNext(
@@ -376,7 +471,14 @@ export function codeSubjectNext(
   lineToScroll?: number,
   fromAssist?: boolean,
 ): void {
-  const codeSubject$ = getCodeSubjectById(fileId);
+  const codeSubjects = getCodeSubjects();
+  const codeSubject$ = codeSubjects.get(fileId);
+  if (!codeSubject$) {
+    console.warn(
+      `codeSubjectNext: no code subject for ${fileId}; skipping update`,
+    );
+    return;
+  }
   const unsavedFiles$ = getUnsavedFilesSubject<Subject<SetUnsavedFileTuple>>();
 
   unsavedFiles$.next([fileId, true]);
@@ -495,6 +597,28 @@ export let importDroppedResourceToApp: ArduinoAppFilesService['importDroppedReso
     return () => {};
   };
 
+// Filesystem watch controls. Default to no-ops so non-desktop platforms (and
+// dev hot-reload before injection) simply don't watch.
+const noopWatch = async (): Promise<void> => {};
+
+export let watchApp: ArduinoAppFilesService['watchApp'] = noopWatch;
+export let unwatchApp: ArduinoAppFilesService['unwatchApp'] = noopWatch;
+export let watchAppsDir: ArduinoAppFilesService['watchAppsDir'] = noopWatch;
+export let unwatchAppsDir: ArduinoAppFilesService['unwatchAppsDir'] = noopWatch;
+export let unwatchAll: ArduinoAppFilesService['unwatchAll'] = noopWatch;
+
+// Typed subscription to the backend `refresh` event: normalizes the raw
+// transport callback into a `RefreshEvent` and drops empty payloads, so
+// consumers don't re-declare the event shape. Returns an unsubscribe fn.
+export function onWatcherRefresh(
+  callback: (event: RefreshEvent) => void,
+): () => void {
+  return eventsOn(REFRESH_EVENT, (payload?: RefreshEvent) => {
+    if (!payload) return;
+    callback(payload);
+  });
+}
+
 export const setArduinoAppFilesService = (
   service: ArduinoAppFilesService,
 ): void => {
@@ -510,4 +634,9 @@ export const setArduinoAppFilesService = (
   selectResourcePathToImport = service.selectResourcePathToImport;
   importResourceToAppFromPath = service.importResourceToAppFromPath;
   importDroppedResourceToApp = service.importDroppedResourceToApp;
+  watchApp = service.watchApp;
+  unwatchApp = service.unwatchApp;
+  watchAppsDir = service.watchAppsDir;
+  unwatchAppsDir = service.unwatchAppsDir;
+  unwatchAll = service.unwatchAll;
 };

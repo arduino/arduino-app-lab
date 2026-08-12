@@ -15,6 +15,11 @@ export type NetworkCredentials = {
   security: SecurityProtocols;
 };
 
+export enum WiFiConnectionErrorCode {
+  IncorrectPassword = 'ERR_WIFI_INCORRECT_PASSWORD',
+  ConnectionFailed = 'ERR_WIFI_CONNECTION_FAILED',
+}
+
 export type SecurityProtocolSection = DropdownMenuSectionType<
   SecurityProtocols,
   string
@@ -34,6 +39,7 @@ export type UseNetworkLogic = () => {
   isConnecting?: boolean;
   connectRequestIsError?: boolean;
   connectRequestIsSuccess?: boolean;
+  connectRequestErrorCode?: WiFiConnectionErrorCode;
   selectedNetwork?: NetworkItem;
   setSelectedNetwork: (network?: NetworkItem) => void;
   manualNetworkSetup: boolean;

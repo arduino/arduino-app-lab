@@ -50,6 +50,25 @@ function cloneRepo() {
   git clone --depth 1 --branch "$tag" "$REPO_URL" "$TEMP_DIR"
 }
 
+# The SVGs downloaded here are embedded into App Lab and attributed in
+# vendored-assets.txt from the licence texts committed beside this script.
+# A tag bump that changes either upstream licence must update those copies,
+# so a mismatch fails the download rather than shipping a stale notice.
+function checkLicenses() {
+  cmp -s "$TEMP_DIR/LICENSE" "$ROOT_DIR/noto-emoji.LICENSE.txt" || {
+    echo "noto-emoji.LICENSE.txt no longer matches upstream LICENSE at $REPO_TAG —"
+    echo "copy the clone's LICENSE over it, commit, and regenerate the notices"
+    echo "with: task general:cache-dep-licenses"
+    exit 1
+  }
+  cmp -s "$TEMP_DIR/third_party/region-flags/LICENSE" "$ROOT_DIR/region-flags.LICENSE.txt" || {
+    echo "region-flags.LICENSE.txt no longer matches upstream at $REPO_TAG —"
+    echo "copy the clone's third_party/region-flags/LICENSE over it, commit, and"
+    echo "regenerate the notices with: task general:cache-dep-licenses"
+    exit 1
+  }
+}
+
 # Copies emoji SVG files from the cloned repo to the local emojis directory.
 function copyEmojis() {
   local emojisSrc="$TEMP_DIR/svg"
@@ -90,6 +109,7 @@ function fetchEmojiAssets() {
   # fi
 
   cloneRepo "$REPO_TAG"
+  checkLicenses
 
   if [[ -d "$EMOJI_DIR" ]]; then
     echo "Removing existing emoji directory"

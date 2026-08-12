@@ -1,0 +1,52 @@
+{
+  "name": "@bcmi-labs/app-lab-ai-assistant",
+  "version": "1.4.3",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "buildDev": "tsc && vite build --mode development",
+    "watch": "yarn buildDev --watch"
+  },
+  "peerDependencies": {
+    "clsx": ">= 1.2.1",
+    "react": ">= 18.2.0",
+    "react-dom": ">= 18.2.0",
+    "react-intl": ">= 6.2.5",
+    "react-markdown": ">= 8.0.6",
+    "remark-gfm": ">= 3.0.1",
+    "zustand": ">= 5.0.8"
+  },
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com",
+    "access": "restricted",
+    "module": "./dist/lib/ai-assistant.es.js",
+    "types": "./dist/index.d.ts",
+    "exports": {
+      ".": {
+        "import": "./dist/lib/ai-assistant.es.js"
+      },
+      "./dist/style.css": {
+        "import": "./dist/style.css"
+      }
+    }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com:bcmi-labs/cloud-editor-mono.git"
+  },
+  "module": "./lib/index.ts",
+  "types": "./index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./lib/index.ts"
+    },
+    "./panel": {
+      "import": "./panel.ts"
+    }
+  }
+}

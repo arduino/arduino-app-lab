@@ -1,0 +1,46 @@
+@use "@cloud-editor-mono/arduino-sass/src/fonts" as fonts;
+@use "@cloud-editor-mono/arduino-sass/src/typography" as typography;
+
+.tabs {
+  position: relative;
+  display: inline-flex;
+  align-self: flex-start;
+  gap: 0;
+  padding: 3px;
+  border-radius: 8px;
+  border: 1px solid var(--border-inverted, #232b2e);
+  background: var(--component-bg-baseline, rgba(255, 255, 255, 0.02));
+}
+
+.tab-indicator {
+  position: absolute;
+  top: 3px;
+  bottom: 3px;
+  left: 0;
+  border-radius: 6px;
+  background: var(--component-bg-flexible, rgba(174, 184, 184, 0.15));
+  transition:
+    transform 0.2s ease,
+    width 0.2s ease;
+  pointer-events: none;
+}
+
+.tab {
+  position: relative;
+  z-index: 1;
+  font: inherit;
+  border: none;
+  background: transparent;
+  padding: 0 14px;
+  border-radius: 6px;
+  color: var(--text-subtle, #c9d2d2);
+  cursor: pointer;
+  transition: color 0.2s ease;
+  font-size: typography.$font-size-xx-small;
+  height: 28px;
+
+  &--active {
+    color: var(--text-default, #ffffff);
+    font-weight: fonts.$font-weight-semibold;
+  }
+}

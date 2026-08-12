@@ -230,4 +230,24 @@ export const messages = defineMessages({
     description:
       'Notification message shown when automatic WebUI file creation fails',
   },
+  couldNotOpenFile: {
+    id: 'app-detail.could-not-open-file',
+    defaultMessage: "Couldn't open the file.",
+    description:
+      'Notification message shown when a file cannot be opened in the editor',
+  },
+  invalidCharactersInFileName: {
+    id: 'app-detail.invalid-characters-in-file-name',
+    defaultMessage:
+      'Invalid name. Can\'t contain $ ` / \\ < > : " | ? *, end with a dot or space.',
+    description:
+      'Notification message shown when creating or renaming a file or folder with a name that is not allowed',
+  },
+  lspError: {
+    id: 'app-detail.lsp-error',
+    defaultMessage:
+      'Language support failed to install. Reopen the app to retry.',
+    description:
+      'Notification message shown when the LSP (Language Server Protocol) service fails to initialize',
+  },
 });

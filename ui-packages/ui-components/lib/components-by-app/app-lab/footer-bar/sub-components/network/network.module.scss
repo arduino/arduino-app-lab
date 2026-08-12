@@ -1,0 +1,20 @@
+.network-icon-container {
+    position: relative;
+    cursor: pointer;
+    color: var(--text-subtle, #c9d2d2);
+    height: 28px;
+    width: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    box-sizing: border-box;
+
+    &:hover:not(.active) {
+        background-color: var(--component-bg-hover, #aeb8b826);
+    }
+
+    &.active {
+        border: 2px solid var(--border-strong, #7f8c8d);
+    }
+}

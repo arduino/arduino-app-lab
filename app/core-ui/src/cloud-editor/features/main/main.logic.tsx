@@ -67,8 +67,7 @@ import {
 import { redo, undo } from '@codemirror/commands';
 import { EditorView } from '@codemirror/view';
 import { defaultStringifySearch, useSearch } from '@tanstack/react-location';
-import { uniqueId } from 'lodash';
-import _ from 'lodash';
+import { range, uniqueId } from 'lodash-es';
 import {
   Key,
   useCallback,
@@ -86,7 +85,7 @@ import {
   useCodeInjectionsObservable,
 } from '../../../common/hooks/code';
 import {
-  codeEditorViewInstance,
+  codeEditorViewInstances,
   useCodeEditorViewInstance,
 } from '../../../common/hooks/editor';
 import { SKETCH_SECRETS_FILE_ID, useFiles } from '../../../common/hooks/files';
@@ -1058,7 +1057,7 @@ export const useMainLogic: UseMainLogic =
 
     const onReceiveViewInstance = useCallback(
       (viewInstance: EditorView | null): void => {
-        codeEditorViewInstance.instance = viewInstance;
+        codeEditorViewInstances.A = viewInstance;
       },
       [],
     );
@@ -1304,18 +1303,18 @@ export const useMainLogic: UseMainLogic =
             }
           },
           [EditorControl.Undo]: (): void => {
-            if (codeEditorViewInstance.instance) {
+            if (codeEditorViewInstances.A) {
               undo({
-                state: codeEditorViewInstance.instance.state,
-                dispatch: codeEditorViewInstance.instance.dispatch,
+                state: codeEditorViewInstances.A.state,
+                dispatch: codeEditorViewInstances.A.dispatch,
               });
             }
           },
           [EditorControl.Redo]: (): void => {
-            if (codeEditorViewInstance.instance) {
+            if (codeEditorViewInstances.A) {
               redo({
-                state: codeEditorViewInstance.instance.state,
-                dispatch: codeEditorViewInstance.instance.dispatch,
+                state: codeEditorViewInstances.A.state,
+                dispatch: codeEditorViewInstances.A.dispatch,
               });
             }
           },
@@ -1393,14 +1392,14 @@ export const useMainLogic: UseMainLogic =
       const compileOutputWarnRange =
         typeof compileOutputWarnLineStart !== 'undefined' &&
         typeof compileOutputWarnLineEnd !== 'undefined'
-          ? _.range(compileOutputWarnLineStart, compileOutputWarnLineEnd + 1, 1)
+          ? range(compileOutputWarnLineStart, compileOutputWarnLineEnd + 1, 1)
           : undefined;
 
       const newLineRegEx = /\r\n|\r|\n/;
       const uploadOutputWarnRange =
         typeof uploadOutputWarnLineStart !== 'undefined' &&
         (iotUploadString || uploadString)
-          ? _.range(
+          ? range(
               uploadOutputWarnLineStart,
               ((iotUploadString || uploadString) as string)?.split(newLineRegEx)
                 .length + 1,

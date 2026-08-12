@@ -20,7 +20,7 @@
     "file-saver": "2.0.5",
     "idb-keyval": "6.2.1",
     "jszip": "3.10.1",
-    "lodash": "4.17.21",
+    "lodash-es": "4.18.1",
     "object-hash": "3.0.0",
     "react": "18.2.0",
     "react-aria": "3.20.0",
@@ -40,6 +40,6 @@
   },
   "devDependencies": {
     "typescript": "5.2.2",
-    "vite": "5.2.8"
+    "vite": "6.4.2"
   }
 }

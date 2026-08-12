@@ -1,0 +1,55 @@
+@use "@cloud-editor-mono/ui-components/public/shared.module.scss";
+@use "@cloud-editor-mono/arduino-sass/src/typography" as typography;
+@use "@cloud-editor-mono/arduino-sass/src/fonts" as fonts;
+
+.loading {
+  height: 100%;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface-bg-below-2, #090f11);
+
+  .loader {
+    position: static;
+    width: auto;
+    height: auto;
+
+    svg {
+      width: 56px;
+      --color: var(--icon-subtle, #c9d2d2);
+    }
+  }
+
+  .caption {
+    font-size: typography.$font-size-xx-small;
+    font-weight: fonts.$font-weight-normal;
+    color: var(--text-inverted-subtle, #5d6a6b);
+  }
+}
+
+.stopped {
+  height: 100%;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  text-align: center;
+  background: var(--surface-bg-below-2, #090f11);
+
+  .stopped-title {
+    font-weight: fonts.$font-weight-semibold;
+    color: var(--text-default, #ffffff);
+  }
+
+  .stopped-body {
+    max-width: 420px;
+    margin: 0 0 8px;
+    color: var(--text-subtle, #99a6a8);
+  }
+}

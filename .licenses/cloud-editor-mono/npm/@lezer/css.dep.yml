@@ -1,9 +1,9 @@
 ---
 name: "@lezer/css"
-version: 1.3.0
+version: 1.3.3
 type: npm
 summary: lezer-based CSS grammar
-homepage: 
+homepage:
 license: mit
 licenses:
 - sources: LICENSE

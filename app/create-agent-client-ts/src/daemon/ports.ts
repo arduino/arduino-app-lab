@@ -2,7 +2,7 @@ import {
   listenForStateCondition,
   StateSubjectValuePair,
 } from '@cloud-editor-mono/common';
-import { orderBy, uniqueId } from 'lodash';
+import { orderBy, uniqueId } from 'lodash-es';
 
 import { AgentPort } from './agent.type';
 import { daemonState, setAgentDaemonState } from './state';

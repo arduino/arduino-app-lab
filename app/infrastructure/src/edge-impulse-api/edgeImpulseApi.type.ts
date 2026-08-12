@@ -23,6 +23,6 @@ export type EIGetDeploymentHistoryResponse =
 export type EIProject = EIProjectItem & {
   impulses?: EIImpulse[];
   target?: string;
-  hasUnoQLatencyDevice?: boolean;
+  hasQBoardLatencyDevice?: boolean;
   hasOtherNonDefaultLatencyDevice?: boolean;
 };

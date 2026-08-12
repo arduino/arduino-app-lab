@@ -30,9 +30,14 @@ const SearchField = forwardRef(
       state,
       inputRef,
     );
+    // react-aria owns Enter (runs onSubmit) and Escape (clears). Escape is only
+    // forwarded when there is something to clear, so it can bubble otherwise.
     const { onKeyDown } = inputProps;
     inputProps.onKeyDown = (e): void => {
-      if (e.key === 'Escape' && inputProps.value !== '') {
+      if (
+        e.key === 'Enter' ||
+        (e.key === 'Escape' && inputProps.value !== '')
+      ) {
         onKeyDown?.(e);
       }
     };

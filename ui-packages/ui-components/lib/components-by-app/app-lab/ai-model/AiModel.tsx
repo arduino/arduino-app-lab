@@ -1,4 +1,3 @@
-import { useI18n } from '@cloud-editor-mono/ui-components';
 import {
   AiModelUninstallDialog,
   Badge,
@@ -10,6 +9,7 @@ import {
 import clsx from 'clsx';
 import { useState } from 'react';
 
+import { useI18n } from '../../../i18n/useI18n';
 import { XSmall, XXSmall } from '../../../typography';
 import styles from './ai-model.module.scss';
 import { AiModelProps } from './AiModel.type';
