@@ -1,3 +1,4 @@
+import { BOARD_FQBN } from '@cloud-editor-mono/common';
 import {
   Board as BoardGenericIcon,
   BoardUnoQ,
@@ -14,9 +15,9 @@ const BoardIcon: React.FC<BoardIconProps> = (props: BoardIconProps) => {
   const { board } = props;
 
   switch (board.fqbn) {
-    case 'arduino:zephyr:unoq':
+    case BOARD_FQBN.UNO_Q:
       return <BoardUnoQ />;
-    case 'arduino:zephyr:ventunoq':
+    case BOARD_FQBN.VENTUNO_Q:
       return <BoardVentunoQ />;
     default:
       return <BoardGenericIcon />;

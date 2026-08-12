@@ -21,7 +21,7 @@ class Timestamp extends GutterMarker {
     this.timestamp = timestamp;
   }
 
-  toDOM(): Text {
+  override toDOM(): Text {
     return document.createTextNode(this.timestamp);
   }
 }

@@ -5,7 +5,7 @@ import {
   sendNotification,
 } from '@cloud-editor-mono/domain';
 import { ToastType } from '@cloud-editor-mono/ui-components';
-import { uniqueId } from 'lodash';
+import { uniqueId } from 'lodash-es';
 import { useCallback, useContext } from 'react';
 import { defineMessages, IntlContext, MessageDescriptor } from 'react-intl';
 

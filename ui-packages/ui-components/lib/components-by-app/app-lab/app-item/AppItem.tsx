@@ -44,6 +44,7 @@ const AppItem: React.FC<AppItemProps> = (props: AppItemProps) => {
   } = props;
 
   const { formatMessage } = useI18n();
+
   const hasActions =
     onRename || onDuplicate || onExport || onSetAsDefault || onDelete;
   const [menuOpen, setMenuOpen] = React.useState(false);
@@ -172,7 +173,7 @@ const AppItem: React.FC<AppItemProps> = (props: AppItemProps) => {
                                     ),
                                     labelPrefix: (
                                       <span
-                                        className={styles['dropdown-item-icon']}
+                                        className={styles['context-menu-icon']}
                                       >
                                         <Pencil />
                                       </span>
@@ -189,7 +190,7 @@ const AppItem: React.FC<AppItemProps> = (props: AppItemProps) => {
                                     ),
                                     labelPrefix: (
                                       <span
-                                        className={styles['dropdown-item-icon']}
+                                        className={styles['context-menu-icon']}
                                       >
                                         <Duplicate />
                                       </span>
@@ -206,7 +207,7 @@ const AppItem: React.FC<AppItemProps> = (props: AppItemProps) => {
                                     ),
                                     labelPrefix: (
                                       <span
-                                        className={styles['dropdown-item-icon']}
+                                        className={styles['context-menu-icon']}
                                       >
                                         <Download />
                                       </span>
@@ -278,7 +279,7 @@ const AppItem: React.FC<AppItemProps> = (props: AppItemProps) => {
                                     ),
                                     labelPrefix: (
                                       <span
-                                        className={styles['dropdown-item-icon']}
+                                        className={styles['context-menu-icon']}
                                       >
                                         <Bin />
                                       </span>

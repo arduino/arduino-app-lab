@@ -1,3 +1,4 @@
+import { isValidResourceName } from '@cloud-editor-mono/infrastructure';
 import * as ContextMenu from '@radix-ui/react-context-menu';
 import clsx from 'clsx';
 import {
@@ -63,6 +64,7 @@ interface FileTreeRenderContextValue {
   onMultiSelectedIdsChange: (ids: Set<string>) => void;
   onEditSubmit: (newName: string) => Promise<void>;
   onEditCancel: () => void;
+  onValidationError?: () => void;
 }
 
 const FileTreeRenderContext = createContext<FileTreeRenderContextValue | null>(
@@ -130,6 +132,7 @@ const FileTreeNode = (nodeProps: NodeRendererProps<TreeNode>): JSX.Element => {
       isReadOnly={ctx.isReadOnly}
       onEditSubmit={ctx.onEditSubmit}
       onEditCancel={ctx.onEditCancel}
+      onValidationError={ctx.onValidationError}
       onDelete={(): Promise<void> => ctx.onNodeDelete(node)}
       renderNodeIcon={ctx.renderNodeIcon}
     />
@@ -139,6 +142,20 @@ const FileTreeNode = (nodeProps: NodeRendererProps<TreeNode>): JSX.Element => {
 const renderEmptyDragPreview = (): ReactElement | null => null;
 const renderEmptyCursor = (): null => null;
 const idAccessor = (node: TreeNode): string => node.path;
+
+// Flatten every node path in the tree into a set, for reconciling selection
+// state against the current data.
+const collectNodePaths = (
+  nodes: TreeNode[] | undefined,
+  acc: Set<string> = new Set(),
+): Set<string> => {
+  if (!nodes) return acc;
+  for (const node of nodes) {
+    acc.add(node.path);
+    if (node.type === 'folder') collectNodePaths(node.children, acc);
+  }
+  return acc;
+};
 
 interface FileTreeProps {
   height: number | undefined;
@@ -160,6 +177,7 @@ interface FileTreeProps {
   onFileMove: (
     fromPath: string,
     toPath: string,
+    nodeType?: 'file' | 'folder',
     filesToUpdate?: Array<{ oldPath: string; newPath: string }>,
   ) => Promise<void>;
   onFolderCreate: (path: string) => Promise<void>;
@@ -182,6 +200,7 @@ interface FileTreeProps {
    */
   onMoveBlocked?: (node: TreeNode) => void;
   onDragOverFolderChange?: (path: string) => void;
+  onValidationError?: () => void;
 }
 
 const FileTree = forwardRef<FileTreeApi, FileTreeProps>((props, ref) => {
@@ -210,6 +229,7 @@ const FileTree = forwardRef<FileTreeApi, FileTreeProps>((props, ref) => {
     onFileDragStart,
     onMoveBlocked,
     onDragOverFolderChange,
+    onValidationError,
   } = props;
 
   const treeApiRef = useRef<TreeApi<TreeNode>>(null);
@@ -253,6 +273,28 @@ const FileTree = forwardRef<FileTreeApi, FileTreeProps>((props, ref) => {
     };
   }, [multiSelectedIds.size]);
 
+  // Drop multi-selected paths that have left the tree (member removed/moved on
+  // disk). Required, not defense-in-depth: a persisted path-set can't stay in
+  // sync "by construction" — a recreated path re-highlights (`has(id)` is true
+  // again) and is indistinguishable from "still selected" at render time, so the
+  // removal must be observed here. (Single-selection is safe: it's driven by the
+  // reconciled `selectedNode`/`selectedFolder` props; a plain click no longer
+  // seeds this set — see FileRow.)
+  useEffect(() => {
+    const present = collectNodePaths(nodes);
+    setMultiSelectedIds((prev) => {
+      if (prev.size === 0) return prev;
+      const next = new Set<string>();
+      for (const id of prev) {
+        if (present.has(id)) next.add(id);
+      }
+      return next.size === prev.size ? prev : next;
+    });
+    setLastSelectedNodeId((prev) =>
+      prev && !present.has(prev) ? undefined : prev,
+    );
+  }, [nodes]);
+
   const handleDragOverZoneChange = useCallback(
     (zone: 'root' | string | null): void => {
       dragOverZoneRef.current = zone;
@@ -277,7 +319,10 @@ const FileTree = forwardRef<FileTreeApi, FileTreeProps>((props, ref) => {
   );
 
   const scrollToNode = (nodeId: string): void => {
-    treeApiRef.current!.scrollTo(nodeId, 'smart');
+    // Callers reach this from a setTimeout, so the tree can have unmounted (or
+    // not yet attached) by the time it runs — the non-null assertion this
+    // replaces threw an uncaught TypeError in exactly that window.
+    treeApiRef.current?.scrollTo(nodeId, 'smart');
   };
 
   useEffect(() => {
@@ -478,6 +523,7 @@ const FileTree = forwardRef<FileTreeApi, FileTreeProps>((props, ref) => {
 
       for (const draggedNode of validNodes) {
         const fromPath = draggedNode.data.path;
+        const nodeType = draggedNode.data.type;
         const fileName = fromPath.split('/').pop() || '';
         const toPath = parentPath ? `${parentPath}/${fileName}` : fileName;
 
@@ -504,7 +550,7 @@ const FileTree = forwardRef<FileTreeApi, FileTreeProps>((props, ref) => {
         const { hasDuplicate, conflictType } = checkForDuplicates(
           nodes,
           toPath,
-          draggedNode.data.type,
+          nodeType,
         );
 
         if (hasDuplicate) {
@@ -523,7 +569,7 @@ const FileTree = forwardRef<FileTreeApi, FileTreeProps>((props, ref) => {
 
         // For folders, track files that will need path updates after the move
         const filesToUpdate: Array<{ oldPath: string; newPath: string }> = [];
-        if (draggedNode.data.type === 'folder' && openFiles) {
+        if (nodeType === 'folder' && openFiles) {
           openFiles.forEach((openFile) => {
             if (openFile.fileId.startsWith(fromPath + '/')) {
               // This file was inside the moved folder, calculate its new path
@@ -537,12 +583,11 @@ const FileTree = forwardRef<FileTreeApi, FileTreeProps>((props, ref) => {
             }
           });
         }
-
-        // Call onFileMove with files to update if it's a folder move
+        // Call onFileMove (with files to update if it's a folder move)
         const movePromise =
-          draggedNode.data.type === 'folder' && filesToUpdate.length > 0
-            ? onFileMove(fromPath, toPath, filesToUpdate)
-            : onFileMove(fromPath, toPath);
+          nodeType === 'folder' && filesToUpdate.length > 0
+            ? onFileMove(fromPath, toPath, nodeType, filesToUpdate)
+            : onFileMove(fromPath, toPath, nodeType);
 
         movePromises.push(
           movePromise
@@ -556,9 +601,9 @@ const FileTree = forwardRef<FileTreeApi, FileTreeProps>((props, ref) => {
             })
             .then(() => {
               // Select the moved item using the data we already have
-              if (draggedNode.data.type === 'file') {
+              if (nodeType === 'file') {
                 selectedFileChange({ ...draggedNode.data, path: toPath });
-              } else if (draggedNode.data.type === 'folder') {
+              } else if (nodeType === 'folder') {
                 onFolderSelect({ ...draggedNode.data, path: toPath });
               }
             })
@@ -625,6 +670,20 @@ const FileTree = forwardRef<FileTreeApi, FileTreeProps>((props, ref) => {
 
   const handleEditSubmit = useCallback(
     async (newName: string): Promise<void> => {
+      if (!newName || newName.trim() === '') {
+        setIsCreating(null);
+        setIsEditingAt(null);
+        return;
+      }
+
+      // Funnel check. FileNode refuses these inline (keeping the input open on
+      // the offending name), so reaching here means a programmatic submit; the
+      // notification explains why nothing happened.
+      if (!isValidResourceName(newName)) {
+        onValidationError?.();
+        return;
+      }
+
       if (isCreating !== null) {
         const path = isCreating.path
           ? `${isCreating.path}/${newName}`
@@ -644,7 +703,14 @@ const FileTree = forwardRef<FileTreeApi, FileTreeProps>((props, ref) => {
         setIsEditingAt(null);
       }
     },
-    [isCreating, isEditingAt, onFileCreate, onFolderCreate, onFileRename],
+    [
+      isCreating,
+      isEditingAt,
+      onFileCreate,
+      onFolderCreate,
+      onFileRename,
+      onValidationError,
+    ],
   );
 
   const handleEditCancel = useCallback((): void => {
@@ -752,6 +818,7 @@ const FileTree = forwardRef<FileTreeApi, FileTreeProps>((props, ref) => {
     onMultiSelectedIdsChange: setMultiSelectedIds,
     onEditSubmit: handleEditSubmit,
     onEditCancel: handleEditCancel,
+    onValidationError,
   };
 
   return (
@@ -811,7 +878,7 @@ const FileTree = forwardRef<FileTreeApi, FileTreeProps>((props, ref) => {
                   openByDefault={false}
                   disableMultiSelection={false}
                   initialOpenState={defaultOpenFoldersState}
-                  disableDrag={isReadOnly}
+                  disableDrag={false}
                   disableDrop={isReadOnly || disableDropNode}
                   onMove={handleDrop}
                   renderDragPreview={renderEmptyDragPreview}

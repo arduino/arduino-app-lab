@@ -13,10 +13,24 @@ import {
 } from '@codemirror/commands';
 import { openSearchPanel } from '@codemirror/search';
 import { EditorView } from '@codemirror/view';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useEvent as useEventListener } from 'react-use';
+import { ServerCapabilities } from 'vscode-languageserver-protocol';
 
+import { LSP_LANGS, LspClientRef, LspId, LspLang } from '../../code-mirror';
 import { CodeMirrorEventAnnotation } from '../../code-mirror/codeMirror.type';
+import {
+  lspFindAllReferences,
+  lspFormat,
+  lspGoToDefinition,
+  lspGoToImplementation,
+  lspGoToTypeDefinition,
+  lspRename,
+} from '../../code-mirror/extensions/lsp/lsp-client/lsp-client-commands';
+import {
+  closeReferencePanel,
+  closeRenamePanel,
+} from '../../code-mirror/extensions/lsp/lsp-extensions/extensions/lsp-panel-helpers';
 import {
   codeMirrorAnnotationMap,
   getCurrentSelectedStrings,
@@ -24,18 +38,73 @@ import {
 import {
   ContextMenuHandlerDictionary,
   ContextMenuItemIds,
+  ContextMenuSectionIds,
+  ContextMenuSectionType,
 } from '../../context-menu/contextMenu.type';
+import { contextMenuSections } from '../../context-menu/contextMenuSpec';
+import { useI18n } from '../../i18n/useI18n';
 import { OnChangeHandlerSetCode } from '../codeEditor.type';
+
+const LSP_CAPABILITY_ITEMS: Array<{
+  id: ContextMenuItemIds;
+  isSupported: (caps: ServerCapabilities) => boolean;
+}> = [
+  {
+    id: ContextMenuItemIds.GoToDefinition,
+    isSupported: (caps) => !!caps.definitionProvider,
+  },
+  {
+    id: ContextMenuItemIds.GoToTypeDefinition,
+    isSupported: (caps) => !!caps.typeDefinitionProvider,
+  },
+  {
+    id: ContextMenuItemIds.GoToImplementation,
+    isSupported: (caps) => !!caps.implementationProvider,
+  },
+  {
+    id: ContextMenuItemIds.FindAllReferences,
+    isSupported: (caps) => !!caps.referencesProvider,
+  },
+  {
+    id: ContextMenuItemIds.Format,
+    isSupported: (caps) =>
+      !!caps.documentFormattingProvider ||
+      !!caps.documentRangeFormattingProvider,
+  },
+  {
+    id: ContextMenuItemIds.Rename,
+    isSupported: (caps) => !!caps.renameProvider,
+  },
+];
+
+// Items disabled on read-only files (external files + example apps): every
+// content-modifying action, including the LSP rename/format.
+const READONLY_DISABLED_ITEMS: ContextMenuItemIds[] = [
+  ContextMenuItemIds.Cut,
+  ContextMenuItemIds.Paste,
+  ContextMenuItemIds.Undo,
+  ContextMenuItemIds.Redo,
+  ContextMenuItemIds.CommentUncomment,
+  ContextMenuItemIds.IncreaseIndent,
+  ContextMenuItemIds.DecreaseIndent,
+  ContextMenuItemIds.Format,
+  ContextMenuItemIds.Rename,
+];
 
 type UseContextMenu = (
   viewInstance: EditorView | null,
   setCode: OnChangeHandlerSetCode,
   code?: string | null,
+  isLspEnabled?: boolean,
+  lspClients?: Map<LspId, LspClientRef>,
+  currentFileExt?: string,
+  readOnly?: boolean,
 ) => {
   onContextMenuClose: (e: KeyboardEvent) => void;
   containerRef: React.RefObject<HTMLDivElement>;
   clickHandlers: ContextMenuHandlerDictionary;
   disabledKeys: ContextMenuItemIds[];
+  sections: ContextMenuSectionType[];
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
 };
@@ -44,9 +113,14 @@ export const useContextMenu: UseContextMenu = function (
   viewInstance: EditorView | null,
   setCode: OnChangeHandlerSetCode,
   code?: string | null,
+  isLspEnabled?: boolean,
+  lspClients?: Map<LspId, LspClientRef>,
+  currentFileExt?: string,
+  readOnly?: boolean,
 ): ReturnType<UseContextMenu> {
+  const { formatMessage } = useI18n();
   const [isOpen, setIsOpen] = useState(false);
-  const [disabledKeys, setDisabledKeys] = useState<ContextMenuItemIds[]>([]);
+  const [isPasteDisabled, setIsPasteDisabled] = useState(false);
 
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -181,37 +255,69 @@ export const useContextMenu: UseContextMenu = function (
         openSearchPanel(viewInstance);
       }
     },
+    // LSP
+    [ContextMenuItemIds.GoToDefinition]: (): void => {
+      if (viewInstance) {
+        lspGoToDefinition(viewInstance, formatMessage);
+      }
+    },
+    [ContextMenuItemIds.GoToTypeDefinition]: (): void => {
+      if (viewInstance) {
+        lspGoToTypeDefinition(viewInstance, formatMessage);
+      }
+    },
+    [ContextMenuItemIds.GoToImplementation]: (): void => {
+      if (viewInstance) {
+        lspGoToImplementation(viewInstance, formatMessage);
+      }
+    },
+    [ContextMenuItemIds.FindAllReferences]: (): void => {
+      if (viewInstance) {
+        closeRenamePanel(viewInstance);
+        lspFindAllReferences(viewInstance, formatMessage);
+      }
+    },
+    [ContextMenuItemIds.Format]: (): void => {
+      if (viewInstance) {
+        lspFormat(viewInstance, formatMessage);
+      }
+    },
+    [ContextMenuItemIds.Rename]: (): void => {
+      if (viewInstance) {
+        closeReferencePanel(viewInstance);
+        lspRename(viewInstance, formatMessage);
+      }
+    },
   };
 
   useEffect(() => {
     if (Config.APP_NAME !== 'App Lab') return;
 
-    const handleNativeCopy = (): void => {
+    const handleNativeCopyOrCut = (): void => {
       const selected = window.getSelection()?.toString();
       if (selected) internalClipboard.current = selected;
     };
 
-    const handleNativeCut = (): void => {
-      const selected = window.getSelection()?.toString();
-      if (selected) internalClipboard.current = selected;
-    };
+    const COPY = 'copy';
+    const CUT = 'cut';
 
-    document.addEventListener('copy', handleNativeCopy);
-    document.addEventListener('cut', handleNativeCut);
+    document.addEventListener(COPY, handleNativeCopyOrCut);
+    document.addEventListener(CUT, handleNativeCopyOrCut);
 
     return () => {
-      document.removeEventListener('copy', handleNativeCopy);
-      document.removeEventListener('cut', handleNativeCut);
+      document.removeEventListener(COPY, handleNativeCopyOrCut);
+      document.removeEventListener(CUT, handleNativeCopyOrCut);
     };
   }, []);
 
+  // Paste availability requires an async clipboard read, so it is resolved when
+  // the menu opens and stored separately.
   useEffect(() => {
-    async function setKeys(): Promise<void> {
+    async function updatePasteDisabled(): Promise<void> {
       //If the document is not focused and development console is open, an error will be thrown
       //To avoid this we prevent the function from getting called if the document is not focused and the mode is development
       if (!document.hasFocus() && Config.MODE === 'development') return;
 
-      const keys: ContextMenuItemIds[] = [];
       if (Config.APP_NAME === 'App Lab') {
         // Sync internalClipboard from system clipboard when menu opens.
         // This ensures that if the user copied from another app, the internal clipboard
@@ -228,43 +334,68 @@ export const useContextMenu: UseContextMenu = function (
           }
         }
 
-        if (!internalClipboard.current) {
-          keys.push(ContextMenuItemIds.Paste);
-        }
+        setIsPasteDisabled(!internalClipboard.current);
       } else {
         try {
           const clipboardValue = await readText();
-          if (!clipboardValue) keys.push(ContextMenuItemIds.Paste);
+          setIsPasteDisabled(!clipboardValue);
         } catch {
-          keys.push(ContextMenuItemIds.Paste);
+          setIsPasteDisabled(true);
         }
       }
-      setDisabledKeys(keys);
     }
 
     if (isOpen) {
-      setKeys();
+      updatePasteDisabled();
     }
   }, [isOpen]);
 
-  const closeContextMenu = useCallback(() => {
-    setIsOpen(false);
+  const lspDisabledKeys = useMemo<ContextMenuItemIds[]>(() => {
+    const lspId = LSP_LANGS[currentFileExt as LspLang];
+    if (!lspId) {
+      return [];
+    }
+    const serverCapabilities =
+      lspClients?.get(lspId)?.client.serverCapabilities;
+    if (!serverCapabilities) {
+      return LSP_CAPABILITY_ITEMS.map((cap) => cap.id);
+    }
+    return LSP_CAPABILITY_ITEMS.filter(
+      (cap) => !cap.isSupported(serverCapabilities),
+    ).map((cap) => cap.id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentFileExt, lspClients, isOpen]);
+
+  const disabledKeys = useMemo<ContextMenuItemIds[]>(() => {
+    return [
+      ...lspDisabledKeys,
+      ...(isPasteDisabled ? [ContextMenuItemIds.Paste] : []),
+      ...(readOnly ? READONLY_DISABLED_ITEMS : []),
+    ];
+  }, [lspDisabledKeys, isPasteDisabled, readOnly]);
+
+  const onContextMenuClose = useCallback((e: KeyboardEvent) => {
+    if (e.key === 'Escape') setIsOpen(false);
   }, []);
 
-  const onContextMenuClose = useCallback(
-    (e: KeyboardEvent) => {
-      if (e.key === 'Escape') closeContextMenu();
-    },
-    [closeContextMenu],
-  );
-
   useEventListener('keydown', onContextMenuClose);
+
+  const filteredSections = useMemo(() => {
+    const lspId = LSP_LANGS[currentFileExt as LspLang];
+    return contextMenuSections.filter((section) => {
+      if (section.name === ContextMenuSectionIds.LSP) {
+        return isLspEnabled && !!lspId;
+      }
+      return true;
+    });
+  }, [currentFileExt, isLspEnabled]);
 
   return {
     onContextMenuClose,
     containerRef,
     clickHandlers,
     disabledKeys,
+    sections: filteredSections,
     isOpen,
     setIsOpen,
   };

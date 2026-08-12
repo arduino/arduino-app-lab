@@ -58,4 +58,16 @@ export const messages = defineMessages({
     defaultMessage: "Items can't be added in examples",
     description: 'Message shown on disabled action buttons for examples',
   },
+  lspBannerWaitingTitle: {
+    id: 'app-files-section.lsp-banner-waiting-title',
+    defaultMessage: 'Installing advanced language support',
+    description:
+      'Title of the banner shown when LSP is not available for the current app',
+  },
+  lspBannerWaitingDescription: {
+    id: 'app-files-section.lsp-banner-waiting-description',
+    defaultMessage: 'This may take a few minutes.',
+    description:
+      'Description of the banner shown when LSP is not available for the current app',
+  },
 });

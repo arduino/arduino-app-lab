@@ -13,6 +13,7 @@
 .device-header {
   height: 100%;
   overflow: hidden;
+  clip-path: inset(0 round 16px 16px 0 0);
   background: var(--surface-bg-below-2, #090f11);
   margin: -9px -9px 0;
   border-radius: 16px 16px 0 0;
@@ -272,5 +273,49 @@
     display: flex;
     align-items: center;
     gap: 4px;  
+  }
+}
+
+.cloud-connector-section {
+  &-description {
+    span {
+      font-weight: 400 !important;
+    }
+  }
+
+  &-badge {
+    width: fit-content;
+  }
+
+  &-connect {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+
+    &-icon {
+      width: 16px;
+      height: 16px;
+      path {
+        fill: var(--text-default, #fff);
+      }
+    }
+
+    &-title {
+      color: var(--text-default, #fff);
+      font-weight: 700 !important;
+    }
+  }
+
+  .link {
+    all: unset;
+    cursor: pointer;
+    color: var(--text-link, #25c2c7);
+    font-weight: 600;
+
+    svg {
+      height: 16px;
+      width: 16px;
+      transform: rotate(-45deg) translateY(6px);
+    }
   }
 }

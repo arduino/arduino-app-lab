@@ -1,5 +1,5 @@
 import clsx from 'clsx';
-import { isUndefined } from 'lodash';
+import { isUndefined } from 'lodash-es';
 import { IntRange } from 'type-fest';
 
 import styles from './progress-bar.module.scss';

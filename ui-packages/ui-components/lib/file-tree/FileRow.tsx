@@ -170,9 +170,14 @@ const FileRow: React.FC<FileRowProps> = ({
           committedOnMouseDownRef.current = false;
           return;
         }
-        // Normal selection - start new multi-selection with this node
+        // Plain click: single-selection is owned by the injected
+        // `selectedNode`/`selectedFolder` (updated via `onSelect` below), so
+        // clear the internal multi-selection instead of seeding a size-1 set.
+        // A size-1 set would shadow those props in the row highlight (see
+        // `checkSelected`) and drift out of sync on external tree changes. The
+        // set is reserved for genuine cmd/shift multi-selection (size >= 2).
         if (onMultiSelectedIdsChange) {
-          onMultiSelectedIdsChange(new Set([node.id]));
+          onMultiSelectedIdsChange(new Set());
         }
         onSelect(true);
         if (onLastSelectedNodeChange) {

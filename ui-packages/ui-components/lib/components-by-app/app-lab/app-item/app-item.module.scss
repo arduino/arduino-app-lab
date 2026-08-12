@@ -48,8 +48,9 @@ $skeleton-opacity: 0.1 !default;
     background-position: center;
     background-repeat: no-repeat;
     background-size: 200% 150%;
-    filter: blur(32px);
-    -webkit-filter: blur(32px);
+    // No CSS blur here: the wash is blurred inside the SVG by getBackgroundIcon.
+    // A CSS filter would create an accelerated compositing layer, which
+    // WebKitGTK fails to import on Linux SBCs (empty rectangle artifact).
   }
 
   &-default {
@@ -361,6 +362,9 @@ $skeleton-opacity: 0.1 !default;
           width: 100%;
           height: 36px;
 
+          // no margin rule here: it also matched the leading icon (the only child
+          // of its own box) and knocked it off-centre. .default-app-toggle pushes
+          // the toggle right on its own.
           svg {
             cursor: pointer;
             flex-shrink: 0;
@@ -368,34 +372,12 @@ $skeleton-opacity: 0.1 !default;
             path {
               fill: var(--text-default, #ffffff);
             }
-
-            &:last-child {
-              margin-left: auto;
-            }
           }
         }
       }
     }
   }
 
-}
-
-.dropdown-item-icon {
-  width: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  vertical-align: middle;
-
-  svg {
-    width: 16px;
-    height: 16px;
-
-    path {
-      fill: white;
-    }
-  }
 }
 
 .dropdownMenuButtonWrapper {

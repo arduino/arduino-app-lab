@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-
 import { Auth0Client } from '@auth0/auth0-spa-js';
 import { type JwtPayload, jwtDecode } from 'jwt-decode';
 
@@ -20,7 +19,7 @@ type CustomizationData = {
   remoteConfKey: string;
 };
 
-export function deepEqual(obj1: unknown, obj2: unknown) {
+export function deepEqual(obj1: unknown, obj2: unknown): boolean {
   // Base case: If both objects are identical, return true.
   if (obj1 === obj2) {
     return true;
@@ -131,11 +130,11 @@ class AuthClient extends Auth0Client {
     return new AuthClient(options);
   }
 
-  public getCustomization() {
+  public getCustomization(): Customization | undefined {
     return this.customConfig?.customization;
   }
 
-  public async checkTosAcceptance() {
+  public async checkTosAcceptance(): Promise<boolean> {
     if (!this.customConfig) {
       console.warn('[AuthClient] Custom configuration not available.');
       return true;
@@ -148,7 +147,7 @@ class AuthClient extends Auth0Client {
     return Boolean(decodedToken.tos_accepted);
   }
 
-  private async validateTos() {
+  private async validateTos(): Promise<void> {
     if (!this.customConfig) {
       console.warn('[AuthClient] Custom configuration not available.');
       return;
@@ -166,17 +165,21 @@ class AuthClient extends Auth0Client {
     }
   }
 
-  public async handleRedirectCallback(
+  // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+  public override async handleRedirectCallback<TAppState = any>(
     ...args: Parameters<Auth0Client['handleRedirectCallback']>
   ) {
-    const res = await super.handleRedirectCallback(...args);
+    const res = await super.handleRedirectCallback<TAppState>(...args);
     if (this.customConfig && (await this.isAuthenticated())) {
       await this.validateTos();
     }
     return res;
   }
 
-  public async getUser(...args: Parameters<Auth0Client['getUser']>) {
+
+  public override async getUser(
+    ...args: Parameters<Auth0Client['getUser']>
+  ): Promise<ArduinoUser | undefined> {
     const res = await super.getUser(...args);
     this.store = {
       user: res || unauthenticatedUser,
@@ -185,7 +188,7 @@ class AuthClient extends Auth0Client {
     return res;
   }
 
-  public subscribe(callback: () => void) {
+  public subscribe(callback: () => void): void {
     if (typeof callback === 'function') {
       this._subscribers.push(callback);
     }
@@ -194,7 +197,7 @@ class AuthClient extends Auth0Client {
   /**
    * Unsubscribe from store changes.
    */
-  public unsubscribe(callback: () => void) {
+  public unsubscribe(callback: () => void): void {
     this._subscribers = this._subscribers.filter((sub) => sub !== callback);
   }
 
@@ -211,7 +214,10 @@ class AuthClient extends Auth0Client {
     }
   }
 
-  get store() {
+  get store(): {
+    user: ArduinoUser;
+    isAuthenticated: boolean;
+  } {
     return this._store;
   }
 }

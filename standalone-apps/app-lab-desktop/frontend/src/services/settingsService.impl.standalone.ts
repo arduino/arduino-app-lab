@@ -4,6 +4,7 @@ import {
   SettingsService,
   WiFiConnectionStatus,
 } from '@cloud-editor-mono/domain/src/services/services-by-app/app-lab';
+import { WiFiConnectionErrorCode } from '@cloud-editor-mono/ui-components/lib/components-by-app/app-lab';
 
 import {
   ConnectToWiFi,
@@ -69,7 +70,11 @@ export const connectToWiFi: SettingsService['connectToWiFi'] = async function (
     });
     await Promise.race([ConnectToWiFi(ssid, password), timeoutPromise]);
   } catch (e) {
-    throw new Error(`Failed to connect to WiFi with SSID ${ssid}: ${e}`);
+    const raw = e instanceof Error ? e.message : String(e);
+    if (raw === WiFiConnectionErrorCode.IncorrectPassword) {
+      throw new Error(WiFiConnectionErrorCode.IncorrectPassword);
+    }
+    throw new Error(WiFiConnectionErrorCode.ConnectionFailed);
   }
 };
 

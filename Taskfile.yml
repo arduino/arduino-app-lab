@@ -9,7 +9,15 @@ tasks:
       - task: general:check-licensed
       - task: general:prepare-deps
     cmds:
-      - licensed cache
+      # Pin GOOS/GOARCH to the canonical CI target so `go list` enumerates the
+      # same dependency set on every machine (a Mac otherwise resolves
+      # platform-specific build-constrained imports and drifts the cache).
+      - GOOS=linux GOARCH=amd64 licensed cache
+      # The cache above is a compliance gate that never reaches users. This turns
+      # it into the attribution App Lab actually ships. Running it here means the
+      # check-cache CI job, which regenerates this task and fails on any git diff,
+      # also catches a stale notice.
+      - ./dev-utils/al-license/generate_dependency_notices.sh
 
   # Source: https://github.com/arduino/tooling-project-assets/blob/main/workflow-templates/assets/check-dependencies-task/Taskfile.yml
   general:check-dep-licenses:
@@ -38,7 +46,9 @@ tasks:
           echo "See: https://github.com/arduino/tooling-project-assets/blob/main/workflow-templates/check-go-dependencies-task.md#unrecognized-licenses"
           exit 1
         fi
-      - licensed status
+      # Same Linux/amd64 pin as `licensed cache`: status re-enumerates from the
+      # live tree, so without it a Mac flags the Linux-only records as stale.
+      - GOOS=linux GOARCH=amd64 licensed status
 
   general:check-licensed:
     desc: Install licensed in the .licensed folder

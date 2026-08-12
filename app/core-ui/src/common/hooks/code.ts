@@ -25,7 +25,7 @@ import {
   useI18n,
 } from '@cloud-editor-mono/ui-components/lib/components-by-app/shared';
 import { applyPatch } from 'diff';
-import { uniqueId } from 'lodash';
+import { uniqueId } from 'lodash-es';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { BehaviorSubject, NEVER, Observable, Subject } from 'rxjs';
 

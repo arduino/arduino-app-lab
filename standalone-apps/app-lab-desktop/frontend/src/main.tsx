@@ -1,16 +1,15 @@
 import './style.css';
 
-import React from 'react';
 import { createRoot } from 'react-dom/client';
 
 import App from './App';
+import { registerCspViolationLogging } from './csp/cspViolations';
+
+// Before anything renders, so no request the policy refuses goes unreported.
+registerCspViolationLogging();
 
 const container = document.getElementById('root');
 
 const root = createRoot(container!);
 
-root.render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>,
-);
+root.render(<App />);

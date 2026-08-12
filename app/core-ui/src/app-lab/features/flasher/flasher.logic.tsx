@@ -7,7 +7,6 @@ import {
   listAvailableOSImages,
   openLinkExternal,
 } from '@cloud-editor-mono/domain/src/services/services-by-app/app-lab';
-import { useBoardSerialTracker } from '@cloud-editor-mono/ui-components/lib/common/utils';
 import { FlasherLogic } from '@cloud-editor-mono/ui-components/lib/components-by-app/app-lab';
 import { useQuery } from '@tanstack/react-query';
 import { get, set } from 'idb-keyval';
@@ -16,6 +15,7 @@ import { useShallow } from 'zustand/react/shallow';
 
 import { BOARD_APP_MAPPING } from '../../constants';
 import { BoardAppInfo } from '../../hooks/useBoards';
+import { useBoardSerialTracker } from '../../hooks/useBoardSerialTracker';
 import { useBoardLifecycleStore } from '../../store/boardLifecycle';
 
 const clearBoardAppMapping = async (boardSerial: string): Promise<void> => {

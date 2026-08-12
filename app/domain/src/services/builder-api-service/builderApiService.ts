@@ -38,7 +38,7 @@ import {
 } from '@cloud-editor-mono/infrastructure';
 import { WebSerialPort } from '@cloud-editor-mono/web-board-communication';
 import { QueryClient } from '@tanstack/react-query';
-import { sortBy, uniqueId } from 'lodash';
+import { sortBy, uniqueId } from 'lodash-es';
 
 import { getAccessToken, noTokenReject } from '../arduino-auth';
 import { transformDataToContentByMimeType } from '../utils';

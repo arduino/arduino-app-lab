@@ -168,8 +168,10 @@
       flex-direction: row;
       align-items: center;
       justify-content: flex-end;
-      padding: 4px 16px;
-      margin: -8px -16px 8px;
+      // Negative margins pull the row full-bleed over the pre padding; the
+      // button then sits 8px from the top/right with the code flush below it.
+      padding: 8px 8px 0;
+      margin: -8px -16px 0;
       border-radius: 8px 8px 0 0;
       background: var(--surface-bg-baseline, #232b2e);
       height: 36px;

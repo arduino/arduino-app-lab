@@ -9,10 +9,11 @@ import {
 } from '@cloud-editor-mono/infrastructure';
 import { EventSourceMessage } from '@microsoft/fetch-event-source';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { debounce } from 'lodash';
+import { debounce } from 'lodash-es';
 import { useCallback, useEffect, useMemo } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 
+import { BoardScopedQuery } from '../../../boardScopedQuery';
 import { useAppSSE } from '../../../features/app/app-detail/hooks/useAppSSE';
 import { useBoardLifecycleStore } from '../../../store/boardLifecycle';
 
@@ -24,19 +25,17 @@ type UseAppsStatus = () => {
 };
 
 const useAppsStatus: UseAppsStatus = function (): ReturnType<UseAppsStatus> {
-  const { boardIsFlashing, boardIsReachable, selectedConnectedBoard } =
-    useBoardLifecycleStore(
-      useShallow((state) => ({
-        boardIsFlashing: state.boardIsFlashing,
-        boardIsReachable: state.boardIsReachable,
-        selectedConnectedBoard: state.selectedConnectedBoard,
-      })),
-    );
+  const { boardIsFlashing, boardIsReachable } = useBoardLifecycleStore(
+    useShallow((state) => ({
+      boardIsFlashing: state.boardIsFlashing,
+      boardIsReachable: state.boardIsReachable,
+    })),
+  );
 
   const queryClient = useQueryClient();
 
   const { data: defaultApps } = useQuery(
-    ['get-default-app'],
+    [BoardScopedQuery.GET_DEFAULT_APP],
     () => {
       return getApps({ query: { filter: 'default' } });
     },
@@ -46,7 +45,7 @@ const useAppsStatus: UseAppsStatus = function (): ReturnType<UseAppsStatus> {
   );
 
   const { data: apps } = useQuery(
-    ['list-my-apps'],
+    [BoardScopedQuery.LIST_MY_APPS],
     () => {
       //This query retrieves all the apps (examples/myapps) and sync the status of the apps with the server.
       return getApps({ query: {} });
@@ -72,7 +71,9 @@ const useAppsStatus: UseAppsStatus = function (): ReturnType<UseAppsStatus> {
   const debouncedInvalidate = useMemo(
     () =>
       debounce(() => {
-        queryClient.invalidateQueries({ queryKey: ['list-my-apps'] });
+        queryClient.invalidateQueries({
+          queryKey: [BoardScopedQuery.LIST_MY_APPS],
+        });
       }, 300),
     [queryClient],
   );
@@ -96,7 +97,9 @@ const useAppsStatus: UseAppsStatus = function (): ReturnType<UseAppsStatus> {
         debouncedInvalidate();
 
         if (normalizedEvent.data?.default) {
-          queryClient.invalidateQueries({ queryKey: ['get-default-app'] });
+          queryClient.invalidateQueries({
+            queryKey: [BoardScopedQuery.GET_DEFAULT_APP],
+          });
         }
       }
     },
@@ -130,21 +133,9 @@ const useAppsStatus: UseAppsStatus = function (): ReturnType<UseAppsStatus> {
     };
   }, [getAppStatusAbort]);
 
-  useEffect(() => {
-    if (selectedConnectedBoard?.serial && boardIsReachable) {
-      queryClient.invalidateQueries({
-        predicate: (query) => {
-          const key = query.queryKey;
-          if (key[0] !== 'list-my-apps') return false;
-          // Bare status query, or one of the section lists only.
-          return (
-            key.length === 1 || key[1] === 'my-apps' || key[1] === 'examples'
-          );
-        },
-      });
-      queryClient.invalidateQueries({ queryKey: ['get-default-app'] });
-    }
-  }, [selectedConnectedBoard?.serial, boardIsReachable, queryClient]);
+  // Refreshing app queries on board switch is handled centrally by
+  // useBoardScopedQueryReset (keyed on the reliable board cache id rather than
+  // the raw serial, which is empty/unstable for network boards).
 
   const filteredApps = useMemo(() => {
     return apps?.filter((app) => app.id) as AppDetailedInfo[];

@@ -99,9 +99,17 @@ export type UseConnectionLost = (
   onConnectionLost?: () => void,
 ) => void;
 
+export type BoardSerialTrackerLogic = {
+  isBoardNew: (serial: string) => Promise<boolean>;
+  markBoardAsUsed: (serial: string) => Promise<void>;
+  getLastConnection: (serial: string) => Promise<string | null>;
+  updateLastConnection: (serial: string) => Promise<void>;
+};
+
 export type UseSetupLogic = () => {
   isBoard?: boolean;
   boards: Board[];
+  boardSerialTracker: BoardSerialTrackerLogic;
   selectedBoard: Board | undefined;
   selectingBoard?: Board;
   selectBoard: (board: Board) => Promise<void>;

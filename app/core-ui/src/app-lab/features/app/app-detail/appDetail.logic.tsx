@@ -2,9 +2,12 @@ import {
   addAppBrick as addAppBrickRequest,
   addAppCustomBrick as addAppCustomBrickRequest,
   deleteAppBrick,
+  getAppBricks,
+  getAppDetail,
   getAppFiles,
   getBricks,
   getUnsavedFilesSubject,
+  importResourceToAppFromPath,
   openFileExternal,
   openLinkExternal,
   renameAppCustomBrick as renameAppCustomBrickRequest,
@@ -12,23 +15,25 @@ import {
   updateAppBrick as updateAppBrickRequest,
   updateAppDetail,
 } from '@cloud-editor-mono/domain/src/services/services-by-app/app-lab';
-import { importResourceToAppFromPath } from '@cloud-editor-mono/domain/src/services/services-by-app/app-lab';
 import { FileIcon } from '@cloud-editor-mono/images/assets/file-icons';
 import {
   AppDetailedInfo,
+  BOARD_STORAGE_FULL_ERROR,
   BrickCreateUpdateRequest,
+  isValidResourceName,
   UpdateAppDetailRequest,
 } from '@cloud-editor-mono/infrastructure';
-import { BOARD_STORAGE_FULL_ERROR } from '@cloud-editor-mono/infrastructure';
 import {
   AiModelRequiredDialogLogic,
   AppLabAppDetailLogic,
   AppLabEditorPanelLogic,
   AppLabEditSectionLogic,
   AppsSection,
+  BRICK_FILE_EXTENSION,
   checkForDuplicates,
   isFileNode,
   isFolderNode,
+  SelectableFileData,
   TreeNode,
   useI18n,
 } from '@cloud-editor-mono/ui-components/lib/components-by-app/app-lab';
@@ -38,13 +43,19 @@ import {
 } from '@cloud-editor-mono/ui-components/lib/dialogs/app-lab/duplicate-file-dialog/types';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { WretchError } from 'wretch/resolver';
 
-import { resetModuleScopedState } from '../../../../../lib/app-components/app-lab/utils';
-import { useFiles } from '../../../../common/hooks/files';
 import { useKeywords } from '../../../../common/hooks/keywords';
 import { queryClient } from '../../../../common/providers/data-fetching/QueryProvider';
+import { BoardScopedQuery } from '../../../boardScopedQuery';
 import { useBoards } from '../../../hooks/useBoards';
 import {
   makeAppBrickDetailLogic,
@@ -53,15 +64,22 @@ import {
 import { useImportResource } from '../../../hooks/useImportResource';
 import { useIsBoard } from '../../../hooks/useIsBoard';
 import { useNotFound } from '../../../hooks/useNotFound';
+import { clearPendingAppFile, peekPendingAppFile } from '../../../openAppFile';
+import { LanguageServerContext } from '../../../providers/language-server/languageServerContext';
 import { DETAIL_PATH_BY_SECTION } from '../../../routes/__root';
 import { createWebUIFiles } from '../../../utils/create-webui-files';
 import { sendAppLabNotification } from '../../notifications';
+import { splitFileName } from './hooks/filePaths';
+import { useAppFiles } from './hooks/useAppFiles';
+import { useEditorFiles } from './hooks/useEditorFiles';
+import { useFileOperations } from './hooks/useFileOperations';
+import { useFileWatch } from './hooks/useFileWatch';
+import { useLSP } from './hooks/useLSP';
 import { useSketchLibraries } from './hooks/useSketchLibraries';
 import { useAddSketchLibraryDialog } from './hooks/useSketchLibrariesDialogs';
 import { messages } from './messages';
 import { useCreateEditorPanelLogic } from './sub-components/editor-panel/appLabEditorPanel';
 import { EditorPanelLogicParams } from './sub-components/editor-panel/appLabEditorPanel.type';
-import { useAppDetailFiles } from './sub-components/files/appDetailFiles';
 import { useAppDetailRuntimeLogic } from './sub-components/runtime/appDetailRuntime';
 import { useCreateAppTitleLogic } from './sub-components/title/appDetailTitle';
 
@@ -93,6 +111,9 @@ export const useAppDetailLogic: AppLabAppDetailLogic = function (
   appId: string,
   section: AppsSection,
 ): ReturnType<AppLabAppDetailLogic> {
+  const { activeSelectedFile, setActiveSelectedFile } = useContext(
+    LanguageServerContext,
+  );
   const [deleteItemDialogOpen, setDeleteItemDialogOpen] = useState(false);
   const [deleteItemFileName, setDeleteItemFileName] = useState<string>('');
   const [deleteItemIsDirectory, setDeleteItemIsDirectory] = useState(false);
@@ -111,10 +132,6 @@ export const useAppDetailLogic: AppLabAppDetailLogic = function (
     },
     [navigate],
   );
-
-  useEffect(() => {
-    return () => resetModuleScopedState();
-  }, []);
 
   const { formatMessage } = useI18n();
 
@@ -145,38 +162,62 @@ export const useAppDetailLogic: AppLabAppDetailLogic = function (
   const editorPaneSyncRef = useRef<{
     renameRightPaneTab?: (oldId: string, newId: string) => void;
     closeRightPaneTab?: (fileId: string) => void;
+    closeFileFromPaneA?: (fileId: string) => void;
   }>({});
 
   const {
-    appDetail: app,
-    appDetailIsLoading,
-    appBricks,
+    data: app,
+    isLoading: appDetailIsLoading,
+    refetch: refetchAppDetail,
+  } = useQuery([BoardScopedQuery.LIST_MY_APPS, appId], () =>
+    getAppDetail(appId),
+  );
+
+  const { data: appBricks, refetch: refetchAppBricks } = useQuery(
+    [BoardScopedQuery.APP_BRICKS, appId],
+    () => getAppBricks(appId),
+  );
+
+  const {
     filesList,
     defaultFile,
-    filesContents,
-    filesContentsAreLoading,
-    allContentsRetrieved,
+    filesListIsLoaded,
     fileTree,
-    sketchDataIsLoading,
-    addAppFile,
-    renameAppFile,
-    deleteAppFile,
-    moveFileHandler,
-    createAppFolder,
-    refetchAppDetail,
+    filesListKey,
     refetchAppYaml,
     refetchSketchYaml,
-    refetchAppBricks,
     refetchAppFiles,
-    removeFileFromPending,
-  } = useAppDetailFiles(appId, updateOpenFile);
+    fetchFile,
+    refreshFileContents,
+  } = useAppFiles({
+    appId,
+    appPath: app?.path,
+  });
 
   // Redirect to the correct section if app is not found
-  const isAppDetailLoaded = !appDetailIsLoading;
-  const shouldRedirect = isAppDetailLoaded && !app?.id;
+  const shouldRedirect = !appDetailIsLoading && !app?.id;
   useNotFound(shouldRedirect, section);
 
   const { selectedBoard } = useBoards();
+
+  const {
+    isLspEnabled,
+    lspWorkspaceDir,
+    lspClients,
+    createLspNode,
+    renameLspNode,
+    deleteLspNode,
+    moveLspNode,
+    syncLspWatchedChange,
+    startLSP,
+    sendLspMessage,
+    subscribeLspMessages,
+    getLspWorkspaceFile,
+    reloadLspFile,
+    lspState,
+    onLspStateChange,
+  } = useLSP(appId, selectedBoard);
+
   const storeEntityId = useMemo(() => {
     if (!app) return undefined;
 
@@ -188,36 +229,11 @@ export const useAppDetailLogic: AppLabAppDetailLogic = function (
     return app.id;
   }, [app, selectedBoard?.serial]);
 
-  const useFilesPayload = useMemo(() => {
-    return {
-      bricks: appBricks?.map((brick) => ({
-        id: brick.id ?? '',
-        name: brick.name ?? '',
-        category: brick.category ?? '',
-      })),
-      defaultFilePath: defaultFile?.path,
-      files: filesContents,
-      filesAreLoading: filesContentsAreLoading,
-      filesContentLoaded: allContentsRetrieved,
-      isClassicSketch: false,
-      isLibraryRoute: false,
-      showSketchSecretsFile: false,
-      storeEntityId,
-      getUnsavedFilesSubject,
-    };
-  }, [
-    allContentsRetrieved,
-    appBricks,
-    defaultFile,
-    filesContents,
-    filesContentsAreLoading,
-    storeEntityId,
-  ]);
-
   const {
-    mainFile: selectableMainFile,
     unsavedFileIds,
+    editorFiles,
     openFiles,
+    openFileIds,
     selectedFile,
     selectFile,
     updateOpenFile: actualUpdateOpenFile,
@@ -225,10 +241,57 @@ export const useAppDetailLogic: AppLabAppDetailLogic = function (
     closeFile,
     onAppRename,
     previewFileId,
-    editorFiles,
     openFilesStore,
     storeSplitState,
-  } = useFiles(useFilesPayload);
+  } = useEditorFiles({
+    storeEntityId,
+    defaultFileId: defaultFile?.path,
+    filesList,
+    appBricks,
+    getUnsavedFilesSubject,
+  });
+
+  const closeFileBothPanes = useCallback(
+    (fileId: string) => {
+      // Route pane A through the consolidating close (fold pane B's tabs
+      // back into A when A's LAST tab closes, collapsing the split) — the
+      // same path a user's X-click takes. A raw closeFile that empties pane
+      // A blanks the whole editor panel (its render gates on pane A's open
+      // files) while pane B silently keeps its tabs: an external delete of
+      // pane A's only file then "closes" both panels, and reselecting the
+      // pane-B file resurrects it doubled (preview in A, committed in B).
+      const closePaneA =
+        editorPaneSyncRef.current.closeFileFromPaneA ?? closeFile;
+      closePaneA(fileId);
+      editorPaneSyncRef.current.closeRightPaneTab?.(fileId);
+    },
+    [closeFile],
+  );
+
+  const {
+    renameFile,
+    deleteFile,
+    removeFolder,
+    addFile,
+    addFolder,
+    moveFile,
+    openFile,
+  } = useFileOperations({
+    appId,
+    appPath: app?.path,
+    filesListKey,
+    files: filesList,
+    fetchFile,
+    selectFile,
+    closeFile: closeFileBothPanes,
+    updateOpenFile,
+    createLspNode,
+    deleteLspNode,
+    renameLspNode,
+    moveLspNode,
+  });
+
+  const selectableMainFile: SelectableFileData | undefined = undefined;
 
   useEffect(() => {
     setUpdateOpenFile(() => (currFileId: string, nextFileId: string) => {
@@ -236,6 +299,33 @@ export const useAppDetailLogic: AppLabAppDetailLogic = function (
       editorPaneSyncRef.current.renameRightPaneTab?.(currFileId, nextFileId);
     });
   }, [actualUpdateOpenFile]);
+
+  // Auto-open a file requested from outside the router (e.g. the AI assistant's file chip): open the stashed target once the file list is ready and still contains it.
+  const [pendingAgentFile] = useState(() => peekPendingAppFile(appId));
+  const openedPendingFileRef = useRef(false);
+  useEffect(() => {
+    // Also wait for the editor to hydrate its stored tabs (openFilesStore !== undefined), or its restored/default selection (the README) overrides our target.
+    if (
+      openedPendingFileRef.current ||
+      !pendingAgentFile ||
+      !filesListIsLoaded ||
+      openFilesStore === undefined
+    ) {
+      return;
+    }
+    if (filesList?.some((f) => f.path === pendingAgentFile)) {
+      openedPendingFileRef.current = true;
+      clearPendingAppFile(appId);
+      void openFile(pendingAgentFile);
+    }
+  }, [
+    appId,
+    pendingAgentFile,
+    filesListIsLoaded,
+    filesList,
+    openFile,
+    openFilesStore,
+  ]);
 
   const duplicateFileDialogLogic: DuplicateFileDialogLogic = useCallback(
     () => ({
@@ -261,7 +351,9 @@ export const useAppDetailLogic: AppLabAppDetailLogic = function (
             filesInTargetFolder.forEach((f) => closeFile(f.fileId));
 
             // Delete target folder
-            await deleteAppFile(duplicateDialog.targetPath, 'folder');
+            await deleteFile(duplicateDialog.targetPath, {
+              nodeType: 'folder',
+            });
           } else {
             // For file-file conflicts, close target file if it's open
             if (
@@ -288,14 +380,22 @@ export const useAppDetailLogic: AppLabAppDetailLogic = function (
               duplicateDialog.sourcePath,
               isFolder,
             );
-            queryClient.invalidateQueries({ queryKey: ['app-files'] });
+            queryClient.invalidateQueries({
+              queryKey: [BoardScopedQuery.APP_FILES],
+            });
             queryClient.invalidateQueries({
               queryKey: ['get-batch-app-file-content'],
             });
           } else {
-            await moveFileHandler(
+            await moveFile(
               duplicateDialog.sourcePath,
               duplicateDialog.targetPath,
+              {
+                nodeType:
+                  duplicateDialog.conflictType === 'folder-folder'
+                    ? 'folder'
+                    : 'file',
+              },
             );
           }
           const isLastItem = conflictQueue.length <= 1;
@@ -383,12 +483,20 @@ export const useAppDetailLogic: AppLabAppDetailLogic = function (
               isFolder,
               newFileName,
             );
-            queryClient.invalidateQueries({ queryKey: ['app-files'] });
+            queryClient.invalidateQueries({
+              queryKey: [BoardScopedQuery.APP_FILES],
+            });
             queryClient.invalidateQueries({
               queryKey: ['get-batch-app-file-content'],
             });
           } else {
-            await moveFileHandler(duplicateDialog.sourcePath, newPath);
+            await moveFile(duplicateDialog.sourcePath, newPath, {
+              nodeType:
+                duplicateDialog.conflictType === 'folder-folder' ||
+                duplicateDialog.conflictType === 'folder-file'
+                  ? 'folder'
+                  : 'file',
+            });
           }
 
           const isLastItem = conflictQueue.length <= 1;
@@ -409,8 +517,8 @@ export const useAppDetailLogic: AppLabAppDetailLogic = function (
     [
       conflictQueue,
       duplicateDialog,
-      moveFileHandler,
-      deleteAppFile,
+      moveFile,
+      deleteFile,
       app?.path,
       filesList,
       fileTree,
@@ -421,9 +529,9 @@ export const useAppDetailLogic: AppLabAppDetailLogic = function (
 
   useEffect(() => {
     if (selectedFile?.fileId) {
-      removeFileFromPending(selectedFile.fileId);
+      fetchFile(selectedFile.fileId);
     }
-  }, [removeFileFromPending, selectedFile]);
+  }, [fetchFile, selectedFile?.fileId]);
 
   useEffect(() => {
     if (selectedFile?.fileId) {
@@ -446,7 +554,7 @@ export const useAppDetailLogic: AppLabAppDetailLogic = function (
         // Check if this is the WebUI brick and create required files automatically AFTER successful brick addition
         if (brickId === 'arduino:web_ui' && app?.name) {
           try {
-            await createWebUIFiles(app.name, createAppFolder, addAppFile);
+            await createWebUIFiles(app.name, addFolder, addFile);
             await refetchAppFiles();
           } catch (error) {
             console.error('Failed to create WebUI files:', error);
@@ -482,8 +590,8 @@ export const useAppDetailLogic: AppLabAppDetailLogic = function (
       refetchAppYaml,
       refetchAppBricks,
       refetchAppFiles,
-      createAppFolder,
-      addAppFile,
+      addFolder,
+      addFile,
       selectFile,
       formatMessage,
     ],
@@ -604,7 +712,17 @@ export const useAppDetailLogic: AppLabAppDetailLogic = function (
         console.error('Invalid file name');
         return;
       }
-      const [fileName, fileExtension] = fullName.split('.');
+
+      // Backstop for non-tree callers; the tree input refuses these inline.
+      if (!isValidResourceName(fullName)) {
+        sendAppLabNotification({
+          message: formatMessage(messages.invalidCharactersInFileName),
+          variant: 'error',
+        });
+        return;
+      }
+
+      const { fileName, fileExtension } = splitFileName(fullName);
       const prevSelectedFileId = selectedFile?.fileId;
 
       // Check for conflicts using checkForDuplicates
@@ -635,7 +753,7 @@ export const useAppDetailLogic: AppLabAppDetailLogic = function (
       // this row auto-open newly created files in editor
       selectFile({ fileId: path });
       try {
-        await addAppFile(path, fileName, fileExtension);
+        await addFile(path, fileName, fileExtension);
         sendAppLabNotification({
           message: formatMessage(messages.successfullyCreatedFile),
           variant: 'success',
@@ -654,7 +772,7 @@ export const useAppDetailLogic: AppLabAppDetailLogic = function (
         });
       }
     },
-    [addAppFile, app?.path, formatMessage, selectFile, selectedFile?.fileId],
+    [addFile, app?.path, formatMessage, selectFile, selectedFile?.fileId],
   );
 
   const addFolderHandler = useCallback(
@@ -662,6 +780,15 @@ export const useAppDetailLogic: AppLabAppDetailLogic = function (
       const folderName = path.split('/').pop();
       if (!folderName) {
         console.error('Invalid folder name');
+        return;
+      }
+
+      // Backstop for non-tree callers; the tree input refuses these inline.
+      if (!isValidResourceName(folderName)) {
+        sendAppLabNotification({
+          message: formatMessage(messages.invalidCharactersInFileName),
+          variant: 'error',
+        });
         return;
       }
 
@@ -691,7 +818,7 @@ export const useAppDetailLogic: AppLabAppDetailLogic = function (
       }
 
       try {
-        await createAppFolder(path);
+        await addFolder(path);
         sendAppLabNotification({
           message: formatMessage(messages.successfullyCreatedFolder),
           variant: 'success',
@@ -707,7 +834,7 @@ export const useAppDetailLogic: AppLabAppDetailLogic = function (
         });
       }
     },
-    [app?.path, createAppFolder, formatMessage],
+    [app?.path, addFolder, formatMessage],
   );
 
   const renameFileHandler = useCallback(
@@ -717,13 +844,20 @@ export const useAppDetailLogic: AppLabAppDetailLogic = function (
       appendExt?: boolean,
       nodeType?: 'file' | 'folder',
     ): Promise<void> => {
+      // Backstop for non-tree callers; the tree input refuses these inline.
+      if (!isValidResourceName(newName)) {
+        sendAppLabNotification({
+          message: formatMessage(messages.invalidCharactersInFileName),
+          variant: 'error',
+        });
+        return;
+      }
+
       const folder = path.split('/').slice(0, -1).join('/');
       let newPath = folder ? `${folder}/${newName}` : newName;
 
       if (appendExt) {
-        const file = filesContents?.find(
-          (f) => f.id === `${app?.path}/${path}`,
-        );
+        const file = filesList?.find((f) => f.path === path);
         newPath += file?.extension ? `.${file.extension}` : '';
       }
 
@@ -771,15 +905,13 @@ export const useAppDetailLogic: AppLabAppDetailLogic = function (
       }
 
       try {
-        updateOpenFile(path, newPath);
-        await renameAppFile(path, newPath, nodeType);
+        await renameFile(path, newPath, { nodeType });
         const messages = RENAME_MESSAGES[nodeType || 'file'];
         sendAppLabNotification({
           message: formatMessage(messages.success),
           variant: 'success',
         });
       } catch (error) {
-        updateOpenFile(newPath, path);
         const messages = RENAME_MESSAGES[nodeType || 'file'];
         sendAppLabNotification({
           message: formatMessage(messages.error),
@@ -787,7 +919,7 @@ export const useAppDetailLogic: AppLabAppDetailLogic = function (
         });
       }
     },
-    [filesContents, app?.path, formatMessage, updateOpenFile, renameAppFile],
+    [filesList, app?.path, formatMessage, renameFile],
   );
 
   const deleteFileHandler = useCallback(
@@ -798,9 +930,10 @@ export const useAppDetailLogic: AppLabAppDetailLogic = function (
       const performDelete = async (): Promise<void> => {
         const fileIndex = openFiles.findIndex((f) => f.fileId === path);
         try {
-          closeFile(path);
           editorPaneSyncRef.current.closeRightPaneTab?.(path);
-          await deleteAppFile(path);
+          // Folders route through removeFolder so descendant tabs/buffers are
+          // cleaned up; single files stay on deleteFile.
+          await (isDir ? removeFolder(path) : deleteFile(path, { nodeType }));
           const messages = DELETE_MESSAGES[nodeType || 'file'];
           sendAppLabNotification({
             message: formatMessage(messages.success),
@@ -821,7 +954,19 @@ export const useAppDetailLogic: AppLabAppDetailLogic = function (
       setPendingDeleteAction(() => performDelete);
       setDeleteItemDialogOpen(true);
     },
-    [closeFile, deleteAppFile, formatMessage, openFiles, selectFile],
+    [deleteFile, removeFolder, formatMessage, openFiles, selectFile],
+  );
+
+  const moveFileHandler = useCallback(
+    async (
+      fromPath: string,
+      toPath: string,
+      nodeType?: 'file' | 'folder',
+      _filesToUpdate?: Array<{ oldPath: string; newPath: string }>,
+    ): Promise<void> => {
+      await moveFile(fromPath, toPath, { nodeType });
+    },
+    [moveFile],
   );
 
   const updateAppBrick = useCallback(
@@ -858,20 +1003,24 @@ export const useAppDetailLogic: AppLabAppDetailLogic = function (
     [appId, refetchAppBricks, refetchAppYaml],
   );
 
-  const selectFileFromEditor = useCallback(
+  // Adapter that bridges the editor panel's `(params) => void` selection
+  // signature to the canonical `openFile(path, opts)`. The editor panel
+  // consumes selection via a prop, so we adapt at this boundary. Use
+  // `openFile` directly everywhere else.
+  const openFileFromEditor = useCallback(
     (params: {
       fileId?: string;
       openAtIndex?: number;
       isPreview?: boolean;
     }): void => {
       const { fileId, openAtIndex, isPreview } = params;
-
-      if (fileId) {
-        removeFileFromPending(fileId);
+      if (!fileId) {
+        selectFile({ fileId, openAtIndex, isPreview });
+        return;
       }
-      selectFile({ fileId, openAtIndex, isPreview });
+      openFile(fileId, { openAtIndex, isPreview });
     },
-    [removeFileFromPending, selectFile],
+    [openFile, selectFile],
   );
 
   const renameFileFromEditor = useCallback(
@@ -880,13 +1029,20 @@ export const useAppDetailLogic: AppLabAppDetailLogic = function (
     [renameFileHandler],
   );
 
+  const handleValidationError = useCallback(() => {
+    sendAppLabNotification({
+      message: formatMessage(messages.invalidCharactersInFileName),
+      variant: 'error',
+    });
+  }, [formatMessage]);
+
   const editorPanelLogicParams: EditorPanelLogicParams = useMemo(() => {
     return {
       appId: app?.id,
       appPath: app?.path,
       appBricks,
       selectedFile,
-      selectFile: selectFileFromEditor,
+      selectFile: openFileFromEditor,
       selectableMainFile,
       unsavedFileIds,
       closeFile,
@@ -894,25 +1050,33 @@ export const useAppDetailLogic: AppLabAppDetailLogic = function (
       deleteAppFile: deleteFileHandler,
       renameAppFile: renameFileFromEditor,
       addAppFile: addFileHandler,
-      addAppFolder: createAppFolder,
+      addAppFolder: addFolder,
       updateAppBrick,
       initialAppBrickTab,
-      sketchDataIsLoading,
       openFiles,
       allFiles: editorFiles,
       readOnly: section === 'examples',
-      removeFileFromPending,
+      fetchFile,
       previewFileId,
       openFilesStore,
-      filesContentLoaded: allContentsRetrieved,
+      filesContentLoaded: filesListIsLoaded,
       storeSplitState,
+      filesList,
+      isLspEnabled,
+      lspWorkspaceDir,
+      lspClients,
+      startLSP,
+      sendLspMessage,
+      subscribeLspMessages,
+      getLspWorkspaceFile,
+      onLspStateChange,
     };
   }, [
     app?.id,
     app?.path,
     appBricks,
     selectedFile,
-    selectFileFromEditor,
+    openFileFromEditor,
     selectableMainFile,
     unsavedFileIds,
     closeFile,
@@ -920,18 +1084,26 @@ export const useAppDetailLogic: AppLabAppDetailLogic = function (
     deleteFileHandler,
     renameFileFromEditor,
     addFileHandler,
-    createAppFolder,
+    addFolder,
     updateAppBrick,
     initialAppBrickTab,
-    sketchDataIsLoading,
     openFiles,
     editorFiles,
     section,
-    removeFileFromPending,
+    fetchFile,
     previewFileId,
     openFilesStore,
-    allContentsRetrieved,
+    filesListIsLoaded,
     storeSplitState,
+    filesList,
+    isLspEnabled,
+    lspWorkspaceDir,
+    lspClients,
+    startLSP,
+    sendLspMessage,
+    subscribeLspMessages,
+    getLspWorkspaceFile,
+    onLspStateChange,
   ]);
 
   // Single owner of the editor-panel/split state machine. Instantiated
@@ -945,17 +1117,52 @@ export const useAppDetailLogic: AppLabAppDetailLogic = function (
     getActivePane,
     activePane,
     rightPaneSelectedFile,
+    rightPaneTabs,
     renameRightPaneTab,
     closeRightPaneTab,
+    closeFileFromPaneA,
     openBrickAiModelsTab,
   } = useCreateEditorPanelLogic(editorPanelLogicParams);
 
   useEffect(() => {
-    editorPaneSyncRef.current = { renameRightPaneTab, closeRightPaneTab };
-  }, [renameRightPaneTab, closeRightPaneTab]);
+    editorPaneSyncRef.current = {
+      renameRightPaneTab,
+      closeRightPaneTab,
+      closeFileFromPaneA,
+    };
+  }, [renameRightPaneTab, closeRightPaneTab, closeFileFromPaneA]);
 
-  const activeSelectedFile =
-    activePane === 'B' ? rightPaneSelectedFile : selectedFile;
+  // An external change reloads/reconciles a file open as a tab in *either*
+  // editor pane, so the watcher gets the union of both panes' tab ids. These
+  // are the RAW id states (pane-A `openFileIds` + pane-B tab ids), not the
+  // meta-derived `openFiles`: the latter tracks `filesList`, so a moved/removed
+  // file drops out of it the moment the tree refetches — i.e. exactly when the
+  // watcher still needs that id to close the ghost tab. Pane B's tabs live in
+  // the editor-panel logic above, which is why this is resolved here rather
+  // than fed straight from `useEditorFiles` (pane A only).
+  const openTabIds = useMemo(
+    () =>
+      Array.from(
+        new Set([...openFileIds, ...rightPaneTabs.map((t) => t.fileId)]),
+      ),
+    [openFileIds, rightPaneTabs],
+  );
+
+  useFileWatch({
+    appId,
+    appPath: app?.path,
+    openTabIds,
+    refreshFileContents,
+    deleteFile,
+    reloadLspFile,
+    syncLspWatchedChange,
+  });
+
+  useEffect(() => {
+    setActiveSelectedFile(
+      activePane === 'B' ? rightPaneSelectedFile : selectedFile,
+    );
+  }, [activePane, rightPaneSelectedFile, selectedFile, setActiveSelectedFile]);
 
   useEffect(() => {
     if (activeSelectedFile?.fileId) {
@@ -966,7 +1173,7 @@ export const useAppDetailLogic: AppLabAppDetailLogic = function (
       if (
         foundFile &&
         isFileNode(foundFile) &&
-        activeSelectedFile.fileExtension !== 'brick'
+        activeSelectedFile.fileExtension !== BRICK_FILE_EXTENSION
       ) {
         // Keep selectedNode as the open file, regardless of folder selection
         setSelectedNode(foundFile);
@@ -1011,7 +1218,7 @@ export const useAppDetailLogic: AppLabAppDetailLogic = function (
 
         if (Object.hasOwn(request, 'default')) {
           queryClient.invalidateQueries({
-            queryKey: ['get-default-app'],
+            queryKey: [BoardScopedQuery.GET_DEFAULT_APP],
             exact: true,
           });
         }
@@ -1025,7 +1232,9 @@ export const useAppDetailLogic: AppLabAppDetailLogic = function (
     },
   });
 
-  const { data: bricks } = useQuery(['list-bricks'], () => getBricks());
+  const { data: bricks } = useQuery([BoardScopedQuery.LIST_BRICKS], () =>
+    getBricks(),
+  );
 
   const setSelectedFile = useCallback(
     (
@@ -1045,8 +1254,8 @@ export const useAppDetailLogic: AppLabAppDetailLogic = function (
       // leave it invisible.
       const resolvedPane = targetPane ?? getActivePane();
       if (resolvedPane === 'B' && openFiles.length > 0) {
-        openFileInPane(path, 'B');
-        removeFileFromPending(path);
+        openFileInPane(path, 'B', isPreview);
+        fetchFile(path);
         setSelectedFolderState(undefined);
         return;
       }
@@ -1055,12 +1264,10 @@ export const useAppDetailLogic: AppLabAppDetailLogic = function (
         (f) => f.fileId === selectedFile?.fileId,
       );
 
-      selectFile({
-        fileId: path,
+      openFile(path, {
         openAtIndex: prevSelectedFileIndex + 1,
         isPreview,
       });
-      removeFileFromPending(path);
 
       // Reset selectedFolder when a file is selected
       setSelectedFolderState(undefined);
@@ -1069,9 +1276,9 @@ export const useAppDetailLogic: AppLabAppDetailLogic = function (
       openFiles,
       openFileInPane,
       getActivePane,
-      removeFileFromPending,
-      selectFile,
-      selectedFile,
+      fetchFile,
+      openFile,
+      selectedFile?.fileId,
     ],
   );
 
@@ -1146,12 +1353,20 @@ export const useAppDetailLogic: AppLabAppDetailLogic = function (
             variant: 'success',
           });
       }, []);
+      const onFileError = useCallback((_error: Error) => {
+        sendAppLabNotification({
+          message: formatMessage(messages.couldNotOpenFile),
+          variant: 'error',
+        });
+      }, []);
       return {
         editorPanelLogic,
         getKeywords: useKeywords,
         onCopyCode,
+        onFileError,
         openFiles: editorPanelLogicParams.openFiles,
         readOnly: editorPanelLogicParams.readOnly,
+        lspState,
       };
     };
 
@@ -1159,6 +1374,7 @@ export const useAppDetailLogic: AppLabAppDetailLogic = function (
     editorPanelLogic,
     editorPanelLogicParams,
     formatMessage,
+    lspState,
   ]);
 
   const deleteTreeItemDialogLogic = useCallback(
@@ -1356,7 +1572,9 @@ export const useAppDetailLogic: AppLabAppDetailLogic = function (
           ),
         type: importTarget.isFolder ? 'folder' : 'file',
         invalidateQueries: () => {
-          queryClient.invalidateQueries({ queryKey: ['app-files'] });
+          queryClient.invalidateQueries({
+            queryKey: [BoardScopedQuery.APP_FILES],
+          });
           queryClient.invalidateQueries({
             queryKey: ['get-batch-app-file-content'],
           });
@@ -1407,6 +1625,7 @@ export const useAppDetailLogic: AppLabAppDetailLogic = function (
         openImportFileDialog: handleOpenImportFileDialog,
         onMoveBlocked: handleMoveBlocked,
         onDragOverFolderChange: handleDragOverFolderChange,
+        onValidationError: handleValidationError,
       };
     };
 
@@ -1446,6 +1665,7 @@ export const useAppDetailLogic: AppLabAppDetailLogic = function (
     handleDuplicateConflict,
     duplicateFileDialogLogic,
     handleMoveBlocked,
+    handleValidationError,
   ]);
 
   const { appStatus } = runtimeActionsLogic();

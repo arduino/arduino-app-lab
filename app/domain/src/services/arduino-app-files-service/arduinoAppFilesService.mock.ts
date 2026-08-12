@@ -527,4 +527,11 @@ export const MockArduinoAppFilesService: ArduinoAppFilesService = {
       }, 300);
     });
   },
+
+  // Filesystem watching is a no-op in the mock (no real backend to observe).
+  async watchApp() {},
+  async unwatchApp() {},
+  async watchAppsDir() {},
+  async unwatchAppsDir() {},
+  async unwatchAll() {},
 };

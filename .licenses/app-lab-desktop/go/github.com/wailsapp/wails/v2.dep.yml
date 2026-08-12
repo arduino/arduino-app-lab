@@ -1,6 +1,6 @@
 ---
 name: github.com/wailsapp/wails/v2
-version: v2.12.0
+version: v2.13.0
 type: go
 summary: Package wails is the main package of the Wails project.
 homepage: https://pkg.go.dev/github.com/wailsapp/wails/v2

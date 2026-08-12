@@ -1,3 +1,4 @@
+import { CloudConnectorStatus } from '@cloud-editor-mono/infrastructure';
 import {
   AttachCarrierDialogLogic,
   Board,
@@ -5,12 +6,24 @@ import {
   Carrier,
   CarriersStatus,
   ChangePasswordDialogLogic,
+  CloudConnectorConnectDialogLogic,
+  CloudConnectorDisconnectDialogLogic,
   KeyboardLayout,
   NetworkItem,
   NetworkSettingsDialogLogic,
   PasswordDialogLogic,
   UnsupportedCarrierDialogLogic,
 } from '@cloud-editor-mono/ui-components/lib/components-by-app/app-lab';
+
+export type UseCloudConnectorSettingsLogic = () => {
+  status?: CloudConnectorStatus;
+  connectBoard: () => void;
+  disconnectBoard: () => void;
+  connectDialogLogic: CloudConnectorConnectDialogLogic;
+  disconnectDialogLogic: CloudConnectorDisconnectDialogLogic;
+  isConnecting: boolean;
+  isDisconnecting: boolean;
+};
 
 export type UseBoardSettingsLogic = () => {
   isBoard: boolean;
@@ -64,6 +77,7 @@ export type UsePasswordSettingsLogic = () => ChangePasswordDialogLogic & {
 };
 
 export type UseSettingsLogic = () => {
+  cloudConnectorSettingsLogic: UseCloudConnectorSettingsLogic;
   boardSettingsLogic: UseBoardSettingsLogic;
   carrierSettingsLogic: UseCarrierSettingsLogic;
   networkModeLogic: UseNetworkModeLogic;
@@ -75,4 +89,8 @@ export type UseSettingsLogic = () => {
 
 export interface SettingsProps {
   settingsLogic: UseSettingsLogic;
+  // Optional extra section rendered at the very end, just before the copyright
+  // line (with a divider above). Kept as a slot so ui-components doesn't depend
+  // on the feature package that provides it (e.g. the AI assistant's Agent panel).
+  agentSection?: React.ReactNode;
 }

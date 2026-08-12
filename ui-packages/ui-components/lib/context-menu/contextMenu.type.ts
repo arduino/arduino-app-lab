@@ -17,8 +17,17 @@ export type ContextMenuItemType = DropdownMenuItemType<
 
 export type ContextMenuSectionType = DropdownMenuSectionType<
   ContextMenuItemIds,
-  MessageDescriptor
+  MessageDescriptor,
+  ContextMenuSectionIds
 >;
+
+export enum ContextMenuSectionIds {
+  Clipboard = 'Clipboard',
+  History = 'History',
+  Editing = 'Editing',
+  Search = 'Search',
+  LSP = 'LSP',
+}
 
 export enum ContextMenuItemIds {
   Cut = 'Cut',
@@ -31,6 +40,12 @@ export enum ContextMenuItemIds {
   IncreaseIndent = 'IncreaseIndent',
   DecreaseIndent = 'DecreaseIndent',
   Find = 'Find',
+  GoToDefinition = 'GoToDefinition',
+  GoToTypeDefinition = 'GoToTypeDefinition',
+  GoToImplementation = 'GoToImplementation',
+  FindAllReferences = 'FindAllReferences',
+  Format = 'Format',
+  Rename = 'Rename',
 }
 
 export type ContextMenuDictionary<T> = Record<

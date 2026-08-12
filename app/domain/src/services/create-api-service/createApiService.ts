@@ -35,7 +35,7 @@ import {
   SUPPORTED_IMAGE_TYPES,
 } from '@cloud-editor-mono/ui-components';
 import dotenv from 'dotenv';
-import { uniqueId } from 'lodash';
+import { uniqueId } from 'lodash-es';
 import {
   BehaviorSubject,
   debounce,

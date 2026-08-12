@@ -4,6 +4,38 @@ import {
   usePanelCallbackRef,
 } from 'react-resizable-panels';
 
+import { usePanelPersistence } from './usePanelPersistence';
+
+const groupMaxSizePx = (panel: PanelImperativeHandle): number => {
+  const size = panel.getSize();
+  return size.asPercentage > 0
+    ? (size.inPixels * 100) / size.asPercentage
+    : size.inPixels;
+};
+
+const panelMaxSizePx = (
+  panel: PanelImperativeHandle,
+  siblingMinSizePx = 0,
+): number => groupMaxSizePx(panel) - siblingMinSizePx;
+
+const MAXIMIZED_TOLERANCE_PX = 10;
+
+// Works for any size, not just the panel's current one
+const isMaxSizePx = (
+  sizePx: number,
+  panel: PanelImperativeHandle,
+  siblingMinSizePx = 0,
+): boolean =>
+  sizePx >= panelMaxSizePx(panel, siblingMinSizePx) - MAXIMIZED_TOLERANCE_PX;
+
+const isPanelMaximized = (
+  panel: PanelImperativeHandle,
+  siblingMinSizePx = 0,
+): boolean => isMaxSizePx(panel.getSize().inPixels, panel, siblingMinSizePx);
+
+export const panelStorageKey = (id: string, appId?: string): string =>
+  appId ? `al-panel:${id}:${appId}` : `al-panel:${id}`;
+
 export interface WorkspacePanelAPI {
   isCollapsed: boolean;
   toggleCollapsed: () => void;
@@ -11,19 +43,26 @@ export interface WorkspacePanelAPI {
   toggleMaximize: () => void;
 }
 
-export type UseWorkspacePanel = (params?: {
-  id?: string;
+export type UseWorkspacePanel = (params: {
+  storageKey: string;
   defaultSize?: number;
+  sibling?: {
+    minSizePx?: number;
+  };
 }) => {
   panel: PanelImperativeHandle | null;
-  storedSize?: number;
+  storedSize: number | undefined;
   setRef: Dispatch<SetStateAction<PanelImperativeHandle | null>>;
   onResize: () => void;
   onDrag: () => void;
   api: WorkspacePanelAPI;
 };
 
-export const useWorkspacePanel: UseWorkspacePanel = ({ defaultSize } = {}) => {
+export const useWorkspacePanel: UseWorkspacePanel = ({
+  storageKey,
+  defaultSize,
+  sibling,
+}) => {
   const [panel, setRef] = usePanelCallbackRef();
 
   const [isCollapsed, setIsCollapsed] = useState(
@@ -33,6 +72,8 @@ export const useWorkspacePanel: UseWorkspacePanel = ({ defaultSize } = {}) => {
   // Maximized logic not provided by the library
   const [isMaximized, setIsMaximized] = useState(false);
   const prevSizeBeforeMaximize = useRef<number | null>(null);
+
+  const { storedSize, setStoredSize } = usePanelPersistence(storageKey);
 
   const toggleCollapsed = useCallback(() => {
     if (!panel) {
@@ -54,38 +95,28 @@ export const useWorkspacePanel: UseWorkspacePanel = ({ defaultSize } = {}) => {
     }
 
     if (isMaximized) {
-      let prevSize = prevSizeBeforeMaximize.current;
-
-      const currSize = panel.getSize().inPixels;
-      if (prevSize && prevSize >= currSize) {
-        // If container was resized while panel was maximized and the previous size is bigger
-        // than the current size, restore to the current size to avoid precision issues
-        prevSize = null;
+      let restoreSize = prevSizeBeforeMaximize.current;
+      // Ignore a stored previous size that is itself a maximized size,
+      // otherwise "un-maximize" would just toggle max → max.
+      if (!restoreSize || isMaxSizePx(restoreSize, panel, sibling?.minSizePx)) {
+        restoreSize = defaultSize || 100;
       }
-
-      panel.resize(prevSizeBeforeMaximize.current || defaultSize || 100);
+      panel.resize(restoreSize);
     } else {
-      const size = panel.getSize();
-      if (size.asPercentage < 98) {
-        // If the panel is already taking most of the space,
-        // maximize it without storing the previous size to avoid precision issues when restoring
-        prevSizeBeforeMaximize.current = size.inPixels;
-      }
+      const currentSize = panel.getSize().inPixels;
+      prevSizeBeforeMaximize.current = currentSize;
       panel.resize('100%');
     }
-  }, [panel, isMaximized, defaultSize]);
+  }, [panel, isMaximized, defaultSize, sibling?.minSizePx]);
 
   const onResize = useCallback(() => {
     if (!panel) {
       return;
     }
     setIsCollapsed(panel.isCollapsed());
-
-    const size = panel.getSize();
-    const otherPanelPx =
-      (size.inPixels * (100 - size.asPercentage)) / size.asPercentage;
-    setIsMaximized(otherPanelPx <= 41);
-  }, [panel]);
+    setIsMaximized(isPanelMaximized(panel, sibling?.minSizePx));
+    setStoredSize(panel.getSize().inPixels);
+  }, [panel, setStoredSize, sibling?.minSizePx]);
 
   const onDrag = useCallback(() => {
     prevSizeBeforeMaximize.current = null;
@@ -96,6 +127,7 @@ export const useWorkspacePanel: UseWorkspacePanel = ({ defaultSize } = {}) => {
     setRef,
     onResize,
     onDrag,
+    storedSize,
     api: {
       toggleCollapsed,
       isCollapsed,

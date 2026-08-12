@@ -27,12 +27,15 @@ interface AppLabAppDetailProps {
   appId: string;
   section: AppsSection;
   appLabAppDetailLogic: AppLabAppDetailLogic;
+  // Breadcrumb page-title/link override for sections that reuse another
+  // section's detail route (Inspirations reuses /examples/$appId).
+  breadcrumbId?: string;
 }
 
 const AppLabAppDetail: React.FC<AppLabAppDetailProps> = (
   props: AppLabAppDetailProps,
 ) => {
-  const { appLabAppDetailLogic, appId, section } = props;
+  const { appLabAppDetailLogic, appId, section, breadcrumbId } = props;
   const {
     app,
     fileTree,
@@ -56,7 +59,7 @@ const AppLabAppDetail: React.FC<AppLabAppDetailProps> = (
       <DeleteTreeItemDialog logic={deleteTreeItemDialogLogic} />
       <TopBar
         pathItems={[
-          section,
+          breadcrumbId ?? section,
           <AppTitle key="app-title" appTitleLogic={appTitleLogic} />,
         ]}
       >
@@ -72,7 +75,7 @@ const AppLabAppDetail: React.FC<AppLabAppDetailProps> = (
               onClick={(): void => onAppAction(AppAction.Duplicate)}
               variant={ButtonVariant.Secondary}
               appearance={ButtonAppearance.Action}
-              size={ButtonSize.Small}
+              size={ButtonSize.XSmall}
               Icon={Duplicate}
               title="Copy and edit app"
               classes={{

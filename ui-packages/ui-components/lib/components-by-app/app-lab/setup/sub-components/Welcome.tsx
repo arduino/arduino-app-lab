@@ -4,12 +4,11 @@ import { DotLottiePlayer } from '@dotlottie/react-player';
 import clsx from 'clsx';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { useBoardSerialTracker } from '../../../../common/utils';
 import { LinuxCredentialsDialog } from '../../../../dialogs';
 import { useI18n } from '../../../../i18n/useI18n';
 import { Large, Small, XSmall } from '../../../../typography';
 import { welcomeMessages } from '../messages';
-import { Board } from '../setup.type';
+import { Board, BoardSerialTrackerLogic } from '../setup.type';
 import BoardCard from './BoardCard';
 import BoardIcon from './BoardIcon';
 import styles from './welcome.module.scss';
@@ -17,6 +16,7 @@ import styles from './welcome.module.scss';
 interface WelcomeProps {
   isLoading: boolean;
   boards: Board[];
+  boardSerialTracker: BoardSerialTrackerLogic;
   onSelectBoard: (board: Board) => void;
   isSelectingBoard?: boolean;
   isAutoSelectingBoard?: boolean;
@@ -56,6 +56,7 @@ const Welcome: React.FC<WelcomeProps> = (props: WelcomeProps) => {
     setupCompleted,
     isAutoSelectingBoard,
     boardSelectionStatus,
+    boardSerialTracker,
   } = props;
 
   const { formatMessage } = useI18n();
@@ -70,7 +71,7 @@ const Welcome: React.FC<WelcomeProps> = (props: WelcomeProps) => {
     markBoardAsUsed,
     getLastConnection,
     updateLastConnection,
-  } = useBoardSerialTracker();
+  } = boardSerialTracker;
 
   const passwordRef = useRef<HTMLInputElement>(null);
 

@@ -134,6 +134,43 @@ describe('useBoardConfiguration - checkBoardName', () => {
 
     expect(result.current.checkBoardName('MyBoard123')).toBe(true);
   });
+
+  it('returns false for names with special characters', async () => {
+    const { result } = renderHook(() => useBoardConfiguration(), {
+      wrapper: createWrapper(),
+    });
+
+    expect(result.current.checkBoardName('!!')).toBe(false);
+    expect(result.current.checkBoardName('my@board')).toBe(false);
+    expect(result.current.checkBoardName('board#')).toBe(false);
+  });
+
+  it('returns true for valid names with hyphens', async () => {
+    const { result } = renderHook(() => useBoardConfiguration(), {
+      wrapper: createWrapper(),
+    });
+
+    expect(result.current.checkBoardName('my-board')).toBe(true);
+    expect(result.current.checkBoardName('my-board-123')).toBe(true);
+  });
+
+  it('returns false for names with underscores', async () => {
+    const { result } = renderHook(() => useBoardConfiguration(), {
+      wrapper: createWrapper(),
+    });
+
+    expect(result.current.checkBoardName('my_board')).toBe(false);
+    expect(result.current.checkBoardName('my-board_123')).toBe(false);
+  });
+
+  it('returns false for names starting or ending with hyphen', async () => {
+    const { result } = renderHook(() => useBoardConfiguration(), {
+      wrapper: createWrapper(),
+    });
+
+    expect(result.current.checkBoardName('-myboard')).toBe(false);
+    expect(result.current.checkBoardName('myboard-')).toBe(false);
+  });
 });
 
 describe('useBoardConfiguration - setBoardConfiguration happy path', () => {
@@ -159,5 +196,25 @@ describe('useBoardConfiguration - setBoardConfiguration happy path', () => {
     expect(result.current.hasBoardConfigurationError).toBe(false);
     expect(result.current.setBoardNameIsError).toBe(false);
     expect(result.current.setKeyboardLayoutIsError).toBe(false);
+  });
+
+  it('sets error message when setBoardName API fails', async () => {
+    const testError = new Error('Invalid board name');
+    setBoardNameMock.mockRejectedValueOnce(testError);
+
+    const { result } = renderHook(() => useBoardConfiguration(), {
+      wrapper: createWrapper(),
+    });
+
+    result.current.setBoardConfiguration('NewBoard', 'it');
+
+    await waitFor(
+      () => {
+        expect(result.current.setBoardNameIsError).toBe(true);
+      },
+      { timeout: 1000 },
+    );
+
+    expect(result.current.boardNameErrorMsg).toBe('Invalid board name');
   });
 });

@@ -1,2 +1,6 @@
 /.yarn/releases/** binary
 /.yarn/plugins/** binary
+
+# Checksum-gated vendored bundle: core.autocrlf would rewrite it on checkout and
+# break the SHA-256 gate in dev-utils/dev-config/scripts/download_socket_io.sh
+/app/core-ui/src/app-lab/assets/socket.io.min.js -text

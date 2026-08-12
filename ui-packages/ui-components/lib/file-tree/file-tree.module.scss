@@ -1,3 +1,4 @@
+@use "sass:math";
 @use "../../public/shared.module.scss";
 
 .tree-container {
@@ -140,6 +141,15 @@
       outline: 1px solid var(--border-accent, #25c2c7);
       border-radius: 4px;
     }
+
+    &--error {
+      outline: 1px solid var(--feedback-error-default, #ff8878);
+      border-radius: 4px;
+
+      &:focus {
+        outline: 1px solid var(--feedback-error-default, #ff8878);
+      }
+    }
   }
 }
 
@@ -226,7 +236,7 @@
       opacity: 0.2;
       flex: none;
       height: 20px;
-      width: percentage(calc((random(60) + 8) / 100));
+      width: math.percentage(math.div(math.random(60) + 8, 100));
     }
   }
 }

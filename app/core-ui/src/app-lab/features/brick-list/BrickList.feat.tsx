@@ -2,6 +2,7 @@ import {
   BrickDetail,
   BrickListItem,
   BricksList,
+  PageLayout,
   TopBar,
 } from '@cloud-editor-mono/ui-components/lib/components-by-app/app-lab';
 import { useSearch } from '@tanstack/react-router';
@@ -24,8 +25,7 @@ const BrickList: React.FC = () => {
   } = useBrickListLogic({ brickId, tab });
 
   return (
-    <section className={styles['main']}>
-      <TopBar pathItems={['Bricks']} />
+    <PageLayout header={<TopBar pathItems={['bricks']} />}>
       <div className={styles['container']}>
         {/* Loading state */}
         {bricksLoading ? <BrickListItem variant="skeleton" /> : null}
@@ -52,7 +52,7 @@ const BrickList: React.FC = () => {
           </div>
         )}
       </div>
-    </section>
+    </PageLayout>
   );
 };
 

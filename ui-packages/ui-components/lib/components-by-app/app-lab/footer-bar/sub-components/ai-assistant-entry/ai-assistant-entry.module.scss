@@ -1,0 +1,85 @@
+@use "@cloud-editor-mono/arduino-sass/src/variables" as vars;
+@use "@cloud-editor-mono/arduino-sass/src/breakpoints" as bp;
+
+.label {
+    display: grid;
+    grid-template-areas: "label";
+    align-items: center;
+    justify-items: center;
+    white-space: nowrap;
+
+    > * {
+        grid-area: label;
+    }
+}
+
+.label-reserve {
+    visibility: hidden;
+}
+
+// Label pill by default; the glyph only takes over on the narrow footer.
+.icon {
+    display: none;
+}
+
+@include bp.breakpoint(vars.$breakpoint-xl) {
+    // outranks the base button's `> svg { width: 14px }`
+    .entry .icon {
+        display: block;
+        width: 16px;
+        height: 16px;
+    }
+
+    .label {
+        display: none;
+    }
+
+    .entry {
+        width: 28px;
+        padding: 0 !important;
+    }
+}
+
+.entry:focus:not(:focus-visible) {
+    border-color: transparent !important;
+    box-shadow: none !important;
+}
+
+.shine {
+    position: relative;
+    overflow: hidden;
+
+    &::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        width: 60%;
+        background: linear-gradient(
+            90deg,
+            transparent 0%,
+            rgba(255, 255, 255, 0.12) 50%,
+            transparent 100%
+        );
+        animation: entry-shine 2.3s linear infinite;
+        pointer-events: none;
+    }
+}
+
+@keyframes entry-shine {
+    0% {
+        transform: translateX(-140%) skewX(-20deg);
+    }
+    43%,
+    100% {
+        transform: translateX(300%) skewX(-20deg);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .shine::after {
+        animation: none;
+        opacity: 0;
+    }
+}

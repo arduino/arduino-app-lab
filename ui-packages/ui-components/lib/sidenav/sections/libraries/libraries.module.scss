@@ -1,3 +1,4 @@
+@use "sass:math";
 @use "../../../../public/shared.module.scss";
 @use "../../../essential/tab-list/tab-list.module.scss";
 
@@ -276,8 +277,8 @@ $itemBorder: 4px solid white;
     @for $i from 1 through $skeletonChildren {
       & :nth-child(#{$i}) {
         $base-width: 0.6;
-        $random-width: calc(random(20) / 100);
-        width: percentage($base-width + $random-width);
+        $random-width: math.div(math.random(20), 100);
+        width: math.percentage($base-width + $random-width);
       }
     }
   }

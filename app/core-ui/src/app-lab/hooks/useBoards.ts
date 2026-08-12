@@ -4,7 +4,6 @@ import {
   reloadApp,
   selectBoard as apiSelectBoard,
 } from '@cloud-editor-mono/domain/src/services/services-by-app/app-lab';
-import { useBoardSerialTracker } from '@cloud-editor-mono/ui-components/lib/common/utils';
 import { Board } from '@cloud-editor-mono/ui-components/lib/components-by-app/app-lab';
 import { useQuery } from '@tanstack/react-query';
 import { del, get, set } from 'idb-keyval';
@@ -19,6 +18,7 @@ import {
   PREVIOUS_BOARD_SERIALS,
 } from '../constants';
 import { useBoardLifecycleStore } from '../store/boardLifecycle';
+import { useBoardSerialTracker } from './useBoardSerialTracker';
 import { useIsBoard } from './useIsBoard';
 
 const CONNECT_TIMEOUT_MS = 15_000;
@@ -232,28 +232,6 @@ export const useBoards: UseBoards = () => {
       dispatch({ type: 'SET_BOARDS', payload: data });
     },
   });
-
-  useEffect(() => {
-    if (!selectedConnectedBoard) {
-      return;
-    }
-
-    const updatedBoard = boards.find(
-      (board) => board.serial === selectedConnectedBoard.serial,
-    );
-
-    if (!updatedBoard) {
-      return;
-    }
-
-    if (
-      updatedBoard.name !== selectedConnectedBoard.name ||
-      updatedBoard.type !== selectedConnectedBoard.type ||
-      updatedBoard.address !== selectedConnectedBoard.address
-    ) {
-      setSelectedConnectedBoard(updatedBoard);
-    }
-  }, [boards, selectedConnectedBoard, setSelectedConnectedBoard]);
 
   // If the selected board is unplugged, and no longer detected for 5 seconds, reload the app
   useEffect(() => {

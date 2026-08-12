@@ -1,3 +1,4 @@
+@use "sass:math";
 
 .dialog-root {
   .dialog-content {
@@ -51,7 +52,7 @@
       & :nth-child(#{$i}) {
         flex: none;
         height: 20px;
-        width: percentage(calc((random(60) + 8) / 100));
+        width: math.percentage(math.div(math.random(60) + 8, 100));
       }
     }
   }

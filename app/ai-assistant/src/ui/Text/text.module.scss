@@ -1,0 +1,10 @@
+@use "@cloud-editor-mono/arduino-sass/src/variables" as variables;
+
+.text {
+  color: var(--text-subtle, #c9d2d2);
+
+  code {
+    color: var(--text-accent, #25c2c7);
+    font-family: variables.$font-roboto;
+  }
+}

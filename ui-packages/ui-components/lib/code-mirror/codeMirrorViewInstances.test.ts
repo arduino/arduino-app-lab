@@ -2,21 +2,26 @@
  * Unit tests for the module-level utilities in codeMirrorViewInstances.ts.
  *
  * Coverage:
- *  - linkSplitEditors / unlinkSplitEditors
+ *  - linkSplitEditors / unlinkSplitEditors + the split-sync mirroring they gate
  *  - useCodeMirrorInstanceCleanup (memory-leak prevention)
  *  - useCodeMirrorStateCleanup (stale-state pruning)
  *
  * The module uses several singleton maps/objects (viewInstances,
- * viewInstanceStateMaps) as module-level state.  Each test restores these to
- * a clean baseline in afterEach to prevent inter-test leakage.
+ * viewInstanceStateMaps) plus a private split-sync flag as module-level
+ * state.  Each test restores these to a clean baseline in afterEach to
+ * prevent inter-test leakage.
  */
 
+import { EditorState } from '@codemirror/state';
+import { EditorView } from '@codemirror/view';
 import { renderHook } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
   clearEditorStateCaches,
+  createSplitSyncExtension,
   linkSplitEditors,
+  splitSyncAnnotation,
   unlinkSplitEditors,
   useCodeMirrorInstanceCleanup,
   useCodeMirrorStateCleanup,
@@ -53,17 +58,46 @@ function makeMockEditorInstance() {
   };
 }
 
+const realViews: EditorView[] = [];
+
+/** Creates a real EditorView carrying the permanent split-sync listener, so
+ *  link/unlink tests exercise the same mirroring path the app uses. jsdom
+ *  cannot lay a view out, but document/transaction handling — all that
+ *  split-sync touches — works. */
+function makeRealEditorView(viewId: ViewInstances, doc: string): EditorView {
+  const view = new EditorView({
+    state: EditorState.create({
+      doc,
+      extensions: [createSplitSyncExtension(viewId)],
+    }),
+    parent: document.body,
+  });
+  realViews.push(view);
+  return view;
+}
+
 // ---------------------------------------------------------------------------
 // Baseline cleanup between tests
 // ---------------------------------------------------------------------------
 
 afterEach(() => {
+  // Reset the module-private splitSyncEnabled flag; a test that links must
+  // not leave mirroring switched on for the next one.
+  unlinkSplitEditors();
+
+  while (realViews.length) {
+    realViews.pop()?.destroy();
+  }
+
   viewInstances[ViewInstances.Editor].instance = null;
   viewInstances[ViewInstances.Editor].appendedTo = null;
+  viewInstances[ViewInstances.Editor].valueInstanceId = undefined;
   viewInstances[ViewInstances.Editor2].instance = null;
   viewInstances[ViewInstances.Editor2].appendedTo = null;
+  viewInstances[ViewInstances.Editor2].valueInstanceId = undefined;
   viewInstances[ViewInstances.Console].instance = null;
   viewInstances[ViewInstances.Console].appendedTo = null;
+  viewInstances[ViewInstances.Console].valueInstanceId = undefined;
   viewInstanceStateMaps[ViewInstances.Editor].clear();
   viewInstanceStateMaps[ViewInstances.Editor2].clear();
   viewInstanceStateMaps[ViewInstances.Console].clear();
@@ -74,7 +108,7 @@ afterEach(() => {
 // ---------------------------------------------------------------------------
 
 describe('linkSplitEditors', () => {
-  it('does nothing when the primary editor instance is null', () => {
+  it('does not seed the peer when the primary editor instance is null', () => {
     const editor2 = makeMockEditorInstance();
     viewInstances[ViewInstances.Editor2].instance =
       editor2 as unknown as typeof viewInstances[ViewInstances.Editor2]['instance'];
@@ -84,7 +118,7 @@ describe('linkSplitEditors', () => {
     expect(editor2.dispatch).not.toHaveBeenCalled();
   });
 
-  it('does nothing when the split editor instance is null', () => {
+  it('does not seed the peer when the split editor instance is null', () => {
     const editor1 = makeMockEditorInstance();
     viewInstances[ViewInstances.Editor].instance =
       editor1 as unknown as typeof viewInstances[ViewInstances.Editor]['instance'];
@@ -94,26 +128,71 @@ describe('linkSplitEditors', () => {
     expect(editor1.dispatch).not.toHaveBeenCalled();
   });
 
-  it('dispatches a reconfigure effect to both instances when both are present', () => {
-    const editor1 = makeMockEditorInstance();
-    const editor2 = makeMockEditorInstance();
+  it('seeds the split pane from the primary document when the panes differ', () => {
+    const editor1 = makeRealEditorView(ViewInstances.Editor, 'void setup() {}');
+    const editor2 = makeRealEditorView(ViewInstances.Editor2, 'stale content');
 
-    viewInstances[ViewInstances.Editor].instance =
-      editor1 as unknown as typeof viewInstances[ViewInstances.Editor]['instance'];
-    viewInstances[ViewInstances.Editor2].instance =
-      editor2 as unknown as typeof viewInstances[ViewInstances.Editor2]['instance'];
+    viewInstances[ViewInstances.Editor].instance = editor1;
+    viewInstances[ViewInstances.Editor2].instance = editor2;
 
     linkSplitEditors();
 
-    expect(editor1.dispatch).toHaveBeenCalledTimes(1);
-    expect(editor2.dispatch).toHaveBeenCalledTimes(1);
+    expect(editor2.state.doc.toString()).toBe('void setup() {}');
+    // The source pane is authoritative and is never written to.
+    expect(editor1.state.doc.toString()).toBe('void setup() {}');
+  });
 
-    // Each dispatch call should carry a StateEffect inside `effects`
-    const [editor1Call] = editor1.dispatch.mock.calls;
-    expect(editor1Call[0]).toHaveProperty('effects');
+  it('leaves the split pane untouched when both panes already match', () => {
+    const editor1 = makeRealEditorView(ViewInstances.Editor, 'same doc');
+    const editor2 = makeRealEditorView(ViewInstances.Editor2, 'same doc');
 
-    const [editor2Call] = editor2.dispatch.mock.calls;
-    expect(editor2Call[0]).toHaveProperty('effects');
+    viewInstances[ViewInstances.Editor].instance = editor1;
+    viewInstances[ViewInstances.Editor2].instance = editor2;
+
+    const dispatchSpy = vi.spyOn(editor2, 'dispatch');
+
+    linkSplitEditors();
+
+    expect(dispatchSpy).not.toHaveBeenCalled();
+  });
+
+  it('enables mirroring, so later edits propagate in both directions', () => {
+    const editor1 = makeRealEditorView(ViewInstances.Editor, 'ab');
+    const editor2 = makeRealEditorView(ViewInstances.Editor2, 'ab');
+
+    viewInstances[ViewInstances.Editor].instance = editor1;
+    viewInstances[ViewInstances.Editor2].instance = editor2;
+
+    linkSplitEditors();
+
+    editor1.dispatch({ changes: { from: 2, insert: 'c' } });
+    expect(editor2.state.doc.toString()).toBe('abc');
+
+    editor2.dispatch({ changes: { from: 3, insert: 'd' } });
+    expect(editor1.state.doc.toString()).toBe('abcd');
+  });
+
+  it('re-seeds the peer instead of throwing when the panes have diverged', () => {
+    const editor1 = makeRealEditorView(ViewInstances.Editor, 'ab');
+    const editor2 = makeRealEditorView(ViewInstances.Editor2, 'ab');
+
+    viewInstances[ViewInstances.Editor].instance = editor1;
+    viewInstances[ViewInstances.Editor2].instance = editor2;
+
+    linkSplitEditors();
+
+    // Force divergence behind split-sync's back: a transaction tagged as a
+    // sync write is skipped by the listener, so it is not mirrored back.
+    editor2.dispatch({
+      changes: { from: 0, to: 2, insert: 'a completely different doc' },
+      annotations: splitSyncAnnotation.of(true),
+    });
+
+    // Now an edit in the primary pane must re-converge the peer rather than
+    // applying a change set against the wrong document length.
+    editor1.dispatch({ changes: { from: 2, insert: 'c' } });
+
+    expect(editor2.state.doc.toString()).toBe('abc');
   });
 });
 
@@ -126,7 +205,26 @@ describe('unlinkSplitEditors', () => {
     expect(() => unlinkSplitEditors()).not.toThrow();
   });
 
-  it('dispatches a reconfigure([]) effect on both instances when they exist', () => {
+  it('stops mirroring subsequent edits in both directions', () => {
+    const editor1 = makeRealEditorView(ViewInstances.Editor, 'ab');
+    const editor2 = makeRealEditorView(ViewInstances.Editor2, 'ab');
+
+    viewInstances[ViewInstances.Editor].instance = editor1;
+    viewInstances[ViewInstances.Editor2].instance = editor2;
+
+    linkSplitEditors();
+    unlinkSplitEditors();
+
+    editor1.dispatch({ changes: { from: 2, insert: '1' } });
+    expect(editor2.state.doc.toString()).toBe('ab');
+
+    editor2.dispatch({ changes: { from: 2, insert: '2' } });
+    expect(editor1.state.doc.toString()).toBe('ab1');
+  });
+
+  it('does not dispatch to either pane — it only flips the sync flag', () => {
+    // Split-sync is a permanently-installed updateListener gated by a module
+    // flag, so unlinking must neither reconfigure nor write to either view.
     const editor1 = makeMockEditorInstance();
     const editor2 = makeMockEditorInstance();
 
@@ -137,18 +235,16 @@ describe('unlinkSplitEditors', () => {
 
     unlinkSplitEditors();
 
-    expect(editor1.dispatch).toHaveBeenCalledTimes(1);
-    expect(editor2.dispatch).toHaveBeenCalledTimes(1);
+    expect(editor1.dispatch).not.toHaveBeenCalled();
+    expect(editor2.dispatch).not.toHaveBeenCalled();
   });
 
-  it('still runs on the remaining instance when only one is present', () => {
+  it('does not throw when only one pane is present', () => {
     const editor1 = makeMockEditorInstance();
     viewInstances[ViewInstances.Editor].instance =
       editor1 as unknown as typeof viewInstances[ViewInstances.Editor]['instance'];
 
     expect(() => unlinkSplitEditors()).not.toThrow();
-    // editor1 should still receive the reconfigure dispatch
-    expect(editor1.dispatch).toHaveBeenCalledTimes(1);
   });
 });
 
@@ -157,23 +253,18 @@ describe('unlinkSplitEditors', () => {
 // ---------------------------------------------------------------------------
 
 describe('useCodeMirrorInstanceCleanup — Editor2', () => {
-  it('calls unlinkSplitEditors (dispatches to Editor) before destroying Editor2', () => {
-    const callOrder: string[] = [];
+  it('destroys Editor2 without disabling split-sync, so a remount resumes mirroring', () => {
+    // Cleanup deliberately leaves the split-sync flag alone: the flag is owned
+    // by the EditorPanel link/unlink effect, and a StrictMode (or skeleton
+    // transition) mount → unmount → remount of Editor2 would otherwise
+    // switch mirroring off for good.
+    const editor1 = makeRealEditorView(ViewInstances.Editor, 'ab');
+    const editor2 = makeRealEditorView(ViewInstances.Editor2, 'ab');
 
-    const editor1 = {
-      ...makeMockEditorInstance(),
-      dispatch: vi.fn(() => callOrder.push('editor1-dispatch')),
-    };
-    const editor2 = {
-      ...makeMockEditorInstance(),
-      dispatch: vi.fn(() => callOrder.push('editor2-dispatch')),
-      destroy: vi.fn(() => callOrder.push('editor2-destroy')),
-    };
+    viewInstances[ViewInstances.Editor].instance = editor1;
+    viewInstances[ViewInstances.Editor2].instance = editor2;
 
-    viewInstances[ViewInstances.Editor].instance =
-      editor1 as unknown as typeof viewInstances[ViewInstances.Editor]['instance'];
-    viewInstances[ViewInstances.Editor2].instance =
-      editor2 as unknown as typeof viewInstances[ViewInstances.Editor2]['instance'];
+    linkSplitEditors();
 
     const { unmount } = renderHook(() =>
       useCodeMirrorInstanceCleanup(ViewInstances.Editor2),
@@ -181,11 +272,19 @@ describe('useCodeMirrorInstanceCleanup — Editor2', () => {
 
     unmount();
 
-    const firstDispatchIdx = callOrder.findIndex((e) => e.includes('dispatch'));
-    const destroyIdx = callOrder.indexOf('editor2-destroy');
+    expect(viewInstances[ViewInstances.Editor2].instance).toBeNull();
+    // With no peer mounted, an edit in the primary pane is a no-op, not a throw
+    // against the destroyed view.
+    expect(() =>
+      editor1.dispatch({ changes: { from: 2, insert: 'c' } }),
+    ).not.toThrow();
 
-    expect(firstDispatchIdx).toBeGreaterThanOrEqual(0);
-    expect(destroyIdx).toBeGreaterThan(firstDispatchIdx);
+    const remountedEditor2 = makeRealEditorView(ViewInstances.Editor2, 'abc');
+    viewInstances[ViewInstances.Editor2].instance = remountedEditor2;
+
+    editor1.dispatch({ changes: { from: 3, insert: 'd' } });
+
+    expect(remountedEditor2.state.doc.toString()).toBe('abcd');
   });
 
   it('destroys the Editor2 instance on unmount', () => {

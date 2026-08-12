@@ -36,6 +36,7 @@ import {
   getBrickDetailsV1Request,
   getBricksV1Request,
   getConfigV1Request,
+  getExamplesV1Request,
   getSerialMonitorLogsStreamV1Request,
   getSketchLibrariesV1Request,
   getSystemPropertyKeysV1Request,
@@ -215,6 +216,12 @@ export const getBricks: OrchestratorService['getBricks'] = async function () {
   const response = await getBricksV1Request(origin);
   return response.bricks?.filter((brick) => brick.author === 'Arduino') || [];
 };
+
+export const getExamples: OrchestratorService['getExamples'] =
+  async function () {
+    const origin = await getOrchestratorURL();
+    return getExamplesV1Request(origin);
+  };
 
 export const getBrickDetails: OrchestratorService['getBrickDetails'] =
   async function (id: string) {

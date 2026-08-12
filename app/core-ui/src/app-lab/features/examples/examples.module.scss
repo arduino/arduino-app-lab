@@ -1,0 +1,35 @@
+@use "@cloud-editor-mono/ui-components/public/shared.module.scss";
+
+.main {
+  background: var(--surface-bg-below-2, #090f11);
+  height: 100%;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  color: white;
+  display: flex;
+  flex-direction: column;
+}
+
+.header {
+  padding: 0 16px;
+  border-bottom: 1px solid var(--color-border, #232b2e);
+}
+
+.body {
+  height: calc(100% - 61px);
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.content {
+  max-width: 772px;
+  margin: 0 auto;
+  padding: 40px 16px;
+  width: 100%;
+  min-height: 100%;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+}

@@ -5,7 +5,7 @@ import {
   sendNotification,
 } from '@cloud-editor-mono/domain';
 import { act, renderHook, waitFor } from '@testing-library/react';
-import { uniqueId } from 'lodash';
+import { uniqueId } from 'lodash-es';
 
 import TestProviderWrapper from '../../../../tests-setup';
 import { useNotificationsLogic } from './notifications.logic';

@@ -29,6 +29,10 @@ $roboto-mono-font-family: "Roboto Mono", "monospace", "Courier New", "Lucida Con
     font-weight: 700;
   }
 
+  &.semibold {
+    font-weight: 600;
+  }
+
   &.italic {
     font-style: italic;
   }

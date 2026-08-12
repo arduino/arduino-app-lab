@@ -1,3 +1,4 @@
+@use "sass:color";
 @use "@cloud-editor-mono/arduino-sass";
 
 .text-area::-webkit-scrollbar {
@@ -144,11 +145,11 @@
     }
 
     &.focused {
-      box-shadow: 0 0 0 3px transparentize(arduino-sass.$teal3, 0.5);
+      box-shadow: 0 0 0 3px color.adjust(arduino-sass.$teal3, $alpha: -0.5);
     }
 
     &.has-error {
-      box-shadow: 0 0 0 3px transparentize(arduino-sass.$darknotifyerror, 0.5);
+      box-shadow: 0 0 0 3px color.adjust(arduino-sass.$darknotifyerror, $alpha: -0.5);
     }
 
     &:hover {

@@ -70,7 +70,7 @@ $loaded-fonts: ();
 /// @return {Url}
 /// @require $base-url
 @function font($path, $base: $base-url) {
-  @return url($base + $font-path + $path);
+  @return url('#{$base}#{$font-path}#{$path}');
 }
 
 /// Font mixin that allows to include font styls from a pre-defined font stack.
@@ -180,25 +180,39 @@ $loaded-fonts: ();
   }
 }
 
-/// Used for creating the source string for fonts using @font-face
-/// Reference: http://goo.gl/Ru1bKP
+/// Used for creating the source string for fonts using @font-face.
+/// Iterates the requested formats and appends `url(...) format(...)` entries.
 /// @requires {function} font
 @function font-source-declaration($font-family, $file-path, $file-formats) {
   $src: ();
 
-  $formats-map: (
-    eot:   '#{$file-path}.eot?#iefix' format('embedded-opentype'),
-    woff2: '#{$file-path}.woff2' format('woff2'),
-    woff:  '#{$file-path}.woff' format('woff'),
-    ttf:   '#{$file-path}.ttf' format('truetype'),
-    svg:   '#{$file-path}.svg##{$font-family}' format('svg')
-  );
+  @each $format in $file-formats {
+    $ext: null;
+    $format-name: null;
 
-  @each $key, $values in $formats-map {
-    @if contains($file-formats, $key) {
-      $file-path: list.nth($values, 1);
-      $font-format: list.nth($values, 2);
-      $src: list.append($src, font($file-path) $font-format, comma);
+    @if $format == eot {
+      $ext: 'eot?#iefix';
+      $format-name: 'embedded-opentype';
+    } @else if $format == woff2 {
+      $ext: 'woff2';
+      $format-name: 'woff2';
+    } @else if $format == woff {
+      $ext: 'woff';
+      $format-name: 'woff';
+    } @else if $format == ttf {
+      $ext: 'ttf';
+      $format-name: 'truetype';
+    } @else if $format == svg {
+      $ext: 'svg##{$font-family}';
+      $format-name: 'svg';
+    }
+
+    @if $ext != null {
+      $src: list.append(
+        $src,
+        font('#{$file-path}.#{$ext}') format('#{$format-name}'),
+        comma
+      );
     }
   }
 

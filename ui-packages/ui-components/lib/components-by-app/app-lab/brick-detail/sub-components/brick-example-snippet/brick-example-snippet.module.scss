@@ -1,0 +1,59 @@
+.snippet {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+
+  // Scoped to the brick snippet only: the snippet owns its outer spacing, so
+  // drop the shared markdown code block's vertical margins.
+  pre {
+    margin: 0;
+  }
+
+  // Flatten the code block's top so it sits flush under the header.
+  &.with-header pre {
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+  }
+}
+
+.header {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 16px;
+  border-radius: 8px 8px 0 0;
+  background: var(--surface-bg-below-1, #171e21);
+}
+
+.title {
+  color: var(--text-default, #fff);
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.see-example-link {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  color: var(--texts-icons-links, #25c2c7);
+  font-size: 12px;
+  font-weight: 700;
+
+  &:hover {
+    text-decoration: underline;
+  }
+
+  > svg {
+    width: 10px;
+    height: 10px;
+  }
+}

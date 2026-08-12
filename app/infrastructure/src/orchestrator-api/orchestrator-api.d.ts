@@ -445,6 +445,9 @@ export interface components {
       name?: string | null;
     };
     CodeExample: {
+      description?: string;
+      encoded_id?: string;
+      name?: string;
       path?: string;
     };
     ConfigDirectories: {

@@ -47,6 +47,11 @@ export interface DropdownMenuButtonProps<
   };
   disabled?: boolean;
   useStaticPosition?: boolean;
+  /**
+   * Render the menu in a portal attached to the document body, so that it is
+   * not clipped or covered by ancestors. Requires `useStaticPosition={false}`.
+   */
+  usePortal?: boolean;
 }
 
 export function DropdownMenuButton<T, L extends MessageDescriptor | string>(
@@ -63,6 +68,7 @@ export function DropdownMenuButton<T, L extends MessageDescriptor | string>(
     onOpen,
     classes,
     useStaticPosition,
+    usePortal,
     isOpened,
     disabled,
   } = props;
@@ -133,6 +139,7 @@ export function DropdownMenuButton<T, L extends MessageDescriptor | string>(
             dropdownMenuPopover: classes?.dropdownMenuPopover,
           }}
           useStaticPosition={useStaticPosition}
+          usePortal={usePortal}
         >
           <DropdownMenu
             {...menuProps}

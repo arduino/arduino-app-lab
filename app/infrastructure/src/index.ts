@@ -3,6 +3,7 @@ export * from './app-lab-bucket';
 export * from './arduino-create-static';
 export * from './auth0';
 export * from './builder-api';
+export * from './cloud-connector';
 export * from './code-formatter-api';
 export * from './create-api';
 export * from './edge-impulse-api';

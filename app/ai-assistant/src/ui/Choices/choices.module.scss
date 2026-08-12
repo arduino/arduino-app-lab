@@ -1,0 +1,228 @@
+@use "@cloud-editor-mono/arduino-sass/src/fonts" as fonts;
+@use "@cloud-editor-mono/arduino-sass/src/typography" as typography;
+@use "@cloud-editor-mono/arduino-sass/src/variables" as variables;
+
+.choices {
+  width: 100%;
+  max-width: var(--chat-content-max-width, 800px);
+  margin-inline: auto;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 16px;
+  border-radius: 8px;
+  border: 1px solid var(--border-default, #434f54);
+  background: var(--component-bg-below-1, #171e21);
+
+  .choices-header {
+    display: flex;
+    align-items: center;
+
+    .choices-dot {
+      flex: none;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--text-accent, #25c2c7);
+      margin-right: 10px;
+    }
+
+    .choices-title {
+      flex: 1;
+      font-weight: fonts.$font-weight-semibold;
+      color: var(--text-default, #fff);
+      line-height: var(--chat-line-height, 1.5);
+    }
+
+    .choices-header-actions {
+      flex: none;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      align-self: flex-start;
+
+      .choices-icon-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 24px;
+        height: 24px;
+        padding: 0;
+        border: none;
+        border-radius: 4px;
+        background: none;
+        color: var(--text-subtle, #c9d2d2);
+        cursor: pointer;
+        transition: background 0.15s ease, color 0.15s ease;
+
+        &:hover {
+          background: var(--component-bg-flexible, rgba(174, 184, 184, 0.15));
+          color: var(--text-default, #fff);
+        }
+
+        .choices-chevron {
+          width: 12px;
+          height: 12px;
+          transition: transform 0.2s ease;
+
+          &--collapsed {
+            transform: rotate(-90deg);
+          }
+        }
+
+        // The close X glyph fills less of its viewBox than the chevron, so it needs a
+        // larger box to read as the same visual size.
+        .choices-close-icon {
+          width: 16px;
+          height: 16px;
+        }
+      }
+    }
+  }
+
+  .choices-options {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+
+    .choices-option {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 12px;
+      text-align: left;
+      border-radius: 8px;
+      background: var(--surface-bg-below-2, #090f11);
+      border: 1px solid transparent;
+      cursor: pointer;
+      transition: background 0.15s ease;
+
+      &:hover {
+        background: var(--component-bg-flexible, rgba(174, 184, 184, 0.15));
+      }
+
+      &--selected {
+        border: 1px solid var(--component-bg-accent, #25c2c7);
+
+        &:hover {
+          background: var(--surface-bg-below-2, #090f11);
+        }
+      }
+
+      .choices-option-body {
+        flex: 1;
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+
+        .choices-option-description {
+          font-size: typography.$font-size-xx-small;
+          font-weight: fonts.$font-weight-medium;
+          color: var(--text-subtle, #c9d2d2);
+          line-height: var(--chat-line-height, 1.5);
+        }
+      }
+    }
+
+    .choices-option-label {
+      font-weight: fonts.$font-weight-semibold;
+      color: var(--text-default, #fff);
+    }
+
+    .choices-badge {
+      flex: none;
+      box-sizing: border-box;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 20px;
+      height: 22px;
+      padding: 0 6px;
+      border-radius: 4px;
+      background: var(--component-bg-baseline, #232b2e);
+      font-family: variables.$font-roboto;
+      font-size: typography.$font-size-xx-small;
+      font-weight: fonts.$font-weight-semibold;
+      color: var(--text-subtle, #c9d2d2);
+    }
+
+    .choices-checkbox {
+      flex: none;
+      box-sizing: border-box;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 18px;
+      height: 18px;
+      border-radius: 4px;
+      border: 1.5px solid var(--border-inverted, #232B2E);
+      background: transparent;
+
+      &--checked {
+        border-color: var(--component-bg-accent, #25c2c7);
+        background: var(--component-bg-accent, #25c2c7);
+      }
+
+      .choices-check-icon {
+        width: 8px;
+        height: 8px;
+        color: var(--text-default, #ffffff);
+      }
+    }
+
+    .choices-other {
+      flex-direction: row;
+      align-items: flex-start;
+      gap: 12px;
+
+      .choices-other-body {
+        flex: 1;
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+
+        .choices-other-head {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 12px;
+          cursor: pointer;
+          width: 100%;
+          padding: 0;
+          border: none;
+          background: none;
+          color: inherit;
+          font: inherit;
+          text-align: left;
+        }
+
+        .choices-other-input {
+          box-sizing: border-box;
+          padding: 8px 10px;
+          border: 1px solid var(--border-inverted, #232b2e);
+          border-radius: 6px;
+          background: var(--component-bg-below-1, #171e21);
+          color: var(--text-default, #fff);
+          font-family: variables.$font-sans;
+          font-size: typography.$font-size-x-small;
+
+          &::placeholder {
+            color: var(--text-subtle, #c9d2d2);
+          }
+
+          &:focus {
+            outline: none;
+          }
+        }
+      }
+    }
+  }
+
+  .choices-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+  }
+}

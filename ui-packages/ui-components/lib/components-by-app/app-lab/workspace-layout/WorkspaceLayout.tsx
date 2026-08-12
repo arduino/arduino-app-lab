@@ -1,14 +1,18 @@
 import clsx from 'clsx';
-import React, { useEffect, useRef } from 'react';
-import {
-  Group,
-  Panel,
-  Separator,
-  useDefaultLayout,
-} from 'react-resizable-panels';
+import React from 'react';
+import { Group, Panel, Separator } from 'react-resizable-panels';
 
 import { SplitDragProvider } from '../../../editor-panel/SplitDragContext';
 import {
+  CONSOLE_PANEL_COLLAPSED_SIZE_PX,
+  CONSOLE_PANEL_MIN_SIZE_PX,
+  EDITOR_PANEL_MIN_SIZE_PX,
+  SIDE_PANEL_COLLAPSED_SIZE_PX,
+  SIDE_PANEL_DEFAULT_SIZE_PX,
+  SIDE_PANEL_MIN_SIZE_PX,
+} from './constants';
+import {
+  panelStorageKey,
   useWorkspacePanel,
   WorkspacePanelAPI,
 } from './hooks/useWorkspacePanel';
@@ -29,9 +33,6 @@ const RIGHT_PANEL_ID = 'right';
 const EDITOR_PANEL_ID = 'editor';
 const CONSOLE_PANEL_ID = 'console';
 
-const SIDE_PANEL_DEFAULT_SIZE_PX = 300;
-const CONSOLE_PANEL_DEFAULT_SIZE_PX = 200;
-
 export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
   sideContent,
   editorContent,
@@ -39,45 +40,22 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
   appId,
 }) => {
   const sidePanel = useWorkspacePanel({
-    id: 'side',
-    defaultSize: SIDE_PANEL_DEFAULT_SIZE_PX,
+    storageKey: panelStorageKey(SIDE_PANEL_ID),
   });
   const consolePanel = useWorkspacePanel({
-    id: 'console',
-    defaultSize: CONSOLE_PANEL_DEFAULT_SIZE_PX,
+    storageKey: panelStorageKey(CONSOLE_PANEL_ID, appId),
+    defaultSize: CONSOLE_PANEL_MIN_SIZE_PX,
+    sibling: {
+      minSizePx: EDITOR_PANEL_MIN_SIZE_PX,
+    },
   });
   const editorPanel = useWorkspacePanel({
-    id: 'editor',
+    storageKey: panelStorageKey(EDITOR_PANEL_ID),
   });
-
-  // Persistence for side and console panels — IDs are scoped per app so each
-  // app remembers its own layout independently.
-  const sideGroupLayout = useDefaultLayout({
-    id: 'side-group',
-  });
-  const consoleGroupLayout = useDefaultLayout({
-    id: appId ? `${appId}-console-group` : 'console-group',
-  });
-
-  // Collapse the console panel on first visit to an app (no saved layout yet).
-  const initialCollapseHandled = useRef(false);
-  useEffect(() => {
-    if (
-      appId &&
-      consoleGroupLayout.defaultLayout == null &&
-      !initialCollapseHandled.current &&
-      consolePanel.panel
-    ) {
-      initialCollapseHandled.current = true;
-      consolePanel.panel.collapse();
-    }
-  }, [appId, consoleGroupLayout.defaultLayout, consolePanel.panel]);
 
   return (
     <SplitDragProvider>
       <Group
-        defaultLayout={sideGroupLayout.defaultLayout}
-        onLayoutChange={sideGroupLayout.onLayoutChanged}
         className={clsx(styles['group'], styles['group-root'])}
         orientation="horizontal"
       >
@@ -86,9 +64,9 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
           panelRef={sidePanel.setRef}
           className={clsx(styles['panel'], styles['panel-left'])}
           collapsible
-          defaultSize={SIDE_PANEL_DEFAULT_SIZE_PX}
-          minSize={152}
-          collapsedSize={44}
+          defaultSize={sidePanel.storedSize ?? SIDE_PANEL_DEFAULT_SIZE_PX}
+          minSize={SIDE_PANEL_MIN_SIZE_PX}
+          collapsedSize={SIDE_PANEL_COLLAPSED_SIZE_PX}
           groupResizeBehavior="preserve-pixel-size"
           onResize={(): void => {
             sidePanel.onResize();
@@ -106,15 +84,13 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
           className={clsx(styles['panel'], styles['panel-right'])}
         >
           <Group
-            defaultLayout={consoleGroupLayout.defaultLayout}
-            onLayoutChanged={consoleGroupLayout.onLayoutChanged}
             className={clsx(styles['group'], styles['group-inner'])}
             orientation="vertical"
           >
             <Panel
               id={EDITOR_PANEL_ID}
               className={clsx(styles['panel'], styles['panel-editor'])}
-              minSize={40}
+              minSize={EDITOR_PANEL_MIN_SIZE_PX}
             >
               {typeof editorContent === 'function'
                 ? editorContent(editorPanel.api)
@@ -128,15 +104,15 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
               panelRef={consolePanel.setRef}
               className={clsx(styles['panel'], styles['panel-console'])}
               collapsible
-              defaultSize={CONSOLE_PANEL_DEFAULT_SIZE_PX}
-              minSize={150}
-              collapsedSize={36}
-              groupResizeBehavior={
-                consolePanel.api.isMaximized
-                  ? 'preserve-relative-size'
-                  : 'preserve-pixel-size'
+              defaultSize={
+                consolePanel.storedSize ?? CONSOLE_PANEL_COLLAPSED_SIZE_PX
               }
-              onResize={consolePanel.onResize}
+              minSize={CONSOLE_PANEL_MIN_SIZE_PX}
+              collapsedSize={CONSOLE_PANEL_COLLAPSED_SIZE_PX}
+              groupResizeBehavior="preserve-pixel-size"
+              onResize={(): void => {
+                consolePanel.onResize();
+              }}
               onDrag={consolePanel.onDrag}
             >
               {typeof consoleContent === 'function'

@@ -36,7 +36,7 @@ func (m *fileContentAssetMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Re
 
 	ctx := m.ctxHolder.Get()
 	p := strings.TrimPrefix(r.URL.Path, pathPrefix)
-	dir, file := path.Dir(p), path.Base(p)
+	dir, file := splitAssetPath(p)
 	runtime.LogInfof(ctx, "Serving asset %s", file)
 	f, err := m.getAsset(dir, file)
 
@@ -76,12 +76,49 @@ func FileContentAssetMiddleware(ctxHolder *context.Holder, selectedBoard *board.
 	}
 }
 
+// splitAssetPath splits a request path (with the route prefix already removed)
+// into the directory to open and the name to read inside it.
+//
+// The remainder names an absolute path on the board, and is anchored at "/"
+// before it is split: the frontend builds these URLs by concatenation, so
+// whether the leading slash survives the prefix depends on the accident of a
+// double slash in the middle. Anchoring keeps the confinement check below
+// comparing two absolute paths either way - a relative dir matches no root, so
+// without this a normalized URL would turn every asset into a 404.
+func splitAssetPath(p string) (dir string, file string) {
+	p = path.Join("/", p)
+	return path.Dir(p), path.Base(p)
+}
+
+// isAllowedAssetPath reports whether the asset route may serve dir. Markdown
+// assets are rewritten to app-relative paths by the frontend, so every
+// legitimate request resolves inside one of the app file roots. dir comes
+// straight from the request URL, so anything else is a traversal attempt
+// rather than a missing asset.
+func isAllowedAssetPath(dir string, file string, roots []string) bool {
+	if !fs.ValidPath(file) || file == "." {
+		return false
+	}
+	return board.IsWithinAnyDir(dir, roots)
+}
+
 func (m *fileContentAssetMiddleware) getAsset(dir string, file string) (fs.File, error) {
+	// The roots are read from the board, over a request the app's context bounds.
+	roots := m.selectedBoard.AppFileRoots(m.ctxHolder.Get())
+	if !isAllowedAssetPath(dir, file, roots) {
+		return nil, fs.ErrInvalid
+	}
+
 	selectedConn := m.selectedBoard.Conn
 
 	if reflect.DeepEqual(selectedConn, board.NoopConn()) {
-		filesDir := os.DirFS(dir) // <- this prevents navigating outside the assets dir
-		return filesDir.Open(file)
+		// The app filesystem belongs to the board. Off-board it is only ever
+		// reachable through a connection, so reading locally here would target
+		// the machine running App Lab instead of the board.
+		if !board.IsSBC() {
+			return nil, fs.ErrInvalid
+		}
+		return os.DirFS(dir).Open(file)
 	} else {
 		remoteFS := getFS(dir, selectedConn)
 		selectedConn.Stats("/")    // warm up the connection

@@ -56,6 +56,12 @@
         }
     }
 
+    .ai-assistant-entry {
+        position: relative;
+        display: flex;
+        align-items: center;
+    }
+
     .app-name {
         font-weight: 700;
         color: var(--text-default, #fff);
@@ -145,67 +151,57 @@
     color: var(--text-subtle, #c9d2d2);
 }
 
-.system-stats {
-    &-container {
-        @include bp.breakpoint(vars.$breakpoint-xl + 1, min) {
+.lsp-loading-container {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    svg {
+        height: 16px;
+        width: 16px;
+
+        path {
+            fill: var(--feedback-neutral-default, #aeb8b8);
+        }
+    }
+
+    .lsp-loading-title {
+        font-weight: 600;
+        color: var(--text-subtle, #c9d2d2);
+        text-transform: capitalize;
+    }
+}
+
+// Shares .lsp-loading-container's layout so the failure sits exactly where the
+// spinner was, and only recolours the icon.
+.lsp-error-container {
+    svg path {
+        fill: var(--feedback-error-default, #ff8878);
+    }
+}
+
+.stop-button {
+    @include bp.breakpoint(vars.$breakpoint-xl) {
+        padding: 0 6px !important;
+    }
+
+    &-text {
+        @include bp.breakpoint(vars.$breakpoint-xl) {
             display: none !important;
         }
+    }
+}
 
-        display: block;
-
-        &.button-active {
-            button {
-                border: 2px solid var(--border-strong, #7f8c8d);
-            }
-        }
+.system-stats-container {
+    @include bp.breakpoint(vars.$breakpoint-xl + 1, min) {
+        display: none !important;
     }
 
-    &-overlay {
-        position: absolute;
-        //Show on top of the container
-        top: -4px;
-        //Change the origin to top right corner
-        translate: 0 -100%;
-
-        border-radius: 4px;
-        padding: 4px;
-        background: var(--surface-bg-below-1, #171e21);
-
-        &--header {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-
-            border-radius: 2px;
-            padding: 4px 12px;
-
-            font-family: typography.$open-sans-font-family;
-            font-size: 12px;
-            color: var(--text-default, #fff);
-        }
-        &--content {
-            display: flex;
-            flex-direction: column;
-
-            gap: 8px;
-            padding: 8px;
-
-            background: var(--surface-bg-baseline, #232b2e);
-            .ip {
-                @include bp.breakpoint(vars.$breakpoint-lg, min) {
-                    display: none !important;
-                }
-            }
-        }
-    }
+    display: block;
 }
 
 .inactive {
     opacity: 0.5;
-}
-
-.warning {
-    color: var(--feedback-warning-default, #c1ab15) !important;
 }
 
 .xxl {

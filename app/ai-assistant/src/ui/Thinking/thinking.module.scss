@@ -1,0 +1,19 @@
+@use "@cloud-editor-mono/ui-components/public/shared.module.scss";
+@use "@cloud-editor-mono/arduino-sass/src/fonts" as fonts;
+@use "@cloud-editor-mono/arduino-sass/src/typography" as typography;
+
+.thinking-sparkle {
+  display: inline-block;
+  flex: none;
+  color: var(--text-accent, #25c2c7);
+  font-size: typography.$font-size-x-small;
+  line-height: 1;
+}
+
+.thinking-details {
+  width: fit-content;
+
+  span {
+    line-height: var(--chat-line-height, 1.5) !important;
+  }
+}

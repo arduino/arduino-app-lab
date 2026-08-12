@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
+import { BoardScopedQuery } from '../../boardScopedQuery';
 import { useBrickDetailLogic } from '../../hooks/useBrickDetail';
 import { UseBrickListLogic, UseBrickListLogicParams } from './brickList.type';
 
@@ -16,7 +17,7 @@ export const useBrickListLogic = function (
   const [selectedTab, setSelectedTab] = useState<string | undefined>(tab);
 
   const { data: bricks, isLoading: bricksAreLoading } = useQuery(
-    ['list-bricks'],
+    [BoardScopedQuery.LIST_BRICKS],
     () => getBricks(),
   );
 

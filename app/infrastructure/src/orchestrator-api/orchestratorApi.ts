@@ -32,6 +32,7 @@ import {
   CloneAppResult,
   CreateAppRequest,
   CreateAppResult,
+  ExampleCatalogResult,
   GetConfigResult,
   LibraryListResponse,
   ListAppBrickInstancesResult,
@@ -302,6 +303,25 @@ export async function getBricksV1Request(
   const endpoint = `/v1/bricks`;
 
   const response = await httpGet<ListBrickResult>({ url: origin, endpoint });
+
+  if (!response) {
+    throw new Error(
+      `Call to "${endpoint}" did not respond with the expected result`,
+    );
+  }
+
+  return response;
+}
+
+export async function getExamplesV1Request(
+  origin: string = Config.ORCHESTRATOR_API_URL,
+): Promise<ExampleCatalogResult> {
+  const endpoint = `/v1/examples`;
+
+  const response = await httpGet<ExampleCatalogResult>({
+    url: origin,
+    endpoint,
+  });
 
   if (!response) {
     throw new Error(

@@ -10,6 +10,7 @@ import {
   ActionStatus,
   Button,
   ButtonAppearance,
+  ButtonSize,
   ButtonVariant,
   RuntimeActionsProps,
 } from '@cloud-editor-mono/ui-components/lib/components-by-app/app-lab';
@@ -137,6 +138,7 @@ const RuntimeActions = (props: RuntimeActionsProps): React.ReactElement => {
           onClick={(): void => stopApp(appId, appStatus)}
           variant={ButtonVariant.Secondary}
           appearance={ButtonAppearance.Destructive}
+          size={ButtonSize.XSmall}
           disabled={stopDisabled || runtimeDisable}
           Icon={Stop}
           iconPosition="left"
@@ -151,6 +153,7 @@ const RuntimeActions = (props: RuntimeActionsProps): React.ReactElement => {
           onClick={(): void => runApp(appId)}
           variant={ButtonVariant.Primary}
           appearance={ButtonAppearance.Action}
+          size={ButtonSize.XSmall}
           disabled={
             currentActionStatus === ActionStatus.Pending || runtimeDisable
           }

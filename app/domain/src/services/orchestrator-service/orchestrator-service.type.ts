@@ -11,6 +11,7 @@ import {
   CloneAppRequest,
   CreateAppRequest,
   EventSourceHandlers,
+  ExampleCatalogResult,
   LibraryListResponse,
   ListAppParams,
   ListLibrariesParams,
@@ -85,6 +86,7 @@ export interface OrchestratorService {
     params: { name: string },
   ): Promise<boolean>;
   getBricks(): Promise<BrickListItem[]>;
+  getExamples(): Promise<ExampleCatalogResult>;
   getBrickDetails(id: string): Promise<BrickDetails>;
   getConfig(): Promise<AppConfig>;
   getSystemResources(

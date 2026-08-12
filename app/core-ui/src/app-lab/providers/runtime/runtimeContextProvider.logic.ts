@@ -1,6 +1,7 @@
 import {
   findPorts,
   forwardNonUIPort,
+  onAgentStartedApp,
   openUIWhenReady,
   startApp,
   stopApp,
@@ -15,7 +16,7 @@ import {
   ActionStatus,
   CONSOLE_SOURCE_KEYS,
 } from '@cloud-editor-mono/ui-components/lib/components-by-app/app-lab';
-import { debounce } from 'lodash';
+import { debounce } from 'lodash-es';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useAppSSE } from '../../features/app/app-detail/hooks/useAppSSE';
@@ -175,6 +176,22 @@ export const useRuntimeLogic: UseRuntimeLogic =
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [activeApp, runningApp, appStarted]);
 
+    // Apps started by the agent (board MCP): open their web UI + forward ports once running, like a manual run.
+    const agentStartedAppIdRef = useRef<string | undefined>(undefined);
+    useEffect(
+      () =>
+        onAgentStartedApp((appId) => {
+          agentStartedAppIdRef.current = appId;
+        }),
+      [],
+    );
+    useEffect(() => {
+      if (runningApp && runningApp.id === agentStartedAppIdRef.current) {
+        agentStartedAppIdRef.current = undefined;
+        openUIIfAvailable(runningApp);
+      }
+    }, [runningApp, openUIIfAvailable]);
+
     //On startup success if called after start/stop actions succeeded.
     const onStartupSuccess = useCallback(
       async (param?: { isStopped: boolean }): Promise<void> => {
@@ -203,14 +220,19 @@ export const useRuntimeLogic: UseRuntimeLogic =
     //On startup success if called after start/stop actions fail.
     const onStartupError = useCallback(
       (data?: ErrorData): void => {
-        if (activeApp?.id) {
+        //The ref is needed for the same reason described above `activeAppRef`:
+        //this handler is handed to the SSE stream when the action starts, so
+        //reading the `activeApp` state here would see the value it had before
+        //the action set it (empty console on the first run/stop of a session).
+        const erroredAppId = activeAppRef.current?.id;
+        if (erroredAppId) {
           appendData(
-            activeApp.id,
+            erroredAppId,
             CONSOLE_SOURCE_KEYS.STARTUP,
             data,
             undefined,
           );
-          setStyleToSource(activeApp.id, CONSOLE_SOURCE_KEYS.STARTUP, 'error');
+          setStyleToSource(erroredAppId, CONSOLE_SOURCE_KEYS.STARTUP, 'error');
         }
 
         //Detect "missing AI model" failures so we can prompt the user to
@@ -229,13 +251,7 @@ export const useRuntimeLogic: UseRuntimeLogic =
           type: 'ACTION_FAILED',
         });
       },
-      [
-        activeApp?.id,
-        appendData,
-        openAiModelRequired,
-        sendCurrentAction,
-        setStyleToSource,
-      ],
+      [appendData, openAiModelRequired, sendCurrentAction, setStyleToSource],
     );
 
     const startAppOnMessage = useCallback(

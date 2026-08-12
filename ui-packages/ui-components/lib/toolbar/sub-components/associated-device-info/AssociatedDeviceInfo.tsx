@@ -116,7 +116,7 @@ const AssociatedDeviceInfo: React.FC<AssociatedDeviceInfoProps> = (
           }}
           badgeValue={boardBubbleBadgeNumber}
         />
-        {renderPopover && renderPopover()}
+        {renderPopover?.()}
       </div>
     ) : null;
   };

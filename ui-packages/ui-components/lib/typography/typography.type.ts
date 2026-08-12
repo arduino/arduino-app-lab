@@ -15,6 +15,7 @@ export interface TextProps {
   size?: TextSize;
   className?: string;
   bold?: boolean;
+  semibold?: boolean;
   italic?: boolean;
   uppercase?: boolean;
   truncate?: boolean;

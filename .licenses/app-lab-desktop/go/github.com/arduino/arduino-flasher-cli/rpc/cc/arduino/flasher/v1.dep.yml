@@ -1,12 +1,12 @@
 ---
 name: github.com/arduino/arduino-flasher-cli/rpc/cc/arduino/flasher/v1
-version: v0.5.0-rc.8
+version: v0.5.1
 type: go
-summary: 
+summary:
 homepage: https://pkg.go.dev/github.com/arduino/arduino-flasher-cli/rpc/cc/arduino/flasher/v1
 license: gpl-3.0
 licenses:
-- sources: arduino-flasher-cli@v0.5.0-rc.8/LICENSE
+- sources: arduino-flasher-cli@v0.5.1/LICENSE
   text: |2
                         GNU GENERAL PUBLIC LICENSE
                            Version 3, 29 June 2007
@@ -718,7 +718,7 @@ licenses:
      * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
      * POSSIBILITY OF SUCH DAMAGE.
      */
-- sources: arduino-flasher-cli@v0.5.0-rc.8/license_header.tpl
+- sources: arduino-flasher-cli@v0.5.1/license_header.tpl
   text: |
     This file is part of arduino-flasher-cli.
 

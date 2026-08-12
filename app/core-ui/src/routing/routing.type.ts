@@ -101,5 +101,6 @@ export type SearchGenerics = MakeGenerics<{
     [BYPASS_IOT_REDIRECT]: boolean;
     [GEN_AI_POC]: boolean;
     openNetworkDialog: boolean;
+    openCloudConnectorDialog: boolean;
   };
 }>;

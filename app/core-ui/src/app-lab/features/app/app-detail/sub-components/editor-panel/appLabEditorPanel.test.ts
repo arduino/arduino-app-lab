@@ -17,6 +17,7 @@
 
 import type { SelectableFileData } from '@cloud-editor-mono/ui-components/lib/editor-tabs-bar/EditorTabsBar.type';
 import { act, renderHook } from '@testing-library/react';
+import { Subject } from 'rxjs';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import TestProviderWrapper from '../../../../../../../tests-setup';
@@ -35,6 +36,7 @@ vi.mock(
     codeSubjectNext: vi.fn(),
     getBrowser: vi.fn(() => 'Chrome'),
     getCodeInjectionsSubject: vi.fn(() => undefined),
+    getCodeReloadSubject: vi.fn(() => new Subject()),
     getCodeSubjectById: vi.fn(() => undefined),
     getUnsavedFilesSubject: vi.fn(() => undefined),
     openLinkExternal: vi.fn(),
@@ -46,10 +48,13 @@ vi.mock(
 vi.mock(
   '@cloud-editor-mono/ui-components/lib/components-by-app/app-lab',
   () => ({
+    // Real value, not a stub: the hook compares tab metadata against it.
+    BRICK_FILE_EXTENSION: 'brick',
     useI18n: vi.fn(() => ({
       formatMessage: vi.fn((m: { defaultMessage: string }) => m.defaultMessage),
     })),
     snackbar: vi.fn(),
+    dismissSnackbar: vi.fn(),
     mapAssetSources: vi.fn((v: unknown) => v),
   }),
 );
@@ -66,8 +71,12 @@ vi.mock('../../../../../../common/hooks/code', () => ({
 }));
 
 vi.mock('../../../../../../common/hooks/editor', () => ({
-  useCodeEditorViewInstance: vi.fn(),
-  codeEditorViewInstance: { instance: null },
+  useCodeEditorViewInstance: vi.fn(() => ({
+    scrollToTop: vi.fn(),
+    scrollToLine: vi.fn(),
+    focusActivePane: vi.fn(),
+  })),
+  codeEditorViewInstances: { A: null, B: null },
 }));
 
 vi.mock('../../../../../../common/hooks/files', () => ({
@@ -130,12 +139,12 @@ const makeParams = (
   addAppFile: vi.fn(),
   deleteAppFile: vi.fn(),
   renameAppFile: vi.fn(),
-  sketchDataIsLoading: false,
   selectableMainFile: undefined,
   unsavedFileIds: undefined,
   openFiles: [],
   readOnly: false,
   updateAppBrick: vi.fn(),
+  isLspEnabled: false,
   ...overrides,
 });
 
@@ -159,9 +168,14 @@ function useTestWrapper(params: EditorPanelLogicParams): {
   moveTabToOtherPane:
     | ((fileId: string, fromPane: 'A' | 'B', toIndex?: number) => void)
     | undefined;
-  openFileInPane: (fileId: string, targetPane: 'A' | 'B') => void;
+  openFileInPane: (
+    fileId: string,
+    targetPane: 'A' | 'B',
+    isPreview?: boolean,
+  ) => void;
   rightTabs: SelectableFileData[];
   rightSelectedTab: SelectableFileData | undefined;
+  rightPreviewFileId: string | undefined;
   closeRightTab: ((fileId: string) => void) | undefined;
   selectRightTab: ((params: SelectTabParams) => void) | undefined;
   closeLeftTab: ((fileId: string) => void) | undefined;
@@ -170,6 +184,7 @@ function useTestWrapper(params: EditorPanelLogicParams): {
   activePane: 'A' | 'B' | undefined;
   renameRightPaneTab: (oldId: string, newId: string) => void;
   closeRightPaneTab: (fileId: string) => void;
+  banner: string | undefined;
 } {
   const {
     editorPanelLogic,
@@ -181,6 +196,7 @@ function useTestWrapper(params: EditorPanelLogicParams): {
   // Both bar logics must always be called (each calls useCallback x3 internally)
   const leftBar = panel.tabsBarLogic();
   const rightBar = panel.splitPaneTabsBarLogic!();
+  const leftEditor = panel.codeEditorLogic();
   return {
     isSplit: panel.isSplit ?? false,
     splitPaneFileId: panel.splitPaneFileId,
@@ -189,6 +205,7 @@ function useTestWrapper(params: EditorPanelLogicParams): {
     openFileInPane,
     rightTabs: rightBar.tabs,
     rightSelectedTab: rightBar.selectedTab,
+    rightPreviewFileId: rightBar.previewFileId,
     closeRightTab: rightBar.closeTab,
     selectRightTab: rightBar.selectTab,
     closeLeftTab: leftBar.closeTab,
@@ -197,6 +214,7 @@ function useTestWrapper(params: EditorPanelLogicParams): {
     activePane: panel.activePane,
     renameRightPaneTab,
     closeRightPaneTab,
+    banner: leftEditor.banner,
   };
 }
 
@@ -1008,7 +1026,10 @@ describe('useCreateEditorPanelLogic — openFileInPane', () => {
       result.current.openFileInPane('file-a', 'A');
     });
 
-    expect(params.selectFile).toHaveBeenCalledWith({ fileId: 'file-a' });
+    expect(params.selectFile).toHaveBeenCalledWith({
+      fileId: 'file-a',
+      isPreview: false,
+    });
     expect(result.current.isSplit).toBe(false);
   });
 
@@ -1070,6 +1091,120 @@ describe('useCreateEditorPanelLogic — openFileInPane', () => {
 
     expect(result.current.isSplit).toBe(false);
     expect(result.current.rightTabs).toHaveLength(0);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Preview tabs in pane B (mirrors pane A's previewFileId behaviour)
+// ---------------------------------------------------------------------------
+
+describe('useCreateEditorPanelLogic — pane B preview tabs', () => {
+  it('opens a preview file as the pane B preview tab', () => {
+    const params = makeParams({
+      openFiles: [fileA],
+      allFiles: [fileA, fileB],
+    });
+    const { result } = renderHook(() => useTestWrapper(params), {
+      wrapper: TestProviderWrapper,
+    });
+
+    act(() => {
+      result.current.openFileInPane('file-b', 'B', true);
+    });
+
+    expect(result.current.rightTabs.map((t) => t.fileId)).toEqual(['file-b']);
+    expect(result.current.rightPreviewFileId).toBe('file-b');
+  });
+
+  it('replaces the existing preview tab in place instead of adding a second', () => {
+    const params = makeParams({
+      openFiles: [fileA],
+      allFiles: [fileA, fileB, fileC],
+    });
+    const { result } = renderHook(() => useTestWrapper(params), {
+      wrapper: TestProviderWrapper,
+    });
+
+    act(() => {
+      result.current.openFileInPane('file-b', 'B', true);
+    });
+    act(() => {
+      result.current.openFileInPane('file-c', 'B', true);
+    });
+
+    // file-b's preview slot is taken over by file-c — no duplicate tab.
+    expect(result.current.rightTabs.map((t) => t.fileId)).toEqual(['file-c']);
+    expect(result.current.rightPreviewFileId).toBe('file-c');
+  });
+
+  it('keeps a committed tab and opens the preview alongside it', () => {
+    const params = makeParams({
+      openFiles: [fileA],
+      allFiles: [fileA, fileB, fileC],
+    });
+    const { result } = renderHook(() => useTestWrapper(params), {
+      wrapper: TestProviderWrapper,
+    });
+
+    act(() => {
+      result.current.openFileInPane('file-b', 'B', false);
+    });
+    act(() => {
+      result.current.openFileInPane('file-c', 'B', true);
+    });
+
+    expect(result.current.rightTabs.map((t) => t.fileId)).toEqual([
+      'file-b',
+      'file-c',
+    ]);
+    expect(result.current.rightPreviewFileId).toBe('file-c');
+  });
+
+  it('commits the preview tab when re-selected without preview', () => {
+    const params = makeParams({
+      openFiles: [fileA],
+      allFiles: [fileA, fileB],
+    });
+    const { result } = renderHook(() => useTestWrapper(params), {
+      wrapper: TestProviderWrapper,
+    });
+
+    act(() => {
+      result.current.openFileInPane('file-b', 'B', true);
+    });
+    expect(result.current.rightPreviewFileId).toBe('file-b');
+
+    act(() => {
+      result.current.selectRightTab?.({ fileId: 'file-b', isPreview: false });
+    });
+
+    expect(result.current.rightPreviewFileId).toBeUndefined();
+    expect(result.current.rightTabs.map((t) => t.fileId)).toEqual(['file-b']);
+  });
+
+  it('clears the preview flag when the preview tab is closed', () => {
+    const params = makeParams({
+      openFiles: [fileA],
+      allFiles: [fileA, fileB, fileC],
+    });
+    const { result } = renderHook(() => useTestWrapper(params), {
+      wrapper: TestProviderWrapper,
+    });
+
+    act(() => {
+      result.current.openFileInPane('file-b', 'B', false);
+    });
+    act(() => {
+      result.current.openFileInPane('file-c', 'B', true);
+    });
+    expect(result.current.rightPreviewFileId).toBe('file-c');
+
+    act(() => {
+      result.current.closeRightTab?.('file-c');
+    });
+
+    expect(result.current.rightPreviewFileId).toBeUndefined();
+    expect(result.current.rightTabs.map((t) => t.fileId)).toEqual(['file-b']);
   });
 });
 
@@ -1169,19 +1304,19 @@ describe('useCreateEditorPanelLogic — pane A close wrappers', () => {
 });
 
 // ---------------------------------------------------------------------------
-// Module-scoped variable cleanup
+// Notice re-entrancy guard
 //
-// hasExecutedForFile is a module-level let declared in appLabEditorPanel.ts.
-// These tests document its deduplication behaviour and the fact that it is NOT
-// reset on component unmount (intentional — only one editor instance exists at
-// a time, so cross-instance state is not a practical concern).
+// The effect keeps the selection it last ran for so unrelated re-renders don't
+// repeat its side effects. It is per-instance, sharing the lifetime of the
+// already-notified record: as a module-level value it outlived that record, and
+// leaving app detail then re-entering suppressed the notice for whichever file
+// happened to be selected last — but not for any other file.
 // ---------------------------------------------------------------------------
 
-describe('useCreateEditorPanelLogic — module-scoped guard (hasExecutedForFile)', () => {
-  // 'app.yaml' is listed in the readonly-files array inside the hook and will
-  // trigger the snackbar on first selection.
-  const readOnlyFileId = 'app.yaml';
-  const readOnlyFile = makeFile(readOnlyFileId, 'yaml');
+describe('useCreateEditorPanelLogic — notice re-entrancy guard', () => {
+  // 'app.yaml' is in the readonly-files list inside the hook, so selecting it
+  // fires the snackbar.
+  const readOnlyFile = makeFile('app.yaml', 'yaml');
 
   beforeEach(async () => {
     const { snackbar } = await import(
@@ -1190,7 +1325,7 @@ describe('useCreateEditorPanelLogic — module-scoped guard (hasExecutedForFile)
     vi.mocked(snackbar).mockClear();
   });
 
-  it('does not show the readonly toast a second time for the same file in the same instance', async () => {
+  it('does not repeat the notice on a re-render with the same selection', async () => {
     const { snackbar } = await import(
       '@cloud-editor-mono/ui-components/lib/components-by-app/app-lab'
     );
@@ -1203,73 +1338,53 @@ describe('useCreateEditorPanelLogic — module-scoped guard (hasExecutedForFile)
       }),
       wrapper: TestProviderWrapper,
     });
+    expect(mockSnackbar.mock.calls.length).toBe(1);
 
-    const countAfterFirstSelection = mockSnackbar.mock.calls.length;
-
-    // Re-render without changing selectedFile
     rerender(
       makeParams({ selectedFile: readOnlyFile, openFiles: [readOnlyFile] }),
     );
-
-    expect(mockSnackbar.mock.calls.length).toBe(countAfterFirstSelection);
+    expect(mockSnackbar.mock.calls.length).toBe(1);
   });
 
-  it('resets the guard and shows the toast again when a different file is then selected', async () => {
+  it('notices the next file when the selection changes', async () => {
     const { snackbar } = await import(
       '@cloud-editor-mono/ui-components/lib/components-by-app/app-lab'
     );
     const mockSnackbar = vi.mocked(snackbar);
-
-    const anotherReadOnlyFile = makeFile('sketch/sketch.yaml', 'yaml');
+    const otherReadOnlyFile = makeFile('sketch/sketch.yaml', 'yaml');
+    const both = [readOnlyFile, otherReadOnlyFile];
 
     const { rerender } = renderHook((props) => useTestWrapper(props), {
-      initialProps: makeParams({
-        selectedFile: readOnlyFile,
-        openFiles: [readOnlyFile, anotherReadOnlyFile],
-      }),
+      initialProps: makeParams({ selectedFile: readOnlyFile, openFiles: both }),
       wrapper: TestProviderWrapper,
     });
+    expect(mockSnackbar.mock.calls.length).toBe(1);
 
-    const countAfterFirstFile = mockSnackbar.mock.calls.length;
-
-    // Switch to the other readonly file — guard should reset and snackbar should fire
-    rerender(
-      makeParams({
-        selectedFile: anotherReadOnlyFile,
-        openFiles: [readOnlyFile, anotherReadOnlyFile],
-      }),
-    );
-
-    expect(mockSnackbar.mock.calls.length).toBeGreaterThan(countAfterFirstFile);
+    rerender(makeParams({ selectedFile: otherReadOnlyFile, openFiles: both }));
+    expect(mockSnackbar.mock.calls.length).toBe(2);
   });
 
-  it('the module-scoped guard persists across component unmounts (not reset on unmount)', async () => {
+  it('notices again after leaving app detail and coming back', async () => {
     const { snackbar } = await import(
       '@cloud-editor-mono/ui-components/lib/components-by-app/app-lab'
     );
     const mockSnackbar = vi.mocked(snackbar);
-
-    const firstParams = makeParams({
+    const params = makeParams({
       selectedFile: readOnlyFile,
       openFiles: [readOnlyFile],
     });
 
-    const { unmount } = renderHook(() => useTestWrapper(firstParams), {
+    const first = renderHook(() => useTestWrapper(params), {
       wrapper: TestProviderWrapper,
     });
+    expect(mockSnackbar.mock.calls.length).toBe(1);
+    first.unmount();
 
-    const countAfterFirstMount = mockSnackbar.mock.calls.length;
-    unmount();
-
-    // Second fresh component instance with the same readonly file
-    renderHook(() => useTestWrapper(firstParams), {
-      wrapper: TestProviderWrapper,
-    });
-
-    // Because hasExecutedForFile is module-scoped and not cleared on unmount,
-    // the toast does NOT fire again for the second instance.
-    // This is intentional: only one editor instance exists at a time.
-    expect(mockSnackbar.mock.calls.length).toBe(countAfterFirstMount);
+    // A fresh visit to app detail. The guard used to be module-level, so it
+    // survived the unmount and swallowed this — but only for the file that
+    // happened to be selected last, which made it look arbitrary.
+    renderHook(() => useTestWrapper(params), { wrapper: TestProviderWrapper });
+    expect(mockSnackbar.mock.calls.length).toBe(2);
   });
 });
 
@@ -1399,5 +1514,254 @@ describe('useCreateEditorPanelLogic — closeRightPaneTab', () => {
     expect(result.current.isSplit).toBe(true);
     expect(result.current.rightTabs.map((t) => t.fileId)).toEqual(['file-b']);
     expect(result.current.splitPaneFileId).toBe('file-b');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Editor banner selection
+// ---------------------------------------------------------------------------
+
+// ---------------------------------------------------------------------------
+// Open-file notices
+//
+// Opening a file can warn that it is read-only, or that it will get no syntax
+// highlighting. Both are one-off "heads up" messages, so they go to a snackbar;
+// the persistent banner slot is reserved for standing conditions.
+//
+// `hasExecutedForFile` is a module-level guard keyed on fileId, so every case
+// here uses a distinct id. The condition under test lives on `fileFullName`,
+// which the checks read, so id and name vary independently.
+// ---------------------------------------------------------------------------
+
+describe('useCreateEditorPanelLogic — open-file notices', () => {
+  let uid = 0;
+
+  const named = (fileFullName: string, fileId?: string): SelectableFileData =>
+    ({
+      fileId: fileId ?? `notice-${(uid += 1)}/${fileFullName}`,
+      fileFullName,
+      fileName: fileFullName,
+      fileExtension: '',
+      tags: [],
+    } as SelectableFileData);
+
+  const openFile = async (
+    selectedFile: SelectableFileData,
+    readOnly = false,
+  ): Promise<{ banner: string | undefined; messages: string[] }> => {
+    const { snackbar } = await import(
+      '@cloud-editor-mono/ui-components/lib/components-by-app/app-lab'
+    );
+    vi.mocked(snackbar).mockClear();
+    const { result } = renderHook(
+      () =>
+        useTestWrapper(
+          makeParams({ selectedFile, openFiles: [selectedFile], readOnly }),
+        ),
+      { wrapper: TestProviderWrapper },
+    );
+    return {
+      banner: result.current.banner,
+      messages: vi.mocked(snackbar).mock.calls.map((c) => c[0].message),
+    };
+  };
+
+  // ── Snackbar ──────────────────────────────────────────────────────────────
+
+  it('warns that a file with no extension gets no highlighting', async () => {
+    expect((await openFile(named('Makefile'))).messages).toEqual([
+      'Use a file extension like .py or .ino to enable syntax highlighting',
+    ]);
+  });
+
+  it('says nothing once the file has an extension', async () => {
+    expect((await openFile(named('main.py'))).messages).toEqual([]);
+    expect((await openFile(named('notes.tar.gz'))).messages).toEqual([]);
+  });
+
+  it('says nothing on a brick tab', async () => {
+    // A brick is not a file. `useEditorFileMeta` synthesises its tab meta from
+    // the brick's display name — usually dotless, so a name-based check matches
+    // it — and it renders BrickDetail rather than an editor, so there is no
+    // highlighting to enable and no filename to add an extension to.
+    const brick = {
+      fileId: 'brick-motor-control',
+      fileFullName: 'Motor Control',
+      fileName: 'Motor Control',
+      fileExtension: 'brick',
+      tags: [],
+    } as SelectableFileData;
+    expect((await openFile(brick)).messages).toEqual([]);
+  });
+
+  it('says nothing on a brick whose name happens to contain a dot', async () => {
+    const brick = {
+      fileId: 'brick-v2',
+      fileFullName: 'Sensor v1.2',
+      fileName: 'Sensor v1.2',
+      fileExtension: 'brick',
+      tags: [],
+    } as SelectableFileData;
+    expect((await openFile(brick)).messages).toEqual([]);
+  });
+
+  it('does not nag about dotfiles', async () => {
+    // `.gitignore` is named that way by convention — there is no extension
+    // anyone would add, so the hint would be noise. Note the file tree reports
+    // its extension as `gitignore`, hence the check reads the name.
+    expect((await openFile(named('.gitignore'))).messages).toEqual([]);
+    expect((await openFile(named('.env'))).messages).toEqual([]);
+  });
+
+  it('prefers the read-only notice when both could apply', async () => {
+    // Read-only by id, and extensionless by name, so both conditions hold.
+    const both = named('sketch-yaml', 'sketch/sketch.yaml');
+    expect((await openFile(both)).messages).toEqual([
+      'This file is view-only and can’t be edited.',
+    ]);
+  });
+
+  it('stays quiet when the whole panel is read-only', async () => {
+    // The panel-wide banner already says so; a snackbar per file would nag.
+    expect((await openFile(named('Makefile'), true)).messages).toEqual([]);
+  });
+
+  // ── Banner ────────────────────────────────────────────────────────────────
+
+  it('keeps the persistent banner for the panel-wide read-only case', async () => {
+    expect((await openFile(named('main.py'), true)).banner).toBe('read-only');
+  });
+
+  it('no longer uses the banner slot for a missing extension', async () => {
+    expect((await openFile(named('Makefile'))).banner).toBeUndefined();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Notice deduplication across switches
+//
+// Reported as "shows on every switch sometimes, sometimes not" in an app whose
+// only two files were `f` and `f.` — both extensionless, so both notice-worthy,
+// which is what made the flakiness observable at all.
+//
+// `tabs` derives from `filesList` and briefly empties when that query
+// refetches. The prune of already-notified files used to run against whatever
+// snapshot it saw, so an empty one forgot every file at once.
+// ---------------------------------------------------------------------------
+
+describe('useCreateEditorPanelLogic — notice deduplication', () => {
+  // Told once per file for as long as the panel lives, regardless of whether
+  // the file stays in the tab strip.
+  //
+  // Both names are extensionless, so both qualify for a notice — which is what
+  // made the original report observable. No per-test id namespacing is needed:
+  // every piece of state this effect keeps is per-instance, so a fresh
+  // renderHook starts clean.
+  const pair = (): { f: SelectableFileData; fDot: SelectableFileData } => ({
+    f: {
+      fileId: 'f',
+      fileFullName: 'f',
+      fileName: 'f',
+      fileExtension: '',
+      tags: [],
+    } as SelectableFileData,
+    // A trailing dot is still no extension, so this notifies too.
+    fDot: {
+      fileId: 'f.',
+      fileFullName: 'f.',
+      fileName: 'f',
+      fileExtension: '',
+      tags: [],
+    } as SelectableFileData,
+  });
+
+  const start = async (
+    selectedFile: SelectableFileData,
+    openFiles: SelectableFileData[],
+  ): Promise<{
+    count: () => number;
+    select: (next: SelectableFileData, tabs?: SelectableFileData[]) => void;
+  }> => {
+    const { snackbar } = await import(
+      '@cloud-editor-mono/ui-components/lib/components-by-app/app-lab'
+    );
+    const mockSnackbar = vi.mocked(snackbar);
+    mockSnackbar.mockClear();
+    const { rerender } = renderHook(
+      (p: EditorPanelLogicParams) => useTestWrapper(p),
+      {
+        initialProps: makeParams({ selectedFile, openFiles, readOnly: false }),
+        wrapper: TestProviderWrapper,
+      },
+    );
+    return {
+      count: (): number => mockSnackbar.mock.calls.length,
+      select: (
+        next: SelectableFileData,
+        tabs: SelectableFileData[] = openFiles,
+      ): void => {
+        rerender(
+          makeParams({ selectedFile: next, openFiles: tabs, readOnly: false }),
+        );
+      },
+    };
+  };
+
+  it('notifies once per file, not on every switch', async () => {
+    const { f, fDot } = pair();
+    const s = await start(f, [f, fDot]);
+
+    s.select(fDot);
+    expect(s.count()).toBe(2);
+
+    // Alternating between them says nothing new.
+    s.select(f);
+    s.select(fDot);
+    s.select(f);
+    expect(s.count()).toBe(2);
+  });
+
+  it('stays quiet when a previewed file is replaced and re-previewed', async () => {
+    const { f, fDot } = pair();
+    // One preview slot, so opening either file removes the other from the tab
+    // strip. Keying the record on tab presence made this re-announce the same
+    // file on every visit — the reported "shows on every switch".
+    const s = await start(f, [f]);
+    expect(s.count()).toBe(1);
+
+    s.select(fDot, [fDot]);
+    expect(s.count()).toBe(2);
+
+    s.select(f, [f]);
+    s.select(fDot, [fDot]);
+    s.select(f, [f]);
+    expect(s.count()).toBe(2);
+  });
+
+  it('stays quiet through a transient empty tab list', async () => {
+    const { f, fDot } = pair();
+    const s = await start(f, [f, fDot]);
+    s.select(fDot);
+    expect(s.count()).toBe(2);
+
+    // `tabs` briefly empties whenever the files-list query refetches. Nothing
+    // reads it here any more, so a refetch window is a non-event.
+    s.select(f, []);
+    s.select(fDot);
+    s.select(f);
+    expect(s.count()).toBe(2);
+  });
+
+  it('stays quiet after a file is closed and re-opened', async () => {
+    const { f, fDot } = pair();
+    const s = await start(f, [f, fDot]);
+    s.select(fDot);
+    expect(s.count()).toBe(2);
+
+    // Close `f`, then re-open it. The hint is about the file's name, not about
+    // this particular visit, so there is nothing new to say.
+    s.select(fDot, [fDot]);
+    s.select(f, [f, fDot]);
+    expect(s.count()).toBe(2);
   });
 });

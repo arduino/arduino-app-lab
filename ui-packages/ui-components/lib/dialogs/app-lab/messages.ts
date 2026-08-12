@@ -352,6 +352,12 @@ export const createAppDialogMessages = defineMessages({
     description:
       'Error message when trying to set an app name that is already used',
   },
+  appNameInvalidChars: {
+    id: 'createAppDialog.appNameInvalidChars',
+    defaultMessage:
+      'Invalid name. Use letters, numbers, spaces, dots, dashes and underscores.',
+    description: 'Error message when app name contains invalid characters',
+  },
   successCreate: {
     id: 'createAppDialog.successCreate',
     defaultMessage: 'App created successfully',
@@ -408,6 +414,12 @@ export const renameAppDialogMessages = defineMessages({
     defaultMessage: 'Name already in use, please choose another one.',
     description:
       'Error message when trying to set an app name that is already used',
+  },
+  appNameInvalidChars: {
+    id: 'renameAppDialog.appNameInvalidChars',
+    defaultMessage:
+      'Invalid name. Use letters, numbers, spaces, dots, dashes and underscores.',
+    description: 'Error message when app name contains invalid characters',
   },
   successRename: {
     id: 'renameAppDialog.successRename',
@@ -1287,5 +1299,165 @@ export const aiModelRequiredDialogMessages = defineMessages({
     defaultMessage: 'Download Model',
     description:
       'Label for the confirm button in the AI model required dialog for examples',
+  },
+});
+
+export const cloudConnectorDisconnectDialogMessages = defineMessages({
+  dialogTitle: {
+    id: 'cloudConnectorDisconnectDialog.title',
+    defaultMessage: 'Arduino Cloud',
+    description: 'Title of the cloud connector disconnect dialog',
+  },
+  dialogBodyTitle: {
+    id: 'cloudConnectorDisconnectDialog.bodyTitle',
+    defaultMessage: 'Delete this device from Arduino Cloud?',
+    description: 'Message shown in the cloud connector disconnect dialog',
+  },
+  dialogBodyDescription: {
+    id: 'cloudConnectorDisconnectDialog.bodyDescription',
+    defaultMessage:
+      "It will stop syncing data with Arduino Cloud, and your apps won't be able to read or write its variables. You can connect it again any time.",
+    description:
+      'Description shown in the cloud connector disconnect dialog to reassure users about their work safety',
+  },
+  cancelButton: {
+    id: 'cloudConnectorDisconnectDialog.cancelButton',
+    defaultMessage: 'Cancel',
+    description:
+      'Label for the cancel button in the cloud connector disconnect dialog',
+  },
+  confirmButton: {
+    id: 'cloudConnectorDisconnectDialog.confirmButton',
+    defaultMessage: 'Delete',
+    description:
+      'Label for the confirm button in the cloud connector disconnect dialog',
+  },
+});
+
+export const cloudConnectorConnectDialogMessages = defineMessages({
+  dialogTitle: {
+    id: 'cloudConnectorConnectDialog.title',
+    defaultMessage: 'Arduino Cloud',
+    description: 'Title of the cloud connector connect dialog',
+  },
+  dialogBodyTitle: {
+    id: 'cloudConnectorConnectDialog.bodyTitle',
+    defaultMessage: 'Connect device to Arduino Cloud',
+    description: 'Message shown in the cloud connector connect dialog',
+  },
+  dialogBodyDescription: {
+    id: 'cloudConnectorConnectDialog.bodyDescription',
+    defaultMessage:
+      'Your device will be registered with Arduino Cloud and stay connected on its own, even when no app is running. Once set up, <bold>your apps can send and receive data from the Cloud in real time.</bold>',
+    description:
+      'Description shown in the cloud connector connect dialog to reassure users about their work safety',
+  },
+  dialogBodyDescription2: {
+    id: 'cloudConnectorConnectDialog.bodyDescription2',
+    defaultMessage: 'Select the Cloud space where you want to add this device.',
+    description:
+      'Description shown in the cloud connector connect dialog to warn users about data loss',
+  },
+  continueButton: {
+    id: 'cloudConnectorConnectDialog.continueButton',
+    defaultMessage: 'Continue',
+    description:
+      'Label for the continue button in the cloud connector connect dialog',
+  },
+  confirmButton: {
+    id: 'cloudConnectorConnectDialog.confirmButton',
+    defaultMessage: 'Connect device',
+    description:
+      'Label for the confirm button in the cloud connector connect dialog',
+  },
+  networkTitle: {
+    id: 'cloudConnectorConnectDialog.networkTitle',
+    defaultMessage: 'Network required',
+    description:
+      'Label for the network selection in the cloud connector connect dialog',
+  },
+  networkDescription: {
+    id: 'cloudConnectorConnectDialog.networkDescription',
+    defaultMessage:
+      'Your device needs a network connection to be added to Arduino Cloud.',
+    description:
+      'Description shown in the cloud connector connect dialog to explain network selection',
+  },
+  networkButton: {
+    id: 'cloudConnectorConnectDialog.networkButton',
+    defaultMessage: 'Connect Wi-Fi',
+    description:
+      'Label for the network selection button in the cloud connector connect dialog',
+  },
+});
+
+export const cloudConnectorErrorDialogMessages = defineMessages({
+  dialogTitle: {
+    id: 'cloudConnectorErrorDialog.title',
+    defaultMessage: 'Arduino Cloud',
+    description: 'Title of the cloud connector error dialog',
+  },
+  dialogBodyTitle: {
+    id: 'cloudConnectorErrorDialog.bodyTitle',
+    defaultMessage: 'Device verification failed',
+    description: 'Message shown in the cloud connector error dialog',
+  },
+  dialogBodyDescription: {
+    id: 'cloudConnectorErrorDialog.bodyDescription',
+    defaultMessage:
+      'The device signature is invalid- This can happen if the board ws previously used or misconfigured.',
+    description:
+      'Description shown in the cloud connector error dialog to reassure users about their work safety',
+  },
+  dialogBodyDescription2: {
+    id: 'cloudConnectorErrorDialog.bodyDescription2',
+    defaultMessage:
+      'Please contact support with the Device ID Above. You may need to reset the board to continue.',
+    description:
+      'Description shown in the cloud connector error dialog to warn users about data loss',
+  },
+  uhwidLabel: {
+    id: 'cloudConnectorErrorDialog.uhwidLabel',
+    defaultMessage: 'Unique Hardware ID',
+    description:
+      'UHDID label shown in the cloud connector error dialog to warn users about data loss',
+  },
+  contactSupportButton: {
+    id: 'cloudConnectorErrorDialog.contactSupportButton',
+    defaultMessage: 'Contact support',
+    description:
+      'Label for the continue button in the cloud connector error dialog',
+  },
+  confirmButton: {
+    id: 'cloudConnectorErrorDialog.confirmButton',
+    defaultMessage: 'Ok, got it',
+    description:
+      'Label for the confirm button in the cloud connector error dialog',
+  },
+});
+
+export const cloudConnectorRequiredDialogMessages = defineMessages({
+  dialogTitle: {
+    id: 'cloudConnectorRequiredDialog.title',
+    defaultMessage: 'Provisioning required',
+    description: 'Title of the cloud connector required dialog',
+  },
+  dialogBodyTitle: {
+    id: 'cloudConnectorRequiredDialog.bodyTitle',
+    defaultMessage: 'Connect device to Arduino Cloud',
+    description: 'Message shown in the cloud connector required dialog',
+  },
+  dialogBodyDescription: {
+    id: 'cloudConnectorRequiredDialog.bodyDescription',
+    defaultMessage:
+      'This app uses the Arduino Cloud brick, which needs the device connected to sync data.',
+    description:
+      'Description shown in the cloud connector required dialog to reassure users about their work safety',
+  },
+  confirmButton: {
+    id: 'cloudConnectorRequiredDialog.confirmButton',
+    defaultMessage: 'Connect device',
+    description:
+      'Label for the confirm button in the cloud connector required dialog',
   },
 });

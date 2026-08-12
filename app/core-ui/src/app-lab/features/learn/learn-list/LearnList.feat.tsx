@@ -1,6 +1,8 @@
 import { NavigationGroup } from '@cloud-editor-mono/images/assets/icons';
 import {
+  EmptyState,
   LearnItem as Card,
+  PageLayout,
   TopBar,
   useI18n,
 } from '@cloud-editor-mono/ui-components/lib/components-by-app/app-lab';
@@ -16,16 +18,13 @@ const LearnList: React.FC = () => {
   const { formatMessage } = useI18n();
 
   return (
-    <section className={styles['main']}>
-      <TopBar pathItems={['learn']} />
+    <PageLayout header={<TopBar pathItems={['learn']} />}>
       {!learnListLoading && learnList.length === 0 ? (
-        <div className={styles['empty-learn-list']}>
-          <div className={styles['empty-learn-list-icon']}>
-            <NavigationGroup />
-          </div>
-          <span>{formatMessage(messages.emptyTitle)}</span>
-          <p>{formatMessage(messages.emptyDescription)}</p>
-        </div>
+        <EmptyState
+          icon={<NavigationGroup />}
+          title={formatMessage(messages.emptyTitle)}
+          description={formatMessage(messages.emptyDescription)}
+        />
       ) : null}
       <div className={styles['learn-list']}>
         {/* Loading state */}
@@ -51,7 +50,7 @@ const LearnList: React.FC = () => {
             ))
           : null}
       </div>
-    </section>
+    </PageLayout>
   );
 };
 

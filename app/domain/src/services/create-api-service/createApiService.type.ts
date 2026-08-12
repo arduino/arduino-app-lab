@@ -28,6 +28,7 @@ export type RetrieveFileContentsResult = Pick<
   extension: string;
   hash?: string;
   modifiedAt?: string;
+  error?: Error;
 };
 
 export type RetrieveFileContentsResultWithData = Omit<

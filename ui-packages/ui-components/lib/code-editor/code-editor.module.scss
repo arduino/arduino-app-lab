@@ -1,3 +1,4 @@
+@use "sass:math";
 @use "../../public/shared.module.scss";
 @use "./code-editor-variables.module.scss";
 @use "../editor-tabs-bar/editor-tabs-bar-variables.module.scss";
@@ -9,7 +10,7 @@
   overflow-x: hidden;
 
   ::-webkit-scrollbar-corner {
-    background: transparent; 
+    background: transparent;
   }
 }
 
@@ -43,7 +44,7 @@
       opacity: 0.2;
       flex: none;
       height: 20px;
-      width: percentage(calc(random(40) / 100));
+      width: math.percentage(math.div(math.random(40), 100));
     }
   }
 }
@@ -95,7 +96,7 @@
 }
 
 .context-menu-separator {
-  background-color: var(--grayscale-smoke, #C9D2D2);
+  background-color: var(--grayscale-smoke, #c9d2d2);
   height: 1px;
   opacity: 0.1;
 }

@@ -1,0 +1,32 @@
+@use "@cloud-editor-mono/arduino-sass/src/fonts" as fonts;
+
+.link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--text-accent, #25c2c7);
+  font-weight: fonts.$font-weight-semibold;
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
+
+  &:focus-visible {
+    outline: 1px solid var(--text-accent, #25c2c7);
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+}
+
+.link-text {
+  display: inline;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.link-icon {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+}

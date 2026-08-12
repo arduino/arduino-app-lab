@@ -1,0 +1,81 @@
+@use "@cloud-editor-mono/arduino-sass/src/fonts" as fonts;
+@use "@cloud-editor-mono/ui-components/public/shared.module.scss";
+
+.checklist {
+  border: 1px solid var(--border-inverted, #232b2e);
+  border-radius: 8px;
+  background: var(--surface-bg-below-1, #171e21);
+  padding: 12px;
+
+  .checklist-title {
+    font-weight: fonts.$font-weight-semibold;
+    color: var(--text-default, #fff);
+  }
+
+  .checklist-counter {
+    flex-shrink: 0;
+    font-weight: fonts.$font-weight-bold;
+    color: var(--text-accent, #25c2c7);
+  }
+
+  .checklist-label {
+    color: var(--text-default, #fff);
+
+    &--pending {
+      color: var(--text-subtle, #c9d2d2);
+    }
+  }
+}
+
+.checklist-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.checklist-items {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.checklist-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.checklist-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 12px;
+  height: 12px;
+  flex-shrink: 0;
+
+  svg {
+    width: 12px;
+    height: 12px;
+  }
+
+  &--completed {
+    color: var(--feedback-success-default, #4caf7d);
+  }
+}
+
+.checklist-circle {
+  border: 1.5px solid var(--text-subtle, #c9d2d2);
+  border-radius: 50%;
+}
+
+.checklist-spinner {
+  border: 1.5px solid var(--border-default, #434f54);
+  border-top-color: var(--text-accent, #25c2c7);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}

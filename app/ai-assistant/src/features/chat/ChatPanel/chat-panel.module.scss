@@ -1,0 +1,266 @@
+@use "@cloud-editor-mono/ui-components/public/shared.module.scss";
+@use "@cloud-editor-mono/arduino-sass/src/fonts" as fonts;
+@use "@cloud-editor-mono/arduino-sass/src/typography" as typography;
+@use "@cloud-editor-mono/arduino-sass/src/variables" as variables;
+
+.chat {
+  --chat-content-max-width: 800px;
+  --chat-gap: 10px;
+  --chat-line-height: 1.5;
+  position: relative;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+  background: var(--surface-bg-below-2, #090f11);
+  color: var(--text-default, #ffffff);
+  display: flex;
+  flex-direction: column;
+
+  .empty-state-title {
+    font-size: typography.$font-size-medium !important;
+    font-weight: fonts.$font-weight-semibold !important;
+  }
+
+  &--empty {
+    .thread {
+      flex: 0 1 auto;
+      margin-top: auto;
+    }
+
+    .composer {
+      margin-bottom: auto;
+    }
+  }
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 52px;
+  padding: 0 16px;
+  flex-shrink: 0;
+}
+
+.toolbar:has(.session-name) {
+  border-bottom: 1px solid var(--border-inverted, #232b2e);
+}
+
+.session-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: var(--text-default, #ffffff);
+  font-size: typography.$font-size-x-small !important;
+}
+
+.thread {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 24px;
+  // Mirror of the scrollbar's footprint, measured by useStickToBottom: it keeps the centred
+  // column centred (i.e. aligned with the composer) once the thread scrolls. `scrollbar-gutter:
+  // stable both-edges` would be the declarative version, but the desktop app's WebKit ignores it.
+  padding-left: calc(24px + var(--thread-scrollbar, 0px));
+
+  display: flex;
+  flex-direction: column-reverse;
+  gap: var(--chat-gap, 10px);
+
+  scrollbar-width: thin;
+  scrollbar-color: var(--component-bg-flexible, rgba(174, 184, 184, 0.15))
+    transparent;
+
+  &::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background-color: var(--component-bg-flexible, rgba(174, 184, 184, 0.15));
+    background-clip: padding-box;
+    border: 2px solid transparent;
+    border-radius: 10px;
+  }
+
+  &:hover::-webkit-scrollbar-thumb {
+    background-color: var(--icon-subtle, rgba(174, 184, 184, 0.4));
+  }
+}
+
+.thread-row {
+  width: 100%;
+  max-width: var(--chat-content-max-width);
+  margin-inline: auto;
+  display: flex;
+  flex-direction: column;
+
+  &:first-child {
+    margin-bottom: auto;
+  }
+}
+
+.composer {
+  position: relative;
+}
+
+// Fade over the bottom of the thread, anchored just above the composer.
+// Visibility is driven by the thread's scroll position (inline opacity).
+.thread-fade {
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  right: 0;
+  height: 64px;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+  background: linear-gradient(
+    180deg,
+    rgba(9, 15, 17, 0) 0%,
+    rgba(9, 15, 17, 0.15) 30%,
+    rgba(9, 15, 17, 0.45) 60%,
+    rgba(9, 15, 17, 0.8) 85%,
+    var(--component-bg-below-2, #090f11) 100%
+  );
+}
+
+// Wrapper carries the shared tooltip (ref + hover handlers) and the absolute
+// positioning above the composer; the button inside is the visible control.
+.scroll-to-bottom {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1;
+  display: inline-flex;
+}
+
+.scroll-to-bottom-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  cursor: pointer;
+  color: var(--text-default, #ffffff);
+  background: var(--component-bg-above, #374146);
+  border: none;
+  transition: background 0.2s ease;
+
+  &:hover {
+    background: linear-gradient(
+        0deg,
+        var(--component-bg-flexible, rgba(174, 184, 184, 0.15)) 0%,
+        var(--component-bg-flexible, rgba(174, 184, 184, 0.15)) 100%
+      ),
+      var(--component-bg-above, #374146);
+  }
+
+  svg {
+    width: 7px;
+    height: auto;
+    // Nudged down a pixel: the glyph's own top padding makes it read as sitting high.
+    transform: translateY(1px);
+  }
+}
+
+.empty-state {
+  margin: auto;
+  max-width: 48ch;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.loading-state {
+  margin: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  .loading-loader {
+    position: static;
+    width: auto;
+    height: auto;
+
+    svg {
+      width: 56px;
+      --color: var(--icon-subtle, #c9d2d2);
+    }
+  }
+
+  .loading-caption {
+    font-size: typography.$font-size-xx-small;
+    font-weight: fonts.$font-weight-normal;
+    color: var(--text-inverted-subtle, #5d6a6b);
+  }
+}
+
+.empty-state-subtitle {
+  color: var(--text-subtle, #c9d2d2);
+  line-height: 1.6;
+}
+
+.suggestions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.chat-toast {
+  position: absolute;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: calc(100% - 48px);
+  max-width: var(--chat-content-max-width);
+  z-index: 10;
+  pointer-events: none;
+
+  > * {
+    pointer-events: auto;
+  }
+}
+
+.permission {
+  padding: 16px 24px 0;
+}
+
+.choices {
+  padding: 16px 24px 0;
+}
+
+.request-error {
+  padding: 16px 24px 0;
+}
+
+.permission-tool {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: var(--surface-bg-below-2, #090f11);
+}
+
+.permission-tool-title {
+  color: var(--text-subtle, #c9d2d2);
+  font-size: typography.$font-size-xx-small;
+  font-weight: fonts.$font-weight-normal;
+  font-family: variables.$font-roboto !important;
+}

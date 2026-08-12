@@ -2,8 +2,9 @@ import { MessageDescriptor } from 'react-intl';
 export interface DropdownMenuSectionType<
   T,
   L extends MessageDescriptor | string,
+  N = string,
 > {
-  name: string;
+  name: N;
   items: DropdownMenuItemType<T, L>[];
 }
 

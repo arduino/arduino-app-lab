@@ -1,12 +1,8 @@
-import {
-  AddLibrary,
-  Bin,
-  Library,
-} from '@cloud-editor-mono/images/assets/icons';
-import { XXSmall } from '@cloud-editor-mono/ui-components/lib/components-by-app/app-lab';
+import { Bin, Library } from '@cloud-editor-mono/images/assets/icons';
 import * as ContextMenu from '@radix-ui/react-context-menu';
 import clsx from 'clsx';
 
+import { XXSmall } from '../../../typography';
 import styles from './library-item.module.scss';
 
 export interface LibraryItemProps {
@@ -17,7 +13,7 @@ export interface LibraryItemProps {
 }
 
 const LibraryItem: React.FC<LibraryItemProps> = (props: LibraryItemProps) => {
-  const { name, version, onDelete, onAddLibrary } = props;
+  const { name, version, onDelete } = props;
 
   return (
     <ContextMenu.Root>
@@ -41,7 +37,7 @@ const LibraryItem: React.FC<LibraryItemProps> = (props: LibraryItemProps) => {
           </div>
         </div>
       </ContextMenu.Trigger>
-      {onDelete && onAddLibrary && (
+      {onDelete && (
         <ContextMenu.Portal>
           <ContextMenu.Content className={styles['library-item-context-menu']}>
             <ContextMenu.Item
@@ -53,14 +49,6 @@ const LibraryItem: React.FC<LibraryItemProps> = (props: LibraryItemProps) => {
             >
               <Bin />
               <XXSmall>Remove</XXSmall>
-            </ContextMenu.Item>
-            <ContextMenu.Separator />
-            <ContextMenu.Item
-              className={styles['library-item-context-menu-item']}
-              onSelect={onAddLibrary}
-            >
-              <AddLibrary />
-              <XXSmall>Add Sketch library</XXSmall>
             </ContextMenu.Item>
           </ContextMenu.Content>
         </ContextMenu.Portal>

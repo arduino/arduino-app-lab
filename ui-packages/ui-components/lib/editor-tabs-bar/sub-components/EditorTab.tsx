@@ -8,11 +8,7 @@ import { WrapperTitle } from '../../essential/wrapper-title';
 import { useI18n } from '../../i18n/useI18n';
 import { Skeleton } from '../../skeleton';
 import { XXSmall } from '../../typography';
-import {
-  NewTabMenuItemIds,
-  SelectableFileData,
-  TabMenuItemIds,
-} from '../EditorTabsBar.type';
+import { SelectableFileData, TabMenuItemIds } from '../EditorTabsBar.type';
 import styles from './editor-tab.module.scss';
 import { tabMenuSections } from './editorTabMenuSpec';
 
@@ -30,11 +26,7 @@ export interface EditorTabProps {
   }) => void;
   dataIsLoading?: boolean;
   isMainFile?: boolean;
-  tabAction?: (
-    key: TabMenuItemIds | NewTabMenuItemIds,
-    fileId: string,
-    tabIndex?: number,
-  ) => void;
+  tabAction?: (key: Key, fileId: string, tabIndex?: number) => void;
   tabIndex?: number;
   tabsCount?: number;
   isUnsaved?: boolean;
@@ -116,12 +108,7 @@ const EditorTab = (props: EditorTabProps): React.ReactElement => {
   const onTabAction = useCallback(
     (key: Key): void => {
       setTooltipResetKey((k) => k + 1);
-      tabAction &&
-        tabAction(
-          key as TabMenuItemIds | NewTabMenuItemIds,
-          tabData?.fileId ?? '',
-          tabIndex,
-        );
+      tabAction?.(key, tabData?.fileId ?? '', tabIndex);
     },
     [tabData?.fileId, tabAction, tabIndex],
   );

@@ -10,18 +10,20 @@
 
 // Import Routes
 
-import { Route as rootRoute } from './routes/__root'
-import { Route as SettingsImport } from './routes/settings'
-import { Route as ModelsImport } from './routes/models'
-import { Route as BricksImport } from './routes/bricks'
-import { Route as AccountImport } from './routes/account'
-import { Route as IndexImport } from './routes/index'
-import { Route as MyAppsIndexImport } from './routes/my-apps/index'
-import { Route as LearnIndexImport } from './routes/learn/index'
-import { Route as ExamplesIndexImport } from './routes/examples/index'
-import { Route as MyAppsAppIdImport } from './routes/my-apps/$appId'
-import { Route as LearnResourceIdImport } from './routes/learn/$resourceId'
-import { Route as ExamplesAppIdImport } from './routes/examples/$appId'
+import { Route as rootRoute } from './routes/__root';
+import { Route as SettingsImport } from './routes/settings';
+import { Route as ModelsImport } from './routes/models';
+import { Route as BricksImport } from './routes/bricks';
+import { Route as AiAssistantImport } from './routes/ai-assistant'
+import { Route as AccountImport } from './routes/account';
+import { Route as IndexImport } from './routes/index';
+import { Route as MyAppsIndexImport } from './routes/my-apps/index';
+import { Route as LearnIndexImport } from './routes/learn/index';
+import { Route as InspirationsIndexImport } from './routes/inspirations/index';
+import { Route as ExamplesIndexImport } from './routes/examples/index';
+import { Route as MyAppsAppIdImport } from './routes/my-apps/$appId';
+import { Route as LearnResourceIdImport } from './routes/learn/$resourceId';
+import { Route as ExamplesAppIdImport } from './routes/examples/$appId';
 
 // Create/Update Routes
 
@@ -29,202 +31,235 @@ const SettingsRoute = SettingsImport.update({
   id: '/settings',
   path: '/settings',
   getParentRoute: () => rootRoute,
-} as any)
+} as any);
 
 const ModelsRoute = ModelsImport.update({
   id: '/models',
   path: '/models',
   getParentRoute: () => rootRoute,
-} as any)
+} as any);
 
 const BricksRoute = BricksImport.update({
   id: '/bricks',
   path: '/bricks',
   getParentRoute: () => rootRoute,
-} as any)
+} as any);
+
+const AiAssistantRoute = AiAssistantImport.update({
+  id: '/ai-assistant',
+  path: '/ai-assistant',
+  getParentRoute: () => rootRoute,
+} as any);
 
 const AccountRoute = AccountImport.update({
   id: '/account',
   path: '/account',
   getParentRoute: () => rootRoute,
-} as any)
+} as any);
 
 const IndexRoute = IndexImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRoute,
-} as any)
+} as any);
 
 const MyAppsIndexRoute = MyAppsIndexImport.update({
   id: '/my-apps/',
   path: '/my-apps/',
   getParentRoute: () => rootRoute,
-} as any)
+} as any);
 
 const LearnIndexRoute = LearnIndexImport.update({
   id: '/learn/',
   path: '/learn/',
   getParentRoute: () => rootRoute,
-} as any)
+} as any);
+
+const InspirationsIndexRoute = InspirationsIndexImport.update({
+  id: '/inspirations/',
+  path: '/inspirations/',
+  getParentRoute: () => rootRoute,
+} as any);
 
 const ExamplesIndexRoute = ExamplesIndexImport.update({
   id: '/examples/',
   path: '/examples/',
   getParentRoute: () => rootRoute,
-} as any)
+} as any);
 
 const MyAppsAppIdRoute = MyAppsAppIdImport.update({
   id: '/my-apps/$appId',
   path: '/my-apps/$appId',
   getParentRoute: () => rootRoute,
-} as any)
+} as any);
 
 const LearnResourceIdRoute = LearnResourceIdImport.update({
   id: '/learn/$resourceId',
   path: '/learn/$resourceId',
   getParentRoute: () => rootRoute,
-} as any)
+} as any);
 
 const ExamplesAppIdRoute = ExamplesAppIdImport.update({
   id: '/examples/$appId',
   path: '/examples/$appId',
   getParentRoute: () => rootRoute,
-} as any)
+} as any);
 
 // Populate the FileRoutesByPath interface
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
     '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexImport
-      parentRoute: typeof rootRoute
-    }
+      id: '/';
+      path: '/';
+      fullPath: '/';
+      preLoaderRoute: typeof IndexImport;
+      parentRoute: typeof rootRoute;
+    };
     '/account': {
-      id: '/account'
-      path: '/account'
-      fullPath: '/account'
-      preLoaderRoute: typeof AccountImport
-      parentRoute: typeof rootRoute
-    }
+      id: '/account';
+      path: '/account';
+      fullPath: '/account';
+      preLoaderRoute: typeof AccountImport;
+      parentRoute: typeof rootRoute;
+    };
+    '/ai-assistant': {
+      id: '/ai-assistant';
+      path: '/ai-assistant';
+      fullPath: '/ai-assistant';
+      preLoaderRoute: typeof AiAssistantImport;
+      parentRoute: typeof rootRoute;
+    };
     '/bricks': {
-      id: '/bricks'
-      path: '/bricks'
-      fullPath: '/bricks'
-      preLoaderRoute: typeof BricksImport
-      parentRoute: typeof rootRoute
-    }
+      id: '/bricks';
+      path: '/bricks';
+      fullPath: '/bricks';
+      preLoaderRoute: typeof BricksImport;
+      parentRoute: typeof rootRoute;
+    };
     '/models': {
-      id: '/models'
-      path: '/models'
-      fullPath: '/models'
-      preLoaderRoute: typeof ModelsImport
-      parentRoute: typeof rootRoute
-    }
+      id: '/models';
+      path: '/models';
+      fullPath: '/models';
+      preLoaderRoute: typeof ModelsImport;
+      parentRoute: typeof rootRoute;
+    };
     '/settings': {
-      id: '/settings'
-      path: '/settings'
-      fullPath: '/settings'
-      preLoaderRoute: typeof SettingsImport
-      parentRoute: typeof rootRoute
-    }
+      id: '/settings';
+      path: '/settings';
+      fullPath: '/settings';
+      preLoaderRoute: typeof SettingsImport;
+      parentRoute: typeof rootRoute;
+    };
     '/examples/$appId': {
-      id: '/examples/$appId'
-      path: '/examples/$appId'
-      fullPath: '/examples/$appId'
-      preLoaderRoute: typeof ExamplesAppIdImport
-      parentRoute: typeof rootRoute
-    }
+      id: '/examples/$appId';
+      path: '/examples/$appId';
+      fullPath: '/examples/$appId';
+      preLoaderRoute: typeof ExamplesAppIdImport;
+      parentRoute: typeof rootRoute;
+    };
     '/learn/$resourceId': {
-      id: '/learn/$resourceId'
-      path: '/learn/$resourceId'
-      fullPath: '/learn/$resourceId'
-      preLoaderRoute: typeof LearnResourceIdImport
-      parentRoute: typeof rootRoute
-    }
+      id: '/learn/$resourceId';
+      path: '/learn/$resourceId';
+      fullPath: '/learn/$resourceId';
+      preLoaderRoute: typeof LearnResourceIdImport;
+      parentRoute: typeof rootRoute;
+    };
     '/my-apps/$appId': {
-      id: '/my-apps/$appId'
-      path: '/my-apps/$appId'
-      fullPath: '/my-apps/$appId'
-      preLoaderRoute: typeof MyAppsAppIdImport
-      parentRoute: typeof rootRoute
-    }
+      id: '/my-apps/$appId';
+      path: '/my-apps/$appId';
+      fullPath: '/my-apps/$appId';
+      preLoaderRoute: typeof MyAppsAppIdImport;
+      parentRoute: typeof rootRoute;
+    };
     '/examples/': {
-      id: '/examples/'
-      path: '/examples'
-      fullPath: '/examples'
-      preLoaderRoute: typeof ExamplesIndexImport
-      parentRoute: typeof rootRoute
-    }
+      id: '/examples/';
+      path: '/examples';
+      fullPath: '/examples';
+      preLoaderRoute: typeof ExamplesIndexImport;
+      parentRoute: typeof rootRoute;
+    };
+    '/inspirations/': {
+      id: '/inspirations/';
+      path: '/inspirations';
+      fullPath: '/inspirations';
+      preLoaderRoute: typeof InspirationsIndexImport;
+      parentRoute: typeof rootRoute;
+    };
     '/learn/': {
-      id: '/learn/'
-      path: '/learn'
-      fullPath: '/learn'
-      preLoaderRoute: typeof LearnIndexImport
-      parentRoute: typeof rootRoute
-    }
+      id: '/learn/';
+      path: '/learn';
+      fullPath: '/learn';
+      preLoaderRoute: typeof LearnIndexImport;
+      parentRoute: typeof rootRoute;
+    };
     '/my-apps/': {
-      id: '/my-apps/'
-      path: '/my-apps'
-      fullPath: '/my-apps'
-      preLoaderRoute: typeof MyAppsIndexImport
-      parentRoute: typeof rootRoute
-    }
+      id: '/my-apps/';
+      path: '/my-apps';
+      fullPath: '/my-apps';
+      preLoaderRoute: typeof MyAppsIndexImport;
+      parentRoute: typeof rootRoute;
+    };
   }
 }
 
 // Create and export the route tree
 
 export interface FileRoutesByFullPath {
-  '/': typeof IndexRoute
-  '/account': typeof AccountRoute
-  '/bricks': typeof BricksRoute
-  '/models': typeof ModelsRoute
-  '/settings': typeof SettingsRoute
-  '/examples/$appId': typeof ExamplesAppIdRoute
-  '/learn/$resourceId': typeof LearnResourceIdRoute
-  '/my-apps/$appId': typeof MyAppsAppIdRoute
-  '/examples': typeof ExamplesIndexRoute
-  '/learn': typeof LearnIndexRoute
-  '/my-apps': typeof MyAppsIndexRoute
+  '/': typeof IndexRoute;
+  '/account': typeof AccountRoute;
+  '/ai-assistant': typeof AiAssistantRoute;
+  '/bricks': typeof BricksRoute;
+  '/models': typeof ModelsRoute;
+  '/settings': typeof SettingsRoute;
+  '/examples/$appId': typeof ExamplesAppIdRoute;
+  '/learn/$resourceId': typeof LearnResourceIdRoute;
+  '/my-apps/$appId': typeof MyAppsAppIdRoute;
+  '/examples': typeof ExamplesIndexRoute;
+  '/inspirations': typeof InspirationsIndexRoute;
+  '/learn': typeof LearnIndexRoute;
+  '/my-apps': typeof MyAppsIndexRoute;
 }
 
 export interface FileRoutesByTo {
-  '/': typeof IndexRoute
-  '/account': typeof AccountRoute
-  '/bricks': typeof BricksRoute
-  '/models': typeof ModelsRoute
-  '/settings': typeof SettingsRoute
-  '/examples/$appId': typeof ExamplesAppIdRoute
-  '/learn/$resourceId': typeof LearnResourceIdRoute
-  '/my-apps/$appId': typeof MyAppsAppIdRoute
-  '/examples': typeof ExamplesIndexRoute
-  '/learn': typeof LearnIndexRoute
-  '/my-apps': typeof MyAppsIndexRoute
+  '/': typeof IndexRoute;
+  '/account': typeof AccountRoute;
+  '/ai-assistant': typeof AiAssistantRoute;
+  '/bricks': typeof BricksRoute;
+  '/models': typeof ModelsRoute;
+  '/settings': typeof SettingsRoute;
+  '/examples/$appId': typeof ExamplesAppIdRoute;
+  '/learn/$resourceId': typeof LearnResourceIdRoute;
+  '/my-apps/$appId': typeof MyAppsAppIdRoute;
+  '/examples': typeof ExamplesIndexRoute;
+  '/inspirations': typeof InspirationsIndexRoute;
+  '/learn': typeof LearnIndexRoute;
+  '/my-apps': typeof MyAppsIndexRoute;
 }
 
 export interface FileRoutesById {
-  __root__: typeof rootRoute
-  '/': typeof IndexRoute
-  '/account': typeof AccountRoute
-  '/bricks': typeof BricksRoute
-  '/models': typeof ModelsRoute
-  '/settings': typeof SettingsRoute
-  '/examples/$appId': typeof ExamplesAppIdRoute
-  '/learn/$resourceId': typeof LearnResourceIdRoute
-  '/my-apps/$appId': typeof MyAppsAppIdRoute
-  '/examples/': typeof ExamplesIndexRoute
-  '/learn/': typeof LearnIndexRoute
-  '/my-apps/': typeof MyAppsIndexRoute
+  __root__: typeof rootRoute;
+  '/': typeof IndexRoute;
+  '/account': typeof AccountRoute;
+  '/ai-assistant': typeof AiAssistantRoute;
+  '/bricks': typeof BricksRoute;
+  '/models': typeof ModelsRoute;
+  '/settings': typeof SettingsRoute;
+  '/examples/$appId': typeof ExamplesAppIdRoute;
+  '/learn/$resourceId': typeof LearnResourceIdRoute;
+  '/my-apps/$appId': typeof MyAppsAppIdRoute;
+  '/examples/': typeof ExamplesIndexRoute;
+  '/inspirations/': typeof InspirationsIndexRoute;
+  '/learn/': typeof LearnIndexRoute;
+  '/my-apps/': typeof MyAppsIndexRoute;
 }
 
 export interface FileRouteTypes {
-  fileRoutesByFullPath: FileRoutesByFullPath
+  fileRoutesByFullPath: FileRoutesByFullPath;
   fullPaths:
     | '/'
     | '/account'
+    | '/ai-assistant'
     | '/bricks'
     | '/models'
     | '/settings'
@@ -232,12 +267,14 @@ export interface FileRouteTypes {
     | '/learn/$resourceId'
     | '/my-apps/$appId'
     | '/examples'
+    | '/inspirations'
     | '/learn'
-    | '/my-apps'
-  fileRoutesByTo: FileRoutesByTo
+    | '/my-apps';
+  fileRoutesByTo: FileRoutesByTo;
   to:
     | '/'
     | '/account'
+    | '/ai-assistant'
     | '/bricks'
     | '/models'
     | '/settings'
@@ -245,12 +282,14 @@ export interface FileRouteTypes {
     | '/learn/$resourceId'
     | '/my-apps/$appId'
     | '/examples'
+    | '/inspirations'
     | '/learn'
-    | '/my-apps'
+    | '/my-apps';
   id:
     | '__root__'
     | '/'
     | '/account'
+    | '/ai-assistant'
     | '/bricks'
     | '/models'
     | '/settings'
@@ -258,28 +297,32 @@ export interface FileRouteTypes {
     | '/learn/$resourceId'
     | '/my-apps/$appId'
     | '/examples/'
+    | '/inspirations/'
     | '/learn/'
-    | '/my-apps/'
-  fileRoutesById: FileRoutesById
+    | '/my-apps/';
+  fileRoutesById: FileRoutesById;
 }
 
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute
-  AccountRoute: typeof AccountRoute
-  BricksRoute: typeof BricksRoute
-  ModelsRoute: typeof ModelsRoute
-  SettingsRoute: typeof SettingsRoute
-  ExamplesAppIdRoute: typeof ExamplesAppIdRoute
-  LearnResourceIdRoute: typeof LearnResourceIdRoute
-  MyAppsAppIdRoute: typeof MyAppsAppIdRoute
-  ExamplesIndexRoute: typeof ExamplesIndexRoute
-  LearnIndexRoute: typeof LearnIndexRoute
-  MyAppsIndexRoute: typeof MyAppsIndexRoute
+  IndexRoute: typeof IndexRoute;
+  AccountRoute: typeof AccountRoute;
+  AiAssistantRoute: typeof AiAssistantRoute;
+  BricksRoute: typeof BricksRoute;
+  ModelsRoute: typeof ModelsRoute;
+  SettingsRoute: typeof SettingsRoute;
+  ExamplesAppIdRoute: typeof ExamplesAppIdRoute;
+  LearnResourceIdRoute: typeof LearnResourceIdRoute;
+  MyAppsAppIdRoute: typeof MyAppsAppIdRoute;
+  ExamplesIndexRoute: typeof ExamplesIndexRoute;
+  InspirationsIndexRoute: typeof InspirationsIndexRoute;
+  LearnIndexRoute: typeof LearnIndexRoute;
+  MyAppsIndexRoute: typeof MyAppsIndexRoute;
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AccountRoute: AccountRoute,
+  AiAssistantRoute: AiAssistantRoute,
   BricksRoute: BricksRoute,
   ModelsRoute: ModelsRoute,
   SettingsRoute: SettingsRoute,
@@ -287,13 +330,14 @@ const rootRouteChildren: RootRouteChildren = {
   LearnResourceIdRoute: LearnResourceIdRoute,
   MyAppsAppIdRoute: MyAppsAppIdRoute,
   ExamplesIndexRoute: ExamplesIndexRoute,
+  InspirationsIndexRoute: InspirationsIndexRoute,
   LearnIndexRoute: LearnIndexRoute,
   MyAppsIndexRoute: MyAppsIndexRoute,
-}
+};
 
 export const routeTree = rootRoute
   ._addFileChildren(rootRouteChildren)
-  ._addFileTypes<FileRouteTypes>()
+  ._addFileTypes<FileRouteTypes>();
 
 /* ROUTE_MANIFEST_START
 {
@@ -303,6 +347,7 @@ export const routeTree = rootRoute
       "children": [
         "/",
         "/account",
+        "/ai-assistant",
         "/bricks",
         "/models",
         "/settings",
@@ -310,6 +355,7 @@ export const routeTree = rootRoute
         "/learn/$resourceId",
         "/my-apps/$appId",
         "/examples/",
+        "/inspirations/",
         "/learn/",
         "/my-apps/"
       ]
@@ -319,6 +365,9 @@ export const routeTree = rootRoute
     },
     "/account": {
       "filePath": "account.tsx"
+    },
+    "/ai-assistant": {
+      "filePath": "ai-assistant.tsx"
     },
     "/bricks": {
       "filePath": "bricks.tsx"
@@ -340,6 +389,9 @@ export const routeTree = rootRoute
     },
     "/examples/": {
       "filePath": "examples/index.tsx"
+    },
+    "/inspirations/": {
+      "filePath": "inspirations/index.tsx"
     },
     "/learn/": {
       "filePath": "learn/index.tsx"

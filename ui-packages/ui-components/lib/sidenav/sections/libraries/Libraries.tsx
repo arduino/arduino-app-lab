@@ -6,7 +6,7 @@ import { setCSSVariable } from '@cloud-editor-mono/common';
 // } from '@cloud-editor-mono/images/assets/icons';
 // import { ArduinoBuilderBoardv3WithId } from '@cloud-editor-mono/infrastructure';
 // import clsx from 'clsx';
-// import { uniq } from 'lodash';
+// import { uniq } from 'lodash-es';
 import {
   Key,
   useCallback,

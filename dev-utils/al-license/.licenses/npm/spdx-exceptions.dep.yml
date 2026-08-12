@@ -1,9 +1,0 @@
----
-name: spdx-exceptions
-version: 2.5.0
-type: npm
-summary: list of SPDX standard license exceptions
-homepage:
-license: other
-licenses: []
-notices: []

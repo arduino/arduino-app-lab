@@ -27,7 +27,7 @@ import {
   WebSerialStateKeys,
 } from '@cloud-editor-mono/web-board-communication';
 import { useQueries, useQuery } from '@tanstack/react-query';
-import { isEqual } from 'lodash';
+import { isEqual } from 'lodash-es';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useSketchParams } from '../../../cloud-editor/features/main/hooks/sketch';

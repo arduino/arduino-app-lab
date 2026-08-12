@@ -1,0 +1,41 @@
+@use "@cloud-editor-mono/arduino-sass/src/typography" as typography;
+@use "@cloud-editor-mono/ui-components/public/shared.module.scss";
+@use "@cloud-editor-mono/arduino-sass/src/variables" as variables;
+
+.code-block {
+  position: relative;
+  background: var(--surface-bg-baseline, #232b2e);
+  border: 1px solid var(--icon-inverted, #171e21);
+  border-radius: 8px;
+  overflow: hidden;
+  min-width: 0;
+}
+
+.copy-action {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 1;
+}
+
+.copy-button {
+  min-width: auto;
+}
+
+.copy-icon {
+  display: block;
+  width: 12px;
+  height: 12px;
+}
+
+.code-pre {
+  margin: 0;
+  padding: 28px 16px 8px 16px;
+  overflow-x: auto;
+}
+
+.code-pre code {
+  font-family: variables.$font-roboto;
+  font-size: typography.$font-size-xx-small;
+  letter-spacing: 1.2px;
+}

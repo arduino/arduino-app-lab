@@ -5,10 +5,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log/slog"
 	"mime/multipart"
 	"net/http"
 	"os"
 	"path/filepath"
+
+	"app-lab-desktop/internal/hostread"
 
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
@@ -115,7 +118,7 @@ func uploadAppFile(ctx context.Context, orchestratorURL string, filePath string)
 	}
 }
 
-func SelectAppDialog(ctx context.Context, orchestratorURL string) (string, error) {
+func SelectAppDialog(ctx context.Context, orchestratorURL string, hostReads *hostread.AllowSet) (string, error) {
 	filePath, err := runtime.OpenFileDialog(ctx, runtime.OpenDialogOptions{
 		Title: "Select App to Import",
 		Filters: []runtime.FileFilter{
@@ -134,6 +137,9 @@ func SelectAppDialog(ctx context.Context, orchestratorURL string) (string, error
 	if filePath == "" {
 		return "", nil
 	}
+
+	// The user picked this in an OS dialog, so reading it back is intended.
+	hostReads.Allow(filePath)
 
 	return filePath, err
 }
@@ -161,7 +167,17 @@ func SelectAiModelDialog(ctx context.Context, orchestratorURL string) (string, e
 	return filePath, err
 }
 
-func ImportAppFromPath(ctx context.Context, orchestratorURL string, filePath string) (string, error) {
+// Importing an app uploads a host file to the orchestrator, where its contents
+// become readable through the ordinary app-file APIs - so it is a host read by
+// another route, and needs the same intent check as a direct one. It also
+// deletes the source when it sits in the temp dir, which the check confines to
+// paths the user actually named.
+func ImportAppFromPath(ctx context.Context, orchestratorURL string, filePath string, hostReads *hostread.AllowSet) (string, error) {
+	if !hostReads.Allows(filePath) {
+		slog.Error("app import denied: path was not selected in this session", "path", filePath)
+		return "", fmt.Errorf("access denied: %s was not selected in this session", filePath)
+	}
+
 	appID, err := uploadAppFile(ctx, orchestratorURL, filePath)
 
 	if filepath.Dir(filePath) == os.TempDir() {

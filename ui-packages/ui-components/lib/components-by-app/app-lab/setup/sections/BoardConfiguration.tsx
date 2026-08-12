@@ -62,6 +62,7 @@ const BoardConfiguration = forwardRef((props: BoardConfigurationProps, ref) => {
   useImperativeHandle(ref, () => ({
     confirm,
     skip: (): void => skipBoardConfiguration(),
+    canSkip: (): boolean => !setBoardNameIsError,
   }));
 
   const { formatMessage } = useI18n();

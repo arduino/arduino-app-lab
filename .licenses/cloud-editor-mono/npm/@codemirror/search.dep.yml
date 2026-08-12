@@ -1,9 +1,9 @@
 ---
 name: "@codemirror/search"
-version: 6.5.10
+version: 6.7.1
 type: npm
 summary: Search functionality for the CodeMirror code editor
-homepage: 
+homepage:
 license: mit
 licenses:
 - sources: LICENSE

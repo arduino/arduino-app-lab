@@ -16,7 +16,11 @@ import { Input, InputStyle } from '../../../../essential/input';
 import { useI18n, XXSmall } from '../../../shared';
 import setupStyles from '../../setup/setup.module.scss';
 import { networkMessages } from '../messages';
-import { NetworkCredentials, SecurityProtocols } from '../network.type';
+import {
+  NetworkCredentials,
+  SecurityProtocols,
+  WiFiConnectionErrorCode,
+} from '../network.type';
 import { securityProtocols } from '../networkSpec';
 import styles from './connect-to-network.module.scss';
 
@@ -32,6 +36,7 @@ interface ConnectToNetworkProps {
   networkCredentials: NetworkCredentials;
   unlockAutoFlow?: () => void;
   onChangeCredentials: (credentials: NetworkCredentials) => void;
+  errorCode?: WiFiConnectionErrorCode;
 }
 
 const ConnectToNetwork: React.FC<ConnectToNetworkProps> = (
@@ -48,10 +53,16 @@ const ConnectToNetwork: React.FC<ConnectToNetworkProps> = (
     networkCredentials,
     unlockAutoFlow,
     onChangeCredentials,
+    errorCode,
   } = props;
 
   const { formatMessage } = useI18n();
   const passwordInputRef = useRef<HTMLInputElement>(null);
+
+  const errorMessageDescriptor =
+    errorCode === WiFiConnectionErrorCode.IncorrectPassword
+      ? networkMessages.incorrectPassword
+      : networkMessages.networkError;
 
   const handleNetworkNameEnter = useCallback((): void => {
     passwordInputRef.current?.focus();
@@ -127,7 +138,7 @@ const ConnectToNetwork: React.FC<ConnectToNetworkProps> = (
         {!isSetupFlow && isError && (
           <div className={styles['error-message']}>
             <TriangleSharp />
-            <XXSmall>{formatMessage(networkMessages.networkError)}</XXSmall>
+            <XXSmall>{formatMessage(errorMessageDescriptor)}</XXSmall>
           </div>
         )}
         {isSetupFlow && (
@@ -140,7 +151,7 @@ const ConnectToNetwork: React.FC<ConnectToNetworkProps> = (
           >
             {isError ? (
               <>
-                <Error /> {formatMessage(networkMessages.networkError)}
+                <Error /> {formatMessage(errorMessageDescriptor)}
               </>
             ) : isSuccess ? (
               <>

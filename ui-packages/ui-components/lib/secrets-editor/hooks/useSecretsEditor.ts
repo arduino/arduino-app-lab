@@ -3,7 +3,7 @@ import {
   SketchSecrets,
   sketchv2secret_CreateApi,
 } from '@cloud-editor-mono/infrastructure';
-import { uniqueId } from 'lodash';
+import { uniqueId } from 'lodash-es';
 import { useEffect, useState } from 'react';
 import { useDebounce } from 'react-use';
 

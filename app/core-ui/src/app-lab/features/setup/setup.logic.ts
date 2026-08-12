@@ -12,6 +12,7 @@ import { useCallback, useContext, useEffect, useRef, useState } from 'react';
 
 import { useBoardItem } from '../../hooks/useBoardItem';
 import { UseBoards } from '../../hooks/useBoards';
+import { useBoardSerialTracker } from '../../hooks/useBoardSerialTracker';
 import { useIsBoard } from '../../hooks/useIsBoard';
 import { useSystemProps } from '../../hooks/useSystemProps';
 import { useTerminal } from '../../hooks/useTerminal';
@@ -140,6 +141,7 @@ export const createUseSetupLogic = function (
 
     const { onOpenTerminal, terminalError } = useTerminal();
     const { boardItem } = useBoardItem();
+    const boardSerialTracker = useBoardSerialTracker();
 
     // Track if auto-selection was ever started to keep loader during transition
     const [autoSelectionStarted, setAutoSelectionStarted] = useState(false);
@@ -430,7 +432,7 @@ export const createUseSetupLogic = function (
         if (showLoader && !loaderTimedOut) {
           setLoaderTimedOut(true);
         }
-      }, 30000); // 30 seconds timeout
+      }, 15000); // 15 seconds timeout
 
       return () => clearTimeout(timeout);
     }, [showLoader, loaderTimedOut]);
@@ -438,6 +440,7 @@ export const createUseSetupLogic = function (
     return {
       isBoard,
       boards,
+      boardSerialTracker,
       selectedBoard,
       selectingBoard,
       boardSelectionStatus,

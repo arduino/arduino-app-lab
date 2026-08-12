@@ -2,6 +2,7 @@ import {
   ArduinoLoop,
   InfoIconOutline,
 } from '@cloud-editor-mono/images/assets/icons';
+import { EditorBannerKind } from '@cloud-editor-mono/ui-components/lib/code-editor';
 import {
   EditorPanel,
   useI18n,
@@ -22,18 +23,29 @@ const AppLabEditorPanel: React.FC<AppLabEditorPanelProps> = (
 ) => {
   const { appLabEditorLogic } = props;
 
-  const { openFiles, readOnly, editorPanelLogic, onCopyCode, getKeywords } =
-    appLabEditorLogic();
+  const {
+    openFiles,
+    readOnly,
+    editorPanelLogic,
+    onCopyCode,
+    onFileError,
+    getKeywords,
+  } = appLabEditorLogic();
 
   const { formatMessage } = useI18n();
 
-  const getReadOnlyBanner = useCallback(
-    (): JSX.Element => (
-      <div className={styles['editor-read-only-banner']}>
-        <InfoIconOutline />
-        <span>{formatMessage(messages.readOnlyBanner)}</span>
-      </div>
-    ),
+  // Contents for each banner kind the editor may ask for. Unknown kinds render
+  // nothing rather than falling back to an unrelated message.
+  const renderBanner = useCallback(
+    (kind: EditorBannerKind): JSX.Element | undefined => {
+      if (kind !== 'read-only') return undefined;
+      return (
+        <div className={styles['editor-banner']}>
+          <InfoIconOutline />
+          <span>{formatMessage(messages.readOnlyBanner)}</span>
+        </div>
+      );
+    },
     [formatMessage],
   );
 
@@ -50,6 +62,7 @@ const AppLabEditorPanel: React.FC<AppLabEditorPanelProps> = (
       editorPanelLogic={editorPanelLogic}
       getKeywords={getKeywords}
       onCopyCode={onCopyCode}
+      onFileError={onFileError}
       classes={{
         tabsBar: styles['editor-tabs-bar'],
         selectedTab: styles['editor-selected-tab'],
@@ -60,7 +73,7 @@ const AppLabEditorPanel: React.FC<AppLabEditorPanelProps> = (
           readOnly && styles['editor-readonly'],
         ),
       }}
-      readOnlyBanner={getReadOnlyBanner()}
+      renderBanner={renderBanner}
     />
   );
 };

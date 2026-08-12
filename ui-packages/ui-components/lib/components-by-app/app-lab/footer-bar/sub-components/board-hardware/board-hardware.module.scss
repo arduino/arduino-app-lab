@@ -1,0 +1,33 @@
+.board-hardware {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px;
+    border-radius: 4px;
+    
+    .board-hardware-title {
+        font-size: 10px;
+        font-weight: 500;
+        color: var(--text-default, #fff);
+    }
+
+    &-warning {
+        .board-hardware-title {
+            color: var(--feedback-warning-default, #c1ab15);
+        }
+    }
+
+    &:hover {
+        cursor: pointer;
+        background: var(--component-bg-flexible, #aeb8b826);
+    }
+}
+
+.tooltip-content--label {
+    font-size: 12px;
+    font-weight: 400;
+    color: var(--text-inverted, #171e21);
+    background: var(--feedback-neutral-default, #aeb8b8);
+    padding: 2px 8px;
+    max-width: none;
+}

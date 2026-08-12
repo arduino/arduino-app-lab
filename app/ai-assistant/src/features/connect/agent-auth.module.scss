@@ -1,0 +1,220 @@
+@use "@cloud-editor-mono/ui-components/public/shared.module.scss";
+@use "@cloud-editor-mono/arduino-sass/src/typography" as typography;
+@use "@cloud-editor-mono/arduino-sass/src/_fonts" as fonts;
+@use "@cloud-editor-mono/arduino-sass/src/_variables" as variables;
+
+.signin {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding-block: 8px;
+}
+
+.hint {
+  color: var(--text-subtle, #c9d2d2);
+  text-align: center;
+}
+
+.signin-waiting {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-block: 8px;
+}
+
+.signin-waiting-text {
+  color: var(--text-default, #ffffff);
+  font-weight: fonts.$font-weight-semibold;
+}
+
+.signin-waiting-hint {
+  color: var(--text-subtle, #c9d2d2);
+  font-weight: fonts.$font-weight-normal;
+}
+
+.auth-url {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border-inverted, #232B2E);
+  background: var(--component-bg-baseline, rgba(255, 255, 255, 0.02));
+}
+
+.auth-url-text {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: typography.$font-size-xx-small;
+  color: var(--text-subtle, #c9d2d2);
+}
+
+.auth-url-copy {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  cursor: pointer;
+  color: var(--text-subtle, #c9d2d2);
+
+  &:hover {
+    background: var(--component-bg-flexible, rgba(174, 184, 184, 0.15));
+  }
+}
+
+.auth-url-copy-icon {
+  width: 14px;
+  height: 14px;
+}
+
+.signin-waiting-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  > span {
+   color: var(--text-inverted-subtle, #5D6A6B);
+  }
+}
+
+.paste-token-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: flex-end;
+  gap: 8px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border-inverted, #232B2E);
+}
+
+.paste-token-hint {
+  color: var(--text-inverted-subtle, #5D6A6B);
+  font-weight: fonts.$font-weight-normal;
+  line-height: 1.5;
+}
+
+.paste-token-btn {
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: var(--text-default, #ffffff);
+  @include fonts.font(opensans, semi-bold);
+  font-size: typography.$font-size-xx-small;
+  line-height: 1.5;
+}
+
+.token-input-root {
+  input, input::placeholder {
+    font-size: typography.$font-size-xx-small !important;
+  }
+}
+
+.token-input-container {
+  min-height: 24px;
+  font-size: typography.$font-size-xx-small;
+}
+
+.signin-waiting-spinner {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 2px solid var(--component-bg-flexible, rgba(174, 184, 184, 0.15));
+  border-top-color: var(--text-accent, #25c2c7);
+  animation: install-spin 0.9s linear infinite;
+}
+
+@keyframes install-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.apikey {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+
+  .verify-btn {
+    align-self: stretch;
+    height: 100%;
+  }
+}
+
+.field-error {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: typography.$font-size-xxx-small;
+  line-height: 1.6;
+  color: var(--feedback-error-default, #FF8878);
+}
+
+.apikey-row {
+  display: flex;
+  gap: 10px;
+}
+
+.apikey-input {
+  flex: 1;
+}
+
+.apikey-input-root {
+  padding: 6px 12px 3px 12px !important;
+
+  input, input::placeholder  {
+    font-size: typography.$font-size-xx-small !important;
+  }
+}
+
+.apikey-input-container {
+  min-height: 24px;
+  font-size: typography.$font-size-xx-small;
+}
+
+.apikey-input-label {
+  span {
+    font-size: typography.$font-size-xxx-small;
+    line-height: 1.1;
+  }
+}
+
+.field-error-icon {
+  width: 14px;
+  height: 14px;
+  flex: none;
+
+  path {
+    fill: var(--feedback-error-default, #FF8878) !important;
+  }
+}
+
+.where {
+  display: block;
+  color: var(--text-default, #ffffff);
+  font-size: typography.$font-size-xxx-small;
+  font-weight: fonts.$font-weight-semibold;
+}
+
+a.where {
+  cursor: pointer;
+  width: fit-content;
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, currentColor 50%, transparent);
+
+  &:hover {
+    text-decoration-color: color-mix(in srgb, currentColor 80%, transparent);
+  }
+}

@@ -1,12 +1,12 @@
 ---
 name: github.com/klauspost/compress/huff0
-version: v1.18.4
+version: v1.18.5
 type: go
 summary: This file contains a generic implementation of Decoder.Decompress4X.
 homepage: https://pkg.go.dev/github.com/klauspost/compress/huff0
 license: bsd-3-clause
 licenses:
-- sources: compress@v1.18.4/LICENSE
+- sources: compress@v1.18.5/LICENSE
   text: |
     Copyright (c) 2012 The Go Authors. All rights reserved.
     Copyright (c) 2019 Klaus Post. All rights reserved.

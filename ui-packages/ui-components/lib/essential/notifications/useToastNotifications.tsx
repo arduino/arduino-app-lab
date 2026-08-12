@@ -1,5 +1,5 @@
 import clsx from 'clsx';
-import { uniqueId } from 'lodash';
+import { uniqueId } from 'lodash-es';
 import { useEffect } from 'react';
 import { toast, ToastOptions } from 'react-toastify';
 

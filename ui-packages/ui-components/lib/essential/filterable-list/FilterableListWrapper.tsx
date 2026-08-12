@@ -50,7 +50,7 @@ export function FilterableListWrapper<T, L extends MessageDescriptor | string>(
       items: FilterableListItemType<T, L>[],
       query: string,
     ): FilterableListItemType<T, L>[] => {
-      onListFiltered && onListFiltered();
+      onListFiltered?.();
 
       return items.filter((item) => {
         const label =

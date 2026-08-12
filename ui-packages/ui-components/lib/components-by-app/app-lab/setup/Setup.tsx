@@ -23,6 +23,7 @@ const Setup: React.FC<SetupProps> = (props: SetupProps) => {
     currentStep,
     stepIsSkippable,
     boards,
+    boardSerialTracker,
     selectedBoard,
     selectingBoard,
     selectBoard,
@@ -56,6 +57,7 @@ const Setup: React.FC<SetupProps> = (props: SetupProps) => {
     <Welcome
       isLoading={isBoard === undefined}
       boards={boards}
+      boardSerialTracker={boardSerialTracker}
       onSelectBoard={selectBoard}
       showBoardConnPswPrompt={showBoardConnPswPrompt}
       onConnPswCancel={onConnPswCancel}

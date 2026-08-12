@@ -10,7 +10,7 @@ import {
   ToastType,
   useI18n,
 } from '@cloud-editor-mono/ui-components/lib/components-by-app/shared';
-import { uniqueId } from 'lodash';
+import { uniqueId } from 'lodash-es';
 import { useCallback, useRef } from 'react';
 
 import { messages } from '../messages';

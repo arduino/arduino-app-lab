@@ -271,6 +271,21 @@ export function SnackbarProvider({
   );
 }
 
+/**
+ * Dismiss the snackbar carrying `toastId` — the `opts.id` it was shown with — or
+ * every snackbar on screen when called with no argument.
+ *
+ * Here so that callers never have to reach for sonner themselves. It is hoisted
+ * from the workspace root rather than declared by any package that imports it,
+ * so nothing stops a second copy resolving alongside this one; that would mean
+ * two toast stores, and a dismiss issued against the wrong one does nothing at
+ * all rather than failing. Keeping the dependency behind this module means there
+ * is only ever one store to dismiss against.
+ */
+export function dismissSnackbar(toastId?: SnackbarProps['toastId']): void {
+  toast.dismiss(toastId);
+}
+
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 export function snackbar({
   closeable = true,
@@ -278,7 +293,9 @@ export function snackbar({
   ...rest
 }: Omit<SnackbarProps, 'onClose' | 'toastId'> & {
   closeable?: (() => void) | boolean;
-  opts?: Pick<ExternalToast, 'onDismiss' | 'onAutoClose' | 'duration'>;
+  // A fixed `id` makes a repeated call update the snackbar already on screen
+  // instead of queueing another copy of it.
+  opts?: Pick<ExternalToast, 'onDismiss' | 'onAutoClose' | 'duration' | 'id'>;
 }) {
   return toast.custom(
     (t) => (

@@ -5,7 +5,7 @@ import {
   BrickListItem,
 } from '@cloud-editor-mono/infrastructure';
 import clsx from 'clsx';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useState } from 'react';
 
 import {
   BrickDetail,
@@ -73,10 +73,12 @@ export const AddAppBrickDialog: React.FC<AddAppBrickDialogProps> = ({
   );
 
   const closeDialog = (): void => {
+    // Only request the close here. The dialog plays a 0.25s close animation and
+    // stays mounted until it finishes; resetting the view state synchronously
+    // would revert the success view to the brick list mid-animation, flashing
+    // the brick manager on the way out. Transient state is instead reset when
+    // the dialog (re)opens, below.
     onOpenChange(false);
-    setSucceeded(false);
-    setBrickDetails(undefined);
-    setSelectedModelsByBrickId({});
   };
 
   useEffect(() => {
@@ -85,6 +87,14 @@ export const AddAppBrickDialog: React.FC<AddAppBrickDialogProps> = ({
     );
     setSelectedBrick(newlySelectedBrick);
   }, [appBricks, bricks, open]);
+
+  useLayoutEffect(() => {
+    if (open) {
+      setSucceeded(false);
+      setBrickDetails(undefined);
+      setSelectedModelsByBrickId({});
+    }
+  }, [open]);
 
   const { formatMessage } = useI18n();
 
@@ -221,7 +231,9 @@ export const AddAppBrickDialog: React.FC<AddAppBrickDialogProps> = ({
             content: styles['content'],
             body: clsx(styles['body'], {
               [styles['succeeded']]: succeeded,
+              [styles['bricks']]: !succeeded,
             }),
+            footer: succeeded ? undefined : styles['bricks-footer'],
           }}
         >
           {succeeded ? (
@@ -243,42 +255,48 @@ export const AddAppBrickDialog: React.FC<AddAppBrickDialogProps> = ({
               </ol>
             </div>
           ) : (
-            <div className={styles['split']}>
-              <div
-                className={(styles['split-item'], styles['split-item-left'])}
-              >
-                <BricksList
-                  bricks={bricks}
-                  disabledBricks={bricks.filter((brick) =>
-                    appBricks?.some((appBrick) => appBrick.id === brick.id),
+            <div className={styles['container']}>
+              <div className={styles['split']}>
+                <div
+                  className={clsx(
+                    styles['split-item'],
+                    styles['split-item-left'],
                   )}
-                  selectedBrick={selectedBrick}
-                  brickSize="medium"
-                  expanded={false}
-                  onClick={setSelectedBrick}
-                  classes={{
-                    container: styles['bricks-list-container'],
-                    item: styles['brick-item'],
-                    itemSelected: styles['selected'],
-                    itemTitle: styles['brick-item-title'],
-                  }}
-                />
-              </div>
+                >
+                  <BricksList
+                    bricks={bricks}
+                    disabledBricks={bricks.filter((brick) =>
+                      appBricks?.some((appBrick) => appBrick.id === brick.id),
+                    )}
+                    selectedBrick={selectedBrick}
+                    brickSize="medium"
+                    expanded={false}
+                    onClick={setSelectedBrick}
+                    classes={{
+                      container: styles['bricks-list-container'],
+                      item: styles['brick-item'],
+                      itemSelected: styles['selected'],
+                      itemTitle: styles['brick-item-title'],
+                    }}
+                  />
+                </div>
 
-              <div
-                className={clsx(
-                  styles['split-item'],
-                  styles['split-item-right'],
-                )}
-              >
-                <BrickDetail
-                  brickId={selectedBrick?.id ?? ''}
-                  brickDetailLogic={brickDetailLogic}
-                  preSelectedModelId={
-                    selectedModelByBrickId[selectedBrick?.id ?? '']
-                  }
-                  preSelectedModelChange={selectedModelChange}
-                />
+                <div
+                  className={clsx(
+                    styles['split-item'],
+                    styles['split-item-right'],
+                  )}
+                >
+                  <BrickDetail
+                    brickId={selectedBrick?.id ?? ''}
+                    brickDetailLogic={brickDetailLogic}
+                    preSelectedModelId={
+                      selectedModelByBrickId[selectedBrick?.id ?? '']
+                    }
+                    preSelectedModelChange={selectedModelChange}
+                    hideExampleHeader
+                  />
+                </div>
               </div>
             </div>
           )}

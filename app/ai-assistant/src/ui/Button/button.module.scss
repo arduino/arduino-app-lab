@@ -1,0 +1,28 @@
+@use "@cloud-editor-mono/ui-components/public/shared.module.scss";
+@use "@cloud-editor-mono/arduino-sass/src/fonts" as fonts;
+@use "@cloud-editor-mono/arduino-sass/src/typography" as typography;
+@use "@cloud-editor-mono/arduino-sass/src/variables" as variables;
+
+button.button {
+  border-radius: 8px;
+  font-family: variables.$font-sans;
+  &:focus,
+  &:focus-visible {
+    outline: none !important;
+    box-shadow: none !important;
+    border-color: transparent !important;
+  }
+}
+
+.button-text {
+  font-family: variables.$font-sans !important;
+  font-weight: fonts.$font-weight-semibold !important;
+}
+
+button.x-small .button-text {
+  font-size: typography.$font-size-xx-small;
+}
+
+button.small .button-text {
+  font-size: typography.$font-size-x-small;
+}

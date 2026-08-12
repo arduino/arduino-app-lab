@@ -1,4 +1,5 @@
 import styles from '../../../public/shared.module.scss';
+import { lspStyles } from '../../code-mirror';
 import typographyStyles from '../../typography/typography.module.scss';
 import styleVars from '../code-editor-variables.module.scss';
 
@@ -78,27 +79,31 @@ export const editorViewStyle = {
     color: styles.editorLinesForegroundActive,
     opacity: 0.8,
   },
-  // Lift CodeMirror's bottom-panel host out of the editor's flex flow so
-  // the find-and-replace panel overlays the editor (top-right) instead of
-  // pushing content up. Find-and-replace is the only registered panel, so
-  // a blanket rule on `.cm-panels-bottom` is safe. `zIndex` mirrors
-  // `$zIndex1` (z-indexes.scss).
+  // `.cm-panels-bottom` is the CodeMirror host that wraps bottom-docked panels, like `.cm-find-replace-host`.
+  // Make the host `position: static` (not a positioning context) so the
+  // `.cm-find-replace-host` can anchor to `.cm-editor` instead of the host.
   '& > .cm-panels-bottom': {
+    position: 'static !important',
+    border: 'none !important',
+    overflow: 'visible !important',
+  },
+  // Float only the find-and-replace panel as a per-pane top-right overlay, anchored to `.cm-editor`.
+  // `zIndex` mirrors `$zIndex1`(z-indexes.scss).
+  '& > .cm-panels-bottom > .cm-find-replace-host': {
     position: 'absolute !important',
     top: '0 !important',
     left: '0 !important',
     right: '0 !important',
-    bottom: 'auto !important',
     height: '0 !important',
-    border: 'none !important',
     overflow: 'visible !important',
     pointerEvents: 'none',
     zIndex: 10000,
   },
-  // Re-enable pointer events on the actual panel content (host div).
-  '& > .cm-panels-bottom > *': {
+  // Re-enable pointer events on the actual `cm-find-replace-host` content.
+  '& > .cm-panels-bottom > .cm-find-replace-host > *': {
     pointerEvents: 'auto',
   },
+  ...lspStyles,
 };
 
 export const foldGutterStyle = {

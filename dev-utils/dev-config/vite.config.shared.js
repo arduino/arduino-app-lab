@@ -72,6 +72,21 @@ function defaultChunking(id) {
   if (id.includes('@codemirror')) {
     return 'a-split';
   }
+  // Keep React core (react, react-dom, scheduler) in its own dependency-free
+  // leaf chunk. If it is bundled together with react-* libraries it ends up in
+  // a circular dependency with the ui-components chunk, and with Vite 6 /
+  // Rollup 4 chunk init ordering React can be accessed before it is
+  // initialized, causing "undefined is not an object (evaluating 's.forwardRef')".
+  if (/\/node_modules\/(react|react-dom|scheduler)\//.test(id)) {
+    return 'react-vendor';
+  }
+  // The react-* libraries (react-modal, react-aria, ...) and ui-components are
+  // mutually dependent. Splitting them into two chunks (b-split / c-split)
+  // creates a circular dependency between those chunks; with Rollup 4 the init
+  // order is no longer guaranteed and a module can be accessed before it is
+  // initialized (e.g. "Cannot access 'q5' before initialization" in
+  // react-modal). Keeping them in a single chunk keeps such cycles intra-chunk,
+  // where Rollup resolves module ordering correctly (same as the dev server).
   if (id.includes('react-')) {
     return 'b-split';
   }
@@ -79,7 +94,7 @@ function defaultChunking(id) {
     id.includes('ui-packages/ui-components') &&
     !id.includes('ui-packages/ui-components/lib/code-editor') // separate code-editor to permit code splitting of keywords
   ) {
-    return 'c-split';
+    return 'b-split';
   }
 }
 
@@ -94,18 +109,6 @@ function appConfig({ port, envDir, pathLevel, isWails } = {}) {
     const routesRootDir = getRoutesRootDir(env.VITE_ROUTER_TYPE, startPath);
 
     return {
-      resolve: {
-        dedupe: [
-          '@codemirror/state',
-          '@codemirror/language',
-          '@lezer/common',
-          '@lezer/highlight',
-          '@lezer/lr',
-          '@codemirror/lang-html',
-          '@codemirror/lang-javascript',
-          '@codemirror/lang-css',
-        ],
-      },
       plugins: [
         augmentWithDatePlugin(),
         reactVirtualized(),
@@ -186,11 +189,6 @@ function appConfig({ port, envDir, pathLevel, isWails } = {}) {
                 '@bcmi-labs/cloud-editor-infrastructure',
                 '@bcmi-labs/cloud-editor-component',
                 '@bcmi-labs/app-lab-desktop',
-                '@codemirror/language',
-                '@codemirror/lang-html',
-                '@codemirror/lang-javascript',
-                '@codemirror/lang-css',
-                '@lezer/highlight',
               ],
             },
       envDir: envDir || DEFAULT_ENV_DIR,

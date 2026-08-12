@@ -10,10 +10,6 @@
   box-sizing: border-box;
   background: var(--surface-bg-below-1, #171e21);
 
-  &:hover:not(.disabled) {
-    background: var(--component-bg-flexible, #aeb8c733);
-  }
-
   .radio {
     border-radius: 24px;
     width: 12px;
@@ -123,6 +119,7 @@
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+      color: var(--text-subtle, #c9d2d2);
     }
 
     .ai-model-tags {
@@ -306,7 +303,16 @@
     align-items: center;
     gap: 4px;
     color: var(--text-inverted-subtle, #5d6a6b);
+    svg {
+      width: 14px;
+      height: 14px;
+    }
   }
+}
+
+.model_size_mb .ai-model-tag-label svg {
+  width: 12px;
+  height: 12px;
 }
 
 .disk-warning {

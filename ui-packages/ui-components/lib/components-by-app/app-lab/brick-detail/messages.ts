@@ -46,12 +46,10 @@ export const messages = defineMessages({
     defaultMessage: 'Used in',
     description: 'Title for the section listing apps that use the brick',
   },
-  missingModel: {
-    id: 'brickDetail.missingModel',
-    defaultMessage:
-      "Don't see your model here? You may need to select <bold>{boardModel}</bold> as the target in Edge Impulse Studio.",
-    description:
-      'Alert message for missing board model filter for custom models',
+  seeExample: {
+    id: 'brickDetail.seeExample',
+    defaultMessage: 'See example',
+    description: 'Label for the button to see the example',
   },
   trainNewModel: {
     id: 'brickDetail.trainNewModel',

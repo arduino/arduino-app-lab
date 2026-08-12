@@ -15,7 +15,7 @@ import {
   SourceType,
 } from '@cloud-editor-mono/infrastructure';
 import { EventSourceMessage } from '@microsoft/fetch-event-source';
-import { uniqueId } from 'lodash';
+import { uniqueId } from 'lodash-es';
 import { BehaviorSubject } from 'rxjs';
 import { WretchError } from 'wretch/types';
 

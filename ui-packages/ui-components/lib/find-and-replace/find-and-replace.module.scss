@@ -6,8 +6,8 @@
 }
 
 .container {
-    // Anchored to the (now-lifted) `.cm-panels-bottom` host so each editor
-    // pane gets its own top-right overlay panel.
+    // Anchored to the floated `.cm-find-replace-host` (which itself pins to
+    // `.cm-editor`) so each editor pane gets its own top-right overlay panel.
     position: absolute;
     top: 8px;
     right: 16px;

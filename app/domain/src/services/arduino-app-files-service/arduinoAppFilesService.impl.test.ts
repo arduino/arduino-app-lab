@@ -5,15 +5,22 @@ import {
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
+  codeSubjectNext,
   createAppFile,
   createAppFolder,
   getAppFileContent,
   getAppFiles,
   getAppFileTree,
+  getCodeReloadSubject,
+  getCodeSubjects,
+  reloadCodeSubject,
   removeAppFile,
   renameAppFile,
+  renameCodeSubject,
+  resetAppFilesState,
   saveAppFile,
   setArduinoAppFilesService,
+  setCodeSubjects,
 } from './arduinoAppFilesService.impl';
 import { MockArduinoAppFilesService } from './arduinoAppFilesService.mock';
 
@@ -793,5 +800,95 @@ describe('arduinoAppFilesService.impl + MockArduinoAppFilesService - Operazioni 
     expect(content1).toBe('level1 content');
     expect(content2).toBe('level2 content');
     expect(content3).toBe('level3 content');
+  });
+});
+
+describe('arduinoAppFilesService.impl - code subject rename + save', () => {
+  const flush = (): Promise<void> =>
+    new Promise((resolve) => setTimeout(resolve, 20));
+
+  beforeEach(() => {
+    resetAppFilesState();
+  });
+
+  it('autosaves edits to the renamed path, not the original path', async () => {
+    const saveCode = vi.fn().mockResolvedValue(undefined);
+
+    // Seed a buffer and prime its save context, mirroring an initial edit.
+    setCodeSubjects({ path: 'test1.py', content: 'initial' }, 0);
+    codeSubjectNext('test1.py', 'first edit', saveCode);
+    await flush();
+
+    expect(saveCode).toHaveBeenCalledWith('test1.py', 'first edit', undefined);
+
+    // Rename the buffer, then edit the renamed file.
+    renameCodeSubject('test1.py', 'test2.py');
+    codeSubjectNext('test2.py', 'second edit', saveCode);
+    await flush();
+
+    const savedPaths = saveCode.mock.calls.map(([path]) => path);
+    expect(savedPaths).toContain('test2.py');
+    // Regression: after rename, autosave must not write back to the old path.
+    expect(saveCode).not.toHaveBeenCalledWith(
+      'test1.py',
+      'second edit',
+      undefined,
+    );
+    expect(saveCode).toHaveBeenLastCalledWith(
+      'test2.py',
+      'second edit',
+      undefined,
+    );
+  });
+});
+
+describe('arduinoAppFilesService.impl - reloadCodeSubject', () => {
+  beforeEach(() => {
+    resetAppFilesState();
+  });
+
+  it('skips the reload when the fetched content matches the buffer', () => {
+    setCodeSubjects({ path: 'main.py', content: 'same content' });
+    const subject$ = getCodeSubjects().get('main.py')!;
+    const before = subject$.getValue();
+    const reloadEvents: unknown[] = [];
+    getCodeReloadSubject().subscribe((e) => e && reloadEvents.push(e));
+
+    reloadCodeSubject('main.py', 'same content', 'refetch');
+
+    // Same emission object, same instanceId: no editor state rebuild is
+    // triggered. Regression: the selection-driven refetch on every file
+    // switch used to mint a new instanceId even for identical content,
+    // rebuilding the editor state and wiping the cursor position the LSP
+    // reference panel had just dispatched.
+    expect(subject$.getValue()).toBe(before);
+    expect(subject$.getValue().meta.instanceId).toBe(before.meta.instanceId);
+    expect(reloadEvents).toHaveLength(0);
+  });
+
+  it('reloads in place when the content actually changed', () => {
+    setCodeSubjects({ path: 'main.py', content: 'old content' });
+    const subject$ = getCodeSubjects().get('main.py')!;
+    const before = subject$.getValue();
+    const reloadEvents: { fileId: string; cause: string }[] = [];
+    getCodeReloadSubject().subscribe(
+      (e) => e && reloadEvents.push(e as { fileId: string; cause: string }),
+    );
+
+    reloadCodeSubject('main.py', 'new content', 'external-change');
+
+    const after = subject$.getValue();
+    expect(after.value).toBe('new content');
+    expect(after.meta.instanceId).not.toBe(before.meta.instanceId);
+    expect(after.meta.initialChange).toBe(true);
+    expect(reloadEvents).toEqual([
+      expect.objectContaining({ fileId: 'main.py', cause: 'external-change' }),
+    ]);
+  });
+
+  it('is a no-op for a file with no subject', () => {
+    expect(() =>
+      reloadCodeSubject('unknown.py', 'content', 'refetch'),
+    ).not.toThrow();
   });
 });

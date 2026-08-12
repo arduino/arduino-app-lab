@@ -11,6 +11,7 @@ import {
 import {
   AddAppBrickDialog,
   AddSketchLibraryDialog,
+  BRICK_FILE_EXTENSION,
   BrickItem,
   ButtonAppearance,
   ButtonSize,
@@ -27,6 +28,7 @@ import {
   useI18n,
   XXSmall,
 } from '@cloud-editor-mono/ui-components/lib/components-by-app/app-lab';
+import * as ContextMenu from '@radix-ui/react-context-menu';
 import clsx from 'clsx';
 import { useCallback, useRef, useState } from 'react';
 import { useMeasure } from 'react-use';
@@ -36,6 +38,7 @@ import styles from '../app-lab-edit-section.module.scss';
 import { useAppFilesSectionLogic } from '../appFiles';
 import { FilesManagerSectionLogic } from '../appLabEditSection.type';
 import { messages } from '../messages';
+import { FilesManagerContextMenu } from './FilesManagerContextMenu';
 
 interface FilesManagerSectionProps {
   logic: FilesManagerSectionLogic;
@@ -89,6 +92,7 @@ export const FilesManagerSection = ({
     onBrickDragStart,
     onBrickDragEnd,
     onDragOverFolderChange,
+    onValidationError,
   } = logic();
   const { openFiles } = appLabEditorPanelLogic();
 
@@ -252,6 +256,10 @@ export const FilesManagerSection = ({
               dropdownMenuItem: styles['action-menu-item'],
               dropdownMenuButtonWrapper: styles['action-button-wrapper'],
             }}
+            // The sidebar lives in a resizable panel that clips its content and
+            // caps its stacking order, so the menu must be portaled out of it.
+            useStaticPosition={false}
+            usePortal
             disabled={section !== 'my-apps'}
           />
           <IconButton
@@ -327,6 +335,25 @@ export const FilesManagerSection = ({
                       {formatMessage(messages.noBricksAddedYet)}
                     </XXSmall>
                   )}
+                  {appBricks && (
+                    <div className={styles['app-list-context-menu']}>
+                      <ContextMenu.Root>
+                        <ContextMenu.Trigger
+                          onContextMenu={(e): false | void =>
+                            section !== 'my-apps' && e.preventDefault()
+                          } // disable native context menu
+                          disabled={section !== 'my-apps'}
+                        >
+                          <div
+                            className={styles['app-list-context-menu-trigger']}
+                          />
+                        </ContextMenu.Trigger>
+                        <FilesManagerContextMenu
+                          onAddBrick={openAddAppBrickDialog}
+                        />
+                      </ContextMenu.Root>
+                    </div>
+                  )}
                 </>
               )}
             </div>
@@ -377,6 +404,25 @@ export const FilesManagerSection = ({
                       {formatMessage(messages.noSketchLibrariesAddedYet)}
                     </XXSmall>
                   )}
+                  {appLibraries && (
+                    <div className={styles['app-list-context-menu']}>
+                      <ContextMenu.Root>
+                        <ContextMenu.Trigger
+                          onContextMenu={(e): false | void =>
+                            section !== 'my-apps' && e.preventDefault()
+                          } // disable native context menu
+                          disabled={section !== 'my-apps'}
+                        >
+                          <div
+                            className={styles['app-list-context-menu-trigger']}
+                          />
+                        </ContextMenu.Trigger>
+                        <FilesManagerContextMenu
+                          onAddSketchLibrary={openAddSketchLibraryDialog}
+                        />
+                      </ContextMenu.Root>
+                    </div>
+                  )}
                 </>
               )}
             </div>
@@ -416,7 +462,9 @@ export const FilesManagerSection = ({
                       onFolderCreate={addFolderHandler}
                       onResourceImport={openImportFileDialog}
                       isReadOnly={section !== 'my-apps'}
-                      isBricksSelected={selectedFile?.fileExtension === 'brick'}
+                      isBricksSelected={
+                        selectedFile?.fileExtension === BRICK_FILE_EXTENSION
+                      }
                       renderNodeIcon={renderIcon}
                       openFiles={openFiles}
                       updateOpenFile={updateOpenFile}
@@ -427,6 +475,7 @@ export const FilesManagerSection = ({
                       onFileDragStart={onFileDragStart}
                       onMoveBlocked={onMoveBlocked}
                       onDragOverFolderChange={onDragOverFolderChange}
+                      onValidationError={onValidationError}
                     />
                   </div>
                 </div>

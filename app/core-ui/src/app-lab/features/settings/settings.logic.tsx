@@ -9,19 +9,24 @@ import {
   getLinuxDistribution,
   getOSImageVersion,
   isNetworkModeEnabled,
+  listCloudConnectorOrganizations,
   openLinkExternal,
   rebootBoard,
   reloadApp,
   setNetworkMode,
 } from '@cloud-editor-mono/domain/src/services/services-by-app/app-lab';
+import { CloudConnectorOrganization } from '@cloud-editor-mono/infrastructure';
 import {
   AttachCarrierDialogLogic,
   CarriersStatus,
+  CloudConnectorConnectDialogLogic,
+  CloudConnectorDisconnectDialogLogic,
   PasswordDialogLogic,
   snackbar,
   UnsupportedCarrierDialogLogic,
   UseBoardSettingsLogic,
   UseCarrierSettingsLogic,
+  UseCloudConnectorSettingsLogic,
   useI18n,
   UseNetworkModeLogic,
   UseNetworkSettingsLogic,
@@ -34,11 +39,14 @@ import { useRouter } from '@tanstack/react-router';
 import { useContext, useEffect, useState } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 
+import { BoardScopedQuery } from '../../boardScopedQuery';
 import { useIsBoard } from '../../hooks/useIsBoard';
 import { useSystemProps } from '../../hooks/useSystemProps';
+import { AuthContext } from '../../providers/auth/authContext';
 import { BoardConfigurationContext } from '../../providers/board-configuration/boardConfigurationContext';
 import { BoardResourcesContext } from '../../providers/board-resources/boardResourcesContext';
 import { bytesToGiB } from '../../providers/board-resources/boardResourcesContextProvider.logic';
+import { CloudConnectorContext } from '../../providers/cloud-connector/cloudConnectorContext';
 import { LinuxCredentialsContext } from '../../providers/linux-credentials/linuxCredentialsContext';
 import { NetworkContext } from '../../providers/network/networkContext';
 import { SetupContext } from '../../providers/setup/setupContext';
@@ -49,6 +57,7 @@ import { systemMessages } from './messages';
 
 export const createUseSettingsLogic = function (): UseSettingsLogic {
   return function useSettingsLogic(): ReturnType<UseSettingsLogic> {
+    const { formatMessage } = useI18n();
     const queryClient = useQueryClient();
     const { data: isBoard } = useIsBoard();
     const {
@@ -148,7 +157,7 @@ export const createUseSettingsLogic = function (): UseSettingsLogic {
       };
 
       const { data: carriers } = useQuery(
-        ['carriers'],
+        [BoardScopedQuery.CARRIERS],
         async () => getCarriers(),
         {
           enabled: boardIsReachable,
@@ -159,23 +168,27 @@ export const createUseSettingsLogic = function (): UseSettingsLogic {
         },
       );
 
-      useQuery(['carriers-status'], async () => getCarriersStatus(), {
-        enabled: boardIsReachable,
-        onSuccess: (data) => {
-          if (data) {
-            setStatus({
-              carriers: data.carriers.map((carrier) => ({
-                ...carrier,
-                next: carrier.current,
-                nextEnabled: carrier.currentEnabled,
-              })),
-            });
-          }
+      useQuery(
+        [BoardScopedQuery.CARRIERS_STATUS],
+        async () => getCarriersStatus(),
+        {
+          enabled: boardIsReachable,
+          onSuccess: (data) => {
+            if (data) {
+              setStatus({
+                carriers: data.carriers.map((carrier) => ({
+                  ...carrier,
+                  next: carrier.current,
+                  nextEnabled: carrier.currentEnabled,
+                })),
+              });
+            }
+          },
+          onError: () => {
+            setUnsupported(true);
+          },
         },
-        onError: () => {
-          setUnsupported(true);
-        },
-      });
+      );
 
       const { systemProps, upsertProp } = useSystemProps();
 
@@ -307,12 +320,10 @@ export const createUseSettingsLogic = function (): UseSettingsLogic {
     };
 
     const useNetworkModeLogic = (): ReturnType<UseNetworkModeLogic> => {
-      const { formatMessage } = useI18n();
-
       const [open, setOpen] = useState(false);
 
       const { data: networkModeEnabled } = useQuery(
-        ['network-mode-enabled'],
+        [BoardScopedQuery.NETWORK_MODE_ENABLED],
         async () => isNetworkModeEnabled(),
         {
           enabled: boardIsReachable,
@@ -329,7 +340,10 @@ export const createUseSettingsLogic = function (): UseSettingsLogic {
         mutationFn: (prop: { enabled: boolean; password: string }) =>
           setNetworkMode(prop.enabled, prop.password),
         onSuccess: (enabled: boolean) => {
-          queryClient.setQueryData(['network-mode-enabled'], enabled);
+          queryClient.setQueryData(
+            [BoardScopedQuery.NETWORK_MODE_ENABLED],
+            enabled,
+          );
           snackbar({
             message: formatMessage(systemMessages.remoteAccessToggle, {
               enabled: enabled ? 'enabled' : 'disabled',
@@ -338,7 +352,9 @@ export const createUseSettingsLogic = function (): UseSettingsLogic {
           });
         },
         onSettled: () => {
-          queryClient.invalidateQueries(['network-mode-enabled']);
+          queryClient.invalidateQueries([
+            BoardScopedQuery.NETWORK_MODE_ENABLED,
+          ]);
         },
       });
 
@@ -361,8 +377,9 @@ export const createUseSettingsLogic = function (): UseSettingsLogic {
       };
     };
 
+    const [networkSettingsDialogOpen, setNetworkSettingsDialogOpen] =
+      useState(false);
     const useNetworkSettingsLogic = (): ReturnType<UseNetworkSettingsLogic> => {
-      const [open, setOpen] = useState(false);
       const networkContext = useContext(NetworkContext);
       const router = useRouter();
       const { offlineWarningOpen } = useContext(SetupContext);
@@ -370,20 +387,20 @@ export const createUseSettingsLogic = function (): UseSettingsLogic {
       useEffect(() => {
         networkContext.setManualNetworkSetup(false);
         networkContext.setSelectedNetwork(undefined);
-        networkContext.setScanningIsEnabled(open);
+        networkContext.setScanningIsEnabled(networkSettingsDialogOpen);
         // eslint-disable-next-line react-hooks/exhaustive-deps
-      }, [open]);
+      }, [networkSettingsDialogOpen]);
 
       useEffect(() => {
         if (networkContext.connectRequestIsSuccess) {
-          setOpen(false);
+          setNetworkSettingsDialogOpen(false);
         }
       }, [networkContext.connectRequestIsSuccess]);
 
       // Close network settings dialog when offline warning opens
       useEffect(() => {
         if (offlineWarningOpen) {
-          setOpen(false);
+          setNetworkSettingsDialogOpen(false);
         }
       }, [offlineWarningOpen]);
 
@@ -393,12 +410,12 @@ export const createUseSettingsLogic = function (): UseSettingsLogic {
           openNetworkDialog?: boolean;
         };
         if (search?.openNetworkDialog) {
-          setOpen(true);
+          setNetworkSettingsDialogOpen(true);
         }
       }, [router]);
 
       const { data: selectedConnectedNetwork } = useQuery(
-        ['connection-name'],
+        [BoardScopedQuery.CONNECTION_NAME],
         async () => getConnectionName(),
         {
           enabled: boardIsReachable && networkContext.isConnected,
@@ -406,7 +423,7 @@ export const createUseSettingsLogic = function (): UseSettingsLogic {
       );
 
       const { data: selectedConnectedIPAddress } = useQuery(
-        ['ip-address'],
+        [BoardScopedQuery.IP_ADDRESS],
         async () => getIPAddress(),
         {
           enabled: boardIsReachable && networkContext.isConnected,
@@ -417,9 +434,9 @@ export const createUseSettingsLogic = function (): UseSettingsLogic {
         ...networkContext,
         selectedConnectedNetwork,
         selectedConnectedIPAddress,
-        open,
-        onOpenChange: setOpen,
-        openNetworkSettingsDialog: () => setOpen(true),
+        open: networkSettingsDialogOpen,
+        onOpenChange: setNetworkSettingsDialogOpen,
+        openNetworkSettingsDialog: () => setNetworkSettingsDialogOpen(true),
       };
     };
 
@@ -441,7 +458,7 @@ export const createUseSettingsLogic = function (): UseSettingsLogic {
       }, [canStartUpdate]);
 
       const { data: osImageVersion } = useQuery(
-        ['os-image-version'],
+        [BoardScopedQuery.OS_IMAGE_VERSION],
         async () => getOSImageVersion(),
         {
           enabled: boardIsReachable,
@@ -449,7 +466,7 @@ export const createUseSettingsLogic = function (): UseSettingsLogic {
       );
 
       const { data: kernelVersion } = useQuery(
-        ['kernel-version'],
+        [BoardScopedQuery.KERNEL_VERSION],
         async () => getKernelVersion(),
         {
           enabled: boardIsReachable,
@@ -457,7 +474,7 @@ export const createUseSettingsLogic = function (): UseSettingsLogic {
       );
 
       const { data: linuxDistribution } = useQuery(
-        ['linux-distribution'],
+        [BoardScopedQuery.LINUX_DISTRIBUTION],
         async () => getLinuxDistribution(),
         {
           enabled: boardIsReachable,
@@ -492,7 +509,84 @@ export const createUseSettingsLogic = function (): UseSettingsLogic {
       };
     };
 
+    const useCloudConnectorSettingsLogic =
+      (): ReturnType<UseCloudConnectorSettingsLogic> => {
+        const [connectDialogOpen, setConnectDialogOpen] = useState(false);
+        const [disconnectDialogOpen, setDisconnectDialogOpen] = useState(false);
+
+        const { user, login } = useContext(AuthContext);
+        const { isConnected } = useContext(NetworkContext);
+        const {
+          isConnecting,
+          isDisconnecting,
+          status,
+          removeProvisioning,
+          startProvisioning,
+        } = useContext(CloudConnectorContext);
+        const router = useRouter();
+
+        // Check for search params to open connector dialog
+        useEffect(() => {
+          const search = router.state.location.search as {
+            openCloudConnectorDialog?: boolean;
+          };
+          if (search?.openCloudConnectorDialog) {
+            setConnectDialogOpen(true);
+          }
+        }, [router]);
+
+        const { data: organizations } = useQuery(
+          ['cloud-connector-organizations'],
+          async () => listCloudConnectorOrganizations(),
+          {
+            enabled: boardIsReachable && !!user,
+          },
+        );
+
+        const connectDialogLogic: CloudConnectorConnectDialogLogic = () => ({
+          isConnected: !!isConnected,
+          open: connectDialogOpen,
+          loggedIn: !!user,
+          organizations: organizations || [],
+          login,
+          connect: (): void => {
+            setNetworkSettingsDialogOpen(true);
+            setConnectDialogOpen(false);
+          },
+          confirmAction: (
+            organization: CloudConnectorOrganization,
+          ): Promise<void> => {
+            setConnectDialogOpen(false);
+            return startProvisioning(organization);
+          },
+          onOpenChange: setConnectDialogOpen,
+        });
+
+        const disconnectDialogLogic: CloudConnectorDisconnectDialogLogic =
+          () => ({
+            open: disconnectDialogOpen,
+            loggedIn: !!user,
+            login,
+            confirmAction: async (): Promise<void> => {
+              setDisconnectDialogOpen(false);
+              await removeProvisioning();
+            },
+            onOpenChange: setDisconnectDialogOpen,
+          });
+
+        return {
+          status,
+          isConnecting,
+          isDisconnecting,
+          connectBoard: () => setConnectDialogOpen(true),
+          connectDialogLogic,
+          disconnectBoard: () => setDisconnectDialogOpen(true),
+          disconnectDialogLogic,
+        };
+      };
+
     return {
+      cloudConnectorSettingsLogic: useCloudConnectorSettingsLogic,
       boardSettingsLogic: useBoardSettingsLogic,
       carrierSettingsLogic: useCarrierSettingsLogic,
       networkModeLogic: useNetworkModeLogic,

@@ -10,6 +10,14 @@ import (
 	"github.com/arduino/arduino-app-cli/pkg/board/remote"
 )
 
+// ErrCodeIncorrectPassword is the stable error code returned to the frontend
+// when the Wi-Fi password is incorrect. It is part of the API contract:
+// the frontend matches this exact code to display the proper error message.
+const ErrCodeIncorrectPassword = "ERR_WIFI_INCORRECT_PASSWORD"
+
+// ErrIncorrectPassword is returned when the Wi-Fi password is incorrect
+var ErrIncorrectPassword = errors.New(ErrCodeIncorrectPassword)
+
 // agnostic function to connect to a Wi-Fi network using nmcli
 func connect(ctx context.Context, nm *network.Manager, ssid, password string) error {
 	_, err := nm.Run(ctx, "radio", "wifi", "on")
@@ -45,6 +53,11 @@ func connect(ctx context.Context, nm *network.Manager, ssid, password string) er
 	}
 
 	if _, err := nm.Run(ctx, args...); err != nil {
+		// If we provided a password and connection failed, it's likely incorrect
+		// Other errors (network not found, etc.) are caught earlier in the process
+		if password != "" {
+			return fmt.Errorf("%w: %w", ErrIncorrectPassword, err)
+		}
 		return fmt.Errorf("failed to connect to Wi-Fi %q: %w", ssid, err)
 	}
 	return nil

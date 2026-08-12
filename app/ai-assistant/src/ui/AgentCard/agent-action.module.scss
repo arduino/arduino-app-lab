@@ -1,0 +1,77 @@
+@use "@cloud-editor-mono/arduino-sass/src/fonts" as fonts;
+@use "@cloud-editor-mono/arduino-sass/src/typography" as typography;
+
+button.action {
+  padding-inline: 12px !important;
+}
+
+.installing {
+  --install-progress-width: 120px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  min-width: var(--install-progress-width);
+
+  .installing-inline {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--install-progress-width);
+    gap: 8px;
+    color: var(--text-accent, #25c2c7);
+
+    .installing-spinner {
+      display: inline-block;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      border: 2px solid var(--component-bg-flexible, rgba(174, 184, 184, 0.15));
+      border-top-color: var(--text-accent, #25c2c7);
+      animation: agent-install-spin 0.9s linear infinite;
+    }
+
+    .installing-text {
+      color: var(--text-accent, #25c2c7);
+      font-size: typography.$font-size-x-small;
+      font-weight: fonts.$font-weight-semibold;
+    }
+  }
+}
+
+.installing-bar {
+  width: var(--install-progress-width);
+}
+
+@keyframes agent-install-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.manage {
+  color: var(--text-default, #ffffff) !important;
+  gap: 10px;
+
+  &:hover {
+    color: var(--text-default, #ffffff) !important;
+    background-color: transparent !important;
+  }
+
+  svg {
+    position: relative;
+    top: 1px;
+    width: 8px;
+    height: 8px;
+    transition: transform 0.2s ease;
+    transform: rotate(-90deg);
+  }
+
+  svg path {
+    fill: var(--text-default, #ffffff) !important;
+  }
+
+  &--expanded svg {
+    transform: rotate(0deg);
+  }
+}

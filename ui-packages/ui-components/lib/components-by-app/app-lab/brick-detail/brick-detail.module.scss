@@ -113,20 +113,6 @@
     flex-direction: column;
     gap: 16px;
 
-    .ai-models-info {
-      display: flex;
-      align-items: center;
-      padding: 8px;
-      border-radius: 8px;
-      gap: 8px;
-      font-size: 12px;
-      color: var(--text-subtle, #c9d2d2);
-      background-color: var(--component-bg-flexible, #aeb8b826);
-      p {
-        margin: 0;
-      }
-    }
-
     .new-models {
       display: flex;
       flex-direction: row;
@@ -167,13 +153,6 @@
       }
     }
 
-    .ai-models-info {
-      .link {
-        color: var(--texts-icons-links, #25c2c7);
-        text-decoration: underline;
-        cursor: pointer;
-      }
-    }
   }
 
   .brick-usages {
@@ -231,9 +210,10 @@
             background-position: center;
             background-repeat: no-repeat;
             background-size: 200% 150%;
-            filter: blur(32px);
             opacity: 1;
-            -webkit-filter: blur(32px);
+            // No CSS blur here: the wash is blurred inside the SVG by
+            // getBackgroundIcon, so no accelerated compositing layer is created
+            // (see the comment there).
           }
 
           &-icon {

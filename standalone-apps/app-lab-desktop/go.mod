@@ -4,6 +4,7 @@ go 1.26.1
 
 require (
 	github.com/adrg/frontmatter v0.2.0
+	github.com/adrg/xdg v0.5.3
 	github.com/arduino/arduino-app-cli v0.11.0-rc.1.0.20260521084642-af3d137da04a
 	github.com/arduino/arduino-cli v1.4.2-rc.1.0.20260414124140-c0d2d070289c
 	github.com/arduino/arduino-flasher-cli v0.5.1
@@ -11,14 +12,19 @@ require (
 	github.com/arduino/go-updater v0.3.0
 	github.com/arduino/go-windows-runas v1.0.3-0.20260119165320-5690d2bdfe05
 	github.com/codeclysm/extract/v4 v4.0.0
+	github.com/coder/acp-go-sdk v0.13.5
+	github.com/fsnotify/fsnotify v1.9.0
 	github.com/goforj/godump v1.5.0
 	github.com/microcosm-cc/bluemonday v1.0.27
+	github.com/modelcontextprotocol/go-sdk v1.4.1
 	github.com/sirupsen/logrus v1.9.4
 	github.com/stretchr/testify v1.11.1
 	github.com/wailsapp/wails/v2 v2.13.0
 	github.com/zalando/go-keyring v0.2.6
+	go.bug.st/downloader/v3 v3.0.0
 	go.bug.st/f v0.5.0
 	go.bug.st/relaxed-semver v0.15.0
+	golang.org/x/sys v0.44.0
 	google.golang.org/grpc v1.80.0
 )
 
@@ -47,7 +53,6 @@ require (
 	github.com/djherbis/buffer v1.2.0 // indirect
 	github.com/djherbis/nio/v3 v3.0.1 // indirect
 	github.com/emirpasic/gods v1.18.1 // indirect
-	github.com/fsnotify/fsnotify v1.9.0 // indirect
 	github.com/go-git/gcfg v1.5.1-0.20230307220236-3a3c6141e376 // indirect
 	github.com/go-git/go-billy/v5 v5.9.0 // indirect
 	github.com/go-git/go-git/v5 v5.19.1 // indirect
@@ -56,6 +61,7 @@ require (
 	github.com/godbus/dbus/v5 v5.1.0 // indirect
 	github.com/gofrs/uuid/v5 v5.4.0 // indirect
 	github.com/golang/groupcache v0.0.0-20241129210726-2c02b8208cf8 // indirect
+	github.com/google/jsonschema-go v0.4.2 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/gorilla/css v1.0.1 // indirect
 	github.com/gorilla/websocket v1.5.3 // indirect
@@ -89,6 +95,8 @@ require (
 	github.com/sagikazarmark/locafero v0.12.0 // indirect
 	github.com/samber/lo v1.49.1 // indirect
 	github.com/schollz/closestmatch v2.1.0+incompatible // indirect
+	github.com/segmentio/asm v1.1.3 // indirect
+	github.com/segmentio/encoding v0.5.4 // indirect
 	github.com/sergi/go-diff v1.4.0 // indirect
 	github.com/skeema/knownhosts v1.3.2 // indirect
 	github.com/spf13/afero v1.15.0 // indirect
@@ -104,13 +112,13 @@ require (
 	github.com/wailsapp/go-webview2 v1.0.22 // indirect
 	github.com/wailsapp/mimetype v1.4.1 // indirect
 	github.com/xanzy/ssh-agent v0.3.3 // indirect
+	github.com/yosida95/uritemplate/v3 v3.0.2 // indirect
 	go.bug.st/cleanup v1.0.0 // indirect
-	go.bug.st/downloader/v3 v3.0.0 // indirect
 	go.bug.st/serial v1.6.4 // indirect
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
 	golang.org/x/crypto v0.51.0 // indirect
 	golang.org/x/net v0.54.0 // indirect
-	golang.org/x/sys v0.44.0 // indirect
+	golang.org/x/oauth2 v0.36.0 // indirect
 	golang.org/x/term v0.43.0 // indirect
 	golang.org/x/text v0.37.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20260406210006-6f92a3bedf2d // indirect

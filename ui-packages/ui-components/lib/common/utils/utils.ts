@@ -18,5 +18,5 @@ export const createMatchCounterWorker = (
 
 export const getShortcutCommand = (): string => {
   const parser = new UAParser();
-  return parser.getOS().name === 'Mac OS' ? '⌘' : 'Ctrl + ';
+  return parser.getOS().name === 'Mac OS' ? '⌘' : 'Ctrl+';
 };

@@ -1,0 +1,61 @@
+@use "@cloud-editor-mono/arduino-sass/src/typography" as typography;
+@use "@cloud-editor-mono/ui-components/public/shared.module.scss";
+@use "@cloud-editor-mono/arduino-sass/src/variables" as variables;
+@use "@cloud-editor-mono/arduino-sass/src/fonts" as fonts;
+
+.tool-status-icon {
+  display: inline-block;
+  flex: none;
+  width: 16px;
+  text-align: center;
+  font-size: typography.$font-size-xx-small;
+  line-height: 1;
+  color: var(--text-subtle, #c9d2d2);
+
+  &--in_progress {
+    color: var(--text-accent, #25c2c7);
+  }
+
+  &--completed {
+    color: var(--feedback-success-default, #4caf50);
+  }
+
+  &--failed {
+    color: var(--feedback-error-default, #ff6b6b);
+  }
+}
+
+.tool-title {
+  flex: 1;
+}
+
+.tool-status {
+  color: var(--text-subtle, #c9d2d2);
+}
+
+.tool-body {
+  padding: 0 9px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.tool-io-label {
+  color: var(--text-subtle, #c9d2d2);
+  margin-top: 8px;
+}
+
+.tool-io {
+  margin: 0;
+  padding: 8px 10px;
+  border-radius: 6px;
+  background: var(--surface-bg-below-2, #090f11);
+  border: 1px solid var(--border-default, #232b2e);
+  font-family: variables.$font-roboto;
+  font-size: typography.$font-size-xx-small;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+

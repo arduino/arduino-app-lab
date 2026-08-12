@@ -1,0 +1,223 @@
+@use "../../../typography/typography.module.scss";
+
+@use "@cloud-editor-mono/arduino-sass/src/variables" as vars;
+@use "@cloud-editor-mono/arduino-sass/src/breakpoints" as bp;
+
+.examples-section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+}
+
+.examples-section-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 4px 4px 0;
+  width: 100%;
+}
+
+.examples-section-title-text {
+  color: var(--text-subtle, #c9d2d2);
+  letter-spacing: 0.12px;
+}
+
+.examples-section-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  min-height: 20px;
+  max-height: 20px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: var(--component-bg-flexible, rgba(55, 65, 70, 0.15));
+}
+
+.examples-section-badge-text {
+  color: var(--text-subtle, #c9d2d2);
+  white-space: nowrap;
+}
+
+.examples-section-description {
+  color: var(--text-inverted-subtle, #5d6a6b);
+  padding: 0 4px 4px;
+}
+
+// Collapsible table (one "Class" of examples)
+.examples-table {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border-inverted, #232b2e);
+  border-radius: 8px;
+  background: var(--surface-bg-below-1, #171e21);
+  overflow: hidden;
+}
+
+.examples-table-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  height: 36px;
+  padding: 8px;
+  background: var(--surface-bg-below-1, #171e21);
+  border: unset;
+  cursor: pointer;
+}
+
+.examples-table-header:hover {
+  background: var(--component-bg-flexible, rgba(174, 184, 184, 0.15));
+}
+
+.examples-table-header-content {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1 0 0;
+  min-width: 0;
+}
+
+.examples-table-header-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  font-size: 14px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.examples-table-header-title {
+  color: var(--text-default, #fff);
+  letter-spacing: 0.12px;
+}
+
+.examples-table-header-count {
+  color: var(--text-inverted-subtle, #5d6a6b);
+  letter-spacing: 0.12px;
+}
+
+.examples-table-header-chevron {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  flex-shrink: 0;
+
+  &:hover {
+    background: var(--component-bg-flexible, rgba(174, 184, 184, 0.15));
+  }
+}
+
+.chevron {
+  width: 16px;
+  height: 16px;
+  color: var(--text-subtle, #c9d2d2);
+  transition: transform 0.05s;
+}
+
+.chevron-collapsed {
+  transform: rotate(180deg);
+}
+
+.examples-table-rows {
+  display: flex;
+  flex-direction: column;
+}
+
+// Single example row
+.examples-row {
+  display: flex;
+  width: 100%;
+  padding: 4px;
+  background: transparent;
+  border: unset;
+  cursor: pointer;
+  text-align: left;
+}
+
+.examples-row-inner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1 0 0;
+  min-width: 0;
+  padding: 4px 8px;
+  border-radius: 4px;
+
+  @include bp.breakpoint(vars.$breakpoint-2xl) {
+    gap: 6px;
+  }
+
+  @include bp.breakpoint(vars.$breakpoint-xl) {
+    gap: 4px;
+  }
+}
+
+.examples-row:hover .examples-row-inner {
+  background: var(--component-bg-flexible, rgba(174, 184, 184, 0.15));
+}
+
+.examples-row-title {
+  display: flex;
+  align-items: center;
+  // Fixed-width column when there is room, shrinks and ellipsizes when squeezed.
+  flex: 0 1 240px;
+  min-width: 0;
+  overflow: hidden;
+
+  @include bp.breakpoint(vars.$breakpoint-2xl) {
+    flex-basis: 180px;
+  }
+
+  @include bp.breakpoint(vars.$breakpoint-xl) {
+    flex-basis: 140px;
+  }
+}
+
+.examples-row-title-text {
+  color: var(--text-default, #fff);
+}
+
+.examples-row-description {
+  display: flex;
+  align-items: center;
+  flex: 1 1 0;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.examples-row-description-text {
+  color: var(--text-subtle, #c9d2d2);
+}
+
+.examples-row-arrow {
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-default, #fff);
+  opacity: 0;
+  flex-shrink: 0;
+  border-radius: 4px;
+
+  svg {
+    width: 12px;
+    height: 12px;
+  }
+
+  &:hover {
+    background: var(--component-bg-flexible, rgba(174, 184, 184, 0.15));
+  }
+}
+
+.examples-row:hover .examples-row-arrow {
+  opacity: 1;
+}

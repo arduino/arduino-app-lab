@@ -1,0 +1,100 @@
+@use "@cloud-editor-mono/arduino-sass/src/fonts" as fonts;
+@use "@cloud-editor-mono/arduino-sass/src/typography" as typography;
+@use "@cloud-editor-mono/arduino-sass/src/variables" as variables;
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-default, #ffffff);
+}
+
+.header-icon {
+  width: 13px;
+  height: 13px;
+  color: var(--text-subtle, #c9d2d2);
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.details {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.grid {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  color: var(--text-subtle, #c9d2d2);
+  font-size: typography.$font-size-xx-small;
+
+  dt {
+    flex: 0 0 50%;
+    font-weight: fonts.$font-weight-semibold;
+  }
+
+  dd {
+    flex: 1;
+    margin: 0;
+  }
+}
+
+.footer {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border-inverted, #232b2e);
+}
+
+.footer-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  width: 100%;
+  gap: 16px;
+}
+
+.footer-default-button {
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  color: var(--text-default, #ffffff);
+  font-family: variables.$font-sans;
+  font-size: typography.$font-size-xx-small;
+  font-weight: fonts.$font-weight-semibold;
+
+  &:not(:disabled):hover {
+    text-decoration: underline;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: default;
+  }
+}

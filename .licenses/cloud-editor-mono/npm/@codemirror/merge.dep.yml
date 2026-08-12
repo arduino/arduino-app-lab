@@ -1,9 +1,9 @@
 ---
 name: "@codemirror/merge"
-version: 6.9.0
+version: 6.12.2
 type: npm
 summary: A diff/merge view for CodeMirror
-homepage: 
+homepage:
 license: mit
 licenses:
 - sources: LICENSE

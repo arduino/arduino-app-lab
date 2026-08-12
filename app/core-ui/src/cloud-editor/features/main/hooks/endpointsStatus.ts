@@ -10,7 +10,7 @@ import {
 } from '@cloud-editor-mono/domain';
 import { ToastType } from '@cloud-editor-mono/ui-components';
 import { useQuery } from '@tanstack/react-query';
-import { uniqueId } from 'lodash';
+import { uniqueId } from 'lodash-es';
 import { useContext, useEffect, useState } from 'react';
 import { defineMessages, IntlContext } from 'react-intl';
 

@@ -1,0 +1,35 @@
+@use "@cloud-editor-mono/arduino-sass/src/fonts";
+
+.menu {
+    min-width: 250px;
+    position: fixed;
+    bottom: 40px;
+    background-color: var(--surface-bg-below-1, #171e21);
+    color: var(--text-default, rgba(255, 255, 255, 1));
+    border-radius: 4px;
+    z-index: 60;
+    padding: 4px;
+}
+
+.menu-header {
+    color: var(--text-default, rgba(255, 255, 255, 1));
+    padding: 4px 0 8px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    &-title {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        padding-left: 8px;
+    }
+}
+
+// Panel rows are monospaced (the header above stays Open Sans), matching the
+// footer popovers in the spec where values like "IP: 192.168.1.1" are Roboto Mono.
+.menu-content {
+    background: var(--surface-bg-baseline, #232b2e);
+
+    @include fonts.font(roboto-mono, regular);
+}

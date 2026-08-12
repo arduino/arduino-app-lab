@@ -6,7 +6,7 @@ import {
   UsbPort,
 } from '@cloud-editor-mono/images/assets/icons';
 import clsx from 'clsx';
-import { uniqueId } from 'lodash';
+import { uniqueId } from 'lodash-es';
 import { useContext, useRef, useState } from 'react';
 
 import { Button } from '../../../../../essential/button/Button';

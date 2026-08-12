@@ -187,6 +187,7 @@ const Network = forwardRef((props: NetworkProps, ref) => {
             setNetworkCredentials(credentials);
             logic.setDraftNetworkCredentials?.(credentials);
           }}
+          errorCode={logic.connectRequestErrorCode}
         />
       ) : (
         <>

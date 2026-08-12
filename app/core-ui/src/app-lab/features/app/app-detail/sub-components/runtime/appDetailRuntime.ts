@@ -38,6 +38,7 @@ import { usePreviousDistinct } from 'react-use';
 import { BehaviorSubject, Subject } from 'rxjs';
 
 import { useAiModels } from '../../../../../providers/ai-models/aiModelsContext';
+import { CloudConnectorContext } from '../../../../../providers/cloud-connector/cloudConnectorContext';
 import { RuntimeContext } from '../../../../../providers/runtime/runtimeContext';
 import { useBoardLifecycleStore } from '../../../../../store/boardLifecycle';
 import { useAppSSE } from '../../hooks/useAppSSE';
@@ -124,11 +125,20 @@ export const useAppDetailRuntimeLogic: UseAppDetailRuntimeLogic = function (
     },
     aiModelRequired,
   } = useContext(RuntimeContext);
+  const { status, showRequiredDialog } = useContext(CloudConnectorContext);
 
   const { getInstalledModel } = useAiModels();
 
   const runApp = useCallback((): void => {
     if (!app) return;
+
+    const brickNeedingProvisioning =
+      status?.provisioning !== 'provisioned' &&
+      appBricks?.some((brick) => brick.id === 'arduino:arduino_cloud');
+    if (brickNeedingProvisioning) {
+      showRequiredDialog();
+      return;
+    }
 
     const brickNeedingModel = appBricks?.find((brick) =>
       brick.model && app?.example
@@ -153,7 +163,15 @@ export const useAppDetailRuntimeLogic: UseAppDetailRuntimeLogic = function (
       runAction(app, setOpen);
       setActivePanel('console');
     }
-  }, [app, appBricks, aiModelRequired, getInstalledModel, runAction]);
+  }, [
+    app,
+    status?.provisioning,
+    appBricks,
+    showRequiredDialog,
+    getInstalledModel,
+    aiModelRequired,
+    runAction,
+  ]);
 
   const setAsDefaultApp = useCallback(
     async (isSelected: boolean): Promise<void> => {

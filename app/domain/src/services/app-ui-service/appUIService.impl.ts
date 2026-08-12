@@ -14,8 +14,13 @@ export let forwardNonUIPort: AppUIService['forwardNonUIPort'] =
     throw new Error('forwardNonUIPort not implemented');
   };
 
+export let onAgentStartedApp: AppUIService['onAgentStartedApp'] = () => {
+  return () => undefined;
+};
+
 export const setAppUIService = (service: AppUIService): void => {
   findPorts = service.findPorts;
   openUIWhenReady = service.openUIWhenReady;
   forwardNonUIPort = service.forwardNonUIPort;
+  onAgentStartedApp = service.onAgentStartedApp;
 };

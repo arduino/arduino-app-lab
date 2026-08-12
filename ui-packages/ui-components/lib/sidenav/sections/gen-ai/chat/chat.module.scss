@@ -1,4 +1,5 @@
 @use "../../../../../public/shared.module.scss";
+@use "../../../../typography/typography.module.scss" as typography;
 
 // TODO: Use correct variables when available
 $scrollbarThumbBorderColor: #f7f9f9;
@@ -262,7 +263,7 @@ $scrollbarThumbBorderColor: #f7f9f9;
 
     code {
         color: shared.theme-var(--editor-syntax-highlight-string);
-        font-family: "Roboto Mono";
+        font-family: typography.$roboto-mono-font-family;
         font-size: 12px;
         font-style: normal;
         font-weight: 400;

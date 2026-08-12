@@ -59,3 +59,9 @@
     color: var(--text-subtle, rgba(201, 210, 210, 1));
     text-align: center;
 }
+
+// Take the panel's monospace family; the typography component hardcodes Open Sans.
+.notification-text,
+.no-notifications {
+    font-family: inherit !important;
+}

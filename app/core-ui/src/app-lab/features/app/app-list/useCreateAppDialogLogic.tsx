@@ -10,7 +10,7 @@ export const useCreateAppDialogLogic = (
   createAppDialogOpen: boolean,
   setCreateAppDialogOpen: (open: boolean) => void,
 ): CreateAppDialogLogic => {
-  const navigate = useNavigate({ from: '/my-apps' });
+  const navigate = useNavigate();
 
   const { mutateAsync: handleCreateApp } = useMutation({
     mutationFn: async (request: CreateAppRequest): Promise<boolean> => {

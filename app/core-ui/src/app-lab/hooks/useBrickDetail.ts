@@ -32,7 +32,8 @@ import {
   useState,
 } from 'react';
 
-import { GET_BATCH_FILE_CONTENT_QUERY_KEY } from '../../common/hooks/queries/arduinoAppFiles';
+import { BoardScopedQuery } from '../boardScopedQuery';
+import { GET_FILE_CONTENT_QUERY_KEY } from '../features/app/app-detail/hooks/useFileContents';
 import { sendAppLabNotification } from '../features/notifications';
 import { AiModelsContext } from '../providers/ai-models/aiModelsContext';
 import { AuthContext } from '../providers/auth/authContext';
@@ -84,7 +85,7 @@ export const useBrickDetailLogic: BrickDetailLogic = (
   }, [enabledEIAutoRefresh]);
 
   const { data: appDetail } = useQuery({
-    queryKey: ['list-my-apps', appId],
+    queryKey: [BoardScopedQuery.LIST_MY_APPS, appId],
     queryFn: () => (appId ? getAppDetail(appId) : undefined),
     enabled: !!appId,
   });
@@ -93,13 +94,13 @@ export const useBrickDetailLogic: BrickDetailLogic = (
   const isExample = appDetail?.example === true;
 
   const { data: brick, isLoading: isBrickLoading } = useQuery({
-    queryKey: ['get-brick-details', brickId],
+    queryKey: [BoardScopedQuery.GET_BRICK_DETAILS, brickId],
     queryFn: () => getBrickDetails(brickId),
     enabled: !!brickId,
   });
 
   const { data: brickInstance } = useQuery({
-    queryKey: ['get-brick-instance', brickId, appId],
+    queryKey: [BoardScopedQuery.GET_BRICK_INSTANCE, brickId, appId],
     queryFn: () => getAppBrickInstance(appId ?? '', brickId),
     // Gate only on having an app + brick context. Previously this depended on
     // `appDetail.bricks`, but the app's brick set is tracked by a separate
@@ -114,7 +115,7 @@ export const useBrickDetailLogic: BrickDetailLogic = (
 
   const usedByAppsInstances = useQueries({
     queries: (readOnly ? brick?.used_by_apps ?? [] : []).map((app) => ({
-      queryKey: ['get-brick-instance', brickId, app.id],
+      queryKey: [BoardScopedQuery.GET_BRICK_INSTANCE, brickId, app.id],
       queryFn: () => getAppBrickInstance(app.id ?? '', brickId),
       enabled: !!app.id && !!brickId,
     })),
@@ -145,7 +146,7 @@ export const useBrickDetailLogic: BrickDetailLogic = (
   );
 
   const { data: apiDocs } = useQuery({
-    queryKey: ['get-brick-api-docs', brickId],
+    queryKey: [BoardScopedQuery.GET_BRICK_API_DOCS, brickId],
     queryFn: () => {
       if (!brick?.api_docs_path) {
         return null;
@@ -156,7 +157,7 @@ export const useBrickDetailLogic: BrickDetailLogic = (
   });
 
   const { data: examples } = useQuery({
-    queryKey: ['get-brick-examples', brickId],
+    queryKey: [BoardScopedQuery.GET_BRICK_EXAMPLES, brickId],
     queryFn: async () => {
       const items =
         brick?.code_examples?.filter((example) => example.path) ?? [];
@@ -168,6 +169,8 @@ export const useBrickDetailLogic: BrickDetailLogic = (
           content:
             '```python\n' + (await getFileContent(example.path!)) + '\n```',
           path: example.path!,
+          exampleName: example.name ?? undefined,
+          exampleId: example.encoded_id ?? undefined,
         })),
       );
     },
@@ -367,7 +370,7 @@ export const useBrickDetailLogic: BrickDetailLogic = (
     ): Promise<void> => {
       // Optimistic update
       queryClient.setQueryData(
-        ['get-brick-instance', brickId, appId],
+        [BoardScopedQuery.GET_BRICK_INSTANCE, brickId, appId],
         (prev: BrickInstance | undefined) => ({ ...prev, model: modelId }),
       );
 
@@ -379,7 +382,7 @@ export const useBrickDetailLogic: BrickDetailLogic = (
         if (appDetail?.path) {
           queryClient.invalidateQueries({
             queryKey: [
-              GET_BATCH_FILE_CONTENT_QUERY_KEY,
+              GET_FILE_CONTENT_QUERY_KEY,
               appDetail.path + '/app.yaml',
             ],
           });
@@ -393,7 +396,7 @@ export const useBrickDetailLogic: BrickDetailLogic = (
           });
       } else {
         queryClient.setQueryData(
-          ['get-brick-instance', brickId, appId],
+          [BoardScopedQuery.GET_BRICK_INSTANCE, brickId, appId],
           (prev: BrickInstance | undefined) => ({ ...prev, model: prevId }),
         );
         sendAppLabNotification({
@@ -439,7 +442,7 @@ export const useBrickDetailLogic: BrickDetailLogic = (
       const model = await downloadImpulse(projectId, impulseId);
       if (model) {
         queryClient.setQueryData(
-          ['get-brick-details', brickId],
+          [BoardScopedQuery.GET_BRICK_DETAILS, brickId],
           (prev: BrickDetails | undefined) => ({
             ...prev,
             compatible_models: (brick?.compatible_models || []).concat(model),
@@ -497,7 +500,7 @@ export const useBrickDetailLogic: BrickDetailLogic = (
       const modelName = getInstalledModel(modelId)?.name;
       await deleteAIModel(modelId, isForced);
       queryClient.setQueryData(
-        ['get-installed-models'],
+        [BoardScopedQuery.GET_INSTALLED_MODELS],
         (prev: AIModelItem[] | undefined) => {
           // update the model just downloaded with id `modelId` to have `status: 'notinstalled'`
           return (prev || []).map((model) => {
@@ -512,7 +515,7 @@ export const useBrickDetailLogic: BrickDetailLogic = (
         },
       );
 
-      queryClient.invalidateQueries(['get-installed-models']);
+      queryClient.invalidateQueries([BoardScopedQuery.GET_INSTALLED_MODELS]);
 
       sendAppLabNotification({
         message: `${modelName} successfully uninstalled`,
@@ -704,8 +707,12 @@ export const useConfigureAppBrickDialog: ConfigureAppBrickDialogLogic = (
       }
       const success = await updateAppBrick(appId, brickId, req);
       if (success) {
-        queryClient.invalidateQueries(['get-brick-instance', brickId, appId]);
-        queryClient.invalidateQueries(['app-bricks', appId]);
+        queryClient.invalidateQueries([
+          BoardScopedQuery.GET_BRICK_INSTANCE,
+          brickId,
+          appId,
+        ]);
+        queryClient.invalidateQueries([BoardScopedQuery.APP_BRICKS, appId]);
       }
       return success;
     },
@@ -713,7 +720,7 @@ export const useConfigureAppBrickDialog: ConfigureAppBrickDialogLogic = (
   );
 
   const { data: brickInstance } = useQuery({
-    queryKey: ['get-brick-instance', brickId, appId],
+    queryKey: [BoardScopedQuery.GET_BRICK_INSTANCE, brickId, appId],
     queryFn: () => getAppBrickInstance(appId ?? '', brickId!),
     enabled: !!appId && !!brickId && open,
   });

@@ -1,7 +1,9 @@
 import { AppsSection } from '@cloud-editor-mono/ui-components/lib/components-by-app/app-lab';
 import { defineMessages } from 'react-intl';
 
-export const emptyTitleMessages = defineMessages<AppsSection>({
+export type EmptyStateKey = AppsSection | 'inspirations';
+
+export const emptyTitleMessages = defineMessages<EmptyStateKey>({
   'my-apps': {
     id: 'appList.emptyMyApps',
     defaultMessage: 'No apps yet',
@@ -12,9 +14,14 @@ export const emptyTitleMessages = defineMessages<AppsSection>({
     defaultMessage: 'No examples found',
     description: 'No examples found',
   },
+  inspirations: {
+    id: 'appList.emptyInspirations',
+    defaultMessage: 'No inspirations found',
+    description: 'No inspirations found',
+  },
 });
 
-export const emptyDescriptionMessages = defineMessages<AppsSection>({
+export const emptyDescriptionMessages = defineMessages<EmptyStateKey>({
   'my-apps': {
     id: 'appList.emptyMyAppsDescription',
     defaultMessage:
@@ -27,6 +34,20 @@ export const emptyDescriptionMessages = defineMessages<AppsSection>({
       'There might be an issue with retrieving examples from the board',
     description: 'No examples found description',
   },
+  inspirations: {
+    id: 'appList.emptyInspirationsDescription',
+    defaultMessage:
+      'There might be an issue with retrieving inspirations from the board',
+    description: 'No inspirations found description',
+  },
+});
+
+export const emptySearchMessages = defineMessages({
+  examples: {
+    id: 'appList.emptySearchExamples',
+    defaultMessage: 'Please check your spelling or try other keywords.',
+    description: 'No examples match the search query',
+  },
 });
 
 export const appListMessages = defineMessages({
@@ -34,16 +55,6 @@ export const appListMessages = defineMessages({
     id: 'appList.actionCreate',
     defaultMessage: 'Create new app',
     description: 'Create a new app',
-  },
-  createNewApp: {
-    id: 'app-lab.app-list.create-new-app',
-    defaultMessage: 'Create New App',
-    description: 'Dropdown option to create a new app',
-  },
-  importApp: {
-    id: 'app-lab.app-list.import-app',
-    defaultMessage: 'Import App',
-    description: 'Dropdown option to import an app',
   },
   successfullyDeletedApp: {
     id: 'app-lab.app-list.successfully-deleted-app',
@@ -69,5 +80,10 @@ export const appListMessages = defineMessages({
     id: 'app-lab.app-list.removed-as-default',
     defaultMessage: '{appName} removed as default app',
     description: 'Success message when an app is removed as default',
+  },
+  searchExamples: {
+    id: 'app-lab.app-list.search-examples',
+    defaultMessage: 'Search',
+    description: 'Search examples placeholder',
   },
 });

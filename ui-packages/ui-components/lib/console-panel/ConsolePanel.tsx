@@ -52,7 +52,7 @@ const ConsolePanel: React.FC<ConsolePanelProps> = ({
 
   const { formatMessage } = useI18n();
 
-  const output = (getOutputString && getOutputString()) || '';
+  const output = getOutputString?.() || '';
 
   //Messages and console UI icons
   const {
@@ -176,7 +176,7 @@ const ConsolePanel: React.FC<ConsolePanelProps> = ({
                 compileResultMessages,
             })}
           >
-            {getOutputString && getOutputString() ? (
+            {getOutputString?.() ? (
               <ConsoleElement
                 viewInstanceId={ViewInstances.Console}
                 classes={{ container: styles['console-output-content'] }}

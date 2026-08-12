@@ -18,6 +18,8 @@ import {
 } from '@tanstack/react-query';
 import { useCallback, useMemo, useState } from 'react';
 
+import { BoardScopedQuery } from '../../../../boardScopedQuery';
+
 export interface UseSketchLibraries {
   libraries?: SketchLibrary[];
   librarySearchIsLoading: boolean;
@@ -61,7 +63,7 @@ export const useSketchLibraries = ({
     LibraryListResponse,
     [string, ListLibrariesParams['query'] | null]
   >({
-    queryKey: ['list-sketch-libraries', searchParams],
+    queryKey: [BoardScopedQuery.LIST_SKETCH_LIBRARIES, searchParams],
     queryFn: async ({ pageParam = 1, queryKey }) => {
       const [, query] = queryKey;
       // Pass both the core search params and the current page to your API
@@ -96,7 +98,7 @@ export const useSketchLibraries = ({
   );
 
   const { data: appLibraries, isLoading: appLibrariesAreLoading } = useQuery(
-    ['app-sketch-libraries', appId],
+    [BoardScopedQuery.APP_SKETCH_LIBRARIES, appId],
     async () => {
       if (appId) {
         const resp = await getAppSketchLibraries(appId);
@@ -131,7 +133,10 @@ export const useSketchLibraries = ({
     },
     onSuccess: async () => {
       assertNonNull(appId);
-      await queryClient.invalidateQueries(['app-sketch-libraries', appId]);
+      await queryClient.invalidateQueries([
+        BoardScopedQuery.APP_SKETCH_LIBRARIES,
+        appId,
+      ]);
       if (refetchSketchYaml) {
         try {
           await refetchSketchYaml();
@@ -157,7 +162,10 @@ export const useSketchLibraries = ({
       setDeletingLibraryId(id);
       try {
         await deleteAppSketchLibrary(appId, libRef);
-        await queryClient.invalidateQueries(['app-sketch-libraries', appId]);
+        await queryClient.invalidateQueries([
+          BoardScopedQuery.APP_SKETCH_LIBRARIES,
+          appId,
+        ]);
         if (refetchSketchYaml) {
           try {
             await refetchSketchYaml();

@@ -1,0 +1,30 @@
+.pin-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+
+  svg {
+    width: 12px !important;
+    height: 12px !important;
+  }
+}
+
+// Inline rename input, shown in place of a session row while editing its title.
+.edit {
+  width: 100%;
+  box-sizing: border-box;
+  margin: 2px 0;
+  padding: 6px 8px;
+  border: 1px solid var(--border-default, #434f54);
+  border-radius: 6px;
+  background: var(--surface-bg-below-2, #090f11);
+  color: var(--text-default, #ffffff);
+  font: inherit;
+  font-size: 12px;
+
+  &:focus {
+    outline: none;
+  }
+}

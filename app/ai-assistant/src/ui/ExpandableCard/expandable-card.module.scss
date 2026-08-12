@@ -1,0 +1,55 @@
+@use "@cloud-editor-mono/ui-components/public/shared.module.scss";
+@use "@cloud-editor-mono/arduino-sass/src/fonts" as fonts;
+@use "@cloud-editor-mono/arduino-sass/src/variables" as variables;
+@use "@cloud-editor-mono/arduino-sass/src/typography" as typography;
+
+.expandable-card {
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.expandable-card-header {
+  width: fit-content;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font-family: variables.$font-sans;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-align: left;
+  cursor: pointer;
+  height: 38px;
+  padding: 0;
+
+  &:hover .expandable-card-title,
+  &:hover .expandable-card-chevron {
+    color: var(--text-default, #ffffff);
+  }
+}
+
+.expandable-card-title {
+  font-size: typography.$font-size-x-small;
+  font-weight: fonts.$font-weight-semibold;
+  color: var(--text-inverted-subtle, #5D6A6B);
+  transition: color 0.3s ease;
+}
+
+.expandable-card-chevron {
+  width: 7px;
+  height: 7px;
+  flex: none;
+  margin-top: 1px;
+  color: var(--text-inverted-subtle, #5D6A6B);
+  transition: transform 0.2s ease, color 0.3s ease;
+  transform: rotate(-90deg);
+
+  &--expanded {
+    transform: rotate(0deg);
+  }
+}
+
+.expandable-card-body {
+  display: block;
+  cursor: pointer;
+}

@@ -23,7 +23,7 @@ import {
   WebSerialStateKeys,
 } from '@cloud-editor-mono/web-board-communication';
 import { useQueryClient } from '@tanstack/react-query';
-import { uniqueId } from 'lodash';
+import { uniqueId } from 'lodash-es';
 import {
   useCallback,
   useContext,

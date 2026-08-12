@@ -1,5 +1,3 @@
-import React from 'react';
-
 import _genAiBanner from './gen-ai-banner.png';
 import _genAiBannerBg from './gen-ai-banner-bg.png';
 import _userAvatar from './user-avatar.png';

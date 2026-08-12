@@ -1,0 +1,26 @@
+@use "@cloud-editor-mono/ui-components/public/shared.module.scss";
+@use "@cloud-editor-mono/arduino-sass/src/variables" as variables;
+@use "@cloud-editor-mono/arduino-sass/src/typography" as typography;
+
+.diff-block {
+    border: 1px solid var(--border-default, #232b2e);
+    border-radius: 8px;
+    font-family: variables.$font-roboto;
+    font-size: typography.$font-size-xx-small;
+    letter-spacing: 1.2px;
+    margin: 0;
+    overflow-x: auto;
+    line-height: 1.5;
+}
+
+.diff-block-added {
+    background: var(--feedback-success-subtle, #213D3C);
+    color: var(--feedback-success-default, #16A588);
+    padding: 3px 12px;
+}
+
+.diff-block-removed {
+    background: var(--feedback-error-subtle, #702419);
+    color: var(--feedback-error-default, #FF8878);
+    padding: 3px 12px;
+}

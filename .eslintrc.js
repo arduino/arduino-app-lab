@@ -66,5 +66,34 @@ module.exports = {
         '@typescript-eslint/explicit-function-return-type': 'warn',
       },
     },
+    {
+      // The ui-components top-level barrel re-exports cloud-editor-only
+      // components (e.g. DeviceAssociationDialog and all its board images),
+      // so importing it from inside the package or from App Lab code drags
+      // every export into the App Lab bundle. Deep imports like
+      // '@cloud-editor-mono/ui-components/lib/components-by-app/app-lab'
+      // remain allowed. Enforced in CI by
+      // app/core-ui/src/architecture/barrelImports.test.ts.
+      files: [
+        'ui-packages/ui-components/**/*.{ts,tsx}',
+        'app/core-ui/src/app-lab/**/*.{ts,tsx}',
+      ],
+      rules: {
+        'no-restricted-imports': [
+          'error',
+          {
+            paths: [
+              '@cloud-editor-mono/ui-components',
+              '@cloud-editor-mono/ui-components/lib',
+              '@cloud-editor-mono/ui-components/lib/index',
+            ].map((name) => ({
+              name,
+              message:
+                'Do not import the ui-components top-level barrel: it pulls every export (board images included) into the bundle. Use a relative import inside the package, or a deep import like @cloud-editor-mono/ui-components/lib/<module> from apps.',
+            })),
+          },
+        ],
+      },
+    },
   ],
 };

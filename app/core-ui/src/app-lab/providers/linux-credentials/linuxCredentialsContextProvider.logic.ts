@@ -1,3 +1,4 @@
+import { BOARD_FQBN } from '@cloud-editor-mono/common';
 import {
   isUserPasswordSet,
   setUserPassword as apiSetUserPassword,
@@ -63,8 +64,7 @@ export function useLinuxCredentials(): LinuxCredentialsContextValue {
   const queryClient = useQueryClient();
 
   const boardsProps = useBoards();
-  const isVentunoQ =
-    boardsProps.selectedBoard?.fqbn === 'arduino:zephyr:ventunoq';
+  const isVentunoQ = boardsProps.selectedBoard?.fqbn === BOARD_FQBN.VENTUNO_Q;
 
   const boardIsReachable = useBoardLifecycleStore(
     (state) => state.boardIsReachable,
@@ -95,7 +95,9 @@ export function useLinuxCredentials(): LinuxCredentialsContextValue {
     },
     onError: (error) => {
       console.error('Failed to set user password', error);
-      dispatch({ type: 'SET_PASSWORD_ERROR' });
+      const errorMessage =
+        error instanceof Error ? error.message : 'Failed to set user password';
+      dispatch({ type: 'SET_PASSWORD_ERROR', payload: errorMessage });
     },
     onSettled: () => {
       queryClient.invalidateQueries(['get-user-password-set']);
@@ -108,6 +110,13 @@ export function useLinuxCredentials(): LinuxCredentialsContextValue {
         dispatch({
           type: 'SET_PASSWORD_ERROR',
           payload: 'Fill with at least 8 characters',
+        });
+        return;
+      }
+      if (password.toLowerCase().includes('arduino')) {
+        dispatch({
+          type: 'SET_PASSWORD_ERROR',
+          payload: 'Password must not contain the username',
         });
         return;
       }

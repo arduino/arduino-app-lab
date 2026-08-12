@@ -6,7 +6,7 @@ import {
   TransactionSpec,
 } from '@codemirror/state';
 import { EditorView } from '@codemirror/view';
-import { debounce } from 'lodash';
+import { debounce } from 'lodash-es';
 import { RefObject, useCallback, useEffect, useRef, useState } from 'react';
 
 import { SerialMonitorStatus } from '../../SerialMonitor.type';

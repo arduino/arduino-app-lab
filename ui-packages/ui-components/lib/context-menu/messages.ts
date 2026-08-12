@@ -53,4 +53,35 @@ export const messages = defineMessages<keyof typeof ContextMenuItemIds>({
     defaultMessage: 'Find',
     description: 'Find',
   },
+  // LSP
+  [ContextMenuItemIds.GoToDefinition]: {
+    id: 'contextMenu.goToDefinition',
+    defaultMessage: 'Go to Definition',
+    description: 'Go to Definition',
+  },
+  [ContextMenuItemIds.GoToTypeDefinition]: {
+    id: 'contextMenu.goToTypeDefinition',
+    defaultMessage: 'Go to Type Definition',
+    description: 'Go to Type Definition',
+  },
+  [ContextMenuItemIds.GoToImplementation]: {
+    id: 'contextMenu.goToImplementation',
+    defaultMessage: 'Go to Implementation',
+    description: 'Go to Implementation',
+  },
+  [ContextMenuItemIds.FindAllReferences]: {
+    id: 'contextMenu.findAllReferences',
+    defaultMessage: 'Find All References',
+    description: 'Find All References',
+  },
+  [ContextMenuItemIds.Format]: {
+    id: 'contextMenu.format',
+    defaultMessage: 'Format',
+    description: 'Format',
+  },
+  [ContextMenuItemIds.Rename]: {
+    id: 'contextMenu.rename',
+    defaultMessage: 'Rename',
+    description: 'Rename',
+  },
 });

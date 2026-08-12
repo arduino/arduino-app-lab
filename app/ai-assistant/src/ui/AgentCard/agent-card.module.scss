@@ -1,0 +1,87 @@
+@use "@cloud-editor-mono/ui-components/public/shared.module.scss";
+@use "@cloud-editor-mono/arduino-sass/src/typography" as typography;
+@use "@cloud-editor-mono/arduino-sass/src/_fonts" as fonts;
+@use "@cloud-editor-mono/arduino-sass/src/_variables" as variables;
+
+.agent {
+  display: flex;
+  flex-direction: column;
+  padding: 14px 16px;
+  border-radius: 10px;
+  background: var(--surface-bg-below-1, #171e21);
+  text-align: left;
+
+  .agent-badge {
+    font-size: typography.$font-size-xxx-small;
+    font-weight: fonts.$font-weight-medium;
+    font-family: variables.$font-roboto;
+    text-transform: uppercase;
+    white-space: nowrap;
+    padding-inline: 6px;
+    border-radius: 4px;
+    color: var(--feedback-success-strong, #dcf2ed);
+    background: var(--feedback-success-subtle, #213d3c);
+    line-height: 1.9;
+
+    &--connected {
+      background: var(--component-bg-neutral, #4e5b61);
+    }
+  }
+}
+
+.agent-head {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.agent-logo {
+  width: 40px;
+  height: 40px;
+  flex: none;
+  border-radius: 8px;
+  background: var(--component-bg-flexible, rgba(174, 184, 184, 0.15));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: fonts.$font-weight-semibold;
+
+  svg {
+    width: auto;
+    height: 20px;
+  }
+}
+
+.agent-text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+}
+
+.agent-name-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.agent-name {
+  color: var(--text-default, #ffffff);
+  margin-right: 8px;
+}
+
+.agent-desc {
+  color: var(--text-subtle, #c9d2d2);
+}
+
+.agent-body {
+  margin-top: 16px;
+  margin-left: -16px;
+  margin-right: -16px;
+  padding: 16px 16px 0;
+  border-top: 1px solid var(--border-inverted, #232b2e);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}

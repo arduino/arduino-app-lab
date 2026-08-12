@@ -2,6 +2,7 @@ import {
   checkAndApplyUpdate,
   getConnectionName,
   getCurrentVersion,
+  getIPAddress,
   newVersion,
 } from '@cloud-editor-mono/domain/src/services/services-by-app/app-lab';
 import { ArduinoLoop } from '@cloud-editor-mono/images/assets/icons';
@@ -12,18 +13,23 @@ import {
   useI18n,
 } from '@cloud-editor-mono/ui-components/lib/components-by-app/app-lab';
 import { useQuery } from '@tanstack/react-query';
-import { useNavigate } from '@tanstack/react-router';
-import { useContext, useEffect, useMemo, useState } from 'react';
+import { useNavigate, useRouter, useRouterState } from '@tanstack/react-router';
+import { useContext, useEffect, useState } from 'react';
 
+import { BoardScopedQuery } from '../../boardScopedQuery';
+import { useAgentModeSeen } from '../../hooks/useAgentModeSeen';
 import { useBoardItem } from '../../hooks/useBoardItem';
 import { UseBoards } from '../../hooks/useBoards';
 import { useIsBoard } from '../../hooks/useIsBoard';
 import { useTerminal } from '../../hooks/useTerminal';
 import { BoardResourcesContext } from '../../providers/board-resources/boardResourcesContext';
 import { useFooterNotifications } from '../../providers/footer-notifications/footerNotificationsContext';
+import { LanguageServerContext } from '../../providers/language-server/languageServerContext';
 import { NetworkContext } from '../../providers/network/networkContext';
 import { RuntimeContext } from '../../providers/runtime/runtimeContext';
 import { useBoardLifecycleStore } from '../../store/boardLifecycle';
+import { useAgentModeEntryShineLogic } from './agentModeEntryShine.logic';
+import { useAgentModeTooltipLogic } from './agentModeTooltip.logic';
 import { messages } from './messages';
 
 const bytesToGiB = (bytes: unknown): string =>
@@ -41,6 +47,10 @@ export const createUseFooterBarLogic = function (
   return function useFooterBarLogic(): ReturnType<FooterBarLogic> {
     const { formatMessage } = useI18n();
     const navigate = useNavigate();
+    const router = useRouter();
+    const aiAssistantActive = useRouterState({
+      select: (state) => state.location.pathname.startsWith('/ai-assistant'),
+    });
 
     const { data: isBoard } = useIsBoard();
 
@@ -93,6 +103,10 @@ export const createUseFooterBarLogic = function (
     const boardIsReachable = useBoardLifecycleStore(
       (state) => state.boardIsReachable,
     );
+    const { markAgentModeHintSeen } = useAgentModeSeen();
+    const agentModeTooltip = useAgentModeTooltipLogic(aiAssistantActive);
+    const { shine: agentModeEntryShine, markEntryClicked } =
+      useAgentModeEntryShineLogic(aiAssistantActive);
 
     const { data: currentVersion } = useQuery(['current-version'], () =>
       getCurrentVersion(),
@@ -132,6 +146,10 @@ export const createUseFooterBarLogic = function (
                 used: (resources.cpuPercentage as number).toFixed(0),
               }),
               state: resources.cpuPercentage > 80 ? 'warning' : undefined,
+              value: {
+                used: resources.cpuPercentage,
+                total: 100,
+              },
             }
           : prev.cpu,
         npu: resources.npuPercentage
@@ -140,12 +158,16 @@ export const createUseFooterBarLogic = function (
                 used: (resources.npuPercentage as number).toFixed(0),
               }),
               state: resources.npuPercentage > 80 ? 'warning' : undefined,
+              value: {
+                used: resources.npuPercentage,
+                total: 100,
+              },
             }
           : prev.npu,
         ...[
           { key: 'ram', value: resources.ram },
-          { key: 'user', value: resources.homeDisk, path: 'USER' },
-          { key: 'root', value: resources.rootDisk, path: 'ROOT' },
+          { key: 'user', value: resources.homeDisk, path: 'User' },
+          { key: 'root', value: resources.rootDisk, path: 'Root' },
         ].reduce(
           (obj, { key, value, path }) => ({
             ...obj,
@@ -163,6 +185,7 @@ export const createUseFooterBarLogic = function (
                     getUsedPercent(value.used, value.total) > 80
                       ? 'warning'
                       : undefined,
+                  value,
                 }
               : prev[key as keyof SystemResources],
           }),
@@ -173,23 +196,20 @@ export const createUseFooterBarLogic = function (
 
     const { isConnected } = useContext(NetworkContext);
     const { data: connectingName } = useQuery(
-      ['connection-name'],
+      [BoardScopedQuery.CONNECTION_NAME],
       async () => getConnectionName(),
       {
         enabled: boardIsReachable && isConnected,
       },
     );
 
-    const boardIP = useMemo(() => {
-      if (!boardIsReachable || !selectedBoard?.address) {
-        return;
-      }
-
-      return formatMessage(messages.ip, {
-        type: 'IP',
-        ip: selectedBoard.address,
-      });
-    }, [boardIsReachable, selectedBoard?.address, formatMessage]);
+    const { data: boardIP } = useQuery(
+      [BoardScopedQuery.IP_ADDRESS],
+      async () => getIPAddress(),
+      {
+        enabled: boardIsReachable,
+      },
+    );
 
     useEffect(() => {
       if (boardIsReachable) {
@@ -200,19 +220,12 @@ export const createUseFooterBarLogic = function (
             label: connectingName ?? undefined,
             state: isConnected ? 'default' : 'inactive',
             onClick: (): void => {
-              if (isConnected) {
-                navigate({
-                  to: '/settings',
-                  hash: 'network',
-                  search: { openNetworkDialog: false },
-                });
-              } else {
-                navigate({
-                  to: '/settings',
-                  hash: 'network',
-                  search: { openNetworkDialog: true },
-                });
-              }
+              navigate({
+                to: '/settings',
+                hash: 'network',
+                hashScrollIntoView: { block: 'nearest', inline: 'nearest' },
+                search: { openNetworkDialog: !isConnected },
+              });
             },
           };
           return newItems;
@@ -226,6 +239,19 @@ export const createUseFooterBarLogic = function (
       });
     };
 
+    const { lspId, lspState } = useContext(LanguageServerContext);
+
+    const onOpenAiAssistant = (): void => {
+      if (aiAssistantActive) {
+        router.history.back();
+        return;
+      }
+      markAgentModeHintSeen('banner');
+      markEntryClicked();
+
+      navigate({ to: '/ai-assistant' });
+    };
+
     return {
       runtimeContext,
       currentVersion: currentVersion || '',
@@ -236,11 +262,18 @@ export const createUseFooterBarLogic = function (
       boardItem,
       boardIP,
       onOpenApp,
+      onOpenAiAssistant,
+      aiAssistantActive,
+      agentModeTooltip,
+      agentModeEntryShine,
       onOpenTerminal,
       isBoard: isBoard || false,
       terminalError,
       boards,
       selectedBoard,
+      lspId,
+      lspState,
+      bytesToGiB,
       selectBoard,
       autoSelectBoard,
       showBoardConnPswPrompt,

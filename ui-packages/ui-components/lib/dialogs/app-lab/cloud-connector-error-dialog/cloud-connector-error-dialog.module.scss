@@ -1,0 +1,55 @@
+.body {
+  align-items: center;
+
+  &-icon {
+    width: 56px;
+    height: 56px;
+    path {
+      fill: var(--feedback-warning-default, #c1ab15);
+    }
+  }
+
+  &-title {
+    text-align: center;
+    font-weight: 700 !important;
+    white-space: pre;
+  }
+
+  &-description {
+    text-align: center;
+  }
+
+  .copy-container {
+    margin-top: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+
+    .label {
+      font-weight: 700 !important;
+    }
+
+    .container {
+      border: 1px solid var(--border-default, #434f54);
+      background: var(--surface-bg-below-1, #171e21);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: calc(100% - 16px);
+      padding: 8px;
+
+      .copy-text {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+
+        svg {
+          height: 12px;
+          width: 12px;
+          color: var(--text-default, #ffffff);;
+        }
+      }
+    }
+  }
+}

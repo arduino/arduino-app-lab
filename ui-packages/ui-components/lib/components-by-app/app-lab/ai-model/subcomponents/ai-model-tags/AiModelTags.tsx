@@ -1,6 +1,5 @@
 import { getPropertyByName } from '@cloud-editor-mono/common';
 import { ArrowUpRight } from '@cloud-editor-mono/images/assets/icons';
-import { useI18n } from '@cloud-editor-mono/ui-components';
 import {
   Button,
   ButtonSize,
@@ -8,6 +7,7 @@ import {
 } from '@cloud-editor-mono/ui-components/lib/components-by-app/app-lab';
 import { useMemo } from 'react';
 
+import { useI18n } from '../../../../../i18n/useI18n';
 import { XXSmall } from '../../../../../typography';
 import { aiModelMessages } from '../../../brick-detail/messages';
 import styles from '../../ai-model.module.scss';

@@ -1,9 +1,9 @@
 ---
 name: "@lezer/python"
-version: 1.1.18
+version: 1.1.19
 type: npm
 summary: Lezer-based Python grammar
-homepage: 
+homepage:
 license: mit
 licenses:
 - sources: LICENSE

@@ -1,4 +1,6 @@
 import {
+  APP_NAME_IN_USE_ERROR,
+  APP_NAME_INVALID_CHARACTERS_REGEX,
   AppDetailedInfo,
   CreateAppRequest,
 } from '@cloud-editor-mono/infrastructure';
@@ -38,7 +40,9 @@ export const RenameAppDialog: React.FC<RenameAppDialogProps> = ({
   const { open, app, confirmAction, onOpenChange, sendNotification } = logic();
   const [name, setName] = useState(app?.name ?? '');
   const [icon, setIcon] = useState(app?.icon ?? '😀');
-  const [hasError, setHasError] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | undefined>(
+    undefined,
+  );
 
   useEffect(() => {
     if (app) {
@@ -48,7 +52,7 @@ export const RenameAppDialog: React.FC<RenameAppDialogProps> = ({
       setName('');
       setIcon('😀');
     }
-    setHasError(false);
+    setErrorMessage(undefined);
   }, [app, open]);
 
   const { formatMessage } = useI18n();
@@ -56,21 +60,49 @@ export const RenameAppDialog: React.FC<RenameAppDialogProps> = ({
   const onAppNameChange = (value: string): void => {
     if (value.length > MAX_LENGTH) return;
     setName(value);
-    setHasError(false);
+    setErrorMessage(undefined);
+  };
+
+  const validateAppName = (name: string): boolean => {
+    // Not the file/folder rule: the app directory is slug.Make(name) server
+    // side, so the raw name never becomes a path. Spaces are fine here.
+    if (APP_NAME_INVALID_CHARACTERS_REGEX.test(name)) {
+      setErrorMessage(formatMessage(messages.appNameInvalidChars));
+      return false;
+    }
+    return true;
   };
 
   const { mutateAsync: handleRenameApp, isLoading } = useMutation(
     ['rename-app'],
     async () => {
-      const result = await confirmAction({ icon, name });
-      if (result) {
-        onOpenChange(false);
-        sendNotification({
-          message: formatMessage(messages.successRename),
-          variant: 'success',
-        });
-      } else {
-        setHasError(true);
+      if (!validateAppName(name)) {
+        return;
+      }
+
+      try {
+        const result = await confirmAction({ icon, name });
+        if (result) {
+          onOpenChange(false);
+          sendNotification({
+            message: formatMessage(messages.successRename),
+            variant: 'success',
+          });
+          return;
+        }
+
+        setErrorMessage(formatMessage(messages.appNameInUse));
+      } catch (error) {
+        if (error instanceof Error && error.message === APP_NAME_IN_USE_ERROR) {
+          setErrorMessage(formatMessage(messages.appNameInUse));
+          return;
+        }
+        const message =
+          error instanceof Error
+            ? error.message
+            : formatMessage(messages.failedRename);
+        setErrorMessage(message);
+        sendNotification({ message, variant: 'error' });
       }
     },
   );
@@ -120,11 +152,7 @@ export const RenameAppDialog: React.FC<RenameAppDialogProps> = ({
               type="text"
               value={name}
               onChange={onAppNameChange}
-              error={
-                hasError
-                  ? new Error(formatMessage(messages.appNameInUse))
-                  : undefined
-              }
+              error={errorMessage ? new Error(errorMessage) : undefined}
               placeholder={formatMessage(messages.inputPlaceholder)}
               /* eslint-disable-next-line jsx-a11y/no-autofocus */
               autoFocus

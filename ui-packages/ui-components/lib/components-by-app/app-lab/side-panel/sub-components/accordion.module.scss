@@ -1,0 +1,38 @@
+.accordion {
+  display: flex;
+  flex-direction: column;
+}
+
+.accordion-header {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+  padding: 4px 8px;
+  border-radius: 3px;
+  background: transparent;
+  border: unset;
+  cursor: pointer;
+  color: var(--text-subtle, #c9d2d2);
+}
+
+.accordion-label {
+  color: var(--text-subtle, #c9d2d2);
+}
+
+// the icon itself is a small ~5x3 glyph; the 16px box is padding, not the svg size
+.accordion-caret {
+  width: 16px;
+  height: 16px;
+  transition: transform 0.05s;
+}
+
+// expanded = caret pointing down (unrotated, per Figma); collapsed = rotated
+.accordion-caret-collapsed {
+  transform: rotate(-90deg);
+}
+
+.accordion-items {
+  display: flex;
+  flex-direction: column;
+}

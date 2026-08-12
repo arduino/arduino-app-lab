@@ -16,6 +16,7 @@ export interface SelectableFileData {
   isFixed?: boolean;
   isMetadataReadOnly?: boolean;
   isPreview?: boolean;
+  error?: Error;
 }
 
 export type AddFileHandler = (
@@ -172,6 +173,16 @@ export type NewTabMenuDictionary<T> = { [K in NewTabMenuItemIds]: T };
 export type NewTabMenuItemDictionary = NewTabMenuDictionary<TabMenuItemType>;
 
 export type UnsavedFileIds = Set<string>;
+
+/**
+ * The `fileExtension` a brick tab carries. Not a real extension: a brick is not
+ * a file — its tab meta is synthesised from the brick's display name, it has no
+ * path, and it renders a detail view rather than an editor.
+ *
+ * Anything that reasons about filenames, languages or highlighting has to
+ * exclude bricks, so compare against this rather than the bare string.
+ */
+export const BRICK_FILE_EXTENSION = 'brick';
 
 export const SUPPORTED_IMAGE_TYPES = [
   '.jpg',

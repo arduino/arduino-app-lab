@@ -1,9 +1,12 @@
 import { FileIcon } from '@cloud-editor-mono/images/assets/file-icons';
 import { BrickIcon } from '@cloud-editor-mono/ui-components/lib/components-by-app/app-lab';
-import { SelectableFileData } from '@cloud-editor-mono/ui-components/lib/components-by-app/shared';
+import {
+  BRICK_FILE_EXTENSION,
+  SelectableFileData,
+} from '@cloud-editor-mono/ui-components/lib/components-by-app/shared';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import * as IDB from 'idb-keyval';
-import { sortBy } from 'lodash';
+import { sortBy } from 'lodash-es';
 import {
   createElement,
   ReactNode,
@@ -48,6 +51,8 @@ export type OpenFilesStoreItem = {
   isSplit?: boolean;
   /** Width of the left pane as a percentage (0-100). */
   splitProportionLeft?: number;
+  /** The file currently opened in preview (single-click) state. */
+  previewFileId?: string | null;
 };
 export type OpenFilesStore = { [key: string]: OpenFilesStoreItem };
 
@@ -64,7 +69,7 @@ export type OpenFilesStorePatch = Partial<Omit<OpenFilesStoreItem, 'panes'>> & {
   };
 };
 
-function mergeStoreItem(
+export function mergeStoreItem(
   prev: OpenFilesStoreItem | undefined,
   patch: OpenFilesStorePatch,
 ): OpenFilesStoreItem {
@@ -119,6 +124,10 @@ function mergeStoreItem(
       patch.splitProportionLeft !== undefined
         ? patch.splitProportionLeft
         : base.splitProportionLeft,
+    previewFileId:
+      patch.previewFileId !== undefined
+        ? patch.previewFileId
+        : base.previewFileId,
   };
 }
 
@@ -202,6 +211,7 @@ export const useFiles: UseFiles = function ({
       tags: ['Main'],
       isFixed: isClassicSketch,
       isMetadataReadOnly: isClassicSketch,
+      error: mainFile.error,
     };
   }, [isClassicSketch, mainFile, renderFileIcon]);
 
@@ -218,6 +228,7 @@ export const useFiles: UseFiles = function ({
           tags: ['Main'],
           isFixed: isClassicSketch,
           isMetadataReadOnly: isClassicSketch,
+          error: mainLibFile.error,
         };
       }
     }
@@ -229,7 +240,7 @@ export const useFiles: UseFiles = function ({
         fileId: brick.id,
         fileName: brick.name,
         fileFullName: brick.name,
-        fileExtension: 'brick',
+        fileExtension: BRICK_FILE_EXTENSION,
         Icon: <BrickIcon category={brick.category} size="xsmall" />,
         isMetadataReadOnly: true,
       })),
@@ -276,6 +287,7 @@ export const useFiles: UseFiles = function ({
         Icon: renderFileIcon(file.fullName, file.extension),
         isFixed: false,
         isMetadataReadOnly: false,
+        error: file.error,
       }))
       .filter((f) =>
         isLibraryRoute ? f.fileId !== mainLibraryFile?.fileId : true,
@@ -391,6 +403,15 @@ export const useFiles: UseFiles = function ({
 
       setOpenFileIds(currOpenFilesIds);
 
+      // Restore the preview tab
+      const storedPreviewFileId = openFilesStore?.previewFileId;
+      if (
+        storedPreviewFileId &&
+        currOpenFilesIds.includes(storedPreviewFileId)
+      ) {
+        setPreviewFileId(storedPreviewFileId);
+      }
+
       if (!isClassicSketch) {
         const lastSelectedFileId = openFilesStore?.selected;
         let currSelectedFileId: string | null = null;
@@ -435,6 +456,7 @@ export const useFiles: UseFiles = function ({
     autoOpenedFiles,
     openFilesStore,
     defaultFilePath,
+    setPreviewFileId,
   ]);
 
   useEffect(() => {
@@ -443,8 +465,9 @@ export const useFiles: UseFiles = function ({
       openFilesInitComplete.current = false;
       setSelectedFileId(undefined);
       setOpenFileIds([]);
+      setPreviewFileId(undefined);
     }
-  }, [filesContentLoaded]);
+  }, [filesContentLoaded, setPreviewFileId]);
 
   const storeOpenFiles = useCallback(
     async (fileIds: string[], selectedFileId: string | undefined) => {
@@ -461,6 +484,7 @@ export const useFiles: UseFiles = function ({
           [storeEntityId]: mergeStoreItem(prevStoreItem, {
             items: uniqueFileIds,
             selected: nextSelected,
+            previewFileId: previewFileId ?? null,
             panes: {
               A: { items: uniqueFileIds, selected: nextSelected },
             },
@@ -469,7 +493,7 @@ export const useFiles: UseFiles = function ({
       });
       queryClient.invalidateQueries(['get-stored-open-files', storeEntityId]);
     },
-    [storeEntityId, enableOpenFilesPersistence, queryClient],
+    [storeEntityId, enableOpenFilesPersistence, queryClient, previewFileId],
   );
 
   /**

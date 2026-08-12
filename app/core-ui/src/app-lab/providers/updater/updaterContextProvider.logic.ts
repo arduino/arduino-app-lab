@@ -18,6 +18,7 @@ import { UpdaterStatus } from '@cloud-editor-mono/ui-components/lib/components-b
 import { useQuery } from '@tanstack/react-query';
 import { useCallback, useContext, useEffect, useRef, useState } from 'react';
 
+import { BoardScopedQuery } from '../../boardScopedQuery';
 import { useIsBoard } from '../../hooks/useIsBoard';
 import { useBoardLifecycleStore } from '../../store/boardLifecycle';
 import { NetworkContext } from '../network/networkContext';
@@ -98,35 +99,39 @@ export const useUpdater: UseUpdater = (): ReturnType<UseUpdater> => {
     data: boardUpdates,
     isFetching: isCheckingForBoardUpdates,
     refetch: checkBoardUpdateQuery,
-  } = useQuery(['board-update-check'], () => checkBoardUpdate(true), {
-    select: (data) => {
-      if (data.updates && data.updates.length > 0) {
-        return data.updates.map((update) => ({
-          name: update.name || 'Unknown',
-          toVersion: update.to_version || '',
-        }));
-      }
-      // null = no board updates available
-      return null;
+  } = useQuery(
+    [BoardScopedQuery.BOARD_UPDATE_CHECK],
+    () => checkBoardUpdate(true),
+    {
+      select: (data) => {
+        if (data.updates && data.updates.length > 0) {
+          return data.updates.map((update) => ({
+            name: update.name || 'Unknown',
+            toVersion: update.to_version || '',
+          }));
+        }
+        // null = no board updates available
+        return null;
+      },
+      onSuccess: (data) => {
+        const newAppVersion = data?.find(
+          (update) => update.name === 'arduino-app-lab',
+        )?.toVersion;
+        if (isBoard && newAppVersion) {
+          checkReleaseNotes(newAppVersion);
+        }
+      },
+      enabled: false,
+      staleTime: Infinity,
+      cacheTime: Infinity,
+      // linear retry for 2 minutes, 2 seconds delay
+      retry: (counter, error) =>
+        (error as Error | undefined)?.message.includes(UPDATE_IN_PROGRESS)
+          ? false
+          : counter < 60,
+      retryDelay: 2000,
     },
-    onSuccess: (data) => {
-      const newAppVersion = data?.find(
-        (update) => update.name === 'arduino-app-lab',
-      )?.toVersion;
-      if (isBoard && newAppVersion) {
-        checkReleaseNotes(newAppVersion);
-      }
-    },
-    enabled: false,
-    staleTime: Infinity,
-    cacheTime: Infinity,
-    // linear retry for 2 minutes, 2 seconds delay
-    retry: (counter, error) =>
-      (error as Error | undefined)?.message.includes(UPDATE_IN_PROGRESS)
-        ? false
-        : counter < 60,
-    retryDelay: 2000,
-  });
+  );
 
   const {
     data: newAppVersion,

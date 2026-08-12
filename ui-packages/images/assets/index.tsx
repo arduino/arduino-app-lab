@@ -47,17 +47,21 @@ import BrickSettings from './brick-settings.svg?react';
 import Bricks from './bricks.svg?react';
 import CaretDown from './caret-down.svg?react';
 import CaseSensitive from './case-sensitive.svg?react';
+import ChatEnter from './chat-enter.svg?react';
 import ChatSend from './chat-send.svg?react';
 import ChatStop from './chat-stop.svg?react';
+import ChatStopFilled from './chat-stop-filled.svg?react';
 import Checkbox from './checkbox.svg?react';
 import Checkmark from './checkmark.svg?react';
 import ChevronDown from './chevron-down.svg?react';
 import ChevronRight from './chevron-right.svg?react';
 import ChevronRightNoPad from './chevron-right-no-pad.svg?react';
 import ChevronUp from './chevron-up.svg?react';
+import Claude from './claude.svg?react';
 import Clear from './clear.svg?react';
 import Close from './close.svg?react';
 import CloseX from './close-x.svg?react';
+import CloudConnectorIllustration from './cloud-connector-illustration.svg?react';
 import CloudPortIcon from './cloud-port-icon.svg?react';
 import CloudPortOff from './cloud-port-off.svg?react';
 import CodeIcon from './code-icon.svg?react';
@@ -94,6 +98,10 @@ import FullScreenExpand from './fullscreen-expand-arrows.svg?react';
 import GenAISendArrow from './gen-ai-send-arrow.svg?react';
 import GoToError from './go-to-error.svg?react';
 import GoogleClassroom from './google-classroom.svg?react';
+import HardwareCpu from './hardware-cpu.svg?react';
+import HardwareNpu from './hardware-npu.svg?react';
+import HardwareRam from './hardware-ram.svg?react';
+import HardwareStorage from './hardware-storage.svg?react';
 import genAiBanner from './images/gen-ai-banner.png';
 import genAiBannerBg from './images/gen-ai-banner-bg.png';
 import userAvatar from './images/user-avatar.png';
@@ -183,6 +191,8 @@ import UserCommunity from './user-community.svg?react';
 import Verify from './verify.svg?react';
 import VerifyAndUpload from './verify-and-upload.svg?react';
 import WholeWords from './whole-words.svg?react';
+import WifiConnected from './wifi-connected.svg?react';
+import WifiDisconnected from './wifi-disconnected.svg?react';
 
 const Icons = {
   AccountArduinoCloud,
@@ -197,6 +207,7 @@ const Icons = {
   AddBrick,
   AddTab,
   Ai,
+  CloudConnectorIllustration,
   Appearance,
   AppExamples,
   AppLabBrickApi,
@@ -234,14 +245,17 @@ const Icons = {
   Bricks,
   CaretDown,
   CaseSensitive,
+  ChatEnter,
   ChatSend,
   ChatStop,
+  ChatStopFilled,
   Checkbox,
   Checkmark,
   ChevronDown,
   ChevronRight,
   ChevronRightNoPad,
   ChevronUp,
+  Claude,
   Clear,
   Close,
   CloseX,
@@ -281,6 +295,10 @@ const Icons = {
   GenAISendArrow,
   GoogleClassroom,
   GoToError,
+  HardwareCpu,
+  HardwareNpu,
+  HardwareRam,
+  HardwareStorage,
   Increment,
   IndentCode,
   InfoIconI,
@@ -366,6 +384,8 @@ const Icons = {
   Verify,
   VerifyAndUpload,
   WholeWords,
+  WifiConnected,
+  WifiDisconnected,
   AppLab,
 };
 
