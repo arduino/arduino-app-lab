@@ -118,7 +118,7 @@ export const createUseFooterBarLogic = function (
       error: connToBoardError,
     });
 
-    const { onOpenTerminal, terminalError } = useTerminal();
+    const { onOpenTerminal } = useTerminal();
 
     const {
       notifications,
@@ -273,7 +273,6 @@ export const createUseFooterBarLogic = function (
       agentModeEntryShine,
       onOpenTerminal,
       isBoard: isBoard || false,
-      terminalError,
       boards,
       selectedBoard,
       lspId,

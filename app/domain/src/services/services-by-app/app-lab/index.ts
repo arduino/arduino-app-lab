@@ -17,6 +17,7 @@ export * from '../../orchestrator-service';
 export * from '../../preferences-service';
 export * from '../../project-hub-service';
 export * from '../../settings-service';
+export * from '../../terminal-service';
 export * from '../../updater-service';
 export * from '../../utils';
 export * from '../../wails-service';

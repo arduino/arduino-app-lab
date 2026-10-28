@@ -11,6 +11,7 @@ import {learn} from '../models';
 import {network} from '../models';
 import {hw} from '../models';
 import {fs} from '../models';
+import {terminal} from '../models';
 import {httpclient} from '../models';
 import {arduinoapps} from '../models';
 import {airuntime} from '../models';
@@ -160,6 +161,8 @@ export function GetRefreshToken(arg1:string):Promise<string>;
 
 export function GetTags():Promise<Array<learn.Tag>>;
 
+export function GetTerminalPreference():Promise<string>;
+
 export function GetTitle():Promise<string>;
 
 export function HandleSecondInstanceLaunch(arg1:options.SecondInstanceData):Promise<void>;
@@ -210,6 +213,8 @@ export function ListLspSketchFiles(arg1:string):Promise<Array<string>>;
 
 export function ListSSIDs():Promise<Array<string>>;
 
+export function ListTerminals():Promise<terminal.TerminalCatalog>;
+
 export function MakeHTTPRequest(arg1:string,arg2:string,arg3:string,arg4:Record<string, string>,arg5:string):Promise<httpclient.Response>;
 
 export function NeedsImageUpdate():Promise<boolean>;
@@ -218,7 +223,7 @@ export function NewVersion():Promise<string>;
 
 export function OnUrlOpen(arg1:string):Promise<void>;
 
-export function OpenBoardTerminal():Promise<void>;
+export function OpenBoardTerminal():Promise<terminal.LaunchResult>;
 
 export function OpenFile(arg1:string):Promise<void>;
 
@@ -263,6 +268,8 @@ export function SetBoardName(arg1:string):Promise<void>;
 export function SetKeyboardLayout(arg1:string):Promise<void>;
 
 export function SetRefreshToken(arg1:string,arg2:string):Promise<void>;
+
+export function SetTerminalPreference(arg1:string):Promise<void>;
 
 export function SetUIZoom(arg1:number):Promise<void>;
 

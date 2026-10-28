@@ -98,7 +98,6 @@ export type UseSetupLogic = () => {
   showConfirmButton?: boolean;
   boardItem?: BoardItem;
   onOpenTerminal: () => Promise<void>;
-  terminalError: string | null;
   onBackStep?: () => void;
   unlockAutoFlow?: () => void;
   setupCompleted?: boolean;

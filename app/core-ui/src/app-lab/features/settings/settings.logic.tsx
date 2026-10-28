@@ -7,14 +7,17 @@ import {
   getKernelVersion,
   getLinuxDistribution,
   getOSImageVersion,
+  getTerminalPreference,
   isHwSupported,
   isNetworkModeEnabled,
   listCloudConnectorOrganizations,
+  listTerminals,
   openLinkExternal,
   rebootBoard,
   reloadApp,
   setHwStatus,
   setNetworkMode,
+  setTerminalPreference,
 } from '@cloud-editor-mono/domain/src/services/services-by-app/app-lab';
 import { CloudConnectorOrganization } from '@cloud-editor-mono/infrastructure';
 import {
@@ -37,6 +40,7 @@ import {
   UsePasswordSettingsLogic,
   UseSettingsLogic,
   UseSystemSettingsLogic,
+  UseTerminalSettingsLogic,
 } from '@cloud-editor-mono/ui-components/lib/components-by-app/app-lab';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from '@tanstack/react-router';
@@ -680,6 +684,37 @@ export const createUseSettingsLogic = function (): UseSettingsLogic {
         };
       };
 
+    const useTerminalSettingsLogic =
+      (): ReturnType<UseTerminalSettingsLogic> => {
+        const { data: catalog } = useQuery({
+          queryKey: ['terminal-catalog'],
+          queryFn: async () => listTerminals(),
+        });
+
+        const { data: preference } = useQuery({
+          queryKey: ['terminal-preference'],
+          queryFn: async () => getTerminalPreference(),
+        });
+
+        const { mutateAsync: savePreference } = useMutation({
+          mutationFn: async (value: string) => setTerminalPreference(value),
+          onSuccess: async () => {
+            await queryClient.invalidateQueries({
+              queryKey: ['terminal-preference'],
+            });
+          },
+        });
+
+        return {
+          supported: catalog?.supported ?? false,
+          terminals: catalog?.terminals ?? [],
+          preference: preference ?? '',
+          setPreference: async (value: string): Promise<void> => {
+            await savePreference(value);
+          },
+        };
+      };
+
     return {
       cloudConnectorSettingsLogic: useCloudConnectorSettingsLogic,
       boardSettingsLogic: useBoardSettingsLogic,
@@ -688,6 +723,7 @@ export const createUseSettingsLogic = function (): UseSettingsLogic {
       networkSettingsLogic: useNetworkSettingsLogic,
       systemSettingsLogic: useSystemSettingsLogic,
       passwordSettingsLogic: usePasswordSettingsLogic,
+      terminalSettingsLogic: useTerminalSettingsLogic,
       onOpenExternal: openLinkExternal,
     };
   };

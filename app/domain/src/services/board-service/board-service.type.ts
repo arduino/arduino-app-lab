@@ -3,6 +3,7 @@ import {
   HwList,
   HwStatus,
   KeyboardLayout,
+  TerminalLaunchResult,
 } from '@cloud-editor-mono/ui-components/lib/components-by-app/app-lab';
 
 export interface BoardService {
@@ -18,7 +19,7 @@ export interface BoardService {
   setUserPassword(password: string): Promise<void>;
   getOSImageVersion(): Promise<string>;
   boardNeedsImageUpdate(): Promise<boolean>;
-  openBoardTerminal(): Promise<void>;
+  openBoardTerminal(): Promise<TerminalLaunchResult>;
   isNetworkModeEnabled(): Promise<boolean>;
   setNetworkMode(enabled: boolean, password: string): Promise<boolean>;
   getKernelVersion(): Promise<string>;

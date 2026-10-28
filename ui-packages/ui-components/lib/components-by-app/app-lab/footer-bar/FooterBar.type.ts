@@ -81,7 +81,6 @@ export type FooterBarLogic = () => {
   // Keeps the "Agent Mode" entry shining until it has been clicked once.
   agentModeEntryShine: boolean;
   onOpenTerminal: () => Promise<void>;
-  terminalError: string | null;
   systemResources: SystemResources;
   boardItem?: BoardItem;
   boardIP?: string | null;

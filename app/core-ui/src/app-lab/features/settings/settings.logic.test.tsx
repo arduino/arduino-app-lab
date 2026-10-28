@@ -57,6 +57,9 @@ vi.mock(
       isHwSupported: vi.fn(),
       getHwList: vi.fn(),
       getHwStatus: vi.fn(),
+      listTerminals: vi.fn(),
+      getTerminalPreference: vi.fn(),
+      setTerminalPreference: vi.fn(),
     };
   },
 );
@@ -144,6 +147,19 @@ beforeEach(() => {
     ],
   });
   domainServices.getHwStatus.mockResolvedValue(hwStatus);
+  domainServices.listTerminals.mockResolvedValue({
+    supported: true,
+    terminals: [
+      {
+        id: 'alacritty',
+        label: 'Alacritty',
+        path: '/usr/bin/alacritty',
+        available: true,
+      },
+    ],
+  });
+  domainServices.getTerminalPreference.mockResolvedValue('');
+  domainServices.setTerminalPreference.mockResolvedValue(undefined);
 });
 
 describe('board extensions settings logic', () => {
@@ -203,5 +219,61 @@ describe('board extensions settings logic', () => {
 
     expect(result.current.attachLogic().open).toBe(false);
     expect(selectedHat(result.current.status)).toBe('automation');
+  });
+});
+
+describe('terminal settings logic', () => {
+  const renderTerminalLogic = async (): Promise<
+    RenderHookResult<
+      ReturnType<ReturnType<typeof useSettingsLogic>['terminalSettingsLogic']>,
+      unknown
+    >
+  > => {
+    const view = renderHook(() => useSettingsLogic().terminalSettingsLogic(), {
+      wrapper,
+    });
+    await waitFor(() => expect(view.result.current.supported).toBe(true));
+    return view;
+  };
+
+  it('lists the terminal emulators detected on the system', async () => {
+    const { result } = await renderTerminalLogic();
+
+    expect(result.current.terminals).toHaveLength(1);
+    expect(result.current.terminals[0].id).toBe('alacritty');
+  });
+
+  it('reports the terminal as not selectable when the platform has a fixed one', async () => {
+    domainServices.listTerminals.mockResolvedValue({
+      supported: false,
+      terminals: [],
+    });
+
+    const { result } = renderHook(
+      () => useSettingsLogic().terminalSettingsLogic(),
+      { wrapper },
+    );
+
+    await waitFor(() => expect(result.current.supported).toBe(false));
+  });
+
+  it('keeps the terminal selected by the user', async () => {
+    domainServices.getTerminalPreference.mockResolvedValue('alacritty');
+
+    const { result } = await renderTerminalLogic();
+
+    expect(result.current.preference).toBe('alacritty');
+  });
+
+  it('persists the terminal selected by the user', async () => {
+    const { result } = await renderTerminalLogic();
+
+    await act(async () => {
+      await result.current.setPreference('alacritty');
+    });
+
+    expect(domainServices.setTerminalPreference).toHaveBeenCalledWith(
+      'alacritty',
+    );
   });
 });

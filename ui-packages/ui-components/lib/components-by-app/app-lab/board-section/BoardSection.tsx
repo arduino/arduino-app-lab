@@ -1,6 +1,5 @@
 import { Terminal } from '@cloud-editor-mono/images/assets/icons';
 
-import { XXSmall } from '../../../typography';
 import {
   ButtonAppearance,
   ButtonSize,
@@ -21,7 +20,6 @@ const BoardSection: React.FC<BoardSectionProps> = (
     selectedBoard,
     selectBoard,
     onOpenTerminal,
-    terminalError,
     linuxCredentialsDialog,
   } = props;
 
@@ -51,17 +49,6 @@ const BoardSection: React.FC<BoardSectionProps> = (
           label={"Connect to the board's shell"}
         />
       )}
-      <div className={styles['terminal-error-container']}>
-        {terminalError && (
-          <XXSmall
-            title={terminalError}
-            bold
-            className={styles['terminal-error']}
-          >
-            {terminalError}
-          </XXSmall>
-        )}
-      </div>
     </div>
   );
 };

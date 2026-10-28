@@ -237,6 +237,65 @@ export const systemMessages = defineMessages({
     defaultMessage: 'Keyboard language',
     description: 'Label for the keyboard language row',
   },
+  terminal: {
+    id: 'appLabSettings.system.terminal',
+    defaultMessage: 'Terminal',
+    description: 'Label for the terminal emulator row',
+  },
+  terminalInfo: {
+    id: 'appLabSettings.system.terminalInfo',
+    defaultMessage:
+      'The terminal emulator used to open the shell of the board. It is detected automatically when it is not set.',
+    description: 'Message explaining how the terminal emulator is selected',
+  },
+  terminalSection: {
+    id: 'appLabSettings.system.terminalSection',
+    defaultMessage: 'Terminal emulators',
+    description:
+      'Title of the section listing the available terminal emulators',
+  },
+  terminalAutomatic: {
+    id: 'appLabSettings.system.terminalAutomatic',
+    defaultMessage: 'Automatic',
+    description:
+      'Label of the option that detects the terminal emulator automatically',
+  },
+  terminalCustom: {
+    id: 'appLabSettings.system.terminalCustom',
+    defaultMessage: 'Custom…',
+    description: 'Label of the option to use a custom terminal command',
+  },
+  terminalCustomLabel: {
+    id: 'appLabSettings.system.terminalCustomLabel',
+    defaultMessage: 'Custom ({command})',
+    description: 'Label of the selected custom terminal command',
+  },
+  terminalNotInstalled: {
+    id: 'appLabSettings.system.terminalNotInstalled',
+    defaultMessage: '{terminal} (not installed)',
+    description: 'Label of a terminal that is selected but not installed',
+  },
+  terminalCustomPlaceholder: {
+    id: 'appLabSettings.system.terminalCustomPlaceholder',
+    defaultMessage: 'e.g. alacritty',
+    description: 'Placeholder of the custom terminal command input',
+  },
+  terminalCustomInfo: {
+    id: 'appLabSettings.system.terminalCustomInfo',
+    defaultMessage:
+      'The command is executed with the permissions of the user running App Lab.',
+    description: 'Warning shown under the custom terminal command field',
+  },
+  terminalCustomSave: {
+    id: 'appLabSettings.system.terminalCustomSave',
+    defaultMessage: 'Save',
+    description: 'Button text to save the custom terminal command',
+  },
+  terminalCustomCancel: {
+    id: 'appLabSettings.system.terminalCustomCancel',
+    defaultMessage: 'Cancel',
+    description: 'Button text to discard the custom terminal command',
+  },
   osPassword: {
     id: 'appLabSettings.system.osPassword',
     defaultMessage: 'OS password',

@@ -12,6 +12,11 @@ import (
 // appDirName is the on-disk app-data folder (hyphenated, per the app's "arduino-app-lab" convention).
 const appDirName = "arduino-app-lab"
 
+// DataHomeEnv is the environment variable that overrides the app-data root.
+// It is not set in production, it lets a test point the app data at a
+// temporary directory on every platform.
+const DataHomeEnv = "ARDUINO_APP_LAB__DATA_HOME"
+
 // RuntimeDir returns the per-agent install directory under the OS app-data root.
 func RuntimeDir(agent AgentID) (string, error) {
 	root, err := appDataRoot()
@@ -121,7 +126,14 @@ func nodeBinExe(runtimeDir string) string {
 }
 
 // appDataRoot returns the OS-appropriate app-data base directory.
+//
+// The DataHomeEnv environment variable overrides it. It is not set in
+// production: it lets a test point the app data at a temporary directory on
+// every platform, the OS-specific variables are honoured on some of them only.
 func appDataRoot() (string, error) {
+	if v := os.Getenv(DataHomeEnv); v != "" {
+		return v, nil
+	}
 	home, err := os.UserHomeDir()
 	if err != nil {
 		return "", err

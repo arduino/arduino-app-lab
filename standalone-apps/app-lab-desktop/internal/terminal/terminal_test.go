@@ -36,7 +36,7 @@ func TestOpenTerminal(t *testing.T) {
 			b := &board.Board{
 				Info: test.Info,
 			}
-			err := OpenTerminal(t.Context(), b)
+			_, err := OpenTerminal(t.Context(), b, Options{})
 			require.Error(t, err, name)
 		})
 	}

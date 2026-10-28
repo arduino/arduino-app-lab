@@ -139,9 +139,41 @@ export type UseSystemSettingsLogic = () => {
   startUpdate: () => void;
 };
 
+export type TerminalInfo = {
+  // id is the name of the executable, it identifies the terminal.
+  id: string;
+  // label is the human readable name of the terminal.
+  label: string;
+  // path is the absolute path of the executable or of the application bundle,
+  // it is empty when the terminal is not installed.
+  path: string;
+  // available tells whether the terminal is installed on the system.
+  available: boolean;
+};
+
+export type TerminalLaunchResult = {
+  // terminal is the id of the terminal that was used.
+  terminal: string;
+  // warning tells why the terminal selected by the user was not used, it is
+  // empty when the selected terminal was used.
+  warning?: string;
+};
+
 export type UsePasswordSettingsLogic = () => {
   changePasswordLogic: ChangePasswordDialogLogic;
   openChangePasswordDialog: () => void;
+};
+
+export type UseTerminalSettingsLogic = () => {
+  // supported is false on the platforms where the terminal emulator is fixed.
+  supported: boolean;
+  // terminals are the terminal emulators detected on the system.
+  terminals: TerminalInfo[];
+  // preference is the terminal selected by the user, an empty value means that
+  // the terminal is detected automatically.
+  preference: string;
+  // setPreference persists the terminal selected by the user.
+  setPreference: (value: string) => Promise<void>;
 };
 
 export type UseSettingsLogic = () => {
@@ -152,6 +184,7 @@ export type UseSettingsLogic = () => {
   networkSettingsLogic: UseNetworkSettingsLogic;
   systemSettingsLogic: UseSystemSettingsLogic;
   passwordSettingsLogic: UsePasswordSettingsLogic;
+  terminalSettingsLogic: UseTerminalSettingsLogic;
   onOpenExternal: (url: string) => void;
 };
 

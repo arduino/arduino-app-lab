@@ -52,7 +52,6 @@ const FooterBar: React.FC<FooterBarProps> = (props: FooterBarProps) => {
     agentModeTooltip,
     agentModeEntryShine,
     onOpenTerminal,
-    terminalError,
     isBoard,
     boards,
     selectedBoard,
@@ -129,7 +128,6 @@ const FooterBar: React.FC<FooterBarProps> = (props: FooterBarProps) => {
               selectedBoard={selectedBoard}
               selectBoard={selectBoard}
               onOpenTerminal={onOpenTerminal}
-              terminalError={terminalError}
             />
           ) : null}
         </div>

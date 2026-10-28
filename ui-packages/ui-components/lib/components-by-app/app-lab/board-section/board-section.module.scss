@@ -24,25 +24,3 @@
   }
 }
 
-.terminal-error-container {
-  position: relative;
-  top: -40px;
-  left: -40px;
-
-  .terminal-error {
-    position: absolute;
-    display: inline-block;
-    width: 400px;
-    max-width: 400px;
-    overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-    padding: 4px 14px;
-    background-color: var(--editor-background);
-    opacity: 0.9;
-    background-color: #2e2220; // rgba(255, 136, 120, 0.15);
-    color: var(--feedback-error-default, #ff8878);
-    z-index: 1;
-    border-radius: 3px;
-  }
-}

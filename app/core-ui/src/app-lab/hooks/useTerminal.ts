@@ -1,23 +1,29 @@
 import { openBoardTerminal } from '@cloud-editor-mono/domain/src/services/services-by-app/app-lab';
-import { useState } from 'react';
+import { snackbar } from '@cloud-editor-mono/ui-components/lib/components-by-app/app-lab';
 
 export interface UseTerminal {
   onOpenTerminal: () => Promise<void>;
-  terminalError: string | null;
 }
 
 export const useTerminal = (): UseTerminal => {
-  const [terminalError, setTerminalError] = useState<string | null>(null);
-
   const onOpenTerminal = async (): Promise<void> => {
     try {
-      setTerminalError(null);
-      await openBoardTerminal();
+      const result = await openBoardTerminal();
+      // The terminal selected in the settings could not be started and another
+      // one was used instead: the user has to know it.
+      if (result?.warning) {
+        snackbar({
+          message: result.warning,
+          variant: 'warning',
+        });
+      }
     } catch (e) {
-      setTerminalError((e as Error).message);
-      setTimeout(() => setTerminalError(null), 6000);
+      snackbar({
+        message: (e as Error).message,
+        variant: 'error',
+      });
     }
   };
 
-  return { onOpenTerminal, terminalError };
+  return { onOpenTerminal };
 };

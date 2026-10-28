@@ -40,7 +40,6 @@ const Setup: React.FC<SetupProps> = (props: SetupProps) => {
     showConfirmButton = true,
     boardItem,
     onOpenTerminal,
-    terminalError,
     onBackStep,
     unlockAutoFlow,
     setupCompleted,
@@ -102,7 +101,6 @@ const Setup: React.FC<SetupProps> = (props: SetupProps) => {
             selectedBoard={selectedBoard}
             selectBoard={selectBoard}
             onOpenTerminal={onOpenTerminal}
-            terminalError={terminalError}
           />
         </div>
       </div>

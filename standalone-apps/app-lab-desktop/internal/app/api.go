@@ -349,8 +349,28 @@ func (a *App) GetTags() ([]learn.Tag, error) {
 }
 
 // Open Terminal
-func (a *App) OpenBoardTerminal() error {
-	return terminal.OpenTerminal(a.ctx(), a.selectedBoard)
+func (a *App) OpenBoardTerminal() (terminal.LaunchResult, error) {
+	return terminal.OpenTerminal(a.ctx(), a.selectedBoard, terminal.Options{
+		PreferredTerminal: readTerminalPreference(),
+	})
+}
+
+// ListTerminals returns the terminal emulators available on the system, in the
+// order they are tried when no terminal has been selected.
+func (a *App) ListTerminals() terminal.TerminalCatalog {
+	return terminal.ListAvailable()
+}
+
+// GetTerminalPreference returns the terminal selected by the user, an empty
+// value means that the terminal is detected automatically.
+func (a *App) GetTerminalPreference() string {
+	return readTerminalPreference()
+}
+
+// SetTerminalPreference persists the terminal selected by the user, an empty
+// value restores the automatic detection.
+func (a *App) SetTerminalPreference(value string) error {
+	return setTerminalPreference(value)
 }
 
 // Flasher endpoints

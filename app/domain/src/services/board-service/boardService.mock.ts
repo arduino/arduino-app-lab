@@ -4,6 +4,7 @@ import {
   HwList,
   HwStatus,
   KeyboardLayout,
+  TerminalLaunchResult,
 } from '@cloud-editor-mono/ui-components/lib/components-by-app/app-lab';
 
 import type { BoardService } from './board-service.type';
@@ -116,8 +117,8 @@ export const MockBoardService: BoardService = {
     return boardNeedsImageUpdateState;
   },
 
-  async openBoardTerminal(): Promise<void> {
-    return Promise.resolve();
+  async openBoardTerminal(): Promise<TerminalLaunchResult> {
+    return Promise.resolve({ terminal: '' });
   },
 
   async isNetworkModeEnabled(): Promise<boolean> {

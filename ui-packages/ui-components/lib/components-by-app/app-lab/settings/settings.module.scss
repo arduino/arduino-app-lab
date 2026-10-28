@@ -316,6 +316,71 @@
   display: inline-block;
 }
 
+.terminal-row {
+  // The row grows when the custom terminal editor is open. The overrides are
+  // important because the height of a settings row is fixed and the styles of
+  // the two modules may be loaded in any order.
+  height: auto !important;
+  align-items: start !important;
+
+  &-value {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    min-width: 0;
+  }
+}
+
+.terminal-custom {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  width: 100%;
+
+  &-input {
+    flex: 1;
+    min-width: 0;
+
+    // The app-lab input style does not fill the available width and it is
+    // taller than the buttons next to it, the sizes of the small button are
+    // used to keep the row aligned.
+    box-sizing: border-box !important;
+    width: 100% !important;
+    height: 28px !important;
+    padding: 0 12px !important;
+    border-radius: 8px !important;
+    align-items: center !important;
+    font-size: 12px !important;
+
+    [class*="input-content"] {
+      line-height: normal !important;
+    }
+  }
+
+  &-input-container {
+    width: 100% !important;
+    height: 100% !important;
+
+    // The small input style puts the text at the bottom of the field and it
+    // adds its own horizontal padding, the field is as tall as the buttons
+    // next to it and the text is centered in it.
+    padding: 0 !important;
+    align-items: center !important;
+  }
+
+  &-info {
+    width: 100%;
+    color: var(--text-subtle, #c9d2d2);
+  }
+}
+
+.terminal-error {
+  width: 100%;
+  color: var(--feedback-error-default, #ff8878);
+}
+
 .toggle {
   cursor: pointer;
 }

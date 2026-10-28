@@ -140,7 +140,7 @@ export const createUseSetupLogic = function (
       refetchSystemProps,
     } = useSystemProps();
 
-    const { onOpenTerminal, terminalError } = useTerminal();
+    const { onOpenTerminal } = useTerminal();
     const { boardItem } = useBoardItem();
     // Handed over uninvoked: Welcome runs it in its own render.
     const serialTracker = useBoardSerialTracker();
@@ -473,7 +473,6 @@ export const createUseSetupLogic = function (
       showConfirmButton,
       boardItem,
       onOpenTerminal,
-      terminalError,
       unlockAutoFlow,
     };
   };

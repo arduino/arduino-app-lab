@@ -19,6 +19,7 @@ import {
   setLspService,
   setOrchestratorService,
   setSettingsService,
+  setTerminalService,
   setUpdaterService,
   setWailsService,
 } from '@cloud-editor-mono/domain/src/services/services-by-app/app-lab';
@@ -40,6 +41,7 @@ import * as StandaloneLearnService from './services/learnService.impl.standalone
 import * as StandaloneLspService from './services/lspService.impl.standalone';
 import * as StandaloneOrchestratorService from './services/orchestratorService.impl.standalone';
 import * as StandaloneSettingsService from './services/settingsService.impl.standalone';
+import * as StandaloneTerminalService from './services/terminalService.impl.standalone';
 import * as StandaloneUpdaterService from './services/updaterService.impl.standalone';
 import * as StandaloneWailsService from './services/wailsService.impl.standalone';
 
@@ -59,6 +61,7 @@ export const injectDependencies = (): void => {
   setLspService(StandaloneLspService);
   setOrchestratorService(StandaloneOrchestratorService);
   setSettingsService(StandaloneSettingsService);
+  setTerminalService(StandaloneTerminalService);
   setUpdaterService(StandaloneUpdaterService);
   setWailsService(StandaloneWailsService);
   // AI Assistant: Wails-backed runtime + agent (ACP).

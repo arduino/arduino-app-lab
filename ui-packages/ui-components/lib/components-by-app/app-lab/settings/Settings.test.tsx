@@ -113,6 +113,12 @@ const renderSettings = ({
       openNetworkSettingsDialog: vi.fn(),
     }),
     systemSettingsLogic: () => systemLogic,
+    terminalSettingsLogic: () => ({
+      supported: false,
+      terminals: [],
+      preference: '',
+      setPreference: vi.fn(),
+    }),
     passwordSettingsLogic: () => ({
       changePasswordLogic: () => ({
         open: false,

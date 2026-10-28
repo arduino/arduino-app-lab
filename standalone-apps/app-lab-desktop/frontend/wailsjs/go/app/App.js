@@ -290,6 +290,10 @@ export function GetTags() {
   return window['go']['app']['App']['GetTags']();
 }
 
+export function GetTerminalPreference() {
+  return window['go']['app']['App']['GetTerminalPreference']();
+}
+
 export function GetTitle() {
   return window['go']['app']['App']['GetTitle']();
 }
@@ -388,6 +392,10 @@ export function ListLspSketchFiles(arg1) {
 
 export function ListSSIDs() {
   return window['go']['app']['App']['ListSSIDs']();
+}
+
+export function ListTerminals() {
+  return window['go']['app']['App']['ListTerminals']();
 }
 
 export function MakeHTTPRequest(arg1, arg2, arg3, arg4, arg5) {
@@ -496,6 +504,10 @@ export function SetKeyboardLayout(arg1) {
 
 export function SetRefreshToken(arg1, arg2) {
   return window['go']['app']['App']['SetRefreshToken'](arg1, arg2);
+}
+
+export function SetTerminalPreference(arg1) {
+  return window['go']['app']['App']['SetTerminalPreference'](arg1);
 }
 
 export function SetUIZoom(arg1) {

@@ -39,7 +39,6 @@ const makeFooterBarLogic =
     agentModeTooltip: { onDismiss: () => undefined },
     agentModeEntryShine: false,
     onOpenTerminal: async () => undefined,
-    terminalError: null,
     systemResources: {
       root: { label: '2.1 / 8 GB', state: 'default' },
       user: { label: '1.2 / 16 GB', state: 'default' },

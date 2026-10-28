@@ -20,6 +20,5 @@ export interface BoardSectionProps {
   selectedBoard: Board | undefined;
   selectBoard: (board: Board) => Promise<void>;
   onOpenTerminal: () => Promise<void>;
-  terminalError: string | null;
   linuxCredentialsDialog?: LinuxCredentialsDialogLogic;
 }

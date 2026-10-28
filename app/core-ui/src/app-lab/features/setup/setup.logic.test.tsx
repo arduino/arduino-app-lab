@@ -124,7 +124,6 @@ let footerItemsMock = [
   },
 ];
 const onOpenTerminalMock = vi.fn<() => Promise<void>>().mockResolvedValue();
-let terminalErrorMock: string | null = null;
 
 vi.mock('../../hooks/useIsBoard', async () => {
   const actual = await vi.importActual<typeof import('../../hooks/useIsBoard')>(
@@ -181,7 +180,6 @@ vi.mock('../footer-bar/footerBar.logic', async () => {
     useFooterBarLogic: vi.fn(() => ({
       items: footerItemsMock,
       onOpenTerminal: onOpenTerminalMock,
-      terminalError: terminalErrorMock,
     })),
   };
 });
@@ -239,7 +237,6 @@ beforeEach(() => {
       state: 'default',
     },
   ];
-  terminalErrorMock = null;
 
   boardConfigurationCtxValue = {
     setBoardNameIsSuccess: false,
