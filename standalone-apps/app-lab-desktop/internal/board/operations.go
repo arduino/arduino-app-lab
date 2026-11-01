@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"log/slog"
 	"os"
 	"path"
@@ -18,6 +19,7 @@ import (
 	"github.com/codeclysm/extract/v4"
 	"github.com/sirupsen/logrus"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
+	semver "go.bug.st/relaxed-semver"
 )
 
 var toolsInstalled = false
@@ -152,8 +154,7 @@ func InstallToolingIfMissing(ctx context.Context) error {
 		f.Close()
 	}
 
-	// If data dir has package_index.json, then we assume that discoveries are installed
-	if dataDir.Join("package_index.json").Exist() {
+	if discoveriesUpToDate(dataDir, embedPackageDir) {
 		toolsInstalled = true
 		return nil
 	}
@@ -230,4 +231,50 @@ func InstallToolingIfMissing(ctx context.Context) error {
 
 	toolsInstalled = true
 	return nil
+}
+
+var builtinDiscoveries = []string{"serial-discovery", "mdns-discovery"}
+
+// bundledToolVersion parses the version out of archive names like "mdns-discovery_v1.1.0_Windows_64bit.zip".
+func bundledToolVersion(entries []fs.DirEntry, tool string) *semver.Version {
+	for _, entry := range entries {
+		rest, ok := strings.CutPrefix(entry.Name(), tool+"_")
+		if !ok {
+			continue
+		}
+		version, _, _ := strings.Cut(rest, "_")
+		if v, err := semver.Parse(strings.TrimPrefix(version, "v")); err == nil {
+			return v
+		}
+	}
+	return nil
+}
+
+func discoveriesUpToDate(dataDir *paths.Path, entries []fs.DirEntry) bool {
+	for _, tool := range builtinDiscoveries {
+		bundled := bundledToolVersion(entries, tool)
+		if bundled == nil {
+			slog.Warn("No bundled archive found for discovery", slog.String("tool", tool))
+			continue
+		}
+		if !toolInstalledAtLeast(dataDir.Join("packages", "builtin", "tools", tool), bundled) {
+			slog.Info("Bundled discovery not installed", slog.String("tool", tool), slog.String("version", bundled.String()))
+			return false
+		}
+	}
+	return true
+}
+
+func toolInstalledAtLeast(toolDir *paths.Path, min *semver.Version) bool {
+	releases, err := toolDir.ReadDir()
+	if err != nil {
+		return false
+	}
+	releases.FilterDirs()
+	for _, release := range releases {
+		if v, err := semver.Parse(release.Base()); err == nil && v.GreaterThanOrEqual(min) {
+			return true
+		}
+	}
+	return false
 }
