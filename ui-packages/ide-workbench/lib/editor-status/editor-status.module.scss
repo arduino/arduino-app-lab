@@ -1,0 +1,52 @@
+@use "../theme/shared.module.scss";
+
+// Pre-migration warning orange; --editor-notification is the teal tint used by
+// the settings opt-out box, not this banner.
+$warning--color: #ffa500;
+// Full width of the CodeMirror gutter (line numbers + fold gutter + padding).
+// `.cm-gutters` has a 48px min-width at the default 12px font size; this calc
+// resolves to 48px there and scales up with the editor font size so the border
+// stays flush against the left edge of the code, not the gutter.
+$cm-gutters-width: calc((var(--editor-font-size) + var(--line-numbers-gutter-width) + 6) * 1px);
+
+.notifications-border {
+    content: "";
+    z-index: shared.$zIndex2;
+    position: absolute;
+    bottom: 0px;
+    right: 0px;
+    height: 100%;
+    width: 100%; /* Declared at the start will be used by browsers which ignore both*/
+    width: -moz-available; /* WebKit-based browsers will ignore this. */
+    width: -webkit-fill-available; /* Mozilla-based browsers will ignore this. */
+    margin-left: $cm-gutters-width;
+    box-sizing: border-box;
+    pointer-events: none;
+}
+
+.editor-notifications {
+    &-wrapper {
+        &--warning:after {
+            @extend .notifications-border;
+            border: 2px solid $warning--color; /* Define the border properties */
+        }
+    }
+
+    &-container {
+        z-index: shared.$zIndex3;
+        position: absolute;
+        bottom: 0px;
+        right: 24px;
+        cursor: pointer;
+    }
+
+    &--warning {
+        background: $warning--color;
+    }
+
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 16px;
+    border-radius: 6px;
+}

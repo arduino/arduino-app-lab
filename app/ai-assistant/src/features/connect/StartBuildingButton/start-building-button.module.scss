@@ -1,0 +1,14 @@
+// The loader covers the label: placed before it, it widens the button.
+.start-btn[aria-busy="true"] {
+  position: relative;
+
+  > :first-child {
+    position: absolute;
+    inset: 0;
+    margin: auto;
+  }
+
+  > :last-child {
+    visibility: hidden;
+  }
+}

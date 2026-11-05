@@ -42,11 +42,18 @@ func TestACPSmoke(t *testing.T) {
 	var reply strings.Builder
 	perms := 0
 
+	// Without a dialect the connection sends no _meta, and this stops checking the production envelope.
+	dialect, err := agent.DialectFor(id)
+	if err != nil {
+		t.Fatalf("dialect for %s: %v", id, err)
+	}
+
 	var mgr *agent.Manager
 	mgr = agent.NewManager(
 		agent.New(agent.Config{Locator: runtimeLocator{agentID: id}, Env: env}),
 		agent.DefaultConnFactory,
 		agent.ManagerConfig{
+			Dialect: dialect,
 			OnUpdate: func(_ agent.SessionID, u agent.Update) {
 				if u.Type == "message_chunk" {
 					mu.Lock()

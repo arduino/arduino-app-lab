@@ -5,7 +5,7 @@
 // dependencies required for the main application to run.
 // ----------------------------------------------------------------------
 
-import { IconNavigationArrowChevronNormalRight } from '@arduino/react-icons';
+import { IconNavigationArrowChevronNormalRight } from '@cloud-editor-mono/images/assets/icons';
 import { Slot } from '@radix-ui/react-slot';
 import clsx from 'clsx';
 import type React from 'react';

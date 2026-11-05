@@ -16,6 +16,7 @@ export const status: AiRuntimeService['status'] = async (agentId) => {
   const s = await RuntimeStatus(agentId);
   return {
     installed: s.installed,
+    agentVersion: s.agentVersion,
     version: s.version,
     diskUsageBytes: s.diskUsageBytes,
   };

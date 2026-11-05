@@ -132,15 +132,17 @@ export function useBoardConfiguration(): BoardConfigurationContextValue {
     isPending: setBoardNameIsLoading,
     isSuccess: setBoardNameIsSuccess,
   } = useMutation({
-    mutationFn: (variables: string) => {
-      if (!checkBoardName(variables)) {
+    mutationFn: async (variables: string) => {
+      const boardName = variables.trim();
+      if (!checkBoardName(boardName)) {
         throw new Error(
           'Board name can only contain letters, numbers, and hyphens.',
         );
       }
-      return apiSetBoardName(variables);
+      await apiSetBoardName(boardName);
+      return boardName;
     },
-    onSuccess: (_, boardName) => {
+    onSuccess: (boardName) => {
       queryClient.setQueryData([BoardScopedQuery.GET_BOARD_NAME], boardName);
       dispatch({ type: 'RESET_ERROR' });
       if (selectedConnectedBoard) {

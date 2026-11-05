@@ -1,7 +1,7 @@
+import { UseCodeEditorParams } from '@cloud-editor-mono/ide-workbench/lib/code-mirror/codeMirror.type';
+import { useCodeMirrorInstanceCleanup } from '@cloud-editor-mono/ide-workbench/lib/code-mirror/codeMirrorViewInstances';
 import clsx from 'clsx';
 
-import { UseCodeEditorParams } from '../../code-mirror/codeMirror.type';
-import { useCodeMirrorInstanceCleanup } from '../../code-mirror/codeMirrorViewInstances';
 import { useConsole } from '../hooks/useConsole';
 
 type ConsoleElementProps = UseCodeEditorParams & {

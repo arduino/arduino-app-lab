@@ -10,6 +10,7 @@ import {
   DeleteAppDialog,
   EmptyState,
   ExportAppDialog,
+  InputStyle,
   PageLayout,
   ReleaseInfoDialog,
   RenameAppDialog,
@@ -118,10 +119,9 @@ const AppList: React.FC<AppListProps> = ({ section, breadcrumbId }) => {
                   }}
                   onSubmit={setSearchQuery}
                   value={searchInput}
-                  classes={{
-                    container: styles['search-container'],
-                    input: styles['search-input'],
-                  }}
+                  inputStyle={InputStyle.AppLab}
+                  outlined
+                  classes={{ container: styles['search-container'] }}
                 />
               )}
               {section === 'my-apps' && (

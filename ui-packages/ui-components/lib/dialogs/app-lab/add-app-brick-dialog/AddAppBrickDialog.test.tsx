@@ -4,7 +4,7 @@ import {
 } from '@cloud-editor-mono/infrastructure';
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { IntlProvider } from 'react-intl';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 // Browser APIs jsdom lacks: the app-lab barrel this dialog imports from also
 // pulls in the serial monitor, which constructs a web worker at import time,
@@ -95,6 +95,10 @@ const selectedBrickId = (): string | null =>
   screen.getByTestId('brick-detail').textContent;
 
 describe('AddAppBrickDialog', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   it('keeps the added brick selected when appBricks refetches during the add', async () => {
     let resolveAdd: (success: boolean) => void = () => undefined;
     const confirmAddAppBrick = vi.fn(
@@ -108,6 +112,47 @@ describe('AddAppBrickDialog', () => {
 
     expect(selectedBrickId()).toBe('arduino:camera');
     await act(async () => resolveAdd(false));
+  });
+
+  it('stops loading when the add rejects', async () => {
+    const consoleError = vi
+      .spyOn(console, 'error')
+      .mockImplementation(() => undefined);
+    const error = new Error('add failed');
+    let rejectAdd: (error: Error) => void = () => undefined;
+    const confirmAddAppBrick = vi.fn(
+      () => new Promise<boolean>((_, reject) => (rejectAdd = reject)),
+    );
+    const { rerender } = renderDialog({ confirmAddAppBrick });
+
+    fireEvent.click(screen.getByText('Camera'));
+    fireEvent.click(screen.getByText('Add'));
+    await act(async () => rejectAdd(error));
+    rerender({ appBricks: [{ id: 'arduino:camera' } as AppBrickListItem] });
+
+    // Loading has stopped, so the selection moves off the brick now in the app.
+    expect(selectedBrickId()).toBe('arduino:air_quality');
+    expect(consoleError).toHaveBeenCalledWith(error);
+  });
+
+  it('shows the success view when the details load rejects after the add', async () => {
+    const consoleError = vi
+      .spyOn(console, 'error')
+      .mockImplementation(() => undefined);
+    const error = new Error('details failed');
+    const loadBrickDetails = vi.fn(() => Promise.reject(error));
+    renderDialog({
+      confirmAddAppBrick: vi.fn(() => Promise.resolve(true)),
+      loadBrickDetails,
+    });
+
+    fireEvent.click(screen.getByText('Camera'));
+    await act(async () => fireEvent.click(screen.getByText('Add')));
+
+    expect(loadBrickDetails).toHaveBeenCalledWith('arduino:camera');
+    expect(screen.getByRole('heading', { name: 'Success' })).toBeTruthy();
+    expect(screen.queryByTestId('brick-detail')).toBeNull();
+    expect(consoleError).toHaveBeenCalledWith(error);
   });
 
   it('selects the first brick not in the app when appBricks load after opening', () => {

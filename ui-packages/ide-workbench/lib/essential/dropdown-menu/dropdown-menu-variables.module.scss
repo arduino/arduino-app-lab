@@ -1,0 +1,11 @@
+$dropdownMenuWidth: 250;
+$dropdownMenuOrientation: var(--dropdown-menu-orientation);
+
+:root {
+  --dropdown-menu-orientation: false;
+}
+
+:export {
+  dropdownMenuWidth: $dropdownMenuWidth;
+  dropdownMenuOrientation: --dropdown-menu-orientation;
+}

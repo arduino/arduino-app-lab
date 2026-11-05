@@ -1,6 +1,3 @@
-export * from '../../code-editor';
-export * from '../../code-mirror';
-export * from '../../editor-tabs-bar';
 export * from '../../essential/notifications';
 export * from '../../essential/radio-group';
 export * from '../../i18n/useI18n';
@@ -14,3 +11,6 @@ export {
   type OnClickInclude,
 } from '../../sidenav/sidenav.type';
 export * from '../../typography';
+export * from '@cloud-editor-mono/ide-workbench/lib/code-editor/index';
+export * from '@cloud-editor-mono/ide-workbench/lib/code-mirror/index';
+export * from '@cloud-editor-mono/ide-workbench/lib/editor-tabs-bar/index';

@@ -5,6 +5,7 @@ export {
   AutoScrollProvider,
   usePauseAutoScroll,
 } from './AutoScroll/AutoScrollContext';
+export { Blocked } from './Blocked/Blocked';
 export { Button } from './Button/Button';
 export { Checklist } from './Checklist/Checklist';
 export {
@@ -20,12 +21,15 @@ export { ExpandableCard } from './ExpandableCard/ExpandableCard';
 export { Heading } from './Heading/Heading';
 export { FileOpenProvider, useFileOpen } from './Link/FileOpenContext';
 export { Link } from './Link/Link';
+export { linkTarget } from './Link/linkTarget';
 export { List } from './List/List';
 export {
   type PickerOptionContent,
   type PickerProps,
+  type PickerSubmenuAnchor,
   Picker,
   pickerStyles,
+  PickerSubmenu,
 } from './Picker/Picker';
 export { ProgressBar } from './ProgressBar/ProgressBar';
 export {

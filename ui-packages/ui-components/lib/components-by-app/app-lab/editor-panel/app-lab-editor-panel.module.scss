@@ -67,27 +67,32 @@
     }
 }
 
-// Right panel in split view: flex-column so tabs bar stacks above the editor
-.split-panel {
-    display: flex;
-    flex-direction: column;
-    flex: 1;
-    min-width: 0;
-    min-height: 0;
-    overflow: hidden;
-    height: 100%;
-    // Positioning context for the floating Split CTA button.
-    position: relative;
+// Find-and-replace fields as the Systemino small outlined text field (28px). The Cloud Editor
+// sets none of these, so find-and-replace.module.scss uses its own values there.
+.editor-code {
+    --editor-find-field-height: 28px;
+    --editor-find-field-radius: 4px;
+    --editor-find-field-border-hover: var(--border-strong);
+    --editor-find-field-border-focus: var(--border-selected);
+    --editor-find-input-padding: 0 7px;
+    --editor-find-input-letter-spacing: 0.12px;
+    --editor-find-input-caret: var(--text-subtle);
+    --editor-find-button-offset: 5px;
 }
 
-// Markdown content area inside a split panel
+// Containers for the App Lab pane content renderers (brick detail and
+// rendered markdown), identical in both panes.
+.brick-container,
 .markdown-container {
     flex: 1;
     min-height: 0;
     padding: 16px 4px 0px 16px;
     overflow: auto;
+    background: var(--editor-background);
+    height: 100%;
 }
 
-.editor-toolbar-disabled {
-    pointer-events: none;
+// The tab rename input lives in the shared EditorTabsBar, so App Lab styles it from here.
+.editor-tabs-bar input {
+    caret-color: var(--text-subtle);
 }

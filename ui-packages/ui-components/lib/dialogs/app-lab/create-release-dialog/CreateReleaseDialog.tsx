@@ -90,25 +90,17 @@ export const CreateReleaseDialog: React.FC<CreateReleaseDialogProps> = ({
   const labelTooltip = useTooltip({
     content: formatMessage(messages.labelInfo),
     direction: 'up-right',
-    timeout: 0,
+    variant: 'card',
   });
   const includeDataTooltip = useTooltip({
-    content: (
-      <span className={styles['tooltip-body']}>
-        <strong>
-          {formatMessage(exportAppDialogMessages.includeDataTooltipTitle)}
-        </strong>
-        <span>
-          {formatMessage(
-            appIsRunning
-              ? messages.includeDataInfoRunning
-              : exportAppDialogMessages.includeDataTooltipContent,
-          )}
-        </span>
-      </span>
+    content: formatMessage(
+      appIsRunning
+        ? messages.includeDataInfoRunning
+        : exportAppDialogMessages.includeDataTooltipContent,
     ),
+    title: formatMessage(exportAppDialogMessages.includeDataTooltipTitle),
     direction: 'up-right',
-    timeout: 0,
+    variant: 'card',
   });
 
   const canSubmit = target.length > 0 && !isSubmitting;
@@ -197,7 +189,7 @@ export const CreateReleaseDialog: React.FC<CreateReleaseDialogProps> = ({
             <span {...labelTooltip.props} className={styles['info']}>
               <InfoIconOutline />
             </span>
-            {labelTooltip.renderTooltip(styles['tooltip'])}
+            {labelTooltip.renderTooltip()}
           </div>
         </div>
         <div className={styles['row']}>
@@ -208,8 +200,8 @@ export const CreateReleaseDialog: React.FC<CreateReleaseDialogProps> = ({
             <Select
               id="release-target"
               name="release-target"
-              value={selectedTarget?.label ?? target}
-              selectedKey={target}
+              displayValue={selectedTarget?.label ?? target}
+              selectedId={target}
               sections={[{ name: 'targets', items: targets }]}
               onChange={(key: Key): void => setTarget(String(key))}
               classes={{ container: styles['target-select'] }}
@@ -230,7 +222,7 @@ export const CreateReleaseDialog: React.FC<CreateReleaseDialogProps> = ({
             <span {...includeDataTooltip.props} className={styles['info']}>
               <InfoIconOutline />
             </span>
-            {includeDataTooltip.renderTooltip(styles['tooltip'])}
+            {includeDataTooltip.renderTooltip()}
           </div>
           <Toggle
             aria-label={includeDataLabel}

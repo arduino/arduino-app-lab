@@ -3,17 +3,17 @@
   gap: 16px !important;
 
   .emoji-picker-button {
-    background-color: #171e21;
-    border-radius: 8px;
+    background-color: var(--surface-bg-below-1);
+    border-radius: 4px;
     width: 36px;
     height: 36px;
     display: flex;
     align-items: center;
     justify-content: center;
-    border: 1px solid #434f54;
+    border: 1px solid transparent;
 
     &-open {
-      border: 1px solid #25c2c7;
+      border-color: var(--border-selected);
     }
   }
 
@@ -25,31 +25,9 @@
     flex: 1;
     position: relative;
 
-    &-input {
-      border-radius: 8px;
-
-      &-container {
-        box-shadow: none !important;
-      }
-
-      &-error {
-        border-color: var(--feedback-error-default, #ff8878);
-      }
-    }
-
     &-length {
       color: var(--text-subtle, #c9d2d2);
       white-space: pre;
-    }
-
-    .error-message {
-      color: var(--feedback-error-default, #ff8878);
-      background-color: rgba(255, 136, 120, 0.15);
-      border-radius: 3px;
-      position: absolute;
-      padding: 2px 6px;
-      left: 0;
-      top: calc(100% + 4px);
     }
   }
 }

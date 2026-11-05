@@ -1,4 +1,4 @@
-// Parsing the agent's JSON-RPC prompt errors (message/kind/code) and spotting the two failures the UI
+// Parsing the agent's JSON-RPC prompt errors (message/cause/kind/code) and spotting the two failures the UI
 // answers differently: auth (re-authenticate) and network (reconnect and retry).
 
 // The request never reached the provider (no route, DNS down, connection dropped mid-flight) rather
@@ -9,17 +9,37 @@ const NETWORK_ERROR =
 export const isNetworkError = (message: string): boolean =>
   NETWORK_ERROR.test(message);
 
-// The turn failed auth (expired/revoked token, bad key): ACP authRequired (-32000) or a 401/auth message.
+// The turn failed auth (expired/revoked token, bad key): ACP authRequired (-32000) or an auth message; a port like ":4010" is no 401.
 export const isAuthError = (message: string, code?: number): boolean =>
-  code === -32000 || /401|authenticat|unauthorized/i.test(message);
+  code === -32000 || /\b401\b|authenticat|unauthorized/i.test(message);
 
-// The prompt rejects with the agent's JSON-RPC error — as a string, an Error wrapping it, or the parsed object. Pull out a readable message, its kind, and its code.
-export const parseAgentError = (
-  e: unknown,
-): { message: string; kind?: string; code?: number } => {
-  const pick = (
-    o: unknown,
-  ): { message: string; kind?: string; code?: number } | null => {
+const BARE_INTERNAL_ERROR = /^\s*internal error\.?\s*$/i;
+
+// A failure that names no cause: the view has to explain it in its own words.
+export const isBareInternalError = (message?: string): boolean =>
+  !message?.trim() || BARE_INTERNAL_ERROR.test(message);
+
+// Where a bare "Internal error" carries its cause: data.details or data.message (ACP TS SDK), data.error (ACP Go SDK).
+const causeIn = (data: unknown): string | undefined => {
+  if (!data || typeof data !== 'object') {
+    return undefined;
+  }
+  const { details, message, error } = data as Record<string, unknown>;
+  return [details, message, error]
+    .find((c): c is string => typeof c === 'string' && c.trim() !== '')
+    ?.trim();
+};
+
+type AgentError = {
+  message: string;
+  cause?: string; // free text, set only when message is bare: show it, never feed it to isAuthError or isNetworkError
+  kind?: string;
+  code?: number;
+};
+
+// The prompt rejects with the agent's JSON-RPC error — as a string, an Error wrapping it, or the parsed object. Pull out its message, cause, kind and code.
+export const parseAgentError = (e: unknown): AgentError => {
+  const pick = (o: unknown): AgentError | null => {
     if (!o || typeof o !== 'object') {
       return null;
     }
@@ -31,8 +51,10 @@ export const parseAgentError = (
     if (typeof r.message !== 'string') {
       return null;
     }
+    const message = r.message.replace(/^Internal error:\s*/i, '');
     return {
-      message: r.message.replace(/^Internal error:\s*/i, ''),
+      message,
+      cause: isBareInternalError(message) ? causeIn(r.data) : undefined,
       kind:
         typeof r.data?.errorKind === 'string' ? r.data.errorKind : undefined,
       code: typeof r.code === 'number' ? r.code : undefined,

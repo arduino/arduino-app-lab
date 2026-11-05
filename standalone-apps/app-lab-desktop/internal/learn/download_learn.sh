@@ -2,20 +2,19 @@
 
 set -e
 
-REPO_HOST=github.com
-REPO_PATH=bcmi-labs/app-bricks-example-temp
+# Colors for output
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m'
 
-# Use a token (if provided) to authenticate the clone of the private repo.
-# GITHUB_TOKEN is the conventional name; NPM_TOKEN is accepted as a fallback
-# because that is the secret currently available in CI.
-# GIT_TOKEN="${GITHUB_TOKEN:-${NPM_TOKEN:-}}"
-GIT_TOKEN="${NPM_TOKEN}"
-if [[ -n "$GIT_TOKEN" ]]; then
-    REPO_URL="https://x-access-token:${GIT_TOKEN}@${REPO_HOST}/${REPO_PATH}"
-else
-    echo "No GITHUB_TOKEN or NPM_TOKEN provided"
-    REPO_URL="https://${REPO_HOST}/${REPO_PATH}"
-fi
+info() { echo -e "${GREEN}[INFO] $1${NC}"; }
+warn() { echo -e "${YELLOW}[WARN] $1${NC}"; }
+
+info "Launching download_learn.sh..."
+
+REPO_HOST=github.com
+REPO_PATH=arduino/app-bricks-examples
+REPO_URL="https://${REPO_HOST}/${REPO_PATH}"
 
 SUB_DIR=learn-docs
 BRANCH=main
@@ -23,28 +22,28 @@ ROOT=$(git rev-parse --show-toplevel)
 DEST=$ROOT/standalone-apps/app-lab-desktop/internal/learn/assets
 
 if [[ -d "$DEST" ]]; then
-    echo "Learn contents already downloaded"
+    info "Learn contents already downloaded"
     exit 0
 else
-    echo "Downloading learn contents"
+    info "Downloading learn contents"
 fi
 
 TMP_DIR=$(mktemp -d)
 trap 'rm -rf "$TMP_DIR"' EXIT
 
-echo "Cloning learn contents into $TMP_DIR"
+info "Cloning learn contents into $TMP_DIR"
 git -C "$TMP_DIR" init -q
 git -C "$TMP_DIR" remote add origin "$REPO_URL"
 git -C "$TMP_DIR" sparse-checkout init --cone
 git -C "$TMP_DIR" sparse-checkout set "$SUB_DIR"
 git -C "$TMP_DIR" pull origin "$BRANCH" -q
 
-echo "Adding lastmod files to learn contents"
+info "Adding lastmod files to learn contents"
 
 add_lastmod() {
     BASEPATH="$1"
     if [ -z "$BASEPATH" ]; then
-        echo "Usage: $0 <BASEPATH>"
+        warn "Usage: $0 <BASEPATH>"
         exit 1
     fi
 
@@ -52,20 +51,19 @@ add_lastmod() {
     find $BASEPATH -maxdepth 2 -type f -name "*.md" | while read -r FILE; do
     LASTMOD=$(git -C "$BASEPATH" log -1 --date=short --format="%cd" -- "$FILE" 2>/dev/null || true)
     if [ -z "$LASTMOD" ]; then
-        echo "Skip (no git history): $FILE"
+        warn "Skip (no git history): $FILE"
         continue
     fi
 
-    echo "Adding $FILE.lastmod ($LASTMOD)"
     printf '%s\n' "$LASTMOD" > "$FILE.lastmod"
     done
 }
 
 add_lastmod $TMP_DIR/$SUB_DIR
 
-echo "Copying learn contents to $DEST"
+info "Copying learn contents to $DEST"
 rm -rf $DEST
 mkdir -p $DEST
 mv $TMP_DIR/learn-docs/* $DEST
 
-echo "Learn contents fetched and copied to $DEST"
+info "Learn contents fetched and copied to $DEST"

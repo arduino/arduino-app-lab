@@ -20,6 +20,7 @@ export namespace agent {
 	    id: string;
 	    name: string;
 	    description?: string;
+	    free?: boolean;
 	
 	    static createFrom(source: any = {}) {
 	        return new AgentModel(source);
@@ -30,6 +31,7 @@ export namespace agent {
 	        this.id = source["id"];
 	        this.name = source["name"];
 	        this.description = source["description"];
+	        this.free = source["free"];
 	    }
 	}
 	export class AuthMethod {
@@ -196,6 +198,7 @@ export namespace agent {
 	    input?: any;
 	    paths?: string[];
 	    outsideWorkspace?: boolean;
+	    outsideApp?: string;
 	    output?: string;
 	
 	    static createFrom(source: any = {}) {
@@ -211,6 +214,7 @@ export namespace agent {
 	        this.input = source["input"];
 	        this.paths = source["paths"];
 	        this.outsideWorkspace = source["outsideWorkspace"];
+	        this.outsideApp = source["outsideApp"];
 	        this.output = source["output"];
 	    }
 	}
@@ -302,6 +306,7 @@ export namespace agent {
 	    pinned?: boolean;
 	    workspaceAppId?: string;
 	    workspaceName?: string;
+	    agentId?: string;
 	
 	    static createFrom(source: any = {}) {
 	        return new SessionSummary(source);
@@ -316,6 +321,40 @@ export namespace agent {
 	        this.pinned = source["pinned"];
 	        this.workspaceAppId = source["workspaceAppId"];
 	        this.workspaceName = source["workspaceName"];
+	        this.agentId = source["agentId"];
+	    }
+	}
+
+}
+
+export namespace agentauth {
+	
+	export class Provider {
+	    id: string;
+	    name: string;
+	    envVar: string;
+	    docUrl: string;
+	    api: string;
+	    signIn?: boolean;
+	    freeKey?: boolean;
+	    keyPrefix?: string;
+	    keySite?: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new Provider(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.id = source["id"];
+	        this.name = source["name"];
+	        this.envVar = source["envVar"];
+	        this.docUrl = source["docUrl"];
+	        this.api = source["api"];
+	        this.signIn = source["signIn"];
+	        this.freeKey = source["freeKey"];
+	        this.keyPrefix = source["keyPrefix"];
+	        this.keySite = source["keySite"];
 	    }
 	}
 
@@ -325,6 +364,7 @@ export namespace airuntime {
 	
 	export class Status {
 	    installed: boolean;
+	    agentVersion?: string;
 	    version?: string;
 	    diskUsageBytes?: number;
 	
@@ -335,6 +375,7 @@ export namespace airuntime {
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.installed = source["installed"];
+	        this.agentVersion = source["agentVersion"];
 	        this.version = source["version"];
 	        this.diskUsageBytes = source["diskUsageBytes"];
 	    }
@@ -370,6 +411,28 @@ export namespace app {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.appId = source["appId"];
 	        this.file = source["file"];
+	    }
+	}
+	export class ProviderCredential {
+	    providerId: string;
+	    name: string;
+	    envVar: string;
+	    maskedKey: string;
+	    addedAt?: string;
+	    signedIn?: boolean;
+	
+	    static createFrom(source: any = {}) {
+	        return new ProviderCredential(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.providerId = source["providerId"];
+	        this.name = source["name"];
+	        this.envVar = source["envVar"];
+	        this.maskedKey = source["maskedKey"];
+	        this.addedAt = source["addedAt"];
+	        this.signedIn = source["signedIn"];
 	    }
 	}
 

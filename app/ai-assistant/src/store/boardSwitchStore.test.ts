@@ -21,7 +21,7 @@ describe('requestBoardSwitch', () => {
 
   it('parks the switch while any session streams, even a background one', () => {
     useChatStore.getState().setCurrentSessionId('visible');
-    useChatStore.getState().setSessionStreaming('background', true);
+    useChatStore.getState().beginTurn('background');
 
     expect(requestBoardSwitch({ currentBoardName: 'board-a', confirm })).toBe(
       false,
@@ -34,9 +34,9 @@ describe('requestBoardSwitch', () => {
   });
 
   it('lets the switch through again once the turn ends', () => {
-    useChatStore.getState().setSessionStreaming('session', true);
+    useChatStore.getState().beginTurn('session');
     requestBoardSwitch({ confirm });
-    useChatStore.getState().setSessionStreaming('session', false);
+    useChatStore.getState().endTurn('session');
 
     expect(requestBoardSwitch({ confirm })).toBe(true);
   });
@@ -48,7 +48,7 @@ describe('confirmPending', () => {
   });
 
   const park = (): void => {
-    useChatStore.getState().setSessionStreaming('session', true);
+    useChatStore.getState().beginTurn('session');
     requestBoardSwitch({ currentBoardName: 'board-a', confirm });
   };
 

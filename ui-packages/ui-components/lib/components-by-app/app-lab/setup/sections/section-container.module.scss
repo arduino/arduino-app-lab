@@ -148,16 +148,3 @@
     }
   }
 }
-
-.tooltip-content {
-  flex-direction: column;
-  gap: 8px;
-  padding: 16px 24px;
-  border-radius: 4px;
-  background: var(--surface-bg-above, #374146);
-  color: #ffffff;
-
-  box-shadow: 0px 4px 20px 0px rgba(0, 0, 0, 0.25);
-  top: unset;
-  right: unset;
-}

@@ -1,3 +1,5 @@
+export { default as DeleteFileDialog } from './delete-file-dialog/DeleteFileDialog';
+export * from './delete-file-dialog/deleteFileDialog.type';
 export { default as DeleteLibraryDialog } from './delete-library-dialog/DeleteLibraryDialog';
 export * from './delete-library-dialog/deleteLibraryDialog.type';
 export { default as DeleteSketchDialog } from './delete-sketch-dialog/DeleteSketchDialog';

@@ -472,3 +472,31 @@ func TestRenameWorkspacePathMovesAFolderIntoAMissingParent(t *testing.T) {
 		t.Error("want the app copy itself never moved")
 	}
 }
+
+// Every app maps to the same temp workspace folder, so only the copied app's
+// paths may reach it.
+func TestInWorkspaceAppAcceptsOnlyTheCopiedApp(t *testing.T) {
+	workspaceMu.Lock()
+	prev := workspaceAppPath
+	workspaceAppPath = boardAppsRootDir + "/app-a"
+	defer func() { workspaceAppPath = prev; workspaceMu.Unlock() }()
+
+	for p, want := range map[string]bool{
+		boardAppsRootDir + "/app-a/python/main.py":               true,
+		boardAppsRootDir + "/app-a/sketch/":                      true,
+		boardAppsRootDir + "/app-b/python/main.py":               false,
+		boardAppsRootDir + "/app-ab/python/main.py":              false,
+		boardAppsRootDir + "/app-a/../app-b/python/main.py":      false,
+		boardAppsRootDir + "/app-a":                              false,
+		"/var/lib/arduino-app-cli/examples/blink/python/main.py": false,
+	} {
+		if got := inWorkspaceApp(p); got != want {
+			t.Errorf("inWorkspaceApp(%q) = %v, want %v", p, got, want)
+		}
+	}
+
+	workspaceAppPath = ""
+	if inWorkspaceApp(boardAppsRootDir + "/app-a/python/main.py") {
+		t.Error("want nothing accepted before any app is copied")
+	}
+}

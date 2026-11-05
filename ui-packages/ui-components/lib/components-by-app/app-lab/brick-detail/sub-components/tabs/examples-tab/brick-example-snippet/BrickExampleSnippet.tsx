@@ -36,7 +36,7 @@ export const BrickExampleSnippet: React.FC<BrickExampleSnippetProps> = ({
   const navigate = useNavigate();
 
   const { props: titleTooltipProps, renderTooltip: renderTitleTooltip } =
-    useTooltip({ content: title, timeout: 0, renderDelay: 500 });
+    useTooltip({ content: title });
 
   return (
     <div

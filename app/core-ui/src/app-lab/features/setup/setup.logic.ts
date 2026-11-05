@@ -44,7 +44,7 @@ const createUseLinuxCredentialsLogic = function (): UseLinuxCredentialsLogic {
 
     // enable network mode by default if setup password is shown, means it's first usage (new board or after flash)
     useEffect(() => {
-      if (context.setUserPasswordIsSuccess) {
+      if (context.setUserPasswordIsSuccess && password) {
         setNetworkMode(true, password);
         setPassword('');
       }

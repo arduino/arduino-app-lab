@@ -107,12 +107,10 @@ const BoardConfiguration = forwardRef((props: BoardConfigurationProps, ref) => {
     >
       <div className={setupStyles['input-container']}>
         <Select
+          outlined
           id="keyboard-layout"
           name="keyboard-layout"
-          value={
-            keyboardLayouts.find((it) => it.id === inputKeyboardLayout)
-              ?.label ?? ''
-          }
+          selectedId={inputKeyboardLayout}
           label={formatMessage(boardConfigurationMessages.keyboardLabel)}
           disabled={setBoardConfigurationIsLoading}
           sections={[
@@ -138,6 +136,7 @@ const BoardConfiguration = forwardRef((props: BoardConfigurationProps, ref) => {
       <div className={setupStyles['input-container']}>
         <Input
           inputStyle={InputStyle.AppLab}
+          outlined
           id="board-name"
           ref={boardNameInputRef}
           value={inputBoardName}
@@ -149,12 +148,6 @@ const BoardConfiguration = forwardRef((props: BoardConfigurationProps, ref) => {
           autoCorrect="off"
           autoCapitalize="off"
           spellCheck="false"
-          classes={{
-            input: styles['board-name'],
-            inputContainer: styles['board-name-container'],
-            inputLabel: styles['board-name-label'],
-            focused: styles['focused'],
-          }}
         >
           <IconButton
             type="button"

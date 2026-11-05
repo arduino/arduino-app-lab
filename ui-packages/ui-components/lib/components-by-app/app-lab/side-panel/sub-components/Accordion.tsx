@@ -1,8 +1,8 @@
-import { IconNavigationArrowCaretNormalDown } from '@arduino/react-icons';
+import { IconNavigationArrowCaretNormalDown } from '@cloud-editor-mono/images/assets/icons';
 import clsx from 'clsx';
 import { useId, useState } from 'react';
 
-import { XXXSmall } from '../../../../typography';
+import { XXSmall } from '../../../../typography';
 import styles from './accordion.module.scss';
 
 export interface AccordionProps {
@@ -30,9 +30,9 @@ export const Accordion = ({
         aria-controls={contentId}
         onClick={(): void => setIsOpen((prev) => !prev)}
       >
-        <XXXSmall bold className={styles['accordion-label']}>
+        <XXSmall semibold className={styles['accordion-label']}>
           {title}
-        </XXXSmall>
+        </XXSmall>
         <IconNavigationArrowCaretNormalDown
           className={clsx(styles['accordion-caret'], {
             [styles['accordion-caret-collapsed']]: !isOpen,

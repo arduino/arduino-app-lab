@@ -113,6 +113,14 @@ func (m *WatchManager) WatchApp(t Target, p string) error {
 // UnwatchApp stops watching an app.
 func (m *WatchManager) UnwatchApp(p string) { m.remove(p) }
 
+// WatchesApp reports whether the app at p is watched, which is what the editor does for the app it has open.
+func (m *WatchManager) WatchesApp(p string) bool {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	w, ok := m.watches[path.Clean(p)]
+	return ok && w.surface == surfaceApp
+}
+
 // WatchAppsDir starts watching the apps root (ArduinoApps), non-recursively,
 // for apps being added/removed/renamed.
 func (m *WatchManager) WatchAppsDir(t Target, p string) error {
@@ -155,6 +163,17 @@ func (m *WatchManager) UnwatchAll() {
 	if remoteCancel != nil {
 		remoteCancel()
 	}
+}
+
+// Retarget moves the remote watches onto a new connection to the same board, where the watched paths still exist.
+func (m *WatchManager) Retarget(t Target) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if t.IsLocal || m.remoteConn == nil {
+		return
+	}
+	m.remoteConn = t.Conn
+	m.scheduleRemoteReconcileLocked()
 }
 
 // Close tears down all watches and the shared fsnotify watcher.

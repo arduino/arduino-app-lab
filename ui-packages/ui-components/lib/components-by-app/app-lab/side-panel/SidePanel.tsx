@@ -1,9 +1,7 @@
 import {
-  IconMediaLibraryBooksNormal,
-  IconTechnologyCablePlugNormal,
-} from '@arduino/react-icons';
-import {
   Brick,
+  IconTechnologyCablePlugNormal,
+  MediaLibraryBooksNormal,
   NavigationGroupOutline,
   NavigationTable,
 } from '@cloud-editor-mono/images/assets/icons';
@@ -90,7 +88,7 @@ const AppLabSidePanel = ({
           />
           <SidePanel.Row
             id={SidePanelItemId.Resources}
-            icon={<IconMediaLibraryBooksNormal />}
+            icon={<MediaLibraryBooksNormal />}
             title={formatMessage(messages.resourcesLabel)}
             route="/learn"
             active={activeItemId === SidePanelItemId.Learn}

@@ -5,30 +5,12 @@
   gap: 8px;
 }
 
+// The examples list always scrolls; the margin matches the content's 16px scrollbar
+// (public/index.scss), so the field ends where the cards end.
 .search-container {
-  display: flex;
-  align-items: center;
   min-width: 300px;
   max-width: 300px;
-
-  input {
-    background: var(--component-bg-flexible, #171E21);
-    border-radius: 4px;
-    border: unset;
-    color: var(--text-subtle, #C9D2D2);
-    font-size: 12px;
-    &::placeholder {
-      color: var(--text-subtle, #C9D2D2);
-    }
-  }
-
-  > svg {
-
-    path {
-      fill: white;
-    }
-  }
-
+  margin-right: 16px;
 }
 
 .my-apps {

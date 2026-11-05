@@ -1150,13 +1150,13 @@ export const duplicateFileDialogMessages = defineMessages({
   folderBodyDescription: {
     id: 'duplicateFileDialog.folderBodyDescription',
     defaultMessage:
-      'A folder with this name already exists. Merge the folders or keep both as separate folders.',
+      'Do you want to overwrite the existing folder or keep both?',
     description: 'Description shown when a folder conflict is detected',
   },
   fileFolderConflictDescription: {
     id: 'duplicateFileDialog.fileFolderConflictDescription',
     defaultMessage:
-      "Can't move this file. A folder with the same name already exists.",
+      "Can't move this file. A folder with this name already exists.",
     description:
       'Description shown when trying to move a file to a location with a folder of the same name',
   },
@@ -1273,10 +1273,11 @@ export const aiModelRequiredDialogMessages = defineMessages({
     defaultMessage: 'AI Model not available',
     description: 'Message shown in the AI model required dialog for apps',
   },
-  dialogBodyTitleExample: {
-    id: 'aiModelRequiredDialog.bodyTitleExample',
-    defaultMessage: 'Download the AI Model to run this example',
-    description: 'Message shown in the AI model required dialog for examples',
+  dialogBodyTitleReadOnlyApp: {
+    id: 'aiModelRequiredDialog.bodyTitleReadOnlyApp',
+    defaultMessage: 'Download the AI Model to run this App',
+    description:
+      'Message shown in the AI model required dialog for read-only apps (example apps and installed releases)',
   },
   dialogBodyDescriptionApp: {
     id: 'aiModelRequiredDialog.bodyDescriptionApp',
@@ -1284,12 +1285,12 @@ export const aiModelRequiredDialogMessages = defineMessages({
       'This App needs the {modelName} AI Model. Download it now to run this App or select another one.',
     description: 'Description shown in the AI model required dialog for apps',
   },
-  dialogBodyDescriptionExample: {
-    id: 'aiModelRequiredDialog.bodyDescriptionExample',
+  dialogBodyDescriptionReadOnlyApp: {
+    id: 'aiModelRequiredDialog.bodyDescriptionReadOnlyApp',
     defaultMessage:
-      'This example needs the {modelName} AI Model. Download it now to run this example.',
+      'This App needs the {modelName} AI Model. Download it now to run this App.',
     description:
-      'Description shown in the AI model required dialog for examples',
+      'Description shown in the AI model required dialog for read-only apps (example apps and installed releases)',
   },
   confirmButtonApp: {
     id: 'aiModelRequiredDialog.confirmButtonApp',
@@ -1297,11 +1298,11 @@ export const aiModelRequiredDialogMessages = defineMessages({
     description:
       'Label for the confirm button in the AI model required dialog for apps',
   },
-  confirmButtonExample: {
-    id: 'aiModelRequiredDialog.confirmButtonExample',
+  confirmButtonReadOnlyApp: {
+    id: 'aiModelRequiredDialog.confirmButtonReadOnlyApp',
     defaultMessage: 'Download model',
     description:
-      'Label for the confirm button in the AI model required dialog for examples',
+      'Label for the confirm button in the AI model required dialog for read-only apps (example apps and installed releases)',
   },
 });
 
@@ -1570,19 +1571,19 @@ export const createReleaseIntroDialogMessages = defineMessages({
   description: {
     id: 'createReleaseIntroDialog.description',
     defaultMessage:
-      'Package your App into a ready-to-run release to deploy or share.',
+      'Create a frozen, production-ready package of your App, built to run consistently across compatible devices.',
     description: 'Explains what creating a release produces',
   },
   pointDirectProduction: {
     id: 'createReleaseIntroDialog.pointDirectProduction',
     defaultMessage:
-      '<strong>Production ready:</strong> Bricks, models and code stay exactly as in the release you made — ready to run on other boards.',
+      '<strong>Direct installation:</strong> Deploy straight to other devices without any setup.',
     description: 'First use case for an app release',
   },
   pointAppLabSharing: {
     id: 'createReleaseIntroDialog.pointAppLabSharing',
     defaultMessage:
-      '<strong>App Lab sharing:</strong> Share a run-only copy others can run, then Copy & edit — your original App stays untouched.',
+      '<strong>App Lab sharing:</strong> Publish as a run-only sample. Users can import and run it, or clone it into an editable project. Your original stays untouched.',
     description: 'Second use case for an app release',
   },
   dontShowAgain: {

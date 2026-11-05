@@ -21,6 +21,11 @@ const COMPONENT_PEERS = new Set([
 // that breaks the API.
 const COMPONENT_PINS = {};
 const COMPONENT_FIELDS = ['peerDependencies', 'dependencies'];
+// The editor package will be published so that App Lab and Cloud Editor can
+// install it from separate repositories (docs/adr/0002, phase 4b). Its
+// peerDependencies are the list a consumer must install; it declares nothing
+// else, and the root still owns every installed version.
+const WORKBENCH = 'ui-packages/ide-workbench';
 const ROOT_BIN = path.join(__dirname, 'node_modules', '.bin');
 
 // `resolution` is null for some root dependencies, so fall back to what is
@@ -61,6 +66,7 @@ module.exports = {
       const cwd = dep.workspace.cwd;
       if (cwd === '.') continue;
       if (cwd === COMPONENT) continue;
+      if (cwd === WORKBENCH && dep.type === 'peerDependencies') continue;
       dep.error(
         `declare ${dep.ident} in the root package.json; workspace packages declare no dependencies`,
       );

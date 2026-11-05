@@ -1,0 +1,59 @@
+@use "@cloud-editor-mono/arduino-sass/src/typography" as typography;
+@use "@cloud-editor-mono/arduino-sass/src/_fonts" as fonts;
+
+.field {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 36px;
+  padding: 4px 12px;
+  border: 1px solid var(--border-default);
+  border-radius: 4px;
+  background: var(--component-bg-baseline);
+}
+
+.body {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 0;
+}
+
+.label {
+  color: var(--text-subtle);
+  font-size: typography.$font-size-xxx-small;
+  font-weight: fonts.$font-weight-semibold;
+  line-height: 1.2;
+}
+
+.value {
+  overflow: hidden;
+  color: var(--text-default);
+  font-size: typography.$font-size-xx-small;
+  line-height: 1.6;
+  text-overflow: ellipsis;
+  user-select: all;
+  white-space: nowrap;
+}
+
+.copy {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  padding: 2px;
+  border: none;
+  border-radius: 3px;
+  background: none;
+  color: var(--text-subtle);
+  cursor: pointer;
+
+  &:hover {
+    color: var(--text-default);
+  }
+
+  svg {
+    width: 14px;
+    height: 14px;
+  }
+}

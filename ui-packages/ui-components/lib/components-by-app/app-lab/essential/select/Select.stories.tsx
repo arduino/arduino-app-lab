@@ -56,6 +56,8 @@ const doubleSections = [
 const AllContent = () => {
   const [value, setValue] = useState(boards[0]);
 
+  // On the baseline surface, like the App Lab dialogs: the filled Select takes the below-1
+  // background, which is also the canvas colour.
   return (
     <div
       style={{
@@ -63,13 +65,15 @@ const AllContent = () => {
         flexDirection: 'column',
         gap: '24px',
         width: '260px',
+        padding: '16px',
+        background: 'var(--surface-bg-baseline)',
       }}
     >
       <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
         <span style={sectionLabelStyle}>Default (4 elements)</span>
         <Select
           label="Board"
-          value={value}
+          selectedId={value}
           sections={singleSection4Elements}
           onChange={(key) => setValue(String(key))}
         />
@@ -79,7 +83,7 @@ const AllContent = () => {
         <span style={sectionLabelStyle}>Default (10 elements)</span>
         <Select
           label="Board"
-          value={value}
+          selectedId={value}
           sections={singleSection}
           onChange={(key) => setValue(String(key))}
         />
@@ -89,9 +93,120 @@ const AllContent = () => {
         <span style={sectionLabelStyle}>Multiple sections</span>
         <Select
           label="Board"
-          value={value}
+          selectedId={value}
           sections={doubleSections}
           onChange={(key) => setValue(String(key))}
+        />
+      </div>
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        <span style={sectionLabelStyle}>Rounded</span>
+        <Select
+          label="Board"
+          selectedId={value}
+          sections={singleSection4Elements}
+          rounded
+          onChange={(key) => setValue(String(key))}
+        />
+      </div>
+
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '8px',
+          paddingBottom: '20px',
+        }}
+      >
+        <span style={sectionLabelStyle}>Error</span>
+        <Select
+          label="Board"
+          selectedId={value}
+          sections={singleSection4Elements}
+          error={new Error('Invalid selection')}
+          onChange={(key) => setValue(String(key))}
+        />
+      </div>
+
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '8px',
+          padding: '8px',
+          background: 'var(--surface-bg-below-1)',
+        }}
+      >
+        <span style={sectionLabelStyle}>On a below-1 surface</span>
+        <Select
+          label="Board"
+          selectedId={value}
+          sections={singleSection4Elements}
+          surface="below-1"
+          onChange={(key) => setValue(String(key))}
+        />
+      </div>
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        <span style={sectionLabelStyle}>Outlined</span>
+        <Select
+          label="Board"
+          selectedId={value}
+          sections={singleSection4Elements}
+          outlined
+          onChange={(key) => setValue(String(key))}
+        />
+      </div>
+
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '8px',
+          paddingBottom: '20px',
+        }}
+      >
+        <span style={sectionLabelStyle}>Outlined with error</span>
+        <Select
+          label="Board"
+          selectedId={value}
+          sections={singleSection4Elements}
+          outlined
+          error={new Error('Invalid selection')}
+          onChange={(key) => setValue(String(key))}
+        />
+      </div>
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        <span style={sectionLabelStyle}>No label</span>
+        <Select
+          selectedId={value}
+          sections={singleSection4Elements}
+          onChange={(key) => setValue(String(key))}
+        />
+      </div>
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        <span style={sectionLabelStyle}>
+          Display value (selection not in the list)
+        </span>
+        <Select
+          label="Board"
+          displayValue="Arduino UNO Q"
+          sections={singleSection4Elements}
+          onChange={(key) => setValue(String(key))}
+        />
+      </div>
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        <span style={sectionLabelStyle}>Disabled outlined</span>
+        <Select
+          label="Board"
+          selectedId={boards[0]}
+          sections={singleSection}
+          outlined
+          disabled
+          onChange={() => undefined}
         />
       </div>
 
@@ -99,7 +214,7 @@ const AllContent = () => {
         <span style={sectionLabelStyle}>Disabled</span>
         <Select
           label="Board"
-          value={boards[0]}
+          selectedId={boards[0]}
           sections={singleSection}
           disabled
           onChange={() => undefined}

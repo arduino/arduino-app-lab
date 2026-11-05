@@ -1,14 +1,10 @@
 import { Button, IconButton, ProgressBar } from '@bcmi-labs/art-ui/components';
 import { Config, setCSSVariable } from '@cloud-editor-mono/common';
-import {
-  ChevronUp,
-  Copy,
-  Sparkle,
-} from '@cloud-editor-mono/images/assets/icons';
+import { ViewInstances } from '@cloud-editor-mono/ide-workbench/lib/code-mirror/codeMirrorViewInstances';
+import { Copy, Sparkle } from '@cloud-editor-mono/images/assets/icons';
 import { Plans, TransmissionTag } from '@cloud-editor-mono/infrastructure';
 import clsx from 'clsx';
 
-import { ViewInstances } from '../code-mirror/codeMirrorViewInstances';
 import { useI18n } from '../i18n/useI18n';
 import { useTooltip } from '../tooltip';
 import { Link, XSmall, XXSmall } from '../typography';

@@ -1,12 +1,12 @@
+import { viewInstances } from '@cloud-editor-mono/ide-workbench/lib/code-mirror/codeMirrorViewInstances';
+import {
+  LspReferenceRow,
+  LspReferencesResult,
+} from '@cloud-editor-mono/ide-workbench/lib/code-mirror/extensions/lsp/lsp-references/lsp-references-types';
 import { FileIcon } from '@cloud-editor-mono/images/assets/file-icons';
 import { CloseX } from '@cloud-editor-mono/images/assets/icons';
 import React, { useCallback, useEffect, useId, useMemo, useRef } from 'react';
 
-import { viewInstances } from '../../../code-mirror/codeMirrorViewInstances';
-import {
-  LspReferenceRow,
-  LspReferencesResult,
-} from '../../../code-mirror/extensions/lsp/lsp-references/lsp-references-types';
 import { useI18n } from '../../../i18n/useI18n';
 import {
   ButtonAppearance,

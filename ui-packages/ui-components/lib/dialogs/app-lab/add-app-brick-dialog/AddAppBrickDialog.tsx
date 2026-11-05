@@ -115,21 +115,32 @@ export const AddAppBrickDialog: React.FC<AddAppBrickDialogProps> = ({
   const handleAddAppBrick = async (): Promise<void> => {
     if (!selectedBrick?.id) return;
     setLoading(true);
-    const success = await confirmAddAppBrick(
-      selectedBrick.id,
-      selectedModelByBrickId[selectedBrick.id],
-    );
-    if (!success) {
-      setLoading(false);
-      return;
-    }
+    try {
+      const success = await confirmAddAppBrick(
+        selectedBrick.id,
+        selectedModelByBrickId[selectedBrick.id],
+      );
+      if (!success) {
+        return;
+      }
 
-    const brickDetails = await loadBrickDetails(selectedBrick.id!);
-    if ((brickDetails.config_variables ?? []).some((v) => v.required)) {
-      setBrickDetails(brickDetails);
+      // The brick is already in the app, so a failed details load still
+      // shows the success view, without the configuration step.
+      let brickDetails: BrickDetails | undefined;
+      try {
+        brickDetails = await loadBrickDetails(selectedBrick.id!);
+      } catch (error) {
+        console.error(error);
+      }
+      if ((brickDetails?.config_variables ?? []).some((v) => v.required)) {
+        setBrickDetails(brickDetails);
+      }
+      setSucceeded(success);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
     }
-    setSucceeded(success);
-    setLoading(false);
   };
 
   const selectedModelChange = useCallback(

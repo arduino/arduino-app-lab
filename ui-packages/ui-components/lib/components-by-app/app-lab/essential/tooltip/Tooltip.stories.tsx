@@ -9,8 +9,6 @@ import { useTooltip } from './';
 const TooltipDemo = ({ content }: { content: string }) => {
   const { props, renderTooltip } = useTooltip({
     content,
-    timeout: 0,
-    renderDelay: 0,
   });
 
   return (

@@ -1,9 +1,17 @@
-import { act, fireEvent, render, within } from '@testing-library/react';
+import {
+  act,
+  fireEvent,
+  render,
+  renderHook,
+  waitFor,
+  within,
+} from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { listSessions, SessionSummary } from '../../services';
+import { listSessions, renameSession, SessionSummary } from '../../services';
 import { useAiAssistantStore, useChatStore } from '../../store';
 import { AgentSidePanel } from './AgentSidePanel';
+import { useAgentSidePanelLogic } from './agentSidePanel.logic';
 
 // SidePanel.Bottom navigates to the settings route, and there is no router around a bare render.
 vi.mock('@tanstack/react-router', async () => ({
@@ -11,12 +19,26 @@ vi.mock('@tanstack/react-router', async () => ({
   useNavigate: (): VoidFunction => vi.fn(),
 }));
 
+const forgottenHandlers = vi.hoisted(
+  (): ((appId: string, chatIds?: string[]) => void)[] => [],
+);
+
 // The panel's mutations hit the DI coding-agent service, which throws "not implemented" outside a running agent.
 vi.mock('../../services', () => ({
+  listAgents: (): { id: string; comingSoon?: boolean }[] => [{ id: 'claude' }],
+  getAgent: (id?: string): { persistsNewSession: boolean } | undefined =>
+    id === 'opencode' ? { persistsNewSession: true } : undefined,
   listSessions: vi.fn(),
   deleteSession: vi.fn(),
   pinSession: vi.fn(),
   renameSession: vi.fn(),
+  onWorkspaceAppForgotten: (
+    handler: (appId: string, chatIds?: string[]) => void,
+  ): VoidFunction => {
+    forgottenHandlers.push(handler);
+    return () =>
+      forgottenHandlers.splice(forgottenHandlers.indexOf(handler), 1);
+  },
 }));
 
 const sessions: SessionSummary[] = [
@@ -58,9 +80,10 @@ const row = async (title: string): Promise<HTMLElement> =>
 describe('AgentSidePanel session folders', () => {
   beforeEach(() => {
     useChatStore.getState().reset();
+    useAiAssistantStore.setState({ selectedAgentId: 'claude' });
     useAiAssistantStore
       .getState()
-      .setAuth({ authenticated: true, agentId: 'claude' });
+      .setAuth('claude', { authenticated: true, agentId: 'claude' });
     vi.mocked(listSessions).mockResolvedValue(sessions);
   });
 
@@ -143,5 +166,184 @@ describe('AgentSidePanel session folders', () => {
 
     expect(await row('Arduino Apps')).toBeInTheDocument();
     expect(rows('Snack Sorter')).toHaveLength(0);
+  });
+
+  // An empty chat has no session, so no current id: New session is the entry it has open.
+  it('selects New session with no current session on an agent that creates it on the first prompt', async () => {
+    useAiAssistantStore.setState({ selectedAgentId: 'opencode' });
+    useAiAssistantStore
+      .getState()
+      .setAuth('opencode', { authenticated: true, agentId: 'opencode' });
+    renderPanel();
+
+    const entry = await row('New session');
+    expect(entry.closest('[aria-current="page"]')).not.toBeNull();
+  });
+
+  // A title the engine writes after the turn has ended reaches the row through a refetch.
+  it('refetches its rows when a session gets its title late', async () => {
+    renderPanel();
+    await vi.waitFor(() => expect(listSessions).toHaveBeenCalled());
+    const calls = vi.mocked(listSessions).mock.calls.length;
+
+    act(() => {
+      useChatStore.getState().touchSessionList();
+    });
+
+    await vi.waitFor(() =>
+      expect(vi.mocked(listSessions).mock.calls.length).toBe(calls + 1),
+    );
+  });
+
+  it('selects nothing with no current session on an agent that opens it at once', async () => {
+    renderPanel();
+
+    const entry = await row('New session');
+    expect(entry.closest('[aria-current="page"]')).toBeNull();
+  });
+});
+
+// The header of a panel showing the renamed session follows the sidebar; a blank title brings back the engine's.
+describe('AgentSidePanel rename', () => {
+  beforeEach(() => {
+    useChatStore.getState().reset();
+    vi.mocked(listSessions).mockResolvedValue(sessions);
+    vi.mocked(renameSession).mockResolvedValue(undefined);
+  });
+
+  const rename = async (
+    result: { current: ReturnType<typeof useAgentSidePanelLogic> },
+    title: string,
+  ): Promise<void> => {
+    act(() => {
+      result.current.startRename(sessions[0]);
+      result.current.setDraftTitle(title);
+    });
+    await act(async () => {
+      result.current.onRenameKeyDown(
+        { key: 'Enter' } as React.KeyboardEvent,
+        's1',
+      );
+    });
+  };
+
+  it('hands the new title to the panel showing the session', async () => {
+    const { result } = renderHook(() => useAgentSidePanelLogic('Arduino Apps'));
+    await waitFor(() => expect(listSessions).toHaveBeenCalled());
+
+    await rename(result, 'Camera setup');
+
+    expect(renameSession).toHaveBeenCalledWith('s1', 'Camera setup');
+    expect(useChatStore.getState().retitled).toMatchObject({
+      sessionId: 's1',
+      title: 'Camera setup',
+    });
+  });
+
+  it('hands back the engine title after a blank rename', async () => {
+    const { result } = renderHook(() => useAgentSidePanelLogic('Arduino Apps'));
+    await waitFor(() => expect(listSessions).toHaveBeenCalled());
+    vi.mocked(listSessions).mockResolvedValue([
+      { ...sessions[0], title: 'Camera init on the Uno Q' },
+    ]);
+
+    await rename(result, '  ');
+
+    expect(renameSession).toHaveBeenCalledWith('s1', '');
+    expect(useChatStore.getState().retitled).toMatchObject({
+      sessionId: 's1',
+      title: 'Camera init on the Uno Q',
+    });
+  });
+});
+
+// The host deletes a forgotten app's chats after it says so: a list read before it is done still has them.
+describe('AgentSidePanel and a deleted app', () => {
+  beforeEach(() => {
+    useChatStore.getState().reset();
+    vi.mocked(listSessions).mockResolvedValue(sessions);
+  });
+
+  const forget = (appId: string, chatIds?: string[]): void =>
+    act(() => forgottenHandlers.forEach((handler) => handler(appId, chatIds)));
+  const ids = (logic: ReturnType<typeof useAgentSidePanelLogic>): string[] =>
+    [...logic.pinnedSessions, ...logic.folders.flatMap((f) => f.sessions)]
+      .map((s) => s.id)
+      .sort();
+
+  it("drops the app's chats at once, also from a read the host answers before it is done", async () => {
+    const { result } = renderHook(() => useAgentSidePanelLogic('Arduino Apps'));
+    await waitFor(() =>
+      expect(ids(result.current)).toEqual(['s1', 's2', 's3', 's4']),
+    );
+    const reads = vi.mocked(listSessions).mock.calls.length;
+
+    forget('snack');
+
+    expect(ids(result.current)).toEqual(['s3', 's4']);
+    await waitFor(() =>
+      expect(vi.mocked(listSessions).mock.calls.length).toBe(reads + 1),
+    );
+    await act(() => new Promise((resolve) => setTimeout(resolve, 0)));
+    expect(ids(result.current)).toEqual(['s3', 's4']);
+  });
+
+  // That chat stays, about no app, as the host keeps it.
+  it('keeps the chat whose turn deleted the app, in the general folder', async () => {
+    useChatStore.getState().beginTurn('s1');
+    const { result } = renderHook(() => useAgentSidePanelLogic('Arduino Apps'));
+    await waitFor(() => expect(ids(result.current)).toHaveLength(4));
+
+    forget('snack');
+
+    await waitFor(() =>
+      expect(ids(result.current)).toEqual(['s1', 's3', 's4']),
+    );
+    const general = result.current.folders.find((f) => f.appId === '');
+    expect(general?.sessions.map((s) => s.id).sort()).toEqual(['s1', 's4']);
+  });
+
+  // A sweep keeps a legacy chat with no board on the app: only the chats the host names go.
+  it('hides exactly the chats the host names, a running one shown unbound', async () => {
+    useChatStore.getState().beginTurn('s1');
+    const { result } = renderHook(() => useAgentSidePanelLogic('Arduino Apps'));
+    await waitFor(() => expect(ids(result.current)).toHaveLength(4));
+    const reads = vi.mocked(listSessions).mock.calls.length;
+
+    forget('snack', ['s1', 's9-of-another-agent']);
+
+    await waitFor(() =>
+      expect(vi.mocked(listSessions).mock.calls.length).toBe(reads + 1),
+    );
+    await act(() => new Promise((resolve) => setTimeout(resolve, 0)));
+    expect(ids(result.current)).toEqual(['s1', 's2', 's3', 's4']);
+    const snack = result.current.folders.find((f) => f.appId === 'snack');
+    expect(snack?.sessions.map((s) => s.id)).toEqual(['s2']);
+    const general = result.current.folders.find((f) => f.appId === '');
+    expect(general?.sessions.map((s) => s.id).sort()).toEqual(['s1', 's4']);
+
+    useChatStore.getState().endTurn('s1');
+    forget('weather', []);
+    expect(ids(result.current)).toEqual(['s1', 's2', 's3', 's4']);
+    forget('weather', ['s3']);
+    expect(ids(result.current)).toEqual(['s1', 's2', 's4']);
+  });
+
+  // A live app can have the deleted one's id (created again, or on another board): its chats show while the host still lists the old ones.
+  it('hides only the chats the forget named, not every chat of that app id', async () => {
+    const { result } = renderHook(() => useAgentSidePanelLogic('Arduino Apps'));
+    await waitFor(() => expect(ids(result.current)).toHaveLength(4));
+    forget('snack');
+    await waitFor(() => expect(ids(result.current)).toEqual(['s3', 's4']));
+
+    vi.mocked(listSessions).mockResolvedValue([
+      ...sessions,
+      { id: 's9', title: 'New snack chat', workspaceAppId: 'snack' },
+    ]);
+    act(() => useChatStore.getState().touchSessionList());
+
+    await waitFor(() =>
+      expect(ids(result.current)).toEqual(['s3', 's4', 's9']),
+    );
   });
 });

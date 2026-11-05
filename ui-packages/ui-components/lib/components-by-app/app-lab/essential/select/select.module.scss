@@ -1,23 +1,58 @@
+@use "@cloud-editor-mono/arduino-sass/src/typography" as typography;
+
 .container {
+  position: relative;
   display: grid;
   grid-template-columns: 1fr auto;
   align-items: center;
+  box-sizing: border-box;
+  height: 36px;
+  padding-right: 11px;
   border-radius: 4px;
-  border: 1px solid var(--border-default, #434f54);
-  background: var(--surface-bg-baseline, #232b2e);
+  border: 1px solid transparent;
+  background: var(--surface-bg-below-1);
+  outline: none;
+
+  &.outlined {
+    border-color: var(--border-default);
+    background: var(--component-bg-baseline);
+  }
+
+  &.on-below-1 {
+    background: var(--surface-bg-baseline);
+  }
+
+  &.rounded {
+    border-radius: 100px;
+  }
+
+  &.has-error {
+    border-color: var(--feedback-error-default);
+  }
+
+  &.outlined.has-error {
+    background: transparent;
+  }
+
+  &:not(.disabled):not(.has-error) {
+    &:hover {
+      background-image: linear-gradient(var(--component-bg-hover), var(--component-bg-hover));
+    }
+
+    &.outlined:hover {
+      background-image: none;
+      border-color: var(--border-strong);
+    }
+
+    // :focus-visible, not :focus: a click also focuses the inner input, and only keyboard focus should show the border.
+    &.open,
+    &:focus-visible {
+      border-color: var(--border-selected);
+    }
+  }
 
   &:not(.disabled) {
-    &:hover {
-      border-color: var(--border-strong, #7f8c8d);
-    }
-
-    &.open {
-      border-color: #c8e9ea;
-    }
-
-    // Keyboard focus only: a click also focuses the inner input, and the open state has its own border.
     &:focus-visible {
-      border-color: var(--border-accent);
       outline: none;
     }
 
@@ -27,43 +62,45 @@
     }
   }
 
-  // &.disabled {
-  //   padding-right: 0;
-  //   .input {
-  //     padding: 0;
-
-  //     &-label {
-  //       opacity: 1;
-  //       color: var(--text-subtle, #c9d2d2);
-  //     }
-
-  //     input {
-  //       color: var(--text-default, #ffffff);
-  //       font-weight: 700;
-  //       padding-top: 8px;
-  //     }
-  //   }
-  // }
+  &.disabled {
+    .input,
+    .dropdown-menu-icon {
+      opacity: 0.5;
+    }
+  }
 
   .input {
     border: none !important;
     background: none !important;
   }
 
-  svg {
+  .dropdown-menu-icon,
+  .dropdown-menu svg {
+    width: 16px;
+    height: 16px;
+
     path {
-      fill: #c9d2d2;
+      fill: var(--icon-default);
     }
   }
 
   .dropdown-menu {
     max-height: 200px !important;
-    overflow-y: scroll;
-  
+    overflow-y: auto;
+    box-sizing: border-box;
+    width: max-content;
+    min-width: 100%;
+    // Long labels (keyboard layouts come from the board) wrap here instead of widening the menu past its container.
+    max-width: 320px;
+    padding: 4px;
+    border-radius: 4px;
+
+    // Positioned against .container's padding box: 1px bottom border + 4px gap.
+    // At least as wide as the field, wider when the selected item's bold label and checkmark need it.
     &-popover {
-      right: 0;
-      left: auto !important;
-      top: 40px !important;
+      min-width: calc(100% + 2px);
+      left: -1px !important;
+      top: calc(100% + 5px) !important;
     }
 
     &-button {
@@ -71,17 +108,44 @@
     }
 
     &-button-wrapper {
-      position: relative;
+      position: static;
       display: flex;
       justify-content: flex-start;
+      width: auto;
+      height: auto;
     }
 
     &-icon--open {
       transform: rotate(180deg);
     }
+
+    &-item {
+      height: auto;
+      min-height: 28px;
+      padding: 4px 4px 4px 12px;
+      border-radius: 4px;
+      font-size: typography.$font-size-xx-small;
+      line-height: 1.6;
+      letter-spacing: 0.12px;
+
+      > * {
+        display: flex;
+        flex: 1;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+      }
+
+      &--selected > * {
+        font-weight: 600;
+      }
+    }
   }
 
+  // Static, so the Input's label and error position against .container like a plain Input.
   .input {
+    position: static;
+    height: 100%;
     border: none;
     background: none;
 
@@ -90,19 +154,4 @@
       background: none !important;
     }
   }
-}
-
-// Spreads the item text so the checkmark sits at the right edge.
-.dropdown-menu-item > * {
-  display: flex;
-  flex: 1;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-}
-
-.selected-check {
-  flex-shrink: 0;
-  width: 16px;
-  height: 16px;
 }

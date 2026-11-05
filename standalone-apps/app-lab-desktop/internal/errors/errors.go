@@ -38,6 +38,22 @@ func TunnelSSHAuthFailedMiddleware() ErrorMiddleware {
 	}
 }
 
+// CodedErrorMiddleware sends an error with a code as its own JSON, so the frontend can word it from the fields; others keep their text.
+func CodedErrorMiddleware() ErrorMiddleware {
+	return func(next options.ErrorFormatter) options.ErrorFormatter {
+		return func(err error) any {
+			var coded interface{ ErrorCode() string }
+			if errors.As(err, &coded) {
+				// A string, as for HwError: the Wails runtime turns an object into "[object Object]".
+				if data, merr := json.Marshal(coded); merr == nil {
+					return string(data)
+				}
+			}
+			return next(err)
+		}
+	}
+}
+
 func HwErrorMiddleware() ErrorMiddleware {
 	return func(next options.ErrorFormatter) options.ErrorFormatter {
 		return func(err error) any {

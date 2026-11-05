@@ -1,3 +1,8 @@
 export { BasicInput } from './BasicInput';
 export { type InputProps, Input } from './Input';
-export { type InputValidateBehavior, InputStyle } from './input.type';
+export {
+  type InputSize,
+  type InputSurface,
+  type InputValidateBehavior,
+  InputStyle,
+} from './input.type';

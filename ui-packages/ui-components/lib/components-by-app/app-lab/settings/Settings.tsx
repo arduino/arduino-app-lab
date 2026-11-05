@@ -150,7 +150,6 @@ export const Settings: React.FC<SettingsProps> = ({
     content: formatMessage(appMessages.appLabUpdateAvailable, {
       newAppVersion: newAppVersion || '',
     }),
-    timeout: 0,
   });
 
   const {
@@ -158,13 +157,11 @@ export const Settings: React.FC<SettingsProps> = ({
     renderTooltip: renderTooltipDisconnect,
   } = useTooltip({
     content: formatMessage(cloudConnectorMessages.disconnectAction),
-    timeout: 0,
   });
 
   const { props: tooltipPropsConnect, renderTooltip: renderTooltipConnect } =
     useTooltip({
       content: formatMessage(cloudConnectorMessages.connectAction),
-      timeout: 0,
     });
 
   const {
@@ -172,13 +169,11 @@ export const Settings: React.FC<SettingsProps> = ({
     renderTooltip: renderTooltipSystemUpdate,
   } = useTooltip({
     content: formatMessage(systemMessages.systemVersionUpdateAvailable),
-    timeout: 0,
   });
 
   const { props: tooltipPropsPassword, renderTooltip: renderTooltipPassword } =
     useTooltip({
       content: formatMessage(systemMessages.changePassword),
-      timeout: 0,
     });
 
   const {
@@ -186,13 +181,11 @@ export const Settings: React.FC<SettingsProps> = ({
     renderTooltip: renderTooltipUpdateNow,
   } = useTooltip({
     content: formatMessage(osMessages.updateNow),
-    timeout: 0,
   });
 
   const { props: tooltipPropsFlash, renderTooltip: renderTooltipFlash } =
     useTooltip({
       content: formatMessage(osMessages.flashBoard),
-      timeout: 0,
     });
 
   const {
@@ -200,7 +193,6 @@ export const Settings: React.FC<SettingsProps> = ({
     renderTooltip: renderTooltipChangeNetwork,
   } = useTooltip({
     content: formatMessage(networkMessages.changeNetwork),
-    timeout: 0,
   });
 
   const isVentunoQ = board?.fqbn === BOARD_FQBN.VENTUNO_Q;

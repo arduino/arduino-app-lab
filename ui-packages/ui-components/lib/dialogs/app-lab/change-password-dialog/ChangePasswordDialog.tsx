@@ -75,6 +75,14 @@ export const ChangePasswordDialog: React.FC<ChangePasswordDialogProps> = ({
     setUserPassword(password, confirmPassword);
   };
 
+  const canConfirm = !isLoading && !!password && !!confirmPassword;
+
+  const handleEnter = (): void => {
+    if (canConfirm) {
+      handleConfirm();
+    }
+  };
+
   const hasError = isError || confirmationIsError;
   const showError = hasError || inputValidation;
 
@@ -88,7 +96,7 @@ export const ChangePasswordDialog: React.FC<ChangePasswordDialogProps> = ({
         <Button
           loading={isLoading}
           size={ButtonSize.Small}
-          disabled={isLoading || !password || !confirmPassword}
+          disabled={!password || !confirmPassword}
           type="submit"
         >
           {formatMessage(messages.save)}
@@ -112,35 +120,34 @@ export const ChangePasswordDialog: React.FC<ChangePasswordDialogProps> = ({
           id="password"
           value={password}
           onChange={(value): void => {
-            setPassword(value as string);
+            setPassword(value);
             setInputValidation(undefined);
           }}
           label={formatMessage(messages.newPassword)}
           disabled={isLoading}
           sensitive
           autoFocus
+          blurOnEnter={false}
+          onEnter={handleEnter}
         />
         <Input
           inputStyle={InputStyle.AppLab}
           id="confirm-password"
           value={confirmPassword}
           onChange={(value): void => {
-            setConfirmPassword(value as string);
+            setConfirmPassword(value);
             setInputValidation(undefined);
           }}
           label={formatMessage(messages.confirmPassword)}
           disabled={isLoading}
+          blurOnEnter={false}
+          onEnter={handleEnter}
           error={
             inputValidation ||
             (hasError
               ? new Error(isError ? errorMsg : confirmationErrorMsg)
               : undefined)
           }
-          classes={{
-            inputContainer: styles['input-container'],
-            error: styles['input-error'],
-            inputError: styles['input-error-message'],
-          }}
           sensitive
         />
 

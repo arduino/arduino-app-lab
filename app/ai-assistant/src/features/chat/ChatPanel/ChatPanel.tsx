@@ -11,8 +11,8 @@ import { useEffect, useMemo, useState } from 'react';
 
 import { messages } from '../../../messages';
 import type { AgentWorkspace } from '../../../services';
-import { getAgent } from '../../../services';
-import { useAiAssistantStore } from '../../../store';
+import { getAgent, isBareInternalError } from '../../../services';
+import { currentAuth, useAiAssistantStore } from '../../../store';
 import {
   type PromptAction,
   AutoScrollProvider,
@@ -23,12 +23,26 @@ import {
   WorkspaceChip,
 } from '../../../ui';
 import { useIsOffline, useStickToBottom } from '../../../utils';
+import { CredentialRestartNotice } from '../../connect/CredentialRestartNotice/CredentialRestartNotice';
 import { ChatInput } from '../ChatInput/ChatInput';
 import { ChatInputPicker } from '../ChatInput/ChatInputPicker';
+import { QueuedPrompts } from '../ChatInput/QueuedPrompts';
 import { Message } from '../Message/Message';
 import { PendingChoices } from '../PendingChoices/PendingChoices';
 import styles from './chat-panel.module.scss';
 import { useChatLogic } from './ChatPanel.logic';
+import { useProviderNames } from './utils/useProviderNames';
+
+// A failure can carry stderr or a JSON body: the banner keeps its first line, and caps it only when it is JSON.
+const FAILURE_MAX_LENGTH = 200;
+const failureSummary = (message: string): string => {
+  const line = message.trim().split('\n')[0].trim();
+  if (!/^[{[]/.test(line)) return line;
+  const chars = Array.from(line); // code points: the cap must not leave half a surrogate pair
+  return chars.length > FAILURE_MAX_LENGTH
+    ? `${chars.slice(0, FAILURE_MAX_LENGTH).join('').trimEnd()}…`
+    : chars.join('');
+};
 
 export interface ChatPanelProps {
   // Suppresses the panel's own toolbar/session-name bar for hosts that render the
@@ -39,13 +53,16 @@ export interface ChatPanelProps {
   // Binds the panel to one app, with no way to leave it; the host names the workspace itself.
   lockedWorkspaceId?: string;
   lockedWorkspaceName?: string;
-  // False while the host keeps this panel mounted but hidden, so it yields the stream to the visible one.
+  // False while the host keeps this panel mounted but hidden, so the visible one drives the session
+  // lifecycle (the workspace rebind, the resume, a session opened from the sidebar) — see chatDriver.
   onScreen?: boolean;
   // Renders the docked side panel's presentation — compact greeting, tighter padding — at any
   // width, so widening the panel doesn't turn it into the full-screen Agent Mode view.
   docked?: boolean;
   // The editor beside a docked panel, read at each send: the agent gets it, the thread never shows it.
   getEditorContext?: () => AgentEditorContext;
+  // Opens the agent's section of Settings; given, the model menu of an agent with provider keys links there.
+  onOpenSettings?: VoidFunction;
 }
 
 export const ChatPanel: React.FC<ChatPanelProps> = ({
@@ -57,21 +74,28 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
   onScreen = true,
   docked = false,
   getEditorContext,
+  onOpenSettings,
 }) => {
   const { formatMessage } = useI18n();
   const {
     messages: chatMessages,
     isStreaming,
-    usedTokens,
+    turnTokens,
     turnStartedAt,
     permission,
     models,
     currentModelId,
+    modelUnreadable,
     setModel,
     modes,
     currentModeId,
     setMode,
-    send,
+    modelPickFailed,
+    dismissModelPickFailed,
+    enqueue,
+    queuedPrompts,
+    removeQueued,
+    clearQueued,
     stop,
     retry,
     respondPermission,
@@ -84,6 +108,8 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
     isLoadingSession,
     isNewSession,
     currentSessionId,
+    canCompose,
+    restoredDraft,
     openFile,
     fileError,
     dismissFileError,
@@ -111,13 +137,11 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
   const offline = useIsOffline();
   const justConnected = useAiAssistantStore((s) => s.justConnected);
   const setJustConnected = useAiAssistantStore((s) => s.setJustConnected);
-  const auth = useAiAssistantStore((s) => s.auth);
+  const auth = useAiAssistantStore(currentAuth);
 
   const { props: scrollTooltipProps, renderTooltip: renderScrollTooltip } =
     useTooltip({
       content: formatMessage(messages.chatScrollToBottom),
-      timeout: 0,
-      renderDelay: 500,
     });
 
   const [workspacePickerOpen, setWorkspacePickerOpen] = useState(false);
@@ -127,6 +151,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
   const connectedAgent = getAgent(
     auth.authenticated ? auth.agentId : undefined,
   );
+  const providerNames = useProviderNames(connectedAgent, models);
 
   // Handed to the thread's collapsible blocks: expanding one stops the thread following its
   // bottom edge, so the content it reveals isn't pushed back out of view by the turn still
@@ -180,15 +205,12 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
     >
       {!hideToolbar && (
         <div className={styles['toolbar']}>
-          {sessionTitle && (
-            <>
-              <Heading className={styles['session-name']}>
-                {sessionTitle}
-              </Heading>
-              {selectedWorkspace && (
-                <WorkspaceChip name={selectedWorkspace.name} />
-              )}
-            </>
+          <Heading className={styles['session-name']}>
+            {sessionTitle ?? formatMessage(messages.chatUnnamedSession)}
+          </Heading>
+          {/* Until then the workspace row below is on screen, and the chip would repeat it. */}
+          {sessionTitle && selectedWorkspace && (
+            <WorkspaceChip name={selectedWorkspace.name} />
           )}
         </div>
       )}
@@ -248,8 +270,9 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
                   <div key={message.id} className={styles['thread-row']}>
                     <Message
                       message={message}
+                      sessionId={currentSessionId}
                       streaming={isStreamingMsg}
-                      tokens={isStreamingMsg ? usedTokens : undefined}
+                      tokens={isStreamingMsg ? turnTokens : undefined}
                       turnStartedAt={isStreamingMsg ? turnStartedAt : undefined}
                       onOpenFile={openFile}
                     />
@@ -304,7 +327,11 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
                   </Text>
                   {permission.outsideWorkspace && (
                     <span className={styles['permission-outside']}>
-                      {formatMessage(messages.permOutsideWorkspace)}
+                      {permission.outsideApp
+                        ? formatMessage(messages.permOutsideApp, {
+                            app: permission.outsideApp,
+                          })
+                        : formatMessage(messages.permOutsideWorkspace)}
                     </span>
                   )}
                 </div>
@@ -344,24 +371,66 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
           <div className={styles['request-error']}>
             <Prompt
               state="error"
-              title="Request failed"
+              title={formatMessage(messages.chatRequestFailed)}
               description={
                 requestError.kind === 'network'
                   ? formatMessage(messages.offlineRequestError)
-                  : requestError.message
+                  : requestError.kind === 'replayed'
+                  ? formatMessage(messages.replayedRequestError)
+                  : requestError.kind === 'session_gone'
+                  ? formatMessage(messages.sessionGoneRequestError)
+                  : requestError.kind === 'session_load_failed'
+                  ? formatMessage(messages.sessionLoadFailedRequestError)
+                  : requestError.kind === 'auth' && requestError.message
+                  ? formatMessage(messages.providerAuthRequestError, {
+                      error: failureSummary(requestError.message).replace(
+                        /\.+$/,
+                        '',
+                      ),
+                    })
+                  : requestError.message &&
+                    !isBareInternalError(requestError.message)
+                  ? failureSummary(requestError.message)
+                  : formatMessage(messages.internalRequestError)
               }
               actions={[
-                {
-                  id: 'retry',
-                  label: 'Retry',
-                  role: 'primary',
-                  onClick: (): void => void retry(requestError.messageId),
-                },
+                ...(requestError.kind === 'auth' && onOpenSettings
+                  ? [
+                      {
+                        id: 'settings',
+                        label: formatMessage(messages.chatOpenSettings),
+                        role: 'secondary' as const,
+                        onClick: onOpenSettings,
+                      },
+                    ]
+                  : []),
+                ...(canCompose
+                  ? [
+                      // A chat the agent no longer has fails a retry the same way.
+                      requestError.kind === 'session_gone'
+                        ? {
+                            id: 'new',
+                            label: formatMessage(
+                              messages.chatSessionFailedNewChat,
+                            ),
+                            role: 'primary' as const,
+                            onClick: newChat,
+                          }
+                        : {
+                            id: 'retry',
+                            label: formatMessage(messages.chatRequestRetry),
+                            role: 'primary' as const,
+                            onClick: (): void =>
+                              void retry(requestError.messageId),
+                          },
+                    ]
+                  : []),
               ]}
             />
           </div>
         )}
         <PendingChoices
+          sessionId={currentSessionId}
           className={styles['choices']}
           onChoicesReply={respondChoices}
         />
@@ -413,22 +482,44 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
         )}
         <ChatInput
           isStreaming={isStreaming}
-          hasSession={currentSessionId !== null}
+          canCompose={canCompose}
+          restoredDraft={restoredDraft}
           onSend={(text): void => {
             scrollToBottom();
-            void send(text);
+            enqueue(text);
           }}
           onStop={(): void => void stop()}
           models={models}
           currentModelId={currentModelId}
+          modelUnreadable={modelUnreadable}
           setModel={setModel}
           modes={modes}
           currentModeId={currentModeId}
           setMode={setMode}
+          onAddProvider={
+            connectedAgent?.perProviderKeys ? onOpenSettings : undefined
+          }
+          providerNames={providerNames}
+          freeModelsLabel={
+            connectedAgent &&
+            formatMessage(messages.providerFreeModels, {
+              agent: connectedAgent.name,
+            })
+          }
+          queue={
+            // Keyed by session: the expanded/collapsed choice belongs to the queue it was made on.
+            <QueuedPrompts
+              key={currentSessionId ?? 'none'}
+              prompts={queuedPrompts}
+              onRemove={removeQueued}
+              onClearAll={clearQueued}
+            />
+          }
         />
       </div>
 
       <div className={styles['chat-toast']}>
+        <CredentialRestartNotice />
         {offline && !offlineDismissed && (
           <Toast
             variant="error"
@@ -445,9 +536,12 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
             onDismiss={(): void => setJustConnected(false)}
             dismissLabel={formatMessage(messages.dismiss)}
           >
-            {formatMessage(messages.connectedToast, {
-              agent: connectedAgent.name,
-            })}
+            {formatMessage(
+              connectedAgent.perProviderKeys
+                ? messages.connectedToastProviders
+                : messages.connectedToast,
+              { agent: connectedAgent.name },
+            )}
           </Toast>
         )}
         {fileError && (
@@ -468,6 +562,16 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
             dismissLabel={formatMessage(messages.dismiss)}
           >
             {formatMessage(sessionActionError)}
+          </Toast>
+        )}
+        {modelPickFailed && (
+          <Toast
+            variant="error"
+            autoDismiss
+            onDismiss={dismissModelPickFailed}
+            dismissLabel={formatMessage(messages.dismiss)}
+          >
+            {formatMessage(messages.modelPickFailed)}
           </Toast>
         )}
       </div>

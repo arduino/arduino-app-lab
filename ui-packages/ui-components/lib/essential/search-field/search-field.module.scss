@@ -1,4 +1,5 @@
 @use "../../../public/shared.module.scss";
+@use "@cloud-editor-mono/arduino-sass/src/typography" as typography;
 
 .input-container {
   display: flex;
@@ -71,4 +72,55 @@
   padding: inherit;
   margin: 7px;
   cursor: pointer;
+}
+
+// Systemino small text field (28px): filled by default, outlined on request.
+.input-container.app-lab {
+  .input {
+    box-sizing: border-box;
+    height: 28px;
+    padding: 0 28px 0 27px;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    background: var(--surface-bg-below-1);
+    color: var(--text-default);
+    font-size: typography.$font-size-xx-small;
+    letter-spacing: 0.12px;
+    caret-color: var(--text-subtle);
+
+    &::placeholder {
+      color: var(--text-subtle);
+      opacity: 1;
+    }
+
+    &:hover:not(:focus) {
+      background-image: linear-gradient(var(--component-bg-hover), var(--component-bg-hover));
+    }
+
+    &:focus {
+      border-color: var(--border-selected);
+    }
+  }
+
+  &.outlined .input {
+    border-color: var(--border-default);
+    background: var(--component-bg-baseline);
+
+    &:hover:not(:focus) {
+      background-image: none;
+      border-color: var(--border-strong);
+    }
+
+    &:focus {
+      border-color: var(--border-selected);
+    }
+  }
+
+  .search-icon {
+    margin: 8px 9px;
+  }
+
+  .clear-icon {
+    margin: 6px 7px;
+  }
 }

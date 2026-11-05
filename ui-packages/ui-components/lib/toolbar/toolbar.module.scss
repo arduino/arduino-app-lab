@@ -1,13 +1,11 @@
 @use "../../public/shared.module.scss";
-@use "../code-editor/code-editor-variables.module.scss";
+@use "@cloud-editor-mono/ide-workbench/lib/code-editor/code-editor-variables.module.scss";
 @use "./toolbar-common.module.scss";
 
 .toolbar {
-    // Indent the toolbar content so it lines up with the editor's left edge
-    // past the line-number gutter (the gutter's min-width in codeEditorStyle.ts).
-    // rc-97 derived this from the gutter-width vars; main's gutter is a fixed
-    // 48px min-width, so match it here. CE-only — App Lab uses EditorToolbar.
-    padding-left: 48px;
+    // Lines the toolbar content up with the code past the line-number gutter.
+    // CE-only — App Lab uses EditorToolbar.
+    padding-left: var(--editor-gutters-width);
     padding-top: 14px;
     padding-bottom: 14px;
     padding-right: 14px;
@@ -87,6 +85,30 @@ $busyButtonWidth: $toolbarButtonWidth * 2;
     background: linear-gradient(to right, transparent 0%, rgba(255, 255, 255, 0.5) 50%, transparent 100%);
     transform: skewX(-30deg);
     animation: shimmer 2.5s infinite;
+}
+
+// Same start as the board icon of the device selector.
+.association-node-read-only-label {
+    margin-left: 26px;
+    color: var(--text-default);
+}
+
+// Without Verify and Upload the device icon starts where the Verify button would.
+.toolbar .association-node-flush {
+    margin-left: 0;
+
+    button {
+        padding-left: 0 !important;
+    }
+
+    button svg {
+        padding-left: 0;
+    }
+}
+
+.toolbar-download-button svg {
+    width: 24px;
+    height: 24px;
 }
 
 .toolbar-button-icon-busy {

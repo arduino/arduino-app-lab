@@ -48,6 +48,7 @@ func Start(access BoardAccess, installs *ModelInstaller) (*Server, error) {
 		registerSketchLibrariesList(srv, access),
 		registerSystemResources(srv, access),
 		registerSystemName(srv, access),
+		registerCarrierStatus(srv, access),
 	}
 	// Mutating tools: registered but omitted from readOnly, so the agent must get user permission before running them.
 	registerAppsCreate(srv, access)
@@ -56,6 +57,8 @@ func Start(access BoardAccess, installs *ModelInstaller) (*Server, error) {
 	registerAppsDelete(srv, access)
 	registerAppsEdit(srv, access)
 	registerAppsClone(srv, access)
+	registerAppFilesRename(srv, access)
+	registerAppFilesDelete(srv, access)
 	registerAppBricksAdd(srv, access)
 	registerAppBricksUpdate(srv, access)
 	registerAppBricksRemove(srv, access)

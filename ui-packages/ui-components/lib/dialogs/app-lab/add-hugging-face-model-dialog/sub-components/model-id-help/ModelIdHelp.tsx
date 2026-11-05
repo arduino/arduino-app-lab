@@ -1,8 +1,8 @@
 import {
+  CopySelection,
   IconNavigationArrowCaretNormalDown,
   IconNavigationArrowCaretNormalRight,
-} from '@arduino/react-icons';
-import { CopySelection } from '@cloud-editor-mono/images/assets/icons';
+} from '@cloud-editor-mono/images/assets/icons';
 import { useState } from 'react';
 import { FormattedMessage } from 'react-intl';
 

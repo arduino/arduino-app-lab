@@ -100,6 +100,7 @@ export const FilesManagerSection = ({
     onFolderExpand,
     checkPathConflict,
     closeFolder,
+    renamedFolder,
     sendAppLabNotification,
     hasSketch,
     boardOffline,
@@ -329,9 +330,9 @@ export const FilesManagerSection = ({
                   collapseBricks && styles['collapsed'],
                 )}
               >
-                <span className={styles['header-button-label']}>
+                <XXSmall semibold className={styles['header-button-label']}>
                   {formatMessage(messages.bricksLabel)}
-                </span>
+                </XXSmall>
                 <CaretDownIcon className={styles['header-button-icon']} />
               </button>
               {!collapseBricks && (
@@ -401,9 +402,9 @@ export const FilesManagerSection = ({
                   collapseLibraries && styles['collapsed'],
                 )}
               >
-                <span className={styles['header-button-label']}>
+                <XXSmall semibold className={styles['header-button-label']}>
                   {formatMessage(messages.sketchLibrariesLabel)}
-                </span>
+                </XXSmall>
                 <CaretDownIcon className={styles['header-button-icon']} />
               </button>
               {!collapseLibraries && (
@@ -464,9 +465,9 @@ export const FilesManagerSection = ({
                   collapseFiles && styles['collapsed'],
                 )}
               >
-                <span className={styles['header-button-label']}>
+                <XXSmall semibold className={styles['header-button-label']}>
                   {formatMessage(messages.filesLabel)}
-                </span>
+                </XXSmall>
                 <CaretDownIcon className={styles['header-button-icon']} />
               </button>
 
@@ -511,6 +512,7 @@ export const FilesManagerSection = ({
                       onFolderExpand={onFolderExpand}
                       checkPathConflict={checkPathConflict}
                       closeFolder={closeFolder}
+                      renamedFolder={renamedFolder}
                     />
                   </div>
                 </div>

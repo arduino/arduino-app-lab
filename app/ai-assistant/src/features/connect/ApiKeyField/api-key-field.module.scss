@@ -1,0 +1,14 @@
+.row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.input {
+  flex: 1;
+  min-width: 0;
+}
+
+.verify-btn {
+  flex: none;
+}

@@ -469,7 +469,11 @@ const AppItem: React.FC<AppItemProps> = (props: AppItemProps) => {
             )}
             {onCreateRelease && (
               <ContextMenu.Item
-                className={styles['context-menu-item']}
+                className={clsx(
+                  styles['context-menu-item'],
+                  createReleaseDisabledReason &&
+                    styles['context-menu-item-disabled'],
+                )}
                 disabled={Boolean(createReleaseDisabledReason)}
                 onSelect={(): void => onCreateRelease()}
                 onPointerDown={(e): void => e.stopPropagation()}

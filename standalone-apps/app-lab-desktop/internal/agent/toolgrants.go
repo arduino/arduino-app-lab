@@ -1,10 +1,13 @@
 package agent
 
 import (
+	"encoding/json"
 	"log/slog"
 	"sort"
 	"strings"
 	"sync"
+
+	"app-lab-desktop/internal/appid"
 )
 
 // GrantStore persists the user's "Always allow" answers between runs; App Lab owns the file and hands over one workspace at a time.
@@ -13,6 +16,11 @@ type GrantStore interface {
 	SaveGrants(workspaceID string, keys []string)
 	// Revision changes when the owner rewrites the file — an app renamed or deleted — so the agent notices without re-reading.
 	Revision() uint64
+}
+
+// grantSaverAt is a GrantStore told the revision an answer's card opened at: after a rewrite of the owner's since, it adds only the new key and checks it.
+type grantSaverAt interface {
+	SaveGrantsAt(workspaceID string, keys []string, added string, rev uint64)
 }
 
 // toolGrants remembers the user's "Always allow" choices per WORKSPACE, because the engine cannot remember them at all: its own rule for an MCP tool is written to <cwd>/.claude/settings.local.json, a scope policySettingSources excludes and hardenAgentPolicyDir deletes, so every later call would prompt again. The workspace is the scope the user reasons in — a grant given while working on one app carries to the next chat about that app, and never to another app. Until the revoke UI exists, uninstalling or clearing App Lab's agent config is the only way back.
@@ -25,7 +33,6 @@ type toolGrants struct {
 	store   GrantStore
 	loaded  bool
 	rev     uint64
-	writes  uint64                     // grants recorded here, so a reload can tell its file snapshot is already out of date
 	allowed map[string]map[string]bool // workspace app id ("" = the general workspace) -> grant keys
 }
 
@@ -44,7 +51,7 @@ func (g *toolGrants) ensureLoaded() {
 	if done || store == nil {
 		return
 	}
-	g.readStore(store, false) // merged: a grant recorded before this first read must not be lost
+	g.readStore(store, false, 0) // merged: a grant recorded before this first read must not be lost
 	g.mu.Lock()
 	g.loaded = true
 	g.mu.Unlock()
@@ -58,39 +65,32 @@ func (g *toolGrants) syncRevision() {
 	if store == nil {
 		return
 	}
-	rev := store.Revision()
-	if rev == seen {
-		return
+	if rev := store.Revision(); rev != seen {
+		g.reload(rev)
 	}
-	g.reload()
-	g.mu.Lock()
-	g.rev = rev
-	g.mu.Unlock()
 }
 
 // reload takes the file as the truth: merging would keep answering for a deleted app, whose id a later app of the same name gets.
-func (g *toolGrants) reload() {
+func (g *toolGrants) reload(rev uint64) {
 	g.mu.Lock()
 	store := g.store
 	g.mu.Unlock()
 	if store != nil {
-		g.readStore(store, true)
+		g.readStore(store, true, rev)
 	}
 }
 
-// readStore reads the file into the map, replacing what is there or merging into it.
-func (g *toolGrants) readStore(store GrantStore, replace bool) {
-	g.mu.Lock()
-	before := g.writes
-	g.mu.Unlock()
-
+// readStore reads the file into the map, replacing what is there (and then seen at rev) or merging into it.
+func (g *toolGrants) readStore(store GrantStore, replace bool, rev uint64) {
+	// A grant being saved lands before the read or after the replace, never between them, so a replace loses no grant.
+	g.writeMu.Lock()
+	defer g.writeMu.Unlock()
 	saved := store.LoadGrants() // touches the filesystem, so never under the registry's own lock
 
 	g.mu.Lock()
 	defer g.mu.Unlock()
-	// A grant recorded mid-read isn't in the snapshot: replacing would drop it and re-prompt, so this read merges.
-	if replace && g.writes != before {
-		replace = false
+	if replace {
+		g.rev = rev
 	}
 	if replace || g.allowed == nil {
 		g.allowed = map[string]map[string]bool{}
@@ -100,23 +100,63 @@ func (g *toolGrants) readStore(store GrantStore, replace bool) {
 			g.allowed[ws] = map[string]bool{}
 		}
 		for _, k := range keys {
-			g.allowed[ws][k] = true
+			if !NeverAnswers(k) {
+				g.allowed[ws][k] = true
+			}
 		}
 	}
 }
 
-// grantKey identifies what was granted; an MCP tool's title is its exact qualified name (mcp__arduino-board__apps_start), while a native tool's also carries its arguments, so there the grant is narrower — never wider. Never-auto-approvable tools have no key at all.
+// NeverAnswers reports a key no call matches: scoped by its arguments, which only a board tool's grant is, yet not a board tool's.
+func NeverAnswers(key string) bool {
+	parts := strings.SplitN(key, "\x00", 4)
+	return len(parts) == 4 && parts[2] == "args" && !isBoardTool(parts[1])
+}
+
+// grantKey identifies what was granted; an MCP tool's title is its exact qualified name (mcp__arduino-board__apps_start), while a native tool's also carries its arguments, so there the grant is narrower — never wider. A call whose grant would cover more than itself has no key at all.
 func grantKey(tc *ToolCall) (string, bool) {
-	if tc == nil || tc.Title == "" || isNeverAutoApprovable(tc.Title) {
+	if grantCoversMany(tc) {
 		return "", false
 	}
 	return tc.Kind + "\x00" + tc.Title + "\x00" + grantScope(tc), true
 }
 
+// grantCoversMany reports a call whose "Always allow" would answer for other targets: board_exec, an app tool naming no app, a board call whose arguments did not arrive, doom_loop (any tool), a read not on one file (its title names none), a call on several files.
+func grantCoversMany(tc *ToolCall) bool {
+	if tc == nil || tc.Title == "" || isNeverAutoApprovable(tc.Title) {
+		return true
+	}
+	if _, ok := toolCallAppID(tc); !ok && namesAnApp(tc.Title) {
+		return true
+	}
+	// Its grant is scoped by its arguments, and arguments that never arrived look like a call that has none.
+	if isBoardTool(tc.Title) && !hasArguments(tc.Input) && !tc.noArguments {
+		return true
+	}
+	paths := toolCallPaths(tc)
+	switch tc.Title {
+	case "doom_loop":
+		return true
+	case "read":
+		return len(paths) != 1
+	}
+	return len(paths) > 1
+}
+
 // grantScope stops a grant covering a call that acts elsewhere: an app tool is scoped to the app it names, anything that left the workspace to where it landed.
 func grantScope(tc *ToolCall) string {
-	if target, ok := toolCallAppID(tc); ok {
+	if target, ok := grantApp(tc); ok {
 		return target
+	}
+	// A board tool aimed at no app (models_delete, wifi_connect, apps_create) is granted for these arguments only.
+	if isBoardTool(tc.Title) {
+		if args, err := json.Marshal(tc.Input); err == nil {
+			return "args\x00" + string(args)
+		}
+	}
+	if paths := toolCallPaths(tc); tc.Title == "read" && len(paths) == 1 {
+		// OpenCode's read request is titled by the tool alone, so the file is what tells one .env from another.
+		return "file\x00" + paths[0]
 	}
 	if tc.OutsideWorkspace {
 		// Named by where it lands: a title like "Edit" is too generic, and one file in another app must not answer for a file in a third.
@@ -125,13 +165,28 @@ func grantScope(tc *ToolCall) string {
 	return ""
 }
 
-// record stores the grant when the user answered with an "always allow" option.
-func (g *toolGrants) record(workspaceID string, req PermissionRequest, optionID string) {
+// grantApp is the app a grant is scoped to, so its delete or rename reaches it: the one an app tool names, or the one models_import_custom imports into.
+func grantApp(tc *ToolCall) (string, bool) {
+	if target, ok := toolCallAppID(tc); ok {
+		return target, true
+	}
+	if !isBoardTool(tc.Title) || bareToolName(tc.Title) != "models_import_custom" {
+		return "", false
+	}
+	input, _ := tc.Input.(map[string]any)
+	id, _ := input["appId"].(string)
+	id = appid.Canonical(id)
+	return id, id != ""
+}
+
+// record stores the grant when the user answered with an "always allow" option; opened is the revision autoAllow returned for the card.
+func (g *toolGrants) record(workspaceID string, req PermissionRequest, optionID string, opened uint64) {
 	key, ok := grantKey(req.ToolCall)
 	if !ok || !isAlwaysAllowOption(req.Options, optionID) {
 		return
 	}
 	g.ensureLoaded()
+	g.syncRevision() // a rewrite by App Lab since the last read comes first: this write must not put back what it removed
 	g.writeMu.Lock()
 	defer g.writeMu.Unlock()
 	g.mu.Lock()
@@ -142,12 +197,16 @@ func (g *toolGrants) record(workspaceID string, req PermissionRequest, optionID 
 		g.allowed[workspaceID] = map[string]bool{}
 	}
 	g.allowed[workspaceID][key] = true
-	g.writes++
-	store, keys := g.store, sortedKeys(g.allowed[workspaceID])
+	store, keys, rev := g.store, sortedKeys(g.allowed[workspaceID]), g.rev
 	g.mu.Unlock()
+	if opened < rev {
+		rev = opened // the card predates a rewrite: the store treats the list as stale and checks the key against what the rewrite retired
+	}
 
 	// Written outside mu so a concurrent lookup isn't blocked on the filesystem; writeMu keeps the order.
-	if store != nil {
+	if at, ok := store.(grantSaverAt); ok {
+		at.SaveGrantsAt(workspaceID, keys, key, rev) // a rewrite of the owner's after the sync above would make keys stale
+	} else if store != nil {
 		store.SaveGrants(workspaceID, keys)
 	}
 }
@@ -162,19 +221,19 @@ func sortedKeys(set map[string]bool) []string {
 	return keys
 }
 
-// autoAllow reports the option to answer with when an earlier "always allow" in this session already covers the call.
-func (g *toolGrants) autoAllow(workspaceID string, req PermissionRequest) (string, bool) {
+// autoAllow reports the option to answer with when an earlier "always allow" in this session already covers the call, and the revision it checked at: a card shown instead passes it to record.
+func (g *toolGrants) autoAllow(workspaceID string, req PermissionRequest) (string, bool, uint64) {
 	key, ok := grantKey(req.ToolCall)
 	if !ok {
-		return "", false
+		return "", false, 0 // no key: record saves nothing for this call either
 	}
 	g.ensureLoaded()
 	g.syncRevision()
 	g.mu.Lock()
-	granted := g.allowed[workspaceID][key]
+	granted, rev := g.allowed[workspaceID][key], g.rev
 	g.mu.Unlock()
 	if !granted {
-		return "", false
+		return "", false, rev
 	}
 	id, ok := allowOptionID(req.Options)
 	if !ok {
@@ -183,7 +242,7 @@ func (g *toolGrants) autoAllow(workspaceID string, req PermissionRequest) (strin
 		// name. The cost is re-prompting on a shape Claude Code does not currently send — logged so it shows up.
 		slog.Warn("[permission] a grant covers this call but the prompt offers no one-off allow; asking the user", "tool", req.ToolCall.Title)
 	}
-	return id, ok
+	return id, ok, rev
 }
 
 // isAlwaysAllowOption reports whether the chosen option persists the decision *and* allows — a one-off allow, or any reject, grants nothing.

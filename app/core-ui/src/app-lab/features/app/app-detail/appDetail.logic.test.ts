@@ -7,13 +7,21 @@
  * Everything the logic hook composes is stubbed; only its own handlers run.
  */
 
-import type { AppsSection } from '@cloud-editor-mono/ui-components/lib/components-by-app/app-lab';
+import type {
+  AppsSection,
+  Board,
+} from '@cloud-editor-mono/ui-components/lib/components-by-app/app-lab';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { createContext, createElement, ReactNode } from 'react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { BoardScopedQuery } from '../../../boardScopedQuery';
+import {
+  isAgentFileRenameHandled,
+  stashAppFileToOpen,
+} from '../../../openAppFile';
+import { useBoardLifecycleStore } from '../../../store/boardLifecycle';
 import {
   SKETCH_INO_TEMPLATE,
   SKETCH_YAML_TEMPLATE,
@@ -31,6 +39,18 @@ const h = vi.hoisted(() => ({
   statAppPath: vi.fn(),
   getAppBricks: vi.fn((): Promise<never[]> => Promise.resolve([])),
   sendAppLabNotification: vi.fn(),
+  onAgentRenamedAppFile: vi.fn(
+    (
+      _cb: (
+        appId: string,
+        appPath: string,
+        from: string,
+        to: string,
+        isFolder: boolean,
+      ) => void,
+    ) => vi.fn(),
+  ),
+  findFileNode: vi.fn<(path: string) => unknown>(() => undefined),
   appFiles: {
     fileTree: [],
     appDirListed: true,
@@ -44,7 +64,7 @@ const h = vi.hoisted(() => ({
     renameDir: vi.fn(),
     refetchAppYaml: vi.fn(),
     refetchSketchYaml: vi.fn(),
-    fetchFile: vi.fn(),
+    fetchFile: vi.fn((_path: string): Promise<void> => Promise.resolve()),
     refreshFileContents: vi.fn(),
   },
   editorFiles: {
@@ -52,16 +72,24 @@ const h = vi.hoisted(() => ({
     editorFiles: [],
     openFiles: [],
     openFileIds: [],
+    selectedFile: undefined as
+      | { fileId: string; fileExtension: string }
+      | undefined,
     selectFile: vi.fn(),
     updateOpenFile: vi.fn(),
     updateOpenFilesOrder: vi.fn(),
     closeFile: vi.fn(),
     onAppRename: vi.fn(),
     openFilesStore: {},
+    tabsHydrated: true,
     storeSplitState: vi.fn(),
   },
-  lsp: { lspClients: [] },
-  editorPanel: { rightPanelTabs: [] },
+  // The arguments of the last `useEditorFiles` call.
+  editorFilesArgs: [] as unknown[],
+  lsp: { lspClients: [], syncLspWatchedChange: vi.fn() },
+  editorPanel: { rightPanelTabs: [], closeRightPanelTab: vi.fn() },
+  // The arguments of the last `useCreateEditorPanelLogic` call.
+  editorPanelArgs: [] as unknown[],
   runtime: { runtimeActionsLogic: (): Record<string, never> => ({}) },
   // The arguments of the last `useAppDetailRuntimeLogic` call.
   runtimeArgs: [] as unknown[],
@@ -104,6 +132,8 @@ vi.mock(
     addAppCustomBrick: vi.fn(),
     deleteAppBrick: vi.fn(),
     importResourceToAppFromPath: vi.fn(),
+    onAgentRenamedApp: (): VoidFunction => vi.fn(),
+    onAgentRenamedAppFile: h.onAgentRenamedAppFile,
     openFileExternal: vi.fn(),
     openLinkExternal: vi.fn(),
     renameAppCustomBrick: vi.fn(),
@@ -135,6 +165,7 @@ vi.mock(
     useNavigate: h.stub(vi.fn()),
     // All the logic asks the router is whether Agent Mode is the surface on screen.
     useRouterState: (): boolean => agentModeActive,
+    useRouter: h.stub({ state: { location: { pathname: '/my-apps/app-1' } } }),
   }),
 );
 
@@ -152,19 +183,27 @@ vi.mock(
     SKETCH_YAML_PATH: 'sketch/sketch.yaml',
     useAppFiles: (): Record<string, unknown> => ({
       ...h.appFiles,
-      findFileNode: (): undefined => undefined,
+      findFileNode: (path: string): unknown => h.findFileNode(path),
     }),
   }),
 );
 
 vi.mock(
   './hooks/useFileOperations',
-  h.stub({ useFileOperations: h.stub(h.fileOperations) }),
+  h.stub({
+    useFileOperations: h.stub(h.fileOperations),
+    keepMovedBuffer: (): boolean => false,
+  }),
 );
 
 vi.mock(
   './hooks/useEditorFiles',
-  h.stub({ useEditorFiles: h.stub(h.editorFiles) }),
+  h.stub({
+    useEditorFiles: (...args: unknown[]): typeof h.editorFiles => {
+      h.editorFilesArgs = args;
+      return h.editorFiles;
+    },
+  }),
 );
 
 vi.mock('./hooks/useLSP', h.stub({ useLSP: h.stub(h.lsp) }));
@@ -179,7 +218,12 @@ vi.mock(
 );
 vi.mock(
   './sub-components/editor-panel/appLabEditorPanel',
-  h.stub({ useCreateEditorPanelLogic: h.stub(h.editorPanel) }),
+  h.stub({
+    useCreateEditorPanelLogic: (...args: unknown[]): typeof h.editorPanel => {
+      h.editorPanelArgs = args;
+      return h.editorPanel;
+    },
+  }),
 );
 vi.mock(
   './sub-components/runtime/appDetailRuntime',
@@ -280,6 +324,7 @@ const errorNotifications = (): unknown[] =>
 
 beforeEach(() => {
   vi.clearAllMocks();
+  h.findFileNode.mockReturnValue(undefined);
   appPath = APP.path;
   agentModeActive = false;
   h.statAppPath.mockRejectedValue(new Error('board unreachable'));
@@ -295,6 +340,57 @@ describe('appDetail.logic file reveal', () => {
 
     expect(h.appFiles.revealPath).toHaveBeenCalledTimes(1);
     expect(h.appFiles.revealPath).toHaveBeenCalledWith('python/sub/x.py');
+  });
+});
+
+// A file chip for the app on screen navigates to the route the user is already on, which remounts nothing.
+describe('appDetail.logic file chip', () => {
+  it('opens the file of the app already on screen, each time it is asked', async () => {
+    h.findFileNode.mockReturnValue({});
+    await renderHandlers();
+
+    act(() => stashAppFileToOpen('app-1', 'python/main.py'));
+    await waitFor(() =>
+      expect(h.fileOperations.openFile).toHaveBeenCalledWith('python/main.py'),
+    );
+
+    act(() => stashAppFileToOpen('app-1', 'python/main.py'));
+    await waitFor(() =>
+      expect(h.fileOperations.openFile).toHaveBeenCalledTimes(2),
+    );
+  });
+
+  // On a cold editor the stored tabs land after the tree; the file opens once they are in place.
+  it('waits for the editor to put its tabs in place before it opens the file', async () => {
+    h.findFileNode.mockReturnValue({});
+    h.editorFiles.tabsHydrated = false;
+    try {
+      const client = new QueryClient({
+        defaultOptions: { queries: { retry: false } },
+      });
+      const { result, rerender } = renderHook(
+        () => useAppDetailLogic('app-1', 'my-apps'),
+        {
+          wrapper: ({ children }: { children: ReactNode }) =>
+            createElement(QueryClientProvider, { client }, children),
+        },
+      );
+      await waitFor(() => expect(result.current.app).toBeDefined());
+
+      act(() => stashAppFileToOpen('app-1', 'python/main.py'));
+      await act(() => new Promise((resolve) => setTimeout(resolve, 0)));
+      expect(h.fileOperations.openFile).not.toHaveBeenCalled();
+
+      h.editorFiles.tabsHydrated = true;
+      rerender();
+      await waitFor(() =>
+        expect(h.fileOperations.openFile).toHaveBeenCalledWith(
+          'python/main.py',
+        ),
+      );
+    } finally {
+      h.editorFiles.tabsHydrated = true;
+    }
   });
 });
 
@@ -494,6 +590,127 @@ describe('appDetail.logic rename custom brick', () => {
   });
 });
 
+// The agent's rename already happened on the board, so the tabs follow it without a second backend call.
+describe('appDetail.logic agent file rename', () => {
+  it("moves this app's tabs and ignores another app's", async () => {
+    await renderHandlers();
+    const onRenamed = h.onAgentRenamedAppFile.mock.calls.at(-1)?.[0];
+
+    act(() => {
+      onRenamed?.('app-1', '/apps/foo', 'capito', 'ok', true);
+      onRenamed?.('app-2', '/apps/bar', 'x.py', 'y.py', false);
+    });
+
+    expect(h.fileOperations.renameFile).toHaveBeenCalledTimes(1);
+    expect(h.fileOperations.renameFile).toHaveBeenCalledWith('capito', 'ok', {
+      source: 'stream',
+      nodeType: 'folder',
+    });
+    expect(h.lsp.syncLspWatchedChange.mock.calls).toEqual([
+      ['capito', 'remove'],
+      ['ok', 'create'],
+    ]);
+  });
+
+  // The tree keeps its own open state by path, and main.logic moves the stored tabs only when no editor does.
+  it('reopens a renamed folder, and tells main.logic it moves the tabs while mounted', async () => {
+    const client = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    });
+    const { result, unmount } = renderHook(
+      () =>
+        useAppDetailLogic('app-1', 'my-apps').appLabEditSectionLogic() as {
+          app?: unknown;
+          renamedFolder?: unknown;
+        },
+      {
+        wrapper: ({ children }: { children: ReactNode }) =>
+          createElement(QueryClientProvider, { client }, children),
+      },
+    );
+    await waitFor(() => expect(result.current.app).toBeDefined());
+    expect(isAgentFileRenameHandled('/apps/foo')).toBe(true);
+
+    act(() => {
+      h.onAgentRenamedAppFile.mock.calls.at(-1)?.[0](
+        'app-1',
+        '/apps/foo',
+        'capito',
+        'ok',
+        true,
+      );
+    });
+
+    expect(result.current.renamedFolder).toEqual({
+      from: 'capito',
+      to: 'ok',
+      seq: 1,
+    });
+    unmount();
+    expect(isAgentFileRenameHandled('/apps/foo')).toBe(false);
+  });
+});
+
+// The tree's onFileRename resolves whatever happened, so the tree reopens a renamed folder only on renamedFolder.
+describe('appDetail.logic folder rename from the tree', () => {
+  type EditSection = Pick<Handlers, 'renameFileHandler'> & {
+    app?: unknown;
+    renamedFolder?: unknown;
+  };
+
+  const renderLogic = async (): Promise<{ current: EditSection }> => {
+    const client = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    });
+    const { result } = renderHook(
+      () =>
+        useAppDetailLogic(
+          'app-1',
+          'my-apps',
+        ).appLabEditSectionLogic() as unknown as EditSection,
+      {
+        wrapper: ({ children }: { children: ReactNode }) =>
+          createElement(QueryClientProvider, { client }, children),
+      },
+    );
+    await waitFor(() => expect(result.current.app).toBeDefined());
+    return result;
+  };
+
+  it('reports a folder the board renamed', async () => {
+    h.statAppPath.mockResolvedValue(null);
+    const result = await renderLogic();
+
+    await act(() =>
+      result.current.renameFileHandler('python/lib', 'utils', false, 'folder'),
+    );
+
+    expect(result.current.renamedFolder).toEqual({
+      from: 'python/lib',
+      to: 'python/utils',
+      seq: 1,
+    });
+  });
+
+  it.each([
+    ['the name is taken', { isDir: true }, false],
+    ['the board refuses it', null, true],
+  ])('reports no folder when %s', async (_, existing, renameFails) => {
+    h.statAppPath.mockResolvedValue(existing);
+    if (renameFails) {
+      h.fileOperations.renameFile.mockRejectedValueOnce(new Error('busy'));
+    }
+    const result = await renderLogic();
+
+    await act(() =>
+      result.current.renameFileHandler('python/lib', 'utils', false, 'folder'),
+    );
+
+    expect(result.current.renamedFolder).toBeUndefined();
+    expect(errorNotifications()).toHaveLength(1);
+  });
+});
+
 // ⌘L lives here rather than in EditorPanel: the shortcut is window-wide, and main keeps this route
 // mounted (hidden) in Agent Mode, where a listener of its own toggled an invisible panel and ate the key.
 describe('appDetail.logic agent panel shortcut', () => {
@@ -617,5 +834,198 @@ describe('appDetail.logic updateApp', () => {
     });
     // The prefix invalidate already refetches this detail; a second fetch would be cancelled.
     expect(h.getAppDetail).not.toHaveBeenCalled();
+  });
+});
+
+describe('appDetail.logic tab loads', () => {
+  afterEach(() => {
+    h.editorFiles.selectedFile = undefined;
+  });
+
+  // `cat` reaches a link to a sticky or setgid folder and answers with its own capital letter.
+  it.each([
+    'is a directory',
+    'Process exited with status 1: cat: /home/arduino/ArduinoApps/a/lnk: Is a directory',
+  ])('closes the tab of a folder and says why, for "%s"', async (answer) => {
+    const consoleError = vi
+      .spyOn(console, 'error')
+      .mockImplementation(() => undefined);
+    h.editorFiles.selectedFile = { fileId: 'lnk', fileExtension: '' };
+    h.appFiles.fetchFile.mockRejectedValueOnce(new Error(answer));
+    try {
+      await renderHandlers();
+
+      await waitFor(() =>
+        expect(h.editorFiles.closeFile).toHaveBeenCalledWith('lnk'),
+      );
+      expect(h.editorPanel.closeRightPanelTab).toHaveBeenCalledWith('lnk');
+      expect(errorNotifications()).toEqual([
+        [{ message: 'app-detail.could-not-open-folder', variant: 'error' }],
+      ]);
+    } finally {
+      consoleError.mockRestore();
+    }
+  });
+
+  // With the board unreachable every read fails: a close would select the next tab, fail it too, and store no tab at all.
+  it('keeps the tab when its read fails for any other reason, and says so', async () => {
+    const consoleError = vi
+      .spyOn(console, 'error')
+      .mockImplementation(() => undefined);
+    h.editorFiles.selectedFile = {
+      fileId: 'python/main.py',
+      fileExtension: 'py',
+    };
+    h.appFiles.fetchFile.mockRejectedValueOnce(
+      new Error('ssh: handshake failed: connection refused'),
+    );
+    try {
+      await renderHandlers();
+
+      await waitFor(() =>
+        expect(errorNotifications()).toEqual([
+          [{ message: 'app-detail.could-not-open-file', variant: 'error' }],
+        ]),
+      );
+      expect(h.editorFiles.closeFile).not.toHaveBeenCalled();
+      expect(h.editorPanel.closeRightPanelTab).not.toHaveBeenCalled();
+    } finally {
+      consoleError.mockRestore();
+    }
+  });
+
+  it('reads no file for a brick tab', async () => {
+    h.editorFiles.selectedFile = {
+      fileId: 'arduino:web_ui',
+      fileExtension: 'brick',
+    };
+    await renderHandlers();
+
+    expect(h.appFiles.fetchFile).not.toHaveBeenCalled();
+  });
+
+  // Without the brick list a brick tab has a file's meta; the root listing has every file of the app root.
+  it('reads no root tab the listing does not have while the brick list is missing', async () => {
+    h.getAppBricks.mockRejectedValue(new Error('bricks failed'));
+    h.findFileNode.mockImplementation((path: string) =>
+      path === 'README.md'
+        ? { type: 'file', path, name: path, extension: '.md' }
+        : undefined,
+    );
+    try {
+      const client = new QueryClient({
+        defaultOptions: { queries: { retry: false } },
+      });
+      const { result, rerender } = renderHook(
+        () => useAppDetailLogic('app-1', 'my-apps'),
+        {
+          wrapper: ({ children }: { children: ReactNode }) =>
+            createElement(QueryClientProvider, { client }, children),
+        },
+      );
+      await waitFor(() => expect(result.current.app).toBeDefined());
+      await waitFor(() => expect(h.getAppBricks).toHaveBeenCalled());
+      await act(() => new Promise((resolve) => setTimeout(resolve, 0)));
+
+      h.editorFiles.selectedFile = {
+        fileId: 'arduino:web_ui',
+        fileExtension: '',
+      };
+      rerender();
+      await act(() => new Promise((resolve) => setTimeout(resolve, 0)));
+      expect(h.appFiles.fetchFile).not.toHaveBeenCalled();
+
+      h.editorFiles.selectedFile = { fileId: 'README.md', fileExtension: 'md' };
+      rerender();
+
+      await waitFor(() =>
+        expect(h.appFiles.fetchFile).toHaveBeenCalledWith('README.md'),
+      );
+    } finally {
+      h.getAppBricks.mockImplementation(
+        (): Promise<never[]> => Promise.resolve([]),
+      );
+    }
+  });
+
+  // A board switch resets the brick list before the tabs, and a tab with no brick behind it reads as a file.
+  it('reads no file when the selected brick tab loses its brick', async () => {
+    h.editorFiles.selectedFile = {
+      fileId: 'arduino:web_ui',
+      fileExtension: 'brick',
+    };
+    const client = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    });
+    const { result, rerender } = renderHook(
+      () => useAppDetailLogic('app-1', 'my-apps'),
+      {
+        wrapper: ({ children }: { children: ReactNode }) =>
+          createElement(QueryClientProvider, { client }, children),
+      },
+    );
+    await waitFor(() => expect(result.current.app).toBeDefined());
+
+    h.editorFiles.selectedFile = {
+      fileId: 'arduino:web_ui',
+      fileExtension: '',
+    };
+    rerender();
+    await act(() => new Promise((resolve) => setTimeout(resolve, 0)));
+
+    expect(h.appFiles.fetchFile).not.toHaveBeenCalled();
+  });
+
+  it('closes a panel B tab only when its path is a folder, and says so each time', async () => {
+    const consoleError = vi
+      .spyOn(console, 'error')
+      .mockImplementation(() => undefined);
+    try {
+      await renderHandlers();
+      const [params] = h.editorPanelArgs as [
+        { onFileLoadError?: (fileId: string, error: unknown) => void },
+      ];
+
+      act(() =>
+        params.onFileLoadError?.('python/b.py', new Error('board unreachable')),
+      );
+      expect(h.editorPanel.closeRightPanelTab).not.toHaveBeenCalled();
+
+      act(() =>
+        params.onFileLoadError?.('python/b.py', new Error('is a directory')),
+      );
+
+      expect(h.editorPanel.closeRightPanelTab).toHaveBeenCalledWith(
+        'python/b.py',
+      );
+      expect(errorNotifications()).toHaveLength(2);
+    } finally {
+      consoleError.mockRestore();
+    }
+  });
+});
+
+describe('appDetail.logic board of the tabs', () => {
+  afterEach(() => {
+    useBoardLifecycleStore.setState({ selectedConnectedBoard: undefined });
+  });
+
+  // A board switch resets the board queries on this id, and a network board often reports no serial.
+  it('restores and writes the tabs on the id the board queries are reset on', async () => {
+    const board: Board = {
+      id: 'board-1',
+      name: 'UNO Q',
+      type: 'Arduino Uno Q',
+      fqbn: 'arduino:zephyr:unoq',
+      connectionType: 'Network',
+      protocol: 'network',
+      serial: '',
+      address: '192.168.1.10',
+    };
+    useBoardLifecycleStore.setState({ selectedConnectedBoard: board });
+
+    await renderHandlers();
+
+    expect(h.editorFilesArgs[0]).toMatchObject({ boardId: '192.168.1.10' });
   });
 });

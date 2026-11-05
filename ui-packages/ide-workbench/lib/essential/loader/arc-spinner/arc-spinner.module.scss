@@ -1,0 +1,25 @@
+.arc-spinner {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+
+  svg {
+    animation: arcSpin 1.1s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+    transform-origin: center;
+    will-change: transform;
+  }
+
+  &.secondary svg {
+    opacity: 0.5;
+  }
+}
+
+@keyframes arcSpin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}

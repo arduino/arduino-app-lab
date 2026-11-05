@@ -3,6 +3,7 @@ package app
 import (
 	"context"
 	"fmt"
+	"sort"
 	"strings"
 	"time"
 
@@ -24,22 +25,33 @@ type boardAccess struct{ app *App }
 // appAgentStartedEvent tells the FE to auto-open an agent-started app's web UI once it's running.
 const appAgentStartedEvent = "app:agent-started"
 
+// appAgentRenamedEvent tells the FE the agent renamed an app, so a page and a chat on the old id follow it to the new one.
+const appAgentRenamedEvent = "app:agent-renamed"
+
 // ForgetWorkspaceApp drops a deleted app's workspace grants (see App.ForgetWorkspaceApp).
 func (b boardAccess) ForgetWorkspaceApp(appID string) { b.app.ForgetWorkspaceApp(appID) }
 
-func (b boardAccess) RebindWorkspaceApp(oldID, newID, newName string) {
-	b.app.RebindWorkspaceApp(oldID, newID, newName)
+func (b boardAccess) RebindWorkspaceApp(oldID, newID, newName string) string {
+	release := b.app.holdRename(oldID, newID) // before the event: the page that follows it lists the chats, which runs a sweep
+	defer release()
+	// Sent before the rebind: the board saves app.yaml in the renamed folder, and a page still on the old id reads the refresh that follows as the app being deleted.
+	b.app.emit(appAgentRenamedEvent, oldID, newID, newName)
+	return b.app.rebindWorkspaceApp(oldID, newID, newName)
 }
+
+// RefreshManagedFiles copies the board's app.yaml and sketch.yaml into the app's checkout (see App.refreshManagedFiles).
+func (b boardAccess) RefreshManagedFiles(appID string) { b.app.refreshManagedFiles(appID) }
 
 // RequestOpenAppUI emits the event so the UI opens/forwards the app's web UI once it's running (same as a manual run).
 func (b boardAccess) RequestOpenAppUI(appID string) {
 	runtime.EventsEmit(b.app.ctx(), appAgentStartedEvent, appID)
 }
 
-// FlushMirrorEdits pushes pending mirror edits to the board now (before apps_start/apps_clone/board_exec),
-// returning the apps whose sync failed so the caller can refuse to act on stale board code.
-func (b boardAccess) FlushMirrorEdits() (failed, conflicts, withheld map[string]error) {
-	return b.app.syncCheckouts(time.Time{}, true)
+// FlushMirrorEdits pushes one app only, as the others may be mid-edit in another chat; its notes go in the calling tool's result, and with their next prompt to the other running chats that edited the app.
+func (b boardAccess) FlushMirrorEdits(appID string) (failed, conflicts, withheld map[string]error, notes []string) {
+	failed, conflicts, withheld, byApp := b.app.syncCheckouts(time.Time{}, true, func(id string) bool { return id == appID })
+	b.app.notifyChatsThatEdited(byApp, "", appID)
+	return failed, conflicts, withheld, byApp[appID]
 }
 
 // agentWifiConnectEvent tells the FE to open its Wi-Fi dialog on an SSID the agent proposed.
@@ -147,7 +159,7 @@ func (b boardAccess) ListBoards(ctx context.Context) ([]boardmcp.BoardSummary, e
 }
 
 // CheckoutApp mirrors the app's files from the board into a local working copy the agent can edit natively.
-func (b boardAccess) CheckoutApp(_ context.Context, appID string) (path string, parked []string, readOnly bool, err error) {
+func (b boardAccess) CheckoutApp(_ context.Context, appID string) (boardmcp.Checkout, error) {
 	return b.app.checkoutApp(appID)
 }
 
@@ -167,12 +179,21 @@ func (b boardAccess) Exec(ctx context.Context, command, cwd string) (string, err
 	}
 	// Force-push pending mirror edits so the command sees the latest code; on failure still run, but tell the agent.
 	syncWarn := ""
-	failed, _, withheld := b.app.syncCheckouts(time.Time{}, true)
+	failed, _, withheld, notes := b.app.syncCheckouts(time.Time{}, true, nil)
 	if len(failed) > 0 {
 		syncWarn = "warning: some agent edits could not be synced to the board; the command may see stale files.\n\n"
 	}
 	if len(withheld) > 0 {
 		syncWarn += "warning: edits to a built-in example were withheld (" + flushFailureSummary(withheld) + "); the board still holds the shipped files.\n\n"
+	}
+	b.app.notifyChatsThatEdited(notes, "board_exec", "")
+	noted := make([]string, 0, len(notes))
+	for appID := range notes {
+		noted = append(noted, appID)
+	}
+	sort.Strings(noted)
+	for _, appID := range noted {
+		syncWarn += boardmcp.SyncIssueWarning(notes[appID])
 	}
 	syncWarn += boardmcp.SyncIssueWarning(b.PendingSyncIssues()) + boardmcp.GhostEditWarning(b.PendingGhostEdits())
 	full := command
@@ -196,22 +217,32 @@ func (b boardAccess) Exec(ctx context.Context, command, cwd string) (string, err
 	return text, nil
 }
 
-// execOnBoard enforces ctx itself: the vendored SSH Output() ignores its context (blocks in CombinedOutput), so we run it on a goroutine and select on ctx — bounding our wait, not the remote command (no session handle to kill), draining into a buffered channel so nothing leaks.
-func execOnBoard(ctx context.Context, sb *board.Board, command string) ([]byte, error) {
+// awaitBoard enforces ctx itself: the vendored SSH Output() ignores its context (blocks in CombinedOutput), so we run
+// the command on a goroutine and select on ctx — bounding our wait, not the remote command (no session handle to kill),
+// draining into a buffered channel so nothing leaks. Every board command on a caller's deadline goes through here.
+func awaitBoard[T any](ctx context.Context, fn func() (T, error)) (T, error) {
+	var zero T
+	// Checked before dispatching: an expired caller must not issue one more command, and a multi-command probe
+	// would otherwise keep going after its deadline, abandoning a session per step.
+	if err := ctx.Err(); err != nil {
+		return zero, err
+	}
 	type result struct {
-		out []byte
+		out T
 		err error
 	}
 	ch := make(chan result, 1) // buffered: the goroutine must not block once we've stopped waiting
+	started := time.Now()
 	go func() {
-		out, err := sb.Conn.GetCmd("sh", "-c", command).Output(ctx)
+		out, err := fn()
 		ch <- result{out, err}
 	}()
 	select {
 	case r := <-ch:
 		return r.out, r.err
 	case <-ctx.Done():
-		return nil, fmt.Errorf("the command did not finish within %s and was abandoned (it may still be running on the board): %w", boardExecTimeout, ctx.Err())
+		waited := time.Since(started).Round(time.Second)
+		return zero, fmt.Errorf("the command did not finish within %s and was abandoned (it may still be running on the board): %w", waited, ctx.Err())
 	}
 }
 
@@ -246,6 +277,14 @@ func (a *App) setSelectedBoard(b *board.Board) {
 	a.boardMu.Lock()
 	defer a.boardMu.Unlock()
 	*a.selectedBoard = *b
+}
+
+// execOnBoard runs a shell command on the board. Its only auto-approved caller is carrier_status, with a constant
+// command: anything built from model input belongs behind board_exec's permission prompt.
+func execOnBoard(ctx context.Context, sb *board.Board, command string) ([]byte, error) {
+	return awaitBoard(ctx, func() ([]byte, error) {
+		return sb.Conn.GetCmd("sh", "-c", command).Output(ctx)
+	})
 }
 
 // boardIdentity keys a board by serial, or by address for network boards that report none.

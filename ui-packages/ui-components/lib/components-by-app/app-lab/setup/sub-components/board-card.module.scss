@@ -136,7 +136,7 @@
   text-align: left;
   font-weight: 700;
   font-size: 20px;
-  color: var(--text-subtle);
+  color: var(--text-default);
   letter-spacing: 1%;
 }
 
@@ -181,14 +181,9 @@
 
 // Tooltip base styles
 .chip-tooltip {
-  position: absolute;
   width: auto;
   max-width: none;
   height: 23px;
-  padding: 2px 8px;
-  border-radius: 3px;
-  background: #AEB8B8;
-  color: #171E21;
   white-space: nowrap;
   text-align: center;
   font-size: 11px;
@@ -196,29 +191,9 @@
   box-shadow: none;
   border: none;
 
-  // Default: above icon (for single variant)
-  bottom: calc(100% + 6px);
-  top: auto;
-  right: auto;
-  left: 50%;
-  transform: translateX(-50%);
-
   span {
-    color: #171E21;
+    color: var(--text-inverted);
     font-size: 11px;
     font-weight: 400;
   }
-
-  &::after {
-    display: none;
-  }
-}
-
-// Override for multi: top-right of card
-.board--multi .chip-tooltip {
-  bottom: auto;
-  top: 8px;
-  right: 8px;
-  left: auto;
-  transform: none;
 }

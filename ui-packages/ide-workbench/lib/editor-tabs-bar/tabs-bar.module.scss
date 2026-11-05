@@ -1,0 +1,171 @@
+@use "../theme/shared.module.scss";
+@use "../code-editor/code-editor-variables.module.scss";
+@use "./editor-tabs-bar-variables.module.scss";
+@use "../essential/dropdown-menu/dropdown-menu-variables.module.scss";
+
+:root {
+  --rename-tab-index: 0;
+  // Public token so siblings (eg. the editor split drop zone) can offset
+  // their geometry to clear the tabs bar without hardcoding the value.
+  --editor-tabs-bar-height: 40px;
+}
+
+$renameTabIndex: var(--rename-tab-index);
+
+:export {
+  renameTabIndex: --rename-tab-index;
+}
+
+.tabs-bar {
+  display: flex;
+  background-color: var(--surface-bg-below-2);
+  // Definite height, so the taller tabs list below can overhang without stretching this bar
+  // (and its background) with it, and so that list's % height isn't a cyclic percentage.
+  // Other consumers already treat this token as the strip height — see
+  // editor-controls.module.scss / EditorSplitDropZone.
+  height: var(--editor-tabs-bar-height);
+  box-sizing: border-box;
+}
+
+.tabs-list {
+  // Shrink-to-fit, never grow: while the tabs fit, this list is only as wide as
+  // they are, so the right-hand controls (+ / chevron) trail the last tab. Once
+  // they don't, flex-shrink pulls the list back to the space the controls leave
+  // and it scrolls instead — which is also what makes clientWidth the available
+  // width for overflow detection.
+  flex: 0 1 auto;
+  min-width: 0;
+  position: relative;
+  display: flex;
+  height: 100%;
+  margin: unset;
+  padding: unset;
+  list-style: none;
+  touch-action: pan-x;
+  // Hidden by default; the scrollbar is revealed on hover (see below).
+  overflow-x: hidden;
+  // Explicit, else it computes to auto next to overflow-x and the tab row scrolls vertically.
+  overflow-y: hidden;
+  overscroll-behavior: none;
+
+  // On hover only this list grows past the bar, so the scrollbar hangs over the editor
+  // rather than taking height from the strip: the tabs keep their full 40px and never shift.
+  // The bar's definite height keeps it (and its background) out of the growth.
+  .tabs-bar-scrollable &:hover {
+    overflow-x: auto;
+    height: calc(100% + 12px);
+    // Above the editor, so the overhanging scrollbar stays visible and hittable while dragging.
+    z-index: 2;
+  }
+
+  &::-webkit-scrollbar {
+    height: 12px;
+    // Transparent rail: this band hangs over the editor canvas, so any colour painted here
+    // reads as a bar across it (and the canvas colour differs per app). Set on both, else
+    // the browser's dark default shows through in dark mode.
+    background-color: transparent;
+  }
+
+  &::-webkit-scrollbar-track {
+    background-color: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    // Transparent inset, so the thumb reads thin without painting a rail colour of its own.
+    border: 4px solid transparent;
+    background-clip: padding-box;
+    border-radius: 10px;
+    background-color: #7f8c8d; // @TODO: To be exported (matches editor scrollbar)
+    cursor: pointer;
+  }
+}
+
+.tabs-bar-scrollable .tabs-bar-right {
+  border-width: 0 0 1px 1px;
+  margin-left: -1px; // To cover the border of last tab if scrollable
+}
+
+.tabs-bar-right {
+  // Fills the bar after the tabs, so the panel controls can sit at its right end while + trails the last tab.
+  flex: 1 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 8px;
+  position: relative;
+  min-width: 32px;
+  // No padding-bottom: it made this section taller than the 40px tab row, and
+  // since .tabs-bar stretches its children, that stretched the tab row too and
+  // left a full-width gap under the tabs.
+  border-style: solid;
+  border-width: 0 0 1px 0;
+  border-color: transparent; // So the border doesn't show when the tabs-bar is flush with the editor canvas below it
+
+  // Simulate scrollbar space so it matches the tab-list. Transparent so it
+  // blends into the tabs-bar background instead of showing as a bar — see
+  // .tabs-list scrollbar above.
+  &::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: -1px;
+    right: 0;
+    bottom: -1px;
+    height: 8px;
+    background-color: transparent;
+  }
+}
+
+.tab-drag-overlay {
+  opacity: 0.7;
+  border-width: 1px !important;
+  filter: blur(0.7px);
+}
+
+.tabs-bar-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+
+// A wrapper that only carries a data attribute: it must not take part in the
+// flex layout of .tabs-bar-actions.
+.tabs-bar-action {
+  display: contents;
+}
+
+.tabs-bar-right-item {
+  width: 100%;
+  height: 100%;
+}
+
+.tabs-bar-right-button {
+  color: var(--editor-tab-foreground);
+  background-color: var(--component-bg-below-1);
+  width: 32px;
+  height: 32px;
+
+  svg {
+    height: 16px;
+    path {
+      fill: var(--editor-tab-foreground);
+    }
+  }
+}
+
+.tabs-bar-right-menu {
+  top: 24px !important;
+  right: -32px;
+  width: 250px;
+}
+
+.new-tab-menu-item {
+  justify-content: flex-start;
+  padding: 0 20px;
+  gap: 5px;
+}
+
+.import-file-input {
+  display: none;
+}

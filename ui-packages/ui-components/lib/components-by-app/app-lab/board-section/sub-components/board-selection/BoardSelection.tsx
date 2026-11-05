@@ -4,7 +4,7 @@ import { useState } from 'react';
 
 import { LinuxCredentialsDialog } from '../../../../../dialogs';
 import { useI18n } from '../../../../../i18n/useI18n';
-import { useTooltip } from '../../../../../tooltip';
+import { useTooltip } from '../../../essential/tooltip';
 import styles from './board-selection.module.scss';
 import { BoardSelectionProps } from './BoardSelection.type';
 import { BoardSwitcher } from './BoardSwitcher';
@@ -28,7 +28,6 @@ const BoardSelection: React.FC<BoardSelectionProps> = ({
     useTooltip({
       content: label,
       direction: 'up',
-      timeout: 0,
     });
 
   const {
@@ -38,7 +37,6 @@ const BoardSelection: React.FC<BoardSelectionProps> = ({
   } = useTooltip({
     content: formatMessage(messages.switchBoardDropdownButton),
     direction: 'up',
-    timeout: 0,
   });
 
   return (
@@ -52,7 +50,7 @@ const BoardSelection: React.FC<BoardSelectionProps> = ({
           {...tooltipPropsLabel}
         >
           {label ? label : formatMessage(messages.notConnected)}
-          {renderTooltipLabel(styles['tooltip-content--label'])}
+          {renderTooltipLabel()}
         </span>
       </div>
 

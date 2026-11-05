@@ -12,7 +12,7 @@ import type { AgentDownReason } from '../../store';
 import { useChatStore } from '../../store';
 import { Button, Text } from '../../ui';
 import { ChatPanel } from '../chat/ChatPanel/ChatPanel';
-import { ConnectPanel } from '../connect/ConnectPanel';
+import { ConnectPanel } from '../connect/ConnectPanel/ConnectPanel';
 import styles from './ai-assistant-panel.module.scss';
 import { useAiAssistantPanelLogic } from './AiAssistantPanel.logic';
 
@@ -22,6 +22,11 @@ const stoppedCopy = (
   reason?: AgentDownReason,
 ): { title: MessageDescriptor; body: MessageDescriptor } => {
   switch (reason) {
+    case 'start-failed':
+      return {
+        title: messages.agentStartFailedTitle,
+        body: messages.agentStartFailedBody,
+      };
     case 'board-changed':
       return {
         title: messages.agentBoardChangedTitle,
@@ -40,17 +45,48 @@ const stoppedCopy = (
   }
 };
 
+interface AgentStoppedPromptProps {
+  reason?: AgentDownReason;
+  reconnecting: boolean;
+  onReconnect: VoidFunction;
+}
+
+// The "agent stopped" prompt with its Reconnect: Agent Mode and the editor's docked panel both show it.
+export const AgentStoppedPrompt: React.FC<AgentStoppedPromptProps> = ({
+  reason,
+  reconnecting,
+  onReconnect,
+}) => {
+  const { formatMessage } = useI18n();
+  const stopped = stoppedCopy(reason);
+  return (
+    <div className={styles['stopped']}>
+      <Text className={styles['stopped-title']}>
+        {formatMessage(stopped.title)}
+      </Text>
+      <Text size={TextSize.XXSmall} className={styles['stopped-body']}>
+        {formatMessage(stopped.body)}
+      </Text>
+      <Button loading={reconnecting} onClick={onReconnect}>
+        {formatMessage(messages.agentReconnect)}
+      </Button>
+    </div>
+  );
+};
+
 // Entry point: restore an existing login on open (skip connect), otherwise the connect state, then the chat.
 export interface AiAssistantPanelProps {
   // Provided by the host, which owns the board's app list; empty/absent hides the picker.
   workspaces?: AgentWorkspace[];
   // Whether Agent Mode is the surface on screen: App Lab keeps this panel mounted and hides it otherwise.
   active?: boolean;
+  onOpenSettings?: VoidFunction;
 }
 
 export const AiAssistantPanel: React.FC<AiAssistantPanelProps> = ({
   workspaces,
   active = true,
+  onOpenSettings,
 }: AiAssistantPanelProps) => {
   const { formatMessage } = useI18n();
   const {
@@ -64,9 +100,11 @@ export const AiAssistantPanel: React.FC<AiAssistantPanelProps> = ({
   } = useAiAssistantPanelLogic();
   const setAgentModeActive = useChatStore((s) => s.setAgentModeActive);
 
-  // The editor's docked panel reads this to know it is the one hidden.
+  // The editor's docked panel reads this to know it is the one hidden. Cleared on unmount: a flag left
+  // true with Agent Mode gone would keep the docked panel onScreen={false} for good.
   useEffect(() => {
     setAgentModeActive(active);
+    return () => setAgentModeActive(false);
   }, [active, setAgentModeActive]);
 
   // The confirmed-switch teardown revives itself, so it gets the loader rather than the stopped prompt.
@@ -84,28 +122,21 @@ export const AiAssistantPanel: React.FC<AiAssistantPanelProps> = ({
   }
 
   if (agentDown) {
-    const stopped = stoppedCopy(agentDownReason);
     return (
-      <div className={styles['stopped']}>
-        <Text className={styles['stopped-title']}>
-          {formatMessage(stopped.title)}
-        </Text>
-        <Text size={TextSize.XXSmall} className={styles['stopped-body']}>
-          {formatMessage(stopped.body)}
-        </Text>
-        <Button
-          loading={reconnecting}
-          disabled={reconnecting}
-          onClick={reconnect}
-        >
-          {formatMessage(messages.agentReconnect)}
-        </Button>
-      </div>
+      <AgentStoppedPrompt
+        reason={agentDownReason}
+        reconnecting={reconnecting}
+        onReconnect={reconnect}
+      />
     );
   }
 
   return authenticated ? (
-    <ChatPanel workspaces={workspaces} onScreen={active} />
+    <ChatPanel
+      workspaces={workspaces}
+      onScreen={active}
+      onOpenSettings={onOpenSettings}
+    />
   ) : (
     <ConnectPanel />
   );

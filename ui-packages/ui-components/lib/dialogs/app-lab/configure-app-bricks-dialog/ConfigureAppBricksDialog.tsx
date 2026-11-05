@@ -93,10 +93,29 @@ export const ConfigureAppBricksDialog: React.FC<
       {},
     );
     setLoading(true);
-    const success = await confirmAction(variables);
-    setLoading(false);
-    if (success) {
-      onOpenChange(false);
+    try {
+      const success = await confirmAction(variables);
+      if (success) {
+        onOpenChange(false);
+      }
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const isMissingRequired = params.some(
+    ({ brick, modelId, variables }) =>
+      (brick.require_model && !modelId) ||
+      variables.some(
+        (variable) => variable.required && !variable.value.trim().length,
+      ),
+  );
+
+  const handleEnter = (): void => {
+    if (!isMissingRequired && !loading) {
+      handleConfirm();
     }
   };
 
@@ -123,14 +142,7 @@ export const ConfigureAppBricksDialog: React.FC<
             variant={ButtonVariant.Primary}
             uppercase={false}
             loading={loading}
-            disabled={params.some(
-              ({ brick, modelId, variables }) =>
-                (brick.require_model && !modelId) ||
-                variables.some(
-                  (variable) =>
-                    variable.required && !variable.value.trim().length,
-                ),
-            )}
+            disabled={isMissingRequired}
             type="submit"
             classes={{
               button: styles['action-button'],
@@ -162,6 +174,8 @@ export const ConfigureAppBricksDialog: React.FC<
                   type="text"
                   value={variable.value}
                   autoFocus={brickIndex === 0 && varIndex === 0}
+                  blurOnEnter={false}
+                  onEnter={handleEnter}
                   onChange={(value: string): void =>
                     setParams((prev) =>
                       prev.map((it) =>
@@ -178,9 +192,6 @@ export const ConfigureAppBricksDialog: React.FC<
                   }
                   label={variable.name?.split('_').map(capitalize).join(' ')}
                   required={variable.required}
-                  classes={{
-                    input: styles['input'],
-                  }}
                 />
                 <XXSmall>{variable.description}</XXSmall>
               </div>

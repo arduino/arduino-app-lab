@@ -1,6 +1,6 @@
 @use "../typography/typography.module.scss";
 @use "../../public/shared.module.scss";
-@use "../code-editor/code-editor-variables.module.scss";
+@use "@cloud-editor-mono/ide-workbench/lib/code-editor/code-editor-variables.module.scss";
 
 :root {
   --console-panel-height: 0;

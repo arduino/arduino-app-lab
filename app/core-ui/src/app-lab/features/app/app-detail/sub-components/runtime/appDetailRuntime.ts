@@ -262,6 +262,7 @@ export const useAppDetailRuntimeLogic: UseAppDetailRuntimeLogic = function (
   } = useAppSSE({
     appSSE: getAppLogs,
     onMessage: onMessageLogs,
+    trimMessageStart: false,
   });
 
   const createMonitorSourceOnMsg = useRef(true);

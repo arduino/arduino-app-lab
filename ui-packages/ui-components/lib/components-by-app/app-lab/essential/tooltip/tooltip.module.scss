@@ -6,3 +6,10 @@
   font-weight: 400;
   padding: 2px 8px;
 }
+
+.card {
+  background-color: var(--component-bg-above);
+  color: var(--text-default);
+  padding: 8px 16px;
+  border-radius: 8px;
+}

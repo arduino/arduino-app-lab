@@ -54,7 +54,6 @@ export const System: React.FC<SystemProps> = ({
   const { props: tooltipProps, renderTooltip } = useTooltip({
     content: formatMessage(messages.systemStats),
     direction: 'up',
-    timeout: 0,
   });
 
   return (
@@ -73,7 +72,7 @@ export const System: React.FC<SystemProps> = ({
         {...tooltipProps}
       >
         <Stats />
-        {renderTooltip(styles['tooltip-content--label'])}
+        {renderTooltip()}
       </div>
       {isMenuVisible && (
         <SystemPanel

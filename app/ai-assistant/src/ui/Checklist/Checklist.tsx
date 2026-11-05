@@ -28,10 +28,7 @@ const StatusIcon: React.FC<{ status: ChecklistItemStatus }> = ({
   if (status === 'in_progress') {
     return (
       <span
-        className={clsx(
-          styles['checklist-icon'],
-          styles['checklist-spinner'],
-        )}
+        className={clsx(styles['checklist-icon'], styles['checklist-spinner'])}
         aria-hidden="true"
       />
     );
@@ -72,8 +69,7 @@ export const Checklist: React.FC<ChecklistProps> = ({
             <StatusIcon status={item.status} />
             <Text
               className={clsx(styles['checklist-label'], {
-                [styles['checklist-label--pending']]:
-                  item.status === 'pending',
+                [styles['checklist-label--pending']]: item.status === 'pending',
               })}
             >
               {item.label}

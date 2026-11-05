@@ -7,6 +7,7 @@ import { CopyToClipboard } from '../../../essential/copy-to-clipboard';
 import { Input } from '../../../essential/input';
 import { ToggleButton } from '../../../essential/toggle-button';
 import { useI18n } from '../../../i18n/useI18n';
+import { hasPermissions, Rbac, RbacCapability } from '../../../rbac';
 import { Link, XSmall, XXSmall } from '../../../typography';
 import { shareSketchMessages as messages } from '../../messages';
 import { ShareSketchLogic, ShareToClassroomLogic } from '../../Toolbar.type';
@@ -42,25 +43,29 @@ export function ShareSketch(props: ShareSketchProps): JSX.Element {
               rest.isPublic ? messages.publicEnabled : messages.publicDisabled,
             )}
           </XSmall>
-          <ToggleButton
-            classes={{
-              button: styles['share-sketch-toggle-button'],
-            }}
-            onChange={onToggleVisibility}
-            isSelected={rest.isPublic}
-          />
+          <Rbac permissions={[RbacCapability.EditSketch]} rbac={rest.rbac}>
+            <ToggleButton
+              classes={{
+                button: styles['share-sketch-toggle-button'],
+              }}
+              onChange={onToggleVisibility}
+              isSelected={rest.isPublic}
+            />
+          </Rbac>
         </div>
       </div>
       {
         <>
           <XXSmall>
-            {formatMessage(
-              rest.isPublic
-                ? messages.publicLabel
-                : rest.organizationId !== undefined
-                ? messages.organizationLabel
-                : messages.personalLabel,
-            )}
+            {rest.isPublic
+              ? formatMessage(messages.publicLabel)
+              : rest.organizationId === undefined
+              ? formatMessage(messages.personalLabel)
+              : rest.organizationName
+              ? formatMessage(messages.organizationLabel, {
+                  spaceName: rest.organizationName,
+                })
+              : formatMessage(messages.organizationLabelUnnamed)}
           </XXSmall>
           {rest.isPublic ? (
             <>
@@ -117,7 +122,8 @@ export function ShareSketch(props: ShareSketchProps): JSX.Element {
                 </button>
               ) : null}
             </>
-          ) : rest.organizationId !== undefined ? (
+          ) : rest.organizationId !== undefined &&
+            hasPermissions([RbacCapability.EditSketch], rest.rbac) ? (
             <div className={styles['url-item-container']}>
               <XXSmall>{`${formatMessage(messages.membersUrlLabel)}:`}</XXSmall>
               <Input

@@ -5,10 +5,12 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { OPEN_FILES_KEY, OpenFilesStore } from '../../common/hooks/files';
 import {
+  getOpenFilesEntry,
   moveOpenFilesEntry,
   patchOpenFilesEntry,
   pruneOrphanedOpenFiles,
   removeOpenFilesForApp,
+  renameOpenFilesInApp,
 } from './openFilesStore';
 
 const item = (label: string): OpenFilesStore[string] => ({
@@ -63,6 +65,61 @@ describe('removeOpenFilesForApp', () => {
     await removeOpenFilesForApp('app-a', 'SERIAL1');
 
     expect(await read()).toEqual({ 'app-b-SERIAL1': item('b1') });
+  });
+});
+
+// The agent renames while Agent Mode has no editor on screen: the tabs it stored must name the new paths.
+describe('renameOpenFilesInApp', () => {
+  it('moves the renamed path and the paths under it, in both panes', async () => {
+    await seed({
+      'app-a-SERIAL1': {
+        items: ['lib/a.py', 'lib2/b.py', 'main.py'],
+        selected: 'lib/a.py',
+        panes: {
+          A: {
+            items: ['lib/a.py', 'lib2/b.py', 'main.py'],
+            selected: 'lib/a.py',
+            markdownByFileId: { 'lib/notes.md': true },
+          },
+          B: { items: ['lib'], selected: 'lib' },
+        },
+        previewFileId: 'lib/c.py',
+      },
+      'app-b-SERIAL1': item('lib/a.py'),
+    });
+
+    await renameOpenFilesInApp('app-a', 'lib', 'core', 'SERIAL1');
+
+    expect(await read()).toEqual({
+      'app-a-SERIAL1': {
+        items: ['core/a.py', 'lib2/b.py', 'main.py'],
+        selected: 'core/a.py',
+        panes: {
+          A: {
+            items: ['core/a.py', 'lib2/b.py', 'main.py'],
+            selected: 'core/a.py',
+            markdownByFileId: { 'core/notes.md': true },
+            brickTabByFileId: undefined,
+          },
+          B: {
+            items: ['core'],
+            selected: 'core',
+            markdownByFileId: undefined,
+            brickTabByFileId: undefined,
+          },
+        },
+        previewFileId: 'core/c.py',
+      },
+      'app-b-SERIAL1': item('lib/a.py'),
+    });
+  });
+
+  it('is a no-op when the app stored no tabs', async () => {
+    await seed({ 'app-b-SERIAL1': item('lib/a.py') });
+
+    await renameOpenFilesInApp('app-a', 'lib', 'core', 'SERIAL1');
+
+    expect(await read()).toEqual({ 'app-b-SERIAL1': item('lib/a.py') });
   });
 });
 
@@ -130,6 +187,22 @@ describe('moveOpenFilesEntry', () => {
     await moveOpenFilesEntry('app-old-SERIAL1', 'app-new-SERIAL1');
 
     expect(await read()).toEqual({ 'app-b-SERIAL1': item('b') });
+  });
+});
+
+// The open editor reads the new key right after an agent rename queues the move, maybe behind a write of its own.
+describe('getOpenFilesEntry', () => {
+  it('sees a move queued before the read', async () => {
+    await seed({ 'app-old-SERIAL1': item('x') });
+
+    const writes = Promise.all([
+      patchOpenFilesEntry('app-old-SERIAL1', () => ({ selected: 'x' })),
+      moveOpenFilesEntry('app-old-SERIAL1', 'app-new-SERIAL1'),
+    ]);
+    const entry = await getOpenFilesEntry('app-new-SERIAL1');
+    await writes;
+
+    expect(entry).toMatchObject({ items: ['x'] });
   });
 });
 

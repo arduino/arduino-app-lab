@@ -8,12 +8,14 @@ import clsx from 'clsx';
 
 import { messages } from '../../messages';
 import { type AgentDescriptor } from '../../services';
-import { Button, ConfirmDialog, ProgressBar, Text } from '../../ui';
+import { Blocked, Button, ConfirmDialog, ProgressBar, Text } from '../../ui';
 import styles from './runtime-panel.module.scss';
 import { type RuntimePanelLogic, formatDiskUsage } from './RuntimePanel.logic';
 
 interface RuntimePanelProps {
   agent: AgentDescriptor;
+  // Why the runtime cannot be touched right now; uninstalling stops the agent mid-answer.
+  blockedReason?: string;
   // Shared runtime logic (owned by AgentSettings so the card can also read the
   // install state to switch between Manage and Install).
   runtime: RuntimePanelLogic;
@@ -26,6 +28,7 @@ interface RuntimePanelProps {
 // the missing/install state), so it never offers an Install action itself.
 export const RuntimePanel: React.FC<RuntimePanelProps> = ({
   agent,
+  blockedReason,
   runtime,
 }) => {
   const { formatMessage } = useI18n();
@@ -52,7 +55,9 @@ export const RuntimePanel: React.FC<RuntimePanelProps> = ({
   // const checking = checkingId === agent.id; // hidden with the "Check for updates" button
   // const upToDate = upToDateId === agent.id; // hidden with the "Check for updates" button
 
-  const version = runtimeStatus?.version;
+  // The agent's own version: Node is the same build for every agent and read as one install.
+  const version = runtimeStatus?.agentVersion;
+  const nodeVersion = runtimeStatus?.version;
   const disk = formatDiskUsage(runtimeStatus?.diskUsageBytes);
   const summary = version ? `${version}${disk ? ` · ${disk}` : ''}` : undefined;
 
@@ -127,6 +132,10 @@ export const RuntimePanel: React.FC<RuntimePanelProps> = ({
                 <dd>{version ?? '—'}</dd>
               </div>
               <div className={styles['runtime-stat']}>
+                <dt>{formatMessage(messages.settingsRuntimeNode)}</dt>
+                <dd>{nodeVersion ?? '—'}</dd>
+              </div>
+              <div className={styles['runtime-stat']}>
                 <dt>{formatMessage(messages.settingsRuntimeDiskUsage)}</dt>
                 <dd>{disk ?? '—'}</dd>
               </div>
@@ -170,14 +179,17 @@ export const RuntimePanel: React.FC<RuntimePanelProps> = ({
                 </button>
               )}
               */}
-              <Button
-                variant={ButtonVariant.Tertiary}
-                appearance={ButtonAppearance.Destructive}
-                size="small"
-                onClick={(): void => openUninstall(agent.id)}
-              >
-                {formatMessage(messages.settingsRuntimeUninstall)}
-              </Button>
+              <Blocked reason={blockedReason}>
+                <Button
+                  variant={ButtonVariant.Tertiary}
+                  appearance={ButtonAppearance.Destructive}
+                  size="small"
+                  disabled={Boolean(blockedReason)}
+                  onClick={(): void => openUninstall(agent.id)}
+                >
+                  {formatMessage(messages.settingsRuntimeUninstall)}
+                </Button>
+              </Blocked>
             </div>
           </div>
         ))}

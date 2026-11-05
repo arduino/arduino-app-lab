@@ -1,25 +1,34 @@
+.notification-button {
+    padding: 0 6px !important;
+
+    &.active {
+        border: 2px solid var(--border-strong);
+    }
+}
+
 .notification-icon-container {
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 4px;
     color: var(--text-subtle, #c9d2d2);
-    border: 2px solid transparent;
-    box-sizing: border-box;
-    border-radius: 4px;
+    // `1ch` is measured in this font, so it must match the label's weight.
+    font-weight: 400;
+    // Bell + gap + a one-digit label with its letter-spacing, so the button keeps
+    // its size with no count.
+    min-width: calc(14px + 4px + 1ch + 0.12px);
 
-    &.active {
-        color: white;
-        border-color: var(--border-strong, #7f8c8d);
+    // Button paints every `svg path` with its text colour at a higher specificity.
+    // The attribute selector leaves out the dot, which sets its own fill.
+    svg path[fill='currentColor'] {
+        fill: var(--icon-subtle) !important;
     }
 
     .notification-label {
         user-select: none;
         -webkit-user-select: none;
         font-size: 12px;
+        letter-spacing: 0.12px;
         color: var(--text-subtle, #c9d2d2);
-        color: green;
-        padding-left: 4px;
-        padding-right: 4px;
     }
 }

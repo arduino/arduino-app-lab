@@ -3,7 +3,7 @@ import { useContext } from 'react';
 
 import { Button } from '../../../essential/button';
 import { useI18n } from '../../../i18n/useI18n';
-import { Text, TextSize } from '../../../typography';
+import { XSmall } from '../../../typography';
 import { DeviceAssociationContext } from '../../context/deviceAssociationContext';
 import { DeviceAssociationDialogLinks } from '../../deviceAssociationDialog.type';
 import { messages } from '../messages';
@@ -59,12 +59,9 @@ const DetectedNone: React.FC<DetectedNoneProps> = (
       case DetectedNoneReason.NoAgent:
         return (
           <div className={styles['agent-not-found-message']}>
-            <Text
-              size={TextSize.XSmall}
-              className={styles['agent-not-found-leading-message']}
-            >
+            <XSmall className={styles['agent-not-found-leading-message']}>
               {formatMessage(messages.agentNotFoundMessage)}
-            </Text>
+            </XSmall>
             {canDownloadAgent ? (
               <Button
                 onClick={onClickDownloadAgent}

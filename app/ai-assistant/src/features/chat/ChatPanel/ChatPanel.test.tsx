@@ -1,6 +1,8 @@
 import { fireEvent, render, screen, within } from '@testing-library/react';
+import { IntlProvider } from 'react-intl';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { useChatStore } from '../../../store';
 import { ChatPanel } from './ChatPanel';
 import type { ChatPanelLogic } from './ChatPanel.logic';
 
@@ -20,13 +22,19 @@ vi.stubGlobal('ResizeObserver', ResizeObserverStub);
 const emptySessionLogic: ChatPanelLogic = {
   messages: [],
   isStreaming: false,
-  usedTokens: 0,
+  turnTokens: 0,
+  queuedPrompts: [],
+  enqueue: vi.fn(),
+  removeQueued: vi.fn(),
+  clearQueued: vi.fn(),
   retryBootstrap: vi.fn(),
   models: [],
   setModel: vi.fn(),
   modes: [],
   setMode: vi.fn(),
-  send: vi.fn(),
+  modelUnreadable: false,
+  modelPickFailed: false,
+  dismissModelPickFailed: vi.fn(),
   stop: vi.fn(),
   retry: vi.fn(),
   respondPermission: vi.fn(),
@@ -36,6 +44,7 @@ const emptySessionLogic: ChatPanelLogic = {
   reopen: vi.fn(),
   newChat: vi.fn(),
   currentSessionId: null,
+  canCompose: true,
   openFile: vi.fn(),
   dismissFileError: vi.fn(),
   dismissSessionActionError: vi.fn(),
@@ -52,6 +61,7 @@ vi.mock('./ChatPanel.logic', () => ({
 
 afterEach(() => {
   logic = emptySessionLogic;
+  useChatStore.getState().reset();
 });
 
 describe('ChatPanel empty state', () => {
@@ -66,6 +76,16 @@ describe('ChatPanel empty state', () => {
         'Ask about this app — the agent already sees the file you have open.',
       ),
     ).not.toBeInTheDocument();
+  });
+
+  it('puts a prompt whose session did not open back in the composer', () => {
+    logic = {
+      ...emptySessionLogic,
+      restoredDraft: { text: 'Blink an LED on D13' },
+    };
+    render(<ChatPanel />);
+
+    expect(screen.getByRole('textbox')).toHaveValue('Blink an LED on D13');
   });
 
   it('keeps the compact greeting in the docked panel, at any width', () => {
@@ -182,6 +202,13 @@ describe('ChatPanel toolbar', () => {
     expect(screen.getAllByText('Weather Station')).toHaveLength(1);
   });
 
+  // The docked header says "New session" meanwhile; a blank one read as a bug in the live pass.
+  it('names an unnamed session in the header', () => {
+    render(<ChatPanel />);
+
+    expect(screen.getByText('New session')).toBeInTheDocument();
+  });
+
   it('leaves the workspace chip out until the session has a title', () => {
     render(
       <ChatPanel
@@ -232,5 +259,185 @@ describe('ChatPanel workspace row', () => {
       screen.queryByRole('button', { name: 'Workspace' }),
     ).not.toBeInTheDocument();
     expect(screen.queryByText('New session in')).not.toBeInTheDocument();
+  });
+});
+
+// Two panels can be mounted at once and `currentSessionId` is the shared pointer the sidebar
+// highlights, not this panel's session: the choice card has to come from the session this panel
+// displays, or an answer resolves on one thread and echoes into the other.
+describe('ChatPanel pending choices', () => {
+  it('shows the question of the session this panel displays, not the shared pointer', () => {
+    const store = useChatStore.getState();
+    store.setCurrentSessionId('other-session');
+    store.addMessage('own-session', {
+      id: 'm1',
+      role: 'assistant',
+      parts: [
+        {
+          type: 'choices',
+          id: 'q1',
+          choices: {
+            id: 'q1',
+            title: 'Which board?',
+            options: [{ id: 'o1', label: 'VentunoQ' }],
+          },
+        },
+      ],
+    });
+    logic = {
+      ...emptySessionLogic,
+      isNewSession: false,
+      currentSessionId: 'own-session',
+    };
+
+    render(<ChatPanel />);
+
+    expect(screen.getByText('Which board?')).toBeInTheDocument();
+  });
+});
+
+// The design's rule: up to two queued prompts are listed as they are, from the third on they sit behind one header.
+describe('ChatPanel queue', () => {
+  const queued = (...texts: string[]): ChatPanelLogic => ({
+    ...emptySessionLogic,
+    isNewSession: false,
+    currentSessionId: 'sess-1',
+    isStreaming: true,
+    queuedPrompts: texts.map((text, i) => ({ id: `q${i}`, text })),
+    removeQueued: vi.fn(),
+    clearQueued: vi.fn(),
+  });
+  // The count is an ICU plural, which only a real provider formats.
+  const renderInIntl = (): void => {
+    render(
+      <IntlProvider locale="en">
+        <ChatPanel />
+      </IntlProvider>,
+    );
+  };
+
+  it('lists two prompts as they are, oldest first, each removable', () => {
+    logic = queued('first', 'second');
+
+    renderInIntl();
+
+    const rows = screen.getAllByRole('button', { name: 'Remove from queue' });
+    expect(rows).toHaveLength(2);
+    expect(
+      screen.getAllByText(/^(first|second)$/).map((el) => el.textContent),
+    ).toEqual(['first', 'second']);
+    expect(screen.queryByText('Clear all')).not.toBeInTheDocument();
+
+    fireEvent.click(rows[0]);
+    expect(logic.removeQueued).toHaveBeenCalledWith('q0');
+  });
+
+  it('collapses three into a header with the count, and opens the full list below it', () => {
+    logic = queued('first', 'second', 'third');
+
+    renderInIntl();
+
+    const header = screen.getByRole('button', { name: '3 queued' });
+    expect(header).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.queryByText('first')).not.toBeInTheDocument();
+
+    fireEvent.click(header);
+
+    expect(header).toHaveAttribute('aria-expanded', 'true');
+    expect(
+      screen.getAllByRole('button', { name: 'Remove from queue' }),
+    ).toHaveLength(3);
+    expect(screen.getByText('first')).toBeInTheDocument();
+  });
+
+  it('drops the whole queue with Clear all', () => {
+    logic = queued('first', 'second', 'third');
+
+    renderInIntl();
+    fireEvent.click(screen.getByRole('button', { name: 'Clear all' }));
+
+    expect(logic.clearQueued).toHaveBeenCalledTimes(1);
+  });
+});
+
+// The banner says why a turn failed: the agent's reason when it gave one, the panel's own words when it gave none.
+describe('ChatPanel request error', () => {
+  const failed = (message: string, kind?: string): ChatPanelLogic => ({
+    ...emptySessionLogic,
+    isNewSession: false,
+    currentSessionId: 'sess-1',
+    retry: vi.fn(),
+    newChat: vi.fn(),
+    requestError: { messageId: 'm1', message, kind },
+  });
+
+  it('shows the cause the agent gave', () => {
+    logic = failed('Tool permission request failed: socket closed');
+    render(<ChatPanel />);
+
+    expect(screen.getByText('Request failed')).toBeInTheDocument();
+    expect(
+      screen.getByText('Tool permission request failed: socket closed'),
+    ).toBeInTheDocument();
+  });
+
+  it('shows the whole first line of a long cause', () => {
+    const line = `spawn failed: ${'x'.repeat(300)}`;
+    logic = failed(`${line}\n    at spawn (node:1:1)`);
+    render(<ChatPanel />);
+
+    expect(screen.getByText(line)).toBeInTheDocument();
+  });
+
+  it('caps a JSON cause without splitting a surrogate pair', () => {
+    // 200 code points end on the emoji, which takes two UTF-16 units.
+    logic = failed(`{"error":"${'x'.repeat(189)}😀${'y'.repeat(100)}"}`);
+    render(<ChatPanel />);
+
+    expect(
+      screen.getByText(`{"error":"${'x'.repeat(189)}😀…`),
+    ).toBeInTheDocument();
+  });
+
+  it('explains an internal error with no cause, and offers Retry', () => {
+    logic = failed('Internal error');
+    render(<ChatPanel />);
+
+    expect(screen.queryByText('Internal error')).not.toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'The agent reported an internal error and gave no reason. Try again; if it happens again, start a new chat.',
+      ),
+    ).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
+    expect(logic.retry).toHaveBeenCalledWith('m1');
+  });
+
+  // The host's own words for these two are English only; a retry of a chat the agent no longer has fails the same way.
+  it('offers a new chat when the agent no longer has the chat', () => {
+    logic = failed('The agent no longer has this chat.', 'session_gone');
+    render(<ChatPanel />);
+
+    expect(
+      screen.getByText(
+        'The agent no longer has this chat, so it cannot reopen it. Start a new chat.',
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'Retry' }),
+    ).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Start a new chat' }));
+    expect(logic.newChat).toHaveBeenCalled();
+  });
+
+  it('offers Retry when the agent could not reopen the chat this time', () => {
+    logic = failed('Could not reopen.', 'session_load_failed');
+    render(<ChatPanel />);
+
+    expect(
+      screen.getByText('The agent could not reopen this chat. Try again.'),
+    ).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
+    expect(logic.retry).toHaveBeenCalledWith('m1');
   });
 });

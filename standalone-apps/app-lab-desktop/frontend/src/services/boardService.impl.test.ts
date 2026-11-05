@@ -6,6 +6,11 @@ const { app } = vi.hoisted(() => ({
     HwAvailable: vi.fn(async () => true),
     HwEnable: vi.fn(async () => undefined),
     HwDisable: vi.fn(async () => undefined),
+    SetBoardName: vi.fn(),
+    SetKeyboardLayout: vi.fn(),
+    SetUserPassword: vi.fn(),
+    IsUserPasswordSet: vi.fn(),
+    GetNetworkModeStatus: vi.fn(),
   },
 }));
 
@@ -24,7 +29,14 @@ vi.mock('@cloud-editor-mono/core-ui/app-lab/persistent-store', () => ({
   set: vi.fn(),
 }));
 
-import { setHwStatus } from './boardService.impl.standalone';
+import {
+  isNetworkModeEnabled,
+  isUserPasswordSet,
+  setBoardName,
+  setHwStatus,
+  setKeyboardLayout,
+  setUserPassword,
+} from './boardService.impl.standalone';
 
 const carrier = (overrides: Partial<HwStatusMount>): HwStatusMount => ({
   name: 'mipi',
@@ -65,5 +77,49 @@ describe('setHwStatus', () => {
 
     expect(app.HwDisable).toHaveBeenCalledWith('pw', 'mipi');
     expect(app.HwEnable).not.toHaveBeenCalled();
+  });
+});
+
+describe('Wails rejections', () => {
+  it.each([
+    [
+      'setBoardName',
+      (): Promise<void> => setBoardName('board'),
+      app.SetBoardName,
+    ],
+    [
+      'setKeyboardLayout',
+      (): Promise<void> => setKeyboardLayout('us'),
+      app.SetKeyboardLayout,
+    ],
+    [
+      'setUserPassword',
+      (): Promise<void> => setUserPassword('secret'),
+      app.SetUserPassword,
+    ],
+  ])('%s rejects with the Wails error', async (_, call, wailsFn) => {
+    vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    wailsFn.mockRejectedValueOnce('ssh failed');
+
+    await expect(call()).rejects.toBe('ssh failed');
+  });
+
+  it('setUserPassword does not log the password', async () => {
+    const log = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    app.SetUserPassword.mockRejectedValueOnce('ssh failed');
+
+    await expect(setUserPassword('secret')).rejects.toBe('ssh failed');
+
+    expect(JSON.stringify(log.mock.calls)).not.toContain('secret');
+  });
+
+  it.each([
+    ['isUserPasswordSet', isUserPasswordSet, app.IsUserPasswordSet],
+    ['isNetworkModeEnabled', isNetworkModeEnabled, app.GetNetworkModeStatus],
+  ])('%s returns false when Wails rejects', async (_, call, wailsFn) => {
+    vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    wailsFn.mockRejectedValueOnce('ssh failed');
+
+    await expect(call()).resolves.toBe(false);
   });
 });

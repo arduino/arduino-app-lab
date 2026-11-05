@@ -33,8 +33,6 @@ export const Bottom = ({
   const { props: accountTooltipProps, renderTooltip: renderAccountTooltip } =
     useTooltip({
       content: formatMessage(messages.accountLabel),
-      timeout: 0,
-      renderDelay: 500,
     });
 
   return (

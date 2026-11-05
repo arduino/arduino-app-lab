@@ -21,11 +21,11 @@ $tabHeight: 40;
 // Cloud Editor only (App Lab passes its own tabsBar/tab classes, so it's
 // unaffected and keeps its darker multi-panel tab palette):
 //   - indent the tabs row so the first tab lines up with the toolbar above and
-//     the code past the 48px gutter (matches .toolbar's padding-left);
+//     the code past the gutter (matches .toolbar's padding-left);
 //   - lighten the tabs strip from the near-black --surface-bg-below-2 to the
 //     toolbar shade (#171e21).
 .editor-tabs-bar-indent {
-  padding-left: 48px;
+  padding-left: var(--editor-gutters-width);
   background-color: var(--component-bg-below-1);
 }
 

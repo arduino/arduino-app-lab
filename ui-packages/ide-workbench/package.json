@@ -1,0 +1,70 @@
+{
+  "name": "@bcmi-labs/ide-workbench",
+  "version": "1.4.4",
+  "description": "The Arduino editor cluster: EditorPanel extension host, CodeMirror editor, tabs, toolbar, image/status views, plus the leaf UI it renders (ADR-0002)",
+  "license": "UNLICENSED",
+  "main": "./lib/index.ts",
+  "module": "./lib/index.ts",
+  "types": "./index.d.ts",
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com:bcmi-labs/cloud-editor-mono.git"
+  },
+  "peerDependencies": {
+    "@codemirror/autocomplete": ">= 6.9.1",
+    "@codemirror/commands": ">= 6.1.1",
+    "@codemirror/lang-cpp": ">= 6.0.1",
+    "@codemirror/lang-css": ">= 6.3.1",
+    "@codemirror/lang-html": ">= 6.0.0",
+    "@codemirror/lang-javascript": ">= 6.0.0",
+    "@codemirror/lang-json": ">= 6.0.2",
+    "@codemirror/lang-python": ">= 6.2.1",
+    "@codemirror/lang-yaml": ">= 6.1.2",
+    "@codemirror/language": ">= 6.0.0",
+    "@codemirror/lint": ">= 6.9.7",
+    "@codemirror/lsp-client": ">= 6.3.0",
+    "@codemirror/merge": ">= 6.8.0",
+    "@codemirror/search": ">= 6.2.2",
+    "@codemirror/state": ">= 6.1.2",
+    "@codemirror/view": ">= 6.3.0",
+    "@dnd-kit/core": ">= 6.2.0",
+    "@dnd-kit/sortable": ">= 9.0.0",
+    "@lezer/highlight": ">= 1.2.1",
+    "@radix-ui/react-context-menu": ">= 2.2.14",
+    "@react-aria/overlays": ">= 3.25.0",
+    "@react-types/shared": ">= 3.27.0",
+    "clsx": ">= 1.2.1",
+    "intl-messageformat": ">= 10.2.5",
+    "lodash-es": ">= 4.18.1",
+    "react": ">= 18.2.0 < 20",
+    "react-aria": ">= 3.25.0",
+    "react-dom": ">= 18.2.0 < 20",
+    "react-intl": ">= 6.2.5",
+    "react-resizable-panels": ">= 4.10.0",
+    "react-stately": ">= 3.24.0",
+    "react-use": ">= 17.4.0",
+    "ua-parser-js": ">= 1.0.33",
+    "vscode-languageserver-protocol": ">= 3.17.5",
+    "yaml": ">= 2.9.0"
+  },
+  "peerDependenciesMeta": {
+    "@react-types/shared": {
+      "optional": true
+    },
+    "intl-messageformat": {
+      "optional": true
+    }
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com",
+    "access": "restricted"
+  },
+  "scripts": {
+    "dev": "yarn run -T vite",
+    "build": "yarn run -T tsc && yarn run -T vite build",
+    "test": "yarn run -T vitest",
+    "test:watch": "yarn run -T vitest watch",
+    "coverage": "yarn run -T vitest run --coverage"
+  },
+  "type": "module"
+}

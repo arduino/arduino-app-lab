@@ -10,32 +10,32 @@ const RESET_ON_BOARD_SWITCH: readonly BoardScopedQuery[] =
 
 export const useBoardScopedQueryReset = (): void => {
   const queryClient = useQueryClient();
+  const hasBoard = useBoardLifecycleStore(
+    (state) => !!state.selectedConnectedBoard,
+  );
   const connectedBoardCacheId = useBoardLifecycleStore((state) =>
     getBoardCacheId(state.selectedConnectedBoard),
   );
 
-  const lastConnectedBoardId = useRef<string | undefined>(undefined);
+  // Kept for a board with no cache id too: the next board's selection must still reset what it loaded.
+  const lastConnectedBoard = useRef<{ id?: string }>();
 
   useEffect(() => {
-    if (!connectedBoardCacheId) {
+    if (!hasBoard) {
       return;
     }
 
-    const previousBoardId = lastConnectedBoardId.current;
-    lastConnectedBoardId.current = connectedBoardCacheId;
+    const previousBoard = lastConnectedBoard.current;
+    lastConnectedBoard.current = { id: connectedBoardCacheId };
 
-    if (previousBoardId === undefined) {
-      return;
-    }
-
-    if (previousBoardId === connectedBoardCacheId) {
+    if (!previousBoard || previousBoard.id === connectedBoardCacheId) {
       return;
     }
 
     RESET_ON_BOARD_SWITCH.forEach((key) => {
       queryClient.resetQueries({ queryKey: [key] });
     });
-  }, [connectedBoardCacheId, queryClient]);
+  }, [hasBoard, connectedBoardCacheId, queryClient]);
 };
 
 export const BoardScopedQueryReset: React.FC = () => {

@@ -15,12 +15,17 @@
  * unconditionally so the React hook call order is always the same across renders.
  */
 
-import type { SelectableFileData } from '@cloud-editor-mono/ui-components/lib/editor-tabs-bar/EditorTabsBar.type';
+import type { SelectableFileData } from '@cloud-editor-mono/ide-workbench/lib/editor-tabs-bar/EditorTabsBar.type';
+import type { AppLabPaneExtras } from '@cloud-editor-mono/ui-components/lib/components-by-app/app-lab';
 import { act, renderHook } from '@testing-library/react';
 import { Subject } from 'rxjs';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import TestProviderWrapper from '../../../../../../../tests-setup';
+import type {
+  OpenFilesStoreItem,
+  OpenFilesStorePatch,
+} from '../../../../../../common/hooks/files';
 import { useCreateEditorPanelLogic } from './appLabEditorPanel';
 import type { EditorPanelLogicParams } from './appLabEditorPanel.type';
 
@@ -64,6 +69,11 @@ vi.mock(
     snackbar: vi.fn(),
     dismissSnackbar: vi.fn(),
     mapAssetSources: vi.fn((v: unknown) => v),
+    InputStyle: (
+      await import(
+        '@cloud-editor-mono/ui-components/lib/essential/input/input.type'
+      )
+    ).InputStyle,
   }),
 );
 
@@ -192,6 +202,7 @@ function useTestWrapper(params: EditorPanelLogicParams): {
   rightPreviewFileId: string | undefined;
   closeRightTab: ((fileId: string) => void) | undefined;
   selectRightTab: ((params: SelectTabParams) => void) | undefined;
+  selectLeftTab: ((params: SelectTabParams) => void) | undefined;
   closeLeftTab: ((fileId: string) => void) | undefined;
   closeAllLeftTabs: (() => void) | undefined;
   leftTabs: SelectableFileData[];
@@ -225,6 +236,7 @@ function useTestWrapper(params: EditorPanelLogicParams): {
     rightPreviewFileId: rightBar.previewFileId,
     closeRightTab: rightBar.closeTab,
     selectRightTab: rightBar.selectTab,
+    selectLeftTab: leftBar.selectTab,
     closeLeftTab: leftBar.closeTab,
     closeAllLeftTabs: leftBar.onCloseAll,
     leftTabs: leftBar.tabs,
@@ -232,8 +244,11 @@ function useTestWrapper(params: EditorPanelLogicParams): {
     renameRightPanelTab,
     closeRightPanelTab,
     banner: leftEditor.banner,
-    brickSelectedTab: panel.brickSelectedTab,
-    splitPanelBrickSelectedTab: panel.splitPanelBrickSelectedTab,
+    brickSelectedTab: (panel.paneExtras?.A as AppLabPaneExtras | undefined)
+      ?.brickSelectedTab,
+    splitPanelBrickSelectedTab: (
+      panel.paneExtras?.B as AppLabPaneExtras | undefined
+    )?.brickSelectedTab,
   };
 }
 
@@ -1742,7 +1757,10 @@ describe('useCreateEditorPanelLogic — open-file notices', () => {
     expect(mockDismiss).not.toHaveBeenCalled();
 
     rerender(
-      makeParams({ selectedFile: sketchYaml, openFiles: [makefile, sketchYaml] }),
+      makeParams({
+        selectedFile: sketchYaml,
+        openFiles: [makefile, sketchYaml],
+      }),
     );
 
     expect(mockDismiss.mock.calls).toEqual([['notice-1']]);
@@ -1918,7 +1936,7 @@ describe('useCreateEditorPanelLogic — restored brick tabs', () => {
               brickB,
               fileA,
             ] as unknown as SelectableFileData[],
-            filesContentLoaded: true,
+            tabsHydrated: true,
             openFilesStore: {
               items: [brickA.fileId],
               selected: brickA.fileId,
@@ -2003,5 +2021,236 @@ describe('useCreateEditorPanelLogic — restored brick tabs', () => {
     const { result } = hydrate({ A: { [brickB.fileId]: 'aiModels' } });
 
     expect(result.current.brickSelectedTab).toBe('overview');
+  });
+});
+
+describe('useCreateEditorPanelLogic — file loads', () => {
+  it('reads no file for a restored brick tab, in either panel', () => {
+    const brickA = makeFile('arduino:web_ui', 'brick');
+    const brickB = makeFile('arduino:llm', 'brick');
+    const fetchFile = vi.fn((_fileId: string) => Promise.resolve());
+    renderHook(
+      () =>
+        useTestWrapper(
+          makeParams({
+            fetchFile,
+            selectedFile: brickA,
+            openFiles: [brickA, fileA],
+            allFiles: [brickA, brickB, fileA, fileB],
+            tabsHydrated: true,
+            openFilesStore: {
+              items: [brickA.fileId, fileA.fileId],
+              selected: brickA.fileId,
+              isSplit: true,
+              panes: {
+                A: {
+                  items: [brickA.fileId, fileA.fileId],
+                  selected: brickA.fileId,
+                },
+                B: {
+                  items: [brickB.fileId, fileB.fileId],
+                  selected: brickB.fileId,
+                },
+              },
+            },
+          }),
+        ),
+      { wrapper: TestProviderWrapper },
+    );
+
+    expect(fetchFile.mock.calls.map(([id]) => id).sort()).toEqual([
+      fileA.fileId,
+      fileB.fileId,
+    ]);
+  });
+
+  // With the brick list failed a brick tab has a file's meta: only the caller can tell.
+  it('reads no tab the caller says names no file, in either panel', () => {
+    const asFile = makeFile('arduino:web_ui', '');
+    const fetchFile = vi.fn((_fileId: string) => Promise.resolve());
+    renderHook(
+      () =>
+        useTestWrapper(
+          makeParams({
+            fetchFile,
+            canReadTab: (fileId) => fileId !== asFile.fileId,
+            selectedFile: fileA,
+            openFiles: [asFile, fileA],
+            allFiles: [asFile, fileA, fileB],
+            tabsHydrated: true,
+            openFilesStore: {
+              items: [asFile.fileId, fileA.fileId],
+              selected: fileA.fileId,
+              isSplit: true,
+              panes: {
+                A: {
+                  items: [asFile.fileId, fileA.fileId],
+                  selected: fileA.fileId,
+                },
+                B: {
+                  items: [asFile.fileId, fileB.fileId],
+                  selected: asFile.fileId,
+                },
+              },
+            },
+          }),
+        ),
+      { wrapper: TestProviderWrapper },
+    );
+
+    expect(fetchFile.mock.calls.map(([id]) => id).sort()).toEqual([
+      fileA.fileId,
+      fileB.fileId,
+    ]);
+  });
+
+  // A click on the tab on screen changes no selection, so only the click itself can read the tab again.
+  it('reads the selected tab again when it is clicked while it has no content', async () => {
+    const consoleError = vi
+      .spyOn(console, 'error')
+      .mockImplementation(() => undefined);
+    const error = new Error('connection refused');
+    const onFileLoadError = vi.fn();
+    const fetchFile = vi.fn((_fileId: string) => Promise.reject(error));
+    const params = makeParams({
+      selectedFile: fileA,
+      openFiles: [fileA, fileB],
+      fetchFile,
+      onFileLoadError,
+    });
+    const { result } = renderHook(() => useTestWrapper(params), {
+      wrapper: TestProviderWrapper,
+    });
+    await act(async () => {
+      result.current.openFileInPanel('file-c', 'B');
+    });
+    fetchFile.mockClear();
+    onFileLoadError.mockClear();
+
+    await act(async () => {
+      result.current.selectLeftTab?.({ fileId: fileA.fileId });
+      result.current.selectRightTab?.({ fileId: 'file-c' });
+    });
+
+    expect(fetchFile.mock.calls.map(([id]) => id)).toEqual([
+      fileA.fileId,
+      'file-c',
+    ]);
+    expect(onFileLoadError.mock.calls).toEqual([
+      [fileA.fileId, error],
+      ['file-c', error],
+    ]);
+    consoleError.mockRestore();
+  });
+
+  it('reports a panel B tab whose file cannot be read, once', async () => {
+    const consoleError = vi
+      .spyOn(console, 'error')
+      .mockImplementation(() => undefined);
+    const error = new Error('is a directory');
+    const onFileLoadError = vi.fn();
+    const params = makeParams({
+      openFiles: [fileA],
+      fetchFile: vi.fn(() => Promise.reject(error)),
+      onFileLoadError,
+    });
+    const { result } = renderHook(() => useTestWrapper(params), {
+      wrapper: TestProviderWrapper,
+    });
+
+    try {
+      await act(async () => {
+        result.current.openFileInPanel('lnk', 'B');
+      });
+
+      expect(onFileLoadError).toHaveBeenCalledTimes(1);
+      expect(onFileLoadError).toHaveBeenCalledWith('lnk', error);
+    } finally {
+      consoleError.mockRestore();
+    }
+  });
+});
+
+describe('useCreateEditorPanelLogic — split view and panel A restore', () => {
+  const x = makeFile('x', 'py');
+  const a2 = makeFile('a2', 'py');
+  const y = makeFile('y', 'py');
+  const b2 = makeFile('b2', 'py');
+  const record = (a: string, b: string): OpenFilesStoreItem => ({
+    items: [a],
+    selected: a,
+    isSplit: true,
+    panes: { A: { items: [a], selected: a }, B: { items: [b], selected: b } },
+  });
+  const storeSpy = (): ReturnType<
+    typeof vi.fn<(patch: OpenFilesStorePatch) => Promise<void>>
+  > => vi.fn((_patch: OpenFilesStorePatch) => Promise.resolve());
+  const panelBWrites = (store: ReturnType<typeof storeSpy>): unknown[] =>
+    store.mock.calls.map(([patch]) => patch.panes?.B?.items ?? null);
+
+  // Panel A's restore arms the write; a split state written before it would be dropped and never sent again.
+  it('restores the split view only once panel A has its tabs', () => {
+    const store = storeSpy();
+    let params = makeParams({
+      allFiles: [x, a2],
+      openFilesStore: record('x', 'a2'),
+      storeSplitState: store,
+    });
+    const { result, rerender } = renderHook(() => useTestWrapper(params), {
+      wrapper: TestProviderWrapper,
+    });
+
+    expect(result.current.rightTabs).toEqual([]);
+    expect(store).not.toHaveBeenCalled();
+
+    params = { ...params, selectedFile: x, openFiles: [x], tabsHydrated: true };
+    rerender();
+
+    expect(result.current.rightTabs.map((t) => t.fileId)).toEqual(['a2']);
+    expect(panelBWrites(store)).toEqual([['a2']]);
+  });
+
+  // A board switch that keeps the app screen resets panel A and restores it from the next board's record.
+  it("restores panel B from the next board's record, and never writes the last board's tabs there", () => {
+    const storeOnA = storeSpy();
+    const storeOnB = storeSpy();
+    let params = makeParams({
+      selectedFile: x,
+      openFiles: [x],
+      allFiles: [x, a2],
+      tabsHydrated: true,
+      openFilesStore: record('x', 'a2'),
+      storeSplitState: storeOnA,
+    });
+    const { result, rerender } = renderHook(() => useTestWrapper(params), {
+      wrapper: TestProviderWrapper,
+    });
+    expect(result.current.rightTabs.map((t) => t.fileId)).toEqual(['a2']);
+
+    params = makeParams({ storeSplitState: storeOnB });
+    rerender();
+
+    expect(result.current.isSplit).toBe(false);
+    expect(result.current.rightTabs).toEqual([]);
+
+    params = makeParams({
+      selectedFile: y,
+      openFiles: [y],
+      allFiles: [y, b2],
+      tabsHydrated: true,
+      openFilesStore: record('y', 'b2'),
+      storeSplitState: storeOnB,
+    });
+    rerender();
+
+    expect(result.current.isSplit).toBe(true);
+    expect(result.current.rightTabs.map((t) => t.fileId)).toEqual(['b2']);
+
+    act(() => {
+      result.current.openFileInPanel('y', 'B');
+    });
+
+    expect(panelBWrites(storeOnB).at(-1)).toEqual(['b2', 'y']);
+    expect(panelBWrites(storeOnB).flat()).not.toContain('a2');
   });
 });

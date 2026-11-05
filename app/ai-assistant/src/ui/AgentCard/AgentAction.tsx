@@ -7,6 +7,7 @@ import {
 import clsx from 'clsx';
 
 import { messages } from '../../messages';
+import { Blocked } from '../Blocked/Blocked';
 import { Button } from '../Button/Button';
 import { ProgressBar } from '../ProgressBar/ProgressBar';
 import { Text } from '../Text/Text';
@@ -20,24 +21,29 @@ export interface AgentActionProps {
   // Runtime install/update is running → inline spinner + progress bar.
   installing?: boolean;
   installProgressPct?: number;
-  // Runtime status still resolving → a loading Install.
+  // Runtime status still resolving → a loading button that offers nothing yet.
   checking?: boolean;
   installed?: boolean;
   connected?: boolean;
-  // Disable Install/Connect while a runtime op runs elsewhere.
+  // Nothing to connect: an installed agent that needs no credential goes straight to Manage.
+  manageOnly?: boolean;
+  // Disable Install, and the Manage that opens the sign-in, while a runtime op runs elsewhere.
   busy?: boolean;
+  // Why connecting is refused right now; shown on hover, since the button cannot say it itself.
+  blockedReason?: string;
   // Rotates the Manage chevron when the details are expanded.
   expanded?: boolean;
   onCancel?: VoidFunction;
   onInstall?: VoidFunction;
+  // Manage on an agent not connected yet: opens its sign-in.
   onConnect?: VoidFunction;
   onManage?: VoidFunction;
 }
 
 // Trailing action for an AgentCard, shared by the Connect panel and the
 // Settings section. States are mutually exclusive and checked in setup-flow
-// order: coming-soon → cancel → installing → install → connect → manage.
-// (Connect never reaches "manage"; Settings never sets "checking".)
+// order: coming-soon → cancel → installing → install → manage.
+// (Settings never sets "checking".)
 export const AgentAction: React.FC<AgentActionProps> = ({
   comingSoon,
   cancelling,
@@ -46,7 +52,9 @@ export const AgentAction: React.FC<AgentActionProps> = ({
   checking,
   installed,
   connected,
+  manageOnly,
   busy,
+  blockedReason,
   expanded,
   onCancel,
   onInstall,
@@ -99,13 +107,24 @@ export const AgentAction: React.FC<AgentActionProps> = ({
     );
   }
 
-  if (checking || !installed) {
+  if (checking) {
     return (
       <Button
         variant={ButtonVariant.Secondary}
         className={styles['action']}
-        loading={checking}
-        disabled={busy || checking}
+        loading
+      >
+        {formatMessage(messages.installChecking)}
+      </Button>
+    );
+  }
+
+  if (!installed) {
+    return (
+      <Button
+        variant={ButtonVariant.Secondary}
+        className={styles['action']}
+        disabled={busy}
         onClick={onInstall}
       >
         {formatMessage(messages.install)}
@@ -113,20 +132,9 @@ export const AgentAction: React.FC<AgentActionProps> = ({
     );
   }
 
-  if (!connected) {
-    return (
-      <Button
-        variant={ButtonVariant.Secondary}
-        className={styles['action']}
-        disabled={busy}
-        onClick={onConnect}
-      >
-        {formatMessage(messages.connect)}
-      </Button>
-    );
-  }
-
-  return (
+  // Not connected yet: Manage opens the sign-in, which a running turn blocks as it blocks every switch.
+  const opensSignIn = !connected && !manageOnly;
+  const manage = (
     <Button
       variant={ButtonVariant.Tertiary}
       className={clsx(styles['action'], styles['manage'], {
@@ -134,10 +142,16 @@ export const AgentAction: React.FC<AgentActionProps> = ({
       })}
       Icon={ChevronDown}
       iconPosition="right"
-      onClick={onManage}
+      disabled={opensSignIn && (busy || Boolean(blockedReason))}
+      onClick={opensSignIn ? onConnect : onManage}
     >
       {formatMessage(messages.settingsManage)}
     </Button>
+  );
+  return opensSignIn ? (
+    <Blocked reason={blockedReason}>{manage}</Blocked>
+  ) : (
+    manage
   );
 };
 

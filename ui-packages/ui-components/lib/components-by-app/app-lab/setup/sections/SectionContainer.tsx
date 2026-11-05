@@ -22,7 +22,6 @@ import {
   sectionTitleMessages,
   tooltipMessages,
 } from '../messages';
-import setupStyles from '../setup.module.scss';
 import { SetupItem, SetupItemId, SetupSection } from '../setup.type';
 import styles from './section-container.module.scss';
 
@@ -85,11 +84,13 @@ export function SectionContainer<T extends SetupItem>(
 
   const { props: tooltipProps, renderTooltip } = useTooltip({
     content: formatMessage(tooltipMessages.wifiTooltipContent),
+    variant: 'card',
   });
 
   const { props: accountTooltipProps, renderTooltip: renderAccountTooltip } =
     useTooltip({
       content: formatMessage(tooltipMessages.accountTooltipContent),
+      variant: 'card',
     });
 
   return (
@@ -147,7 +148,7 @@ export function SectionContainer<T extends SetupItem>(
                     </XXSmall>
                   </div>
 
-                  {renderAccountTooltip(setupStyles['tooltip-content'])}
+                  {renderAccountTooltip()}
                 </div>
               ) : null}
             </div>
@@ -156,7 +157,7 @@ export function SectionContainer<T extends SetupItem>(
                 <XSmall>
                   {formatMessage(sectionContainerMessages.networkSetupSubtitle)}
                 </XSmall>
-                {renderTooltip(styles['tooltip-content'])}
+                {renderTooltip()}
               </div>
             ) : null}
           </div>
@@ -192,7 +193,6 @@ export function SectionContainer<T extends SetupItem>(
               loading={stepIsLoading}
               size={ButtonSize.Small}
               onClick={handleConfirm}
-              disabled={stepIsLoading}
             >
               {formatMessage(sectionActionMessages[step])}
             </Button>

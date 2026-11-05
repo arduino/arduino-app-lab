@@ -326,6 +326,40 @@ export const staticDefaultItems: ToolbarItemDictionary = {
   [ToolbarItemIds.DownloadSketch]: () => null,
 };
 
+// Same button as the IoT one, with the icon sized like Serial Monitor and Share.
+const renderSketchDownloadButton: ToolbarItemDictionary[ToolbarItemIds.DownloadSketch] =
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (formatMessage: FormatMessage, onClick?: (...args: any) => any) => {
+    return (
+      <ToolbarButton
+        Icon={Download}
+        key={`${ToolbarItemIds.DownloadSketch}_button`}
+        onClick={onClick}
+        label={formatMessage(messages.downloadSketch)}
+        classes={{
+          button: clsx(
+            styles['toolbar-button'],
+            styles['toolbar-flavour-button'],
+            styles['toolbar-download-button'],
+          ),
+        }}
+      />
+    );
+  };
+
+// Download comes before Share: the items render in key order.
+export const staticReadOnlyItems: ToolbarItemDictionary = {
+  [ToolbarItemIds.VerifyButton]: renderVerifyButton,
+  [ToolbarItemIds.UploadButton]: renderUploadButton,
+  [ToolbarItemIds.PendingButton]: renderPendingButton,
+  [ToolbarItemIds.CreatingButton]: renderCreatingButton,
+  [ToolbarItemIds.AssociationNode]: renderAssociationNode,
+  [ToolbarItemIds.OpenFlavourConfig]: renderOpenFlavourConfigButton,
+  [ToolbarItemIds.OpenSerialMonitor]: renderOpenSerialMonitorButtonNode,
+  [ToolbarItemIds.DownloadSketch]: renderSketchDownloadButton,
+  [ToolbarItemIds.ShareSketch]: renderShareSketchButton,
+};
+
 export const staticIotItems: ToolbarItemDictionary = {
   ...staticDefaultItems,
   [ToolbarItemIds.AssociationNode]: renderNoAssociatedIotDevice,

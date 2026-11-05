@@ -39,3 +39,11 @@
   --scrollbar-thumb: var(--border-strong);
   --scrollbar-thumb-active: var(--icon-subtle);
 }
+
+// Systemino's current value; the vendored snapshot in al-tokens.scss still has #702419.
+// al-tokens.scss declares this token on :root after this file, so on <html>, where portaled
+// content resolves it, only a selector more specific than :root wins.
+:root[data-art-theme="dark"],
+[data-art-theme="dark"] {
+  --feedback-error-subtle: #64251e;
+}

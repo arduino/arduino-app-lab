@@ -7,6 +7,7 @@ import { CopyToClipboard } from '../essential/copy-to-clipboard';
 import { IconButton } from '../essential/icon-button';
 import { Input } from '../essential/input';
 import { useI18n } from '../i18n/useI18n';
+import { hasPermissions, Rbac, RbacCapability } from '../rbac';
 import { Medium, Text, XSmall } from '../typography';
 import { isSecretEmpty, useSecretEditor } from './hooks/useSecretsEditor';
 import messages from './messages';
@@ -24,6 +25,7 @@ const SecretsEditor: React.FC<SecretsEditorProps> = ({
 }: SecretsEditorProps) => {
   const {
     secrets: sketchSecrets,
+    rbac,
     updateSecrets,
     openDeleteSecretDialog,
   } = secretsEditorLogic();
@@ -36,6 +38,8 @@ const SecretsEditor: React.FC<SecretsEditorProps> = ({
       submitSecrets: updateSecrets,
       openDeleteSecretDialog,
     });
+
+  const canEditSketch = hasPermissions([RbacCapability.EditSketch], rbac);
 
   const [focusedSecretInput, setFocusedSecretInput] = useState<string | null>(
     null,
@@ -71,6 +75,7 @@ const SecretsEditor: React.FC<SecretsEditorProps> = ({
                         : undefined
                     }
                     className={styles['key-input']}
+                    disabled={!canEditSketch}
                     before={
                       focusedSecretInput === secret.id ||
                       !!noPrefixSecretName ? (
@@ -97,39 +102,44 @@ const SecretsEditor: React.FC<SecretsEditorProps> = ({
                     sensitive
                     label={formatMessage(messages.valueLabel)}
                     value={secret.value ?? ''}
+                    disabled={!canEditSketch}
                     onChange={(value): void =>
                       changeSecret({ id: secret.id, value })
                     }
                   />
-                  {(secrets.length > 1 || !isSecretEmpty(secrets[0])) && (
-                    <IconButton
-                      classes={{ button: styles['button-delete'] }}
-                      label="Delete"
-                      Icon={Bin}
-                      onPress={(): void => deleteSecret(secret.id)}
-                    ></IconButton>
-                  )}
+                  <Rbac permissions={[RbacCapability.EditSketch]} rbac={rbac}>
+                    {(secrets.length > 1 || !isSecretEmpty(secrets[0])) && (
+                      <IconButton
+                        classes={{ button: styles['button-delete'] }}
+                        label="Delete"
+                        Icon={Bin}
+                        onPress={(): void => deleteSecret(secret.id)}
+                      ></IconButton>
+                    )}
+                  </Rbac>
                 </div>
               );
             })}
         </div>
-        <div className={styles['sticky-wrapper']}>
-          <Button
-            classes={{ button: styles['button-add'] }}
-            Icon={Plus}
-            type={ButtonType.Secondary}
-            iconPosition="left"
-            onClick={(): void => {
-              flushSync(() => addSecret());
-              containerRef.current?.scrollTo(
-                0,
-                containerRef.current.scrollHeight,
-              );
-            }}
-          >
-            {formatMessage(messages.addButton)}
-          </Button>
-        </div>
+        <Rbac permissions={[RbacCapability.EditSketch]} rbac={rbac}>
+          <div className={styles['sticky-wrapper']}>
+            <Button
+              classes={{ button: styles['button-add'] }}
+              Icon={Plus}
+              type={ButtonType.Secondary}
+              iconPosition="left"
+              onClick={(): void => {
+                flushSync(() => addSecret());
+                containerRef.current?.scrollTo(
+                  0,
+                  containerRef.current.scrollHeight,
+                );
+              }}
+            >
+              {formatMessage(messages.addButton)}
+            </Button>
+          </div>
+        </Rbac>
       </div>
     </div>
   );

@@ -1,6 +1,6 @@
 import { ExitButton } from '@cloud-editor-mono/images/assets/icons';
 import { clsx } from 'clsx';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import {
   Button,
@@ -49,6 +49,13 @@ export const TrainNewModelDialog: React.FC<TrainNewModelDialogProps> = (
 
   const [showWelcomePage, setShowWelcomePage] = useState(true);
   const shouldShowWelcome = !isWelcomePageDismissed && showWelcomePage;
+
+  // Reset on open, not on close, so the closing dialog does not switch panels.
+  useEffect(() => {
+    if (open) {
+      setShowWelcomePage(true);
+    }
+  }, [open]);
 
   const handleStartWelcome = useCallback(
     (shouldDismissFuture: boolean): void => {

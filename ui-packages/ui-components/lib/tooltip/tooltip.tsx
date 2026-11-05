@@ -32,6 +32,10 @@ interface UseTooltipParams {
    * @deprecated to be removed, the style now is added from the wrapper on the respective app.
    */
   tooltipType?: 'title' | 'tooltip';
+  /**
+   * Override the default z-index of the tooltip.
+   */
+  zIndex?: number;
 }
 
 type UseTooltip = (params: UseTooltipParams) => {
@@ -54,6 +58,7 @@ export const useTooltip: UseTooltip = ({
   renderDelay = 0,
   tooltipType = 'tooltip',
   triggerType = 'hover',
+  zIndex,
   role = 'tooltip',
   ariaLabel,
   keepOpen = false,
@@ -202,6 +207,7 @@ export const useTooltip: UseTooltip = ({
             transform: position?.transform,
             opacity: position ? 1 : 0, // Hide until positioned
             pointerEvents: position ? 'auto' : 'none',
+            zIndex: zIndex ?? undefined,
           }}
         >
           {title && (
@@ -226,6 +232,7 @@ export const useTooltip: UseTooltip = ({
       showTooltip,
       title,
       tooltipType,
+      zIndex,
     ],
   );
 

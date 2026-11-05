@@ -48,8 +48,6 @@ export const IconButton = React.forwardRef(
       setShowTooltip,
     } = useTooltip({
       content: label,
-      timeout: 0,
-      renderDelay: 500,
     });
 
     React.useImperativeHandle(ref, () => buttonRef.current!);

@@ -1,7 +1,9 @@
 package lsp
 
 import (
+	"errors"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"runtime"
 	"strconv"
@@ -287,9 +289,9 @@ func writeFakeArduinoCli(t *testing.T, exitCode int) (cliPath, logPath string) {
 	return cliPath, logPath
 }
 
-// countUpdateIndexCalls returns how often the fake arduino-cli was asked to
-// update the core index.
-func countUpdateIndexCalls(t *testing.T, logPath string) int {
+// countCalls returns how often the fake arduino-cli was called with arguments
+// starting with prefix, e.g. "core update-index".
+func countCalls(t *testing.T, logPath, prefix string) int {
 	t.Helper()
 	data, err := os.ReadFile(logPath)
 	if os.IsNotExist(err) {
@@ -300,7 +302,7 @@ func countUpdateIndexCalls(t *testing.T, logPath string) int {
 	}
 	n := 0
 	for _, line := range strings.Split(strings.TrimSpace(string(data)), "\n") {
-		if strings.HasPrefix(line, "core update-index ") {
+		if strings.HasPrefix(line, prefix+" ") {
 			n++
 		}
 	}
@@ -316,23 +318,23 @@ func TestRefreshArduinoCliCoreIndexRunsOncePerLaunch(t *testing.T) {
 	for i := 0; i < 3; i++ {
 		h.refreshArduinoCliCoreIndex(cliPath, "cfg.yaml")
 	}
-	if got := countUpdateIndexCalls(t, logPath); got != 1 {
+	if got := countCalls(t, logPath, "core update-index"); got != 1 {
 		t.Fatalf("update-index ran %d times, want 1", got)
 	}
 }
 
-// An offline host keeps the cached index: the per-launch refresh is not fatal,
-// and it is not retried in the same launch, so a failing fetch cannot stall
-// every language-server start.
-func TestRefreshArduinoCliCoreIndexToleratesOfflineOncePerLaunch(t *testing.T) {
+// A host that is offline at the first start, for example before Wi-Fi
+// connects, keeps the cached index for that start. The next start fetches it
+// again: a first install has no core in the index until one fetch succeeds.
+func TestRefreshArduinoCliCoreIndexRetriesAfterAFailedFetch(t *testing.T) {
 	cliPath, logPath := writeFakeArduinoCli(t, 1)
 	h := &LSPHandler{}
 
 	for i := 0; i < 2; i++ {
 		h.refreshArduinoCliCoreIndex(cliPath, "cfg.yaml")
 	}
-	if got := countUpdateIndexCalls(t, logPath); got != 1 {
-		t.Fatalf("update-index ran %d times, want 1", got)
+	if got := countCalls(t, logPath, "core update-index"); got != 2 {
+		t.Fatalf("update-index ran %d times, want 2", got)
 	}
 }
 
@@ -351,8 +353,8 @@ func writeHangingArduinoCli(t *testing.T) string {
 	return cliPath
 }
 
-// A firewall that drops packets makes the fetch hang, so the per-launch
-// refresh is time-boxed and the language server start continues without it.
+// A firewall that drops packets makes the fetch hang, so the refresh is
+// time-boxed and the language server start continues without it.
 func TestRefreshArduinoCliCoreIndexGivesUpOnAHangingFetch(t *testing.T) {
 	cliPath := writeHangingArduinoCli(t)
 	h := &LSPHandler{}
@@ -367,5 +369,173 @@ func TestRefreshArduinoCliCoreIndexGivesUpOnAHangingFetch(t *testing.T) {
 	// reach the process.
 	if elapsed := time.Since(start); elapsed > 30*time.Second {
 		t.Fatalf("refreshArduinoCliCoreIndex() took %s, want it to give up at the timeout", elapsed)
+	}
+
+	// A retry would wait the full timeout again on every language server start.
+	start = time.Now()
+	h.refreshArduinoCliCoreIndex(cliPath, "cfg.yaml")
+	if elapsed := time.Since(start); elapsed > 500*time.Millisecond {
+		t.Fatalf("second refreshArduinoCliCoreIndex() took %s after a timeout, want it skipped", elapsed)
+	}
+}
+
+// A core install needs a library index that lists the library versions the
+// core depends on. The fetch runs once per launch, so a second install in the
+// same launch reuses it.
+func TestRefreshArduinoCliLibraryIndexRunsOncePerLaunch(t *testing.T) {
+	cliPath, logPath := writeFakeArduinoCli(t, 0)
+	h := &LSPHandler{}
+
+	for i := 0; i < 3; i++ {
+		h.refreshArduinoCliLibraryIndex(cliPath, "cfg.yaml")
+	}
+	if got := countCalls(t, logPath, "lib update-index"); got != 1 {
+		t.Fatalf("lib update-index ran %d times, want 1", got)
+	}
+}
+
+// A host that is offline at the first start, for example before Wi-Fi
+// connects, keeps the cached library index for that install. The next install
+// fetches it again: a first install has no core to fall back to.
+func TestRefreshArduinoCliLibraryIndexRetriesAfterAFailedFetch(t *testing.T) {
+	cliPath, logPath := writeFakeArduinoCli(t, 1)
+	h := &LSPHandler{}
+
+	for i := 0; i < 2; i++ {
+		h.refreshArduinoCliLibraryIndex(cliPath, "cfg.yaml")
+	}
+	if got := countCalls(t, logPath, "lib update-index"); got != 2 {
+		t.Fatalf("lib update-index ran %d times, want 2", got)
+	}
+}
+
+// A core index fetch that ran out of time means the host drops packets, so the
+// library fetch before an install would wait its full timeout. It is skipped.
+func TestRefreshArduinoCliLibraryIndexSkippedAfterTheCoreIndexTimedOut(t *testing.T) {
+	cliPath := writeHangingArduinoCli(t)
+	h := &LSPHandler{}
+
+	prevCore, prevLib := coreIndexRefreshTimeout, libraryIndexRefreshTimeout
+	coreIndexRefreshTimeout = 1 * time.Second
+	libraryIndexRefreshTimeout = 1 * time.Second
+	t.Cleanup(func() { coreIndexRefreshTimeout, libraryIndexRefreshTimeout = prevCore, prevLib })
+
+	h.refreshArduinoCliCoreIndex(cliPath, "cfg.yaml")
+	start := time.Now()
+	h.refreshArduinoCliLibraryIndex(cliPath, "cfg.yaml")
+	if elapsed := time.Since(start); elapsed > 500*time.Millisecond {
+		t.Fatalf("refreshArduinoCliLibraryIndex() took %s after the core index timed out, want it skipped", elapsed)
+	}
+}
+
+// A core index fetch that fails at once means the host refuses the connection,
+// which says nothing about the library index server, so the fetch still runs.
+func TestRefreshArduinoCliLibraryIndexRunsAfterTheCoreIndexFailed(t *testing.T) {
+	cliPath, logPath := writeFakeArduinoCli(t, 1)
+	h := &LSPHandler{}
+
+	h.refreshArduinoCliCoreIndex(cliPath, "cfg.yaml")
+	h.refreshArduinoCliLibraryIndex(cliPath, "cfg.yaml")
+	if got := countCalls(t, logPath, "lib update-index"); got != 1 {
+		t.Fatalf("lib update-index ran %d times, want 1", got)
+	}
+}
+
+func TestRefreshArduinoCliLibraryIndexGivesUpOnAHangingFetch(t *testing.T) {
+	cliPath := writeHangingArduinoCli(t)
+	h := &LSPHandler{}
+
+	prev := libraryIndexRefreshTimeout
+	libraryIndexRefreshTimeout = 1 * time.Second
+	t.Cleanup(func() { libraryIndexRefreshTimeout = prev })
+
+	start := time.Now()
+	h.refreshArduinoCliLibraryIndex(cliPath, "cfg.yaml")
+	// The script sleeps for 300s. Anything near that means the deadline did not
+	// reach the process.
+	if elapsed := time.Since(start); elapsed > 30*time.Second {
+		t.Fatalf("refreshArduinoCliLibraryIndex() took %s, want it to give up at the timeout", elapsed)
+	}
+
+	// A retry would wait the full timeout again on every language server start.
+	start = time.Now()
+	h.refreshArduinoCliLibraryIndex(cliPath, "cfg.yaml")
+	if elapsed := time.Since(start); elapsed > 500*time.Millisecond {
+		t.Fatalf("second refreshArduinoCliLibraryIndex() took %s after a timeout, want it skipped", elapsed)
+	}
+}
+
+// The editor shows the install error as the language support failure, so it
+// must name the reason arduino-cli printed, not only the exit status.
+func TestInstallArduinoCliCoreErrorCarriesTheReason(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("the stand-in is a /bin/sh script")
+	}
+	cliPath := writeFakeTool(t, "arduino-cli", "#!/bin/sh\n"+
+		"printf 'Downloading index: 10%%\\rDownloading index: 100%%\\n'\n"+
+		"echo \"Error during install: Library 'Arduino_RouterBridge@0.4.4' not found\"\n"+
+		"exit 1\n")
+
+	err := installArduinoCliCore(cliPath, "cfg.yaml", "arduino:zephyr@1.1.0")
+	if err == nil {
+		t.Fatal("installArduinoCliCore() = nil, want an error")
+	}
+	want := "installing arduino:zephyr@1.1.0: Error during install: Library 'Arduino_RouterBridge@0.4.4' not found"
+	if err.Error() != want {
+		t.Fatalf("installArduinoCliCore() error = %q, want %q", err.Error(), want)
+	}
+	var exitErr *exec.ExitError
+	if !errors.As(err, &exitErr) {
+		t.Fatalf("installArduinoCliCore() error = %#v, want it to wrap the *exec.ExitError", err)
+	}
+}
+
+func TestInstallArduinoCliCoreSucceeds(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("the stand-in is a /bin/sh script")
+	}
+	cliPath := writeFakeTool(t, "arduino-cli", "#!/bin/sh\necho 'Platform arduino:zephyr@1.1.0 installed'\n")
+
+	if err := installArduinoCliCore(cliPath, "cfg.yaml", "arduino:zephyr@1.1.0"); err != nil {
+		t.Fatalf("installArduinoCliCore() = %v, want nil", err)
+	}
+}
+
+// A failed upgrade keeps the installed core, so the language server still
+// starts on it.
+func TestInstallOrKeepArduinoCliCoreKeepsTheInstalledVersion(t *testing.T) {
+	cliPath, _ := writeFakeArduinoCli(t, 1)
+
+	if err := installOrKeepArduinoCliCore(cliPath, "cfg.yaml", "arduino:zephyr@1.1.0", "1.0.0"); err != nil {
+		t.Fatalf("installOrKeepArduinoCliCore() = %v, want nil", err)
+	}
+}
+
+// With no core installed there is nothing to fall back to.
+func TestInstallOrKeepArduinoCliCoreFailsWithoutAnInstalledVersion(t *testing.T) {
+	cliPath, _ := writeFakeArduinoCli(t, 1)
+
+	if err := installOrKeepArduinoCliCore(cliPath, "cfg.yaml", "arduino:zephyr@1.1.0", ""); err == nil {
+		t.Fatal("installOrKeepArduinoCliCore() = nil, want an error")
+	}
+}
+
+func TestLastOutputLine(t *testing.T) {
+	tests := []struct {
+		name string
+		out  string
+		want string
+	}{
+		{"empty", "", ""},
+		{"blank lines only", "\n \n", ""},
+		{"trailing newline", "first\nsecond\n", "second"},
+		{"progress bar redraws", "a 10%\ra 100%\nError: boom\r\n", "Error: boom"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := lastOutputLine([]byte(tt.out)); got != tt.want {
+				t.Fatalf("lastOutputLine(%q) = %q, want %q", tt.out, got, tt.want)
+			}
+		})
 	}
 }

@@ -2,8 +2,10 @@ package appmirror
 
 import (
 	"errors"
+	"io/fs"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -18,8 +20,9 @@ type fakeBoard struct {
 	failWrites   bool
 	failPath     string
 	silentWrites bool
-	list         []string // served by ListFiles (Populate tests)
-	listErr      error    // served alongside list, for the partial-walk case
+	list         []string         // served by ListFiles (Populate tests)
+	listErr      error            // served alongside list, for the partial-walk case
+	readErrs     map[string]error // ReadFile fails for these paths; fs.ErrNotExist is a file the board lacks
 }
 
 func newFakeBoard() *fakeBoard {
@@ -30,6 +33,9 @@ func (f *fakeBoard) ListFiles(string) ([]string, error) { return f.list, f.listE
 func (f *fakeBoard) ReadFile(p string) (string, error) {
 	if c, ok := f.writes[p]; ok { // what a sync wrote is what a read-back must see
 		return c, nil
+	}
+	if err := f.readErrs[p]; err != nil {
+		return "", err
 	}
 	if c, ok := f.contents[p]; ok {
 		return c, nil
@@ -67,7 +73,7 @@ func writeLocal(t *testing.T, root, rel, content string) {
 // or the whole sync aborts (the board write seam can't create parent dirs itself).
 func TestSyncBackCreatesNewBoardDirs(t *testing.T) {
 	local := t.TempDir()
-	writeLocal(t, local, "app.yaml", "name: x")
+	writeLocal(t, local, "README.md", "readme")
 	writeLocal(t, local, "assets/app.js", "js")
 	writeLocal(t, local, "assets/libs/socket.js", "lib")
 
@@ -92,7 +98,7 @@ func TestSyncBackCreatesNewBoardDirs(t *testing.T) {
 	if board.writes["/apps/demo/assets/libs/socket.js"] != "lib" {
 		t.Fatalf("nested file not written: %v", board.writes)
 	}
-	for _, rel := range []string{"app.yaml", "assets/app.js", "assets/libs/socket.js"} {
+	for _, rel := range []string{"README.md", "assets/app.js", "assets/libs/socket.js"} {
 		if res.NewBase[rel] == "" {
 			t.Fatalf("NewBase missing %q: %v", rel, res.NewBase)
 		}
@@ -221,6 +227,235 @@ func TestSyncBackForceKeepsBoardEditsToUntouchedFiles(t *testing.T) {
 	}
 }
 
+// An agent edit or delete of a managed file must never reach the board, and the mirror must go back to the board's copy.
+func TestSyncBackWithholdsManagedFiles(t *testing.T) {
+	local := t.TempDir()
+	writeLocal(t, local, "app.yaml", "name: renamed by hand")
+	writeLocal(t, local, "python/main.py", "agent edit")
+	writeLocal(t, local, "sketch/sketch.ino", "void setup() {}")
+	board := newFakeBoard()
+	board.contents["/apps/demo/app.yaml"] = "name: demo"
+	board.contents["/apps/demo/sketch/sketch.yaml"] = "profiles: {}"
+	board.contents["/apps/demo/python/main.py"] = "original"
+	board.contents["/apps/demo/sketch/sketch.ino"] = "void setup() {}"
+	base := map[string]string{
+		"app.yaml":           contentHash([]byte("name: demo")),
+		"sketch/sketch.yaml": contentHash([]byte("profiles: {}")), // deleted in the mirror, while sketch.ino stays
+		"python/main.py":     contentHash([]byte("original")),
+		"sketch/sketch.ino":  contentHash([]byte("void setup() {}")),
+	}
+
+	res, err := SyncBack(board, "/apps/demo", local, time.Time{}, base)
+	if err != nil {
+		t.Fatalf("SyncBack: %v", err)
+	}
+	for _, p := range []string{"/apps/demo/app.yaml", "/apps/demo/sketch/sketch.yaml"} {
+		if _, written := board.writes[p]; written {
+			t.Errorf("%s was written to the board", p)
+		}
+	}
+	if len(board.removed) != 0 {
+		t.Errorf("removed from the board: %v", board.removed)
+	}
+	if board.writes["/apps/demo/python/main.py"] != "agent edit" {
+		t.Errorf("an ordinary edit must still be pushed: %v", board.writes)
+	}
+	if strings.Join(res.Withheld, ",") != "app.yaml" {
+		t.Errorf("withheld = %v, want app.yaml", res.Withheld)
+	}
+	if strings.Join(res.Unpaired, ",") != "sketch/sketch.yaml" {
+		t.Errorf("unpaired = %v, want sketch/sketch.yaml: deleted without sketch.ino", res.Unpaired)
+	}
+	for rel, want := range map[string]string{"app.yaml": "name: demo", "sketch/sketch.yaml": "profiles: {}"} {
+		if got, _ := os.ReadFile(filepath.Join(local, filepath.FromSlash(rel))); string(got) != want {
+			t.Errorf("mirror %s = %q, want the board's %q", rel, got, want)
+		}
+		if res.NewBase[rel] != contentHash([]byte(want)) {
+			t.Errorf("the baseline of %s must follow the board's copy", rel)
+		}
+	}
+}
+
+// Removing both sketch files is removing the sketch: keeping sketch.yaml alone would leave an app arduino-app-cli does not load.
+func TestSyncBackRemovesWholeSketch(t *testing.T) {
+	local := t.TempDir()
+	writeLocal(t, local, "python/main.py", "original")
+	board := newFakeBoard()
+	board.contents["/apps/demo/sketch/sketch.ino"] = "void setup() {}"
+	board.contents["/apps/demo/sketch/sketch.yaml"] = "profiles: {}"
+	board.contents["/apps/demo/python/main.py"] = "original"
+	base := map[string]string{
+		"sketch/sketch.ino":  contentHash([]byte("void setup() {}")),
+		"sketch/sketch.yaml": contentHash([]byte("profiles: {}")),
+		"python/main.py":     contentHash([]byte("original")),
+	}
+
+	res, err := SyncBack(board, "/apps/demo", local, time.Time{}, base)
+	if err != nil {
+		t.Fatalf("SyncBack: %v", err)
+	}
+	removed := strings.Join(board.removed, ",")
+	if !strings.Contains(removed, "/apps/demo/sketch/sketch.ino") || !strings.Contains(removed, "/apps/demo/sketch/sketch.yaml") {
+		t.Errorf("removed = %v, want both sketch files", board.removed)
+	}
+	if len(res.Withheld) != 0 {
+		t.Errorf("withheld = %v, want none", res.Withheld)
+	}
+}
+
+// A change that would leave the board with one sketch file alone is not applied, and the checkout goes back to the board's state.
+func TestSyncBackKeepsSketchPairTogether(t *testing.T) {
+	notOnBoard := func(rels ...string) map[string]error {
+		errs := map[string]error{}
+		for _, rel := range rels {
+			errs["/apps/demo/"+rel] = fs.ErrNotExist
+		}
+		return errs
+	}
+	ino, yaml := "void setup() {}", "profiles: {}"
+	cases := []struct {
+		name       string
+		local      map[string]string
+		board      map[string]string // board contents; the other sketch file is absent
+		base       map[string]string
+		wantLocal  []string // sketch files the checkout must hold afterwards
+		wantUnpair string
+	}{
+		{
+			name:       "sketch.yaml alone into an app without a sketch",
+			local:      map[string]string{"python/main.py": "x", "sketch/sketch.yaml": yaml},
+			base:       map[string]string{"python/main.py": contentHash([]byte("x"))},
+			wantUnpair: "sketch/sketch.yaml",
+		},
+		{
+			name:       "sketch.ino deleted alone",
+			local:      map[string]string{"sketch/sketch.yaml": yaml},
+			board:      map[string]string{"sketch/sketch.ino": ino, "sketch/sketch.yaml": yaml},
+			base:       map[string]string{"sketch/sketch.ino": contentHash([]byte(ino)), "sketch/sketch.yaml": contentHash([]byte(yaml))},
+			wantLocal:  []string{"sketch/sketch.ino", "sketch/sketch.yaml"},
+			wantUnpair: "sketch/sketch.ino",
+		},
+		{
+			name:       "sketch.ino edited after the board lost the sketch",
+			local:      map[string]string{"sketch/sketch.ino": ino + " // edit", "sketch/sketch.yaml": yaml},
+			base:       map[string]string{"sketch/sketch.ino": contentHash([]byte(ino)), "sketch/sketch.yaml": contentHash([]byte(yaml))},
+			wantUnpair: "sketch/sketch.ino,sketch/sketch.yaml",
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			local := t.TempDir()
+			for rel, content := range tc.local {
+				writeLocal(t, local, rel, content)
+			}
+			board := newFakeBoard()
+			board.readErrs = notOnBoard(sketchPair[0], sketchPair[1])
+			for rel, content := range tc.board {
+				board.contents["/apps/demo/"+rel] = content
+				delete(board.readErrs, "/apps/demo/"+rel)
+			}
+
+			res, err := SyncBack(board, "/apps/demo", local, time.Time{}, tc.base)
+			if err != nil {
+				t.Fatalf("SyncBack: %v", err)
+			}
+			for p := range board.writes {
+				if pairedWith(strings.TrimPrefix(p, "/apps/demo/")) != "" {
+					t.Errorf("%s was written to the board", p)
+				}
+			}
+			if len(board.removed) != 0 {
+				t.Errorf("removed from the board: %v", board.removed)
+			}
+			if got := strings.Join(res.Unpaired, ","); got != tc.wantUnpair {
+				t.Errorf("unpaired = %q, want %q", got, tc.wantUnpair)
+			}
+			for _, rel := range sketchPair {
+				_, err := os.Stat(filepath.Join(local, filepath.FromSlash(rel)))
+				want := slices.Contains(tc.wantLocal, rel)
+				if (err == nil) != want {
+					t.Errorf("checkout has %s = %v, want %v", rel, err == nil, want)
+				}
+			}
+		})
+	}
+}
+
+// Pushed back alone, a sketch.yaml the board lost since checkout could leave half a sketch: the checkout drops it instead.
+func TestSyncBackDropsManagedFileTheBoardLost(t *testing.T) {
+	local := t.TempDir()
+	writeLocal(t, local, "sketch/sketch.yaml", "profiles: {} # agent edit")
+	board := newFakeBoard()
+	board.readErrs = map[string]error{"/apps/demo/sketch/sketch.yaml": fs.ErrNotExist}
+	base := map[string]string{"sketch/sketch.yaml": contentHash([]byte("profiles: {}"))}
+
+	res, err := SyncBack(board, "/apps/demo", local, time.Time{}, base)
+	if err != nil {
+		t.Fatalf("SyncBack: %v", err)
+	}
+	if len(board.writes) != 0 {
+		t.Errorf("the board was written: %v", board.writes)
+	}
+	if strings.Join(res.Withheld, ",") != "sketch/sketch.yaml" {
+		t.Errorf("withheld = %v, want sketch/sketch.yaml", res.Withheld)
+	}
+	if _, err := os.Stat(filepath.Join(local, "sketch")); !errors.Is(err, fs.ErrNotExist) {
+		t.Errorf("the checkout must match the board, which has no sketch/: stat err = %v", err)
+	}
+	if _, tracked := res.NewBase["sketch/sketch.yaml"]; tracked {
+		t.Error("a file the board lost must leave the baseline")
+	}
+}
+
+// An app without a sketch gains one when the agent writes both files: arduino-app-cli does not load half a sketch/.
+func TestSyncBackPushesManagedFileTheBoardLacks(t *testing.T) {
+	local := t.TempDir()
+	writeLocal(t, local, "sketch/sketch.ino", "void setup() {}")
+	writeLocal(t, local, "sketch/sketch.yaml", "profiles: {}")
+	board := newFakeBoard()
+	board.readErrs = map[string]error{
+		"/apps/demo/sketch/sketch.ino":  fs.ErrNotExist,
+		"/apps/demo/sketch/sketch.yaml": fs.ErrNotExist,
+	}
+
+	res, err := SyncBack(board, "/apps/demo", local, time.Time{}, map[string]string{})
+	if err != nil {
+		t.Fatalf("SyncBack: %v", err)
+	}
+	if board.writes["/apps/demo/sketch/sketch.yaml"] != "profiles: {}" || board.writes["/apps/demo/sketch/sketch.ino"] != "void setup() {}" {
+		t.Errorf("both sketch files must reach the board: %v", board.writes)
+	}
+	if len(res.Withheld) != 0 {
+		t.Errorf("withheld = %v, want none", res.Withheld)
+	}
+	if res.NewBase["sketch/sketch.yaml"] != contentHash([]byte("profiles: {}")) {
+		t.Error("the pushed sketch.yaml must enter the baseline, so a later edit to it is withheld")
+	}
+}
+
+// Without the board's copy there is nothing to put back: keep the file, report nothing, and let a later sync decide.
+func TestSyncBackKeepsManagedFileItCannotRead(t *testing.T) {
+	local := t.TempDir()
+	writeLocal(t, local, "app.yaml", "name: renamed by hand")
+	board := newFakeBoard()
+	board.readErrs = map[string]error{"/apps/demo/app.yaml": errors.New("connection reset")}
+	base := map[string]string{"app.yaml": contentHash([]byte("name: demo"))}
+
+	res, err := SyncBack(board, "/apps/demo", local, time.Time{}, base)
+	if err != nil {
+		t.Fatalf("SyncBack: %v", err)
+	}
+	if len(res.Withheld) != 0 || len(board.writes) != 0 {
+		t.Errorf("withheld = %v, writes = %v, want neither", res.Withheld, board.writes)
+	}
+	if got, _ := os.ReadFile(filepath.Join(local, "app.yaml")); string(got) != "name: renamed by hand" {
+		t.Errorf("mirror app.yaml = %q, want the agent's copy kept", got)
+	}
+	if res.NewBase["app.yaml"] != base["app.yaml"] {
+		t.Error("the baseline must stay, so the next sync sees the edit again")
+	}
+}
+
 // Both sides edited the file since checkout: report it and leave the board alone rather than pick a winner.
 func TestSyncBackReportsConflictInsteadOfOverwriting(t *testing.T) {
 	local := t.TempDir()
@@ -261,6 +496,47 @@ func TestSyncBackDoesNotDeleteAFileChangedOnTheBoard(t *testing.T) {
 	}
 	if len(res.Conflicts) != 1 || res.Conflicts[0] != "notes.md" {
 		t.Fatalf("conflicts = %v, want [notes.md]", res.Conflicts)
+	}
+}
+
+// A board copy that cannot be read may have changed since checkout: the edit waits for a sync that can tell.
+func TestSyncBackDoesNotPushOverABoardFileItCannotRead(t *testing.T) {
+	local := t.TempDir()
+	writeLocal(t, local, "main.py", "agent edit")
+	board := newFakeBoard()
+	board.readErrs = map[string]error{"/apps/demo/main.py": errors.New("exit status 1")}
+	base := map[string]string{"main.py": contentHash([]byte("original"))}
+
+	res, err := SyncBack(board, "/apps/demo", local, time.Time{}, base)
+
+	if err == nil {
+		t.Error("the edit did not reach the board, and the sync reported no failure")
+	}
+	if len(board.writes) != 0 {
+		t.Errorf("wrote %v over a board file it could not read", board.writes)
+	}
+	if res.NewBase["main.py"] != base["main.py"] {
+		t.Error("the baseline must stay, so the next sync pushes the edit")
+	}
+}
+
+// The same holds for a local deletion: the board file is removed only once a sync can tell it is unchanged.
+func TestSyncBackDoesNotDeleteABoardFileItCannotRead(t *testing.T) {
+	local := t.TempDir()
+	writeLocal(t, local, "main.py", "code")
+	board := newFakeBoard()
+	board.readErrs = map[string]error{"/apps/demo/notes.md": errors.New("exit status 1")}
+	base := map[string]string{"main.py": contentHash([]byte("code")), "notes.md": contentHash([]byte("old notes"))}
+
+	res, err := SyncBack(board, "/apps/demo", local, time.Time{}, base)
+	if err != nil {
+		t.Fatalf("SyncBack: %v", err)
+	}
+	if len(board.removed) != 0 {
+		t.Errorf("removed %v, a board file it could not read", board.removed)
+	}
+	if res.NewBase["notes.md"] != base["notes.md"] {
+		t.Error("the baseline must stay, so a later sync propagates the deletion")
 	}
 }
 
@@ -477,7 +753,109 @@ func TestReconcileRestoresBoardCopyWhenLocalDeleted(t *testing.T) {
 	}
 }
 
+// editingBoard writes a checkout file while its board copy is read, as an agent edit lands during a read over adb.
+type editingBoard struct {
+	*fakeBoard
+	duringRead map[string]func() // board path → the local write that lands while it is read
+}
+
+func (b editingBoard) ReadFile(p string) (string, error) {
+	if edit := b.duringRead[p]; edit != nil {
+		edit()
+	}
+	return b.fakeBoard.ReadFile(p)
+}
+
+// An edit written while Reconcile reads the board copy is parked when the board moved too, and kept for SyncBack when it did not.
+func TestReconcileKeepsAnEditMadeDuringTheBoardRead(t *testing.T) {
+	local := t.TempDir()
+	writeLocal(t, local, "main.py", "original")
+	writeLocal(t, local, "util.py", "util")
+	inner := newFakeBoard()
+	inner.list = []string{"/apps/demo/main.py", "/apps/demo/util.py"}
+	inner.contents["/apps/demo/main.py"] = "board rewrite"
+	inner.contents["/apps/demo/util.py"] = "util"
+	board := editingBoard{fakeBoard: inner, duringRead: map[string]func(){
+		"/apps/demo/main.py": func() { writeLocal(t, local, "main.py", "agent edit") },
+		"/apps/demo/util.py": func() { writeLocal(t, local, "util.py", "util edit") },
+	}}
+	base := map[string]string{"main.py": contentHash([]byte("original")), "util.py": contentHash([]byte("util"))}
+
+	next, parked, err := Reconcile(board, "/apps/demo", local, base)
+	if err != nil {
+		t.Fatalf("Reconcile: %v", err)
+	}
+	if len(parked) != 1 || parked[0] != "main.py" {
+		t.Errorf("parked = %v, want [main.py]", parked)
+	}
+	if got, _ := os.ReadFile(filepath.Join(local, "main.py"+ParkedSuffix)); string(got) != "agent edit" {
+		t.Errorf("parked copy = %q, want the edit made during the read", got)
+	}
+	if got, _ := os.ReadFile(filepath.Join(local, "util.py")); string(got) != "util edit" {
+		t.Errorf("util.py = %q, want the edit left for SyncBack", got)
+	}
+	if next["util.py"] != base["util.py"] {
+		t.Error("util.py must keep its baseline, so SyncBack still sees the edit")
+	}
+}
+
+// A file the board lost takes the folders it alone kept with it; a folder that still holds a file stays.
+func TestReconcileRemovesTheFoldersADropLeavesEmpty(t *testing.T) {
+	local := t.TempDir()
+	writeLocal(t, local, "app.yaml", "name: demo")
+	writeLocal(t, local, "old/sub/gone.py", "gone")
+	writeLocal(t, local, "old/also-gone.py", "gone too")
+	writeLocal(t, local, "keep/gone.py", "gone")
+	writeLocal(t, local, "keep/new.py", "a file the agent created")
+	board := newFakeBoard()
+	board.list = []string{"/apps/demo/app.yaml"}
+	board.contents["/apps/demo/app.yaml"] = "name: demo"
+	base := map[string]string{
+		"app.yaml":         contentHash([]byte("name: demo")),
+		"old/sub/gone.py":  contentHash([]byte("gone")),
+		"old/also-gone.py": contentHash([]byte("gone too")),
+		"keep/gone.py":     contentHash([]byte("gone")),
+	}
+
+	if _, _, err := Reconcile(board, "/apps/demo", local, base); err != nil {
+		t.Fatalf("Reconcile: %v", err)
+	}
+	if _, err := os.Stat(filepath.Join(local, "old")); !errors.Is(err, fs.ErrNotExist) {
+		t.Errorf("old/ held only files the board lost: stat err = %v, want it removed", err)
+	}
+	if _, err := os.Stat(filepath.Join(local, "keep", "new.py")); err != nil {
+		t.Errorf("keep/new.py and its folder must stay: %v", err)
+	}
+	if _, err := os.Stat(filepath.Join(local, "keep", "gone.py")); !errors.Is(err, fs.ErrNotExist) {
+		t.Errorf("keep/gone.py: stat err = %v, want it dropped", err)
+	}
+}
+
 // Turn-end cleanup removes the parked copies (same-turn buffers) and touches nothing else.
+// A sync skips parked copies and skipped folders, so the checkout matches its baseline with them; a delete of the folder would lose them.
+func TestHoldsOnlyBaselineCountsWhatASyncSkips(t *testing.T) {
+	base := map[string]string{"main.py": contentHash([]byte("code"))}
+	for name, extra := range map[string]string{
+		"nothing more":  "",
+		"a parked copy": "main.py" + ParkedSuffix,
+		"a .git file":   ".git/notes",
+		"a dependency":  "node_modules/x/index.js",
+		"a cache file":  ".cache/y",
+	} {
+		local := t.TempDir()
+		writeLocal(t, local, "main.py", "code")
+		if extra != "" {
+			writeLocal(t, local, extra, "kept only here")
+		}
+		if !MatchesBaseline(local, base) {
+			t.Errorf("%s: MatchesBaseline = false, want true: a sync pushes nothing", name)
+		}
+		if got := HoldsOnlyBaseline(local, base); got != (extra == "") {
+			t.Errorf("%s: HoldsOnlyBaseline = %v, want %v", name, got, extra == "")
+		}
+	}
+}
+
 func TestRemoveParkedLeavesRealFiles(t *testing.T) {
 	local := t.TempDir()
 	writeLocal(t, local, "main.py", "code")

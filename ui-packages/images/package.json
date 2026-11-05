@@ -23,6 +23,15 @@
     "./assets/icons": {
       "import": "./assets/icons/index.ts"
     },
+    "./assets/error.svg": {
+      "import": "./assets/error.svg"
+    },
+    "./assets/info-icon-outline.svg": {
+      "import": "./assets/info-icon-outline.svg"
+    },
+    "./assets/warning.svg": {
+      "import": "./assets/warning.svg"
+    },
     "./assets/file-icons": {
       "import": "./assets/file-icons/index.ts"
     },

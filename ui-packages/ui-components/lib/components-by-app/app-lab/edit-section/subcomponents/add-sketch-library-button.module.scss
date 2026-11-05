@@ -1,20 +1,8 @@
-// `div.` outranks the shared `.tooltip` class this element also carries.
-div.popover {
-  width: 288px;
-  max-width: none;
-  padding: 16px 24px;
-  border-radius: 3px;
-  background: var(--component-bg-above);
-  color: var(--text-default);
-  white-space: normal;
-}
-
 .content {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   gap: 8px;
-  width: 240px;
 }
 
 .text {

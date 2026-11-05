@@ -10,6 +10,8 @@ import (
 	"time"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
+
+	"app-lab-desktop/internal/appid"
 )
 
 // modelStatusInstalled is the /v1/models status of a model actually present on the board; anything else is on offer.
@@ -284,7 +286,7 @@ func registerModelsImportCustom(srv *mcp.Server, access BoardAccess) {
 			"Use models_install instead whenever models_list already offers a suitable model: this tool is only for a model the board does not list yet. " +
 			"It returns as soon as the picker is open; the user still has to choose and the download takes minutes, so check models_list afterwards rather than calling this again.",
 	}, func(ctx context.Context, _ *mcp.CallToolRequest, in modelImportInput) (*mcp.CallToolResult, any, error) {
-		appID, brickID := strings.TrimSpace(in.AppID), strings.TrimSpace(in.BrickID)
+		appID, brickID := appid.Canonical(in.AppID), strings.TrimSpace(in.BrickID)
 		if appID == "" || brickID == "" {
 			return nil, nil, fmt.Errorf("appId and brickId are required")
 		}

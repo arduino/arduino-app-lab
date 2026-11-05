@@ -5,8 +5,10 @@ import { useIntersection, usePrevious } from 'react-use';
 
 import { UNKNOWN_BOARD_NAME } from '../device-association-dialog';
 import { FormatMessage, useI18n } from '../i18n/useI18n';
-import { Text, TextSize } from '../typography';
+import { hasPermissions, RbacCapability } from '../rbac';
+import { Small, XSmall } from '../typography';
 import { Link } from '../typography/Link';
+import { messages } from './messages';
 import AssociatedDeviceButton from './sub-components/associated-device-button';
 import ChromeOsDeviceSelection from './sub-components/chromeos-device-selection';
 import OpenSerialMonitorButton, {
@@ -24,7 +26,11 @@ import {
   ToolbarItemIds,
   ToolbarLogic,
 } from './Toolbar.type';
-import { staticDefaultItems, staticIotItems } from './toolbarSpec';
+import {
+  staticDefaultItems,
+  staticIotItems,
+  staticReadOnlyItems,
+} from './toolbarSpec';
 
 interface ToolbarProps {
   toolbarLogic: ToolbarLogic;
@@ -45,6 +51,7 @@ const Toolbar: React.FC<ToolbarProps> = (props: ToolbarProps) => {
     isVerifying,
     isUploading,
     canUpload,
+    rbac,
     boardsConfigIsUnknown,
     clickHandlers,
     devices = { totalCount: 0 },
@@ -63,6 +70,11 @@ const Toolbar: React.FC<ToolbarProps> = (props: ToolbarProps) => {
   } = toolbarLogic();
 
   const selectedBoardHasAltPort = Boolean(selectedDeviceAltPortBoardId);
+  const canEditSketch = hasPermissions([RbacCapability.EditSketch], rbac);
+  const canUploadSketch = hasPermissions([RbacCapability.UploadSketch], rbac);
+  const isDeviceReadOnly = !canUploadSketch || !canEditSketch;
+  const canUpdateThing = hasPermissions([RbacCapability.UpdateThing], rbac);
+  const showDownload = !canEditSketch;
 
   const isIotToolbar = isIotComponent || isIotSketch;
 
@@ -130,10 +142,12 @@ const Toolbar: React.FC<ToolbarProps> = (props: ToolbarProps) => {
         port={selectedPort}
         deviceIsIot={selectedBoardIsIot}
         isIotToolbar={isIotToolbar}
+        isReadOnly={isDeviceReadOnly}
+        canChangeIotDevice={canUpdateThing}
         onClickDeviceChange={onClick}
         boardsConfigIsUnknown={boardsConfigIsUnknown}
         boardBubbleBadgeNumber={
-          disableBoardBubbleBadge
+          disableBoardBubbleBadge || isDeviceReadOnly
             ? 0
             : (devicesDataToRender.totalCount as number)
         }
@@ -142,16 +156,22 @@ const Toolbar: React.FC<ToolbarProps> = (props: ToolbarProps) => {
         isOtaCompatible={currentDeviceSupportsOta}
         switchToAltPort={switchToAltPort}
         classes={{
-          'button-container': styles['associated-device-info-button-container'],
+          'button-container': clsx(
+            styles['associated-device-info-button-container'],
+            !canUploadSketch && styles['association-node-flush'],
+          ),
           button: styles['associated-device-info-button'],
         }}
       />
     ),
     [
       boardsConfigIsUnknown,
+      canUpdateThing,
+      canUploadSketch,
       currentDeviceSupportsOta,
       devicesDataToRender.totalCount,
       disableBoardBubbleBadge,
+      isDeviceReadOnly,
       isIotToolbar,
       manyPortsAvailable,
       selectedBoard,
@@ -175,7 +195,11 @@ const Toolbar: React.FC<ToolbarProps> = (props: ToolbarProps) => {
     [currentDeviceIsBusy, selectedBoardIsIot, selectedPort],
   );
 
-  const staticItems = isIotToolbar ? staticIotItems : staticDefaultItems;
+  const staticItems = isIotToolbar
+    ? staticIotItems
+    : showDownload
+    ? staticReadOnlyItems
+    : staticDefaultItems;
 
   const items: ToolbarItemDictionary = {
     ...staticItems,
@@ -183,12 +207,29 @@ const Toolbar: React.FC<ToolbarProps> = (props: ToolbarProps) => {
   };
   if (
     useChromeOsDeviceAssociation &&
+    !isDeviceReadOnly &&
     (!isIotToolbar || (isIotToolbar && selectedFqbn))
   ) {
     items[ToolbarItemIds.AssociationNode] = chromeOsAssociationNode;
   }
-  if (!useChromeOsDeviceAssociation && selectedFqbn) {
+  // The ChromeOS selector always opens detection, so a read-only device uses the default button.
+  if ((!useChromeOsDeviceAssociation || isDeviceReadOnly) && selectedFqbn) {
     items[ToolbarItemIds.AssociationNode] = defaultAssociationNode;
+  }
+  if (isDeviceReadOnly && !selectedFqbn && !isIotToolbar) {
+    items[ToolbarItemIds.AssociationNode] = (): JSX.Element => (
+      <div
+        id="association-node"
+        key={ToolbarItemIds.AssociationNode}
+        className={clsx(
+          styles['association-node-container'],
+          styles['association-node-read-only-label'],
+          !canUploadSketch && styles['association-node-flush'],
+        )}
+      >
+        <Small>{formatMessage(messages.noDeviceSelected)}</Small>
+      </div>
+    );
   }
 
   const getBusyState = (): ToolbarBusyState | undefined => {
@@ -226,23 +267,19 @@ const Toolbar: React.FC<ToolbarProps> = (props: ToolbarProps) => {
         role="tooltip"
       >
         <div className={clsx(styles['upload-info-popover'])}>
-          <Text size={TextSize.Small} bold={true}>
-            {formatMessage(canUpload.popover.title)}
-          </Text>
+          <Small bold={true}>{formatMessage(canUpload.popover.title)}</Small>
           {!canUpload.popover.messageBold ? (
-            <Text size={TextSize.XSmall}>
-              {formatMessage(canUpload.popover.message)}
-            </Text>
+            <XSmall>{formatMessage(canUpload.popover.message)}</XSmall>
           ) : (
-            <Text size={TextSize.XSmall}>
+            <XSmall>
               {formatMessage(canUpload.popover.message, {
                 messageBold: (
-                  <Text size={TextSize.XSmall} bold>
+                  <XSmall bold>
                     {formatMessage(canUpload.popover.messageBold)}
-                  </Text>
+                  </XSmall>
                 ),
               })}
-            </Text>
+            </XSmall>
           )}
           {canUpload.popover.link ? (
             <Link
@@ -292,10 +329,10 @@ const Toolbar: React.FC<ToolbarProps> = (props: ToolbarProps) => {
               | ToolbarItemIds.VerifyButton
               | ToolbarItemIds.CreatingButton
               | ToolbarItemIds.PendingButton =>
-              itemId === ToolbarItemIds.UploadButton ||
+              (itemId === ToolbarItemIds.UploadButton && canUploadSketch) ||
               itemId === ToolbarItemIds.PendingButton ||
               itemId === ToolbarItemIds.CreatingButton ||
-              itemId === ToolbarItemIds.VerifyButton,
+              (itemId === ToolbarItemIds.VerifyButton && canUploadSketch),
           )
           .map((itemId) => {
             const id = itemId;
@@ -367,7 +404,8 @@ const Toolbar: React.FC<ToolbarProps> = (props: ToolbarProps) => {
           }
 
           if (id === ToolbarItemIds.OpenFlavourConfig) {
-            return selectedFqbn &&
+            return canUploadSketch &&
+              selectedFqbn &&
               Object.keys(parseArduinoFqbn(selectedFqbn).config).length > 0
               ? items[id](formatMessage, clickHandlers[id])
               : null;
@@ -377,7 +415,10 @@ const Toolbar: React.FC<ToolbarProps> = (props: ToolbarProps) => {
             return items[id](shareSketchLogic, shareToClassroomLogic);
           }
 
-          if (id === ToolbarItemIds.DownloadSketch && isIotComponent) {
+          if (
+            id === ToolbarItemIds.DownloadSketch &&
+            (isIotComponent || showDownload)
+          ) {
             return items[id](formatMessage, clickHandlers[id]);
           }
         })}

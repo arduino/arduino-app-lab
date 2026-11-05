@@ -3,21 +3,21 @@ import {
   OPEN_FILES_KEY,
   OpenFilesStore,
   OpenFilesStoreItem,
+  OpenFilesStorePanelState,
   OpenFilesStorePatch,
 } from '../../common/hooks/files';
 import * as IDB from './persistentStore';
 
 const EXAMPLE_SUFFIX = '-example';
 
-const entryKeyForApp = (appId: string, serial?: string): string =>
+export const entryKeyForApp = (appId: string, serial?: string): string =>
   serial ? `${appId}-${serial}` : appId;
 
-// Serialize writes so an editor patch and a GC prune can't interleave their
-// read-modify-write and clobber one another.
-let writeQueue: Promise<unknown> = Promise.resolve();
-const enqueueWrite = <T>(task: () => Promise<T>): Promise<T> => {
-  const result = writeQueue.then(task, task);
-  writeQueue = result.then(
+// One queue for every access: patches and prunes can't clobber each other, and a read sees every write queued before it.
+let queue: Promise<unknown> = Promise.resolve();
+const enqueue = <T>(task: () => Promise<T>): Promise<T> => {
+  const result = queue.then(task, task);
+  queue = result.then(
     () => undefined,
     () => undefined,
   );
@@ -27,14 +27,14 @@ const enqueueWrite = <T>(task: () => Promise<T>): Promise<T> => {
 const mutateStore = (
   mutator: (store: OpenFilesStore) => OpenFilesStore,
 ): Promise<void> =>
-  enqueueWrite(() =>
+  enqueue(() =>
     IDB.update<OpenFilesStore>(OPEN_FILES_KEY, (prev) => mutator(prev ?? {})),
   );
 
 export const getOpenFilesEntry = async (
   key: string,
 ): Promise<OpenFilesStoreItem | undefined> => {
-  const store = await IDB.get<OpenFilesStore>(OPEN_FILES_KEY);
+  const store = await enqueue(() => IDB.get<OpenFilesStore>(OPEN_FILES_KEY));
   return store?.[key];
 };
 
@@ -61,6 +61,62 @@ export const moveOpenFilesEntry = (
     if (fromKey === toKey || !(fromKey in store)) return store;
     const { [fromKey]: item, ...rest } = store;
     return item ? { ...rest, [toKey]: item } : rest;
+  });
+
+export const moveOpenFilesForApp = (
+  oldAppId: string,
+  newAppId: string,
+  serial?: string,
+): Promise<void> =>
+  moveOpenFilesEntry(
+    entryKeyForApp(oldAppId, serial),
+    entryKeyForApp(newAppId, serial),
+  );
+
+// Moves the stored tabs of a renamed file or folder, and the tabs under it: with no editor on screen nothing else does.
+export const renameOpenFilesInApp = (
+  appId: string,
+  from: string,
+  to: string,
+  serial?: string,
+): Promise<void> =>
+  mutateStore((store) => {
+    const key = entryKeyForApp(appId, serial);
+    const item = store[key];
+    if (!item) return store;
+    const move = (id: string): string =>
+      id === from || id.startsWith(`${from}/`)
+        ? to + id.slice(from.length)
+        : id;
+    const moveKeys = <T>(
+      byId?: Record<string, T>,
+    ): Record<string, T> | undefined =>
+      byId &&
+      Object.fromEntries(
+        Object.entries(byId).map(([id, value]) => [move(id), value]),
+      );
+    const movePane = (
+      pane: OpenFilesStorePanelState,
+    ): OpenFilesStorePanelState => ({
+      ...pane,
+      items: pane.items.map(move),
+      selected: pane.selected && move(pane.selected),
+      markdownByFileId: moveKeys(pane.markdownByFileId),
+      brickTabByFileId: moveKeys(pane.brickTabByFileId),
+    });
+    return {
+      ...store,
+      [key]: {
+        ...item,
+        items: item.items.map(move),
+        selected: item.selected && move(item.selected),
+        panes: item.panes && {
+          A: movePane(item.panes.A),
+          B: item.panes.B && movePane(item.panes.B),
+        },
+        previewFileId: item.previewFileId && move(item.previewFileId),
+      },
+    };
   });
 
 export const removeOpenFilesForApp = (

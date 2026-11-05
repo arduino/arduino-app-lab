@@ -1,9 +1,11 @@
 import {
+  Bin,
+  FileFolderOpen,
   IconFileFolderNormal,
-  IconFileFolderOpen,
   IconNavigationArrowCaretNormalDown,
-} from '@arduino/react-icons';
-import { Bin, Pin, PlusSmall } from '@cloud-editor-mono/images/assets/icons';
+  Pin,
+  PlusSmall,
+} from '@cloud-editor-mono/images/assets/icons';
 import {
   Board,
   SidePanel,
@@ -15,8 +17,9 @@ import { useId } from 'react';
 
 import { messages } from '../../messages';
 import { SessionSummary } from '../../services';
-import { useAiAssistantStore } from '../../store';
+import { currentAuth, useAiAssistantStore } from '../../store';
 import { ConfirmDialog } from '../../ui';
+import { titleIfNamed } from '../../utils';
 import styles from './agent-side-panel.module.scss';
 import { useAgentSidePanelLogic } from './agentSidePanel.logic';
 import { SessionActionsMenu } from './SessionActionsMenu';
@@ -69,7 +72,9 @@ export const AgentSidePanel = ({
     confirmDelete,
   } = useAgentSidePanelLogic(formatMessage(messages.sessionsGeneralFolder));
 
-  const authenticated = useAiAssistantStore((s) => s.auth.authenticated);
+  const authenticated = useAiAssistantStore(
+    (s) => currentAuth(s).authenticated,
+  );
   const agentDown = useAiAssistantStore((s) => s.agentDown);
   const agentReady = authenticated && !agentDown;
 
@@ -109,7 +114,10 @@ export const AgentSidePanel = ({
             <SessionStateIcon state={dotState(session)} />
           )
         }
-        title={session.title || formatMessage(messages.sessionsUntitled)}
+        title={
+          titleIfNamed(session.title) ||
+          formatMessage(messages.sessionsUntitled)
+        }
         onClick={agentReady ? (): void => onSelectSession(session) : undefined}
         active={session.id === currentSessionId}
         dimmed={!agentReady}
@@ -163,9 +171,7 @@ export const AgentSidePanel = ({
               return (
                 <div key={key} className={styles['folder']}>
                   <SidePanel.Row
-                    icon={
-                      open ? <IconFileFolderOpen /> : <IconFileFolderNormal />
-                    }
+                    icon={open ? <FileFolderOpen /> : <IconFileFolderNormal />}
                     title={folder.name}
                     onClick={
                       agentReady
@@ -203,7 +209,7 @@ export const AgentSidePanel = ({
           Icon={Bin}
           heading={formatMessage(messages.sessionsDeleteDialogHeading, {
             title:
-              confirmingSession.title ||
+              titleIfNamed(confirmingSession.title) ||
               formatMessage(messages.sessionsUntitled),
           })}
           description={formatMessage(messages.sessionsDeleteDialogBody)}

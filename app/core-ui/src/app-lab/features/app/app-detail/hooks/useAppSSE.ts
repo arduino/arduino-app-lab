@@ -47,12 +47,15 @@ export const useAppSSE = <T extends AppSSE | AppSSEWithId>({
   onSuccess,
   onError,
   onMessage,
+  trimMessageStart = true,
 }: {
   appSSE: T;
   handlers?: Partial<EventSourceHandlers>;
   onSuccess?: () => void;
   onError?: (data?: ErrorData) => void;
   onMessage?: (data: MessageData) => void;
+  // false for streams that show program output, which must stay verbatim
+  trimMessageStart?: boolean;
 }): UseSSE<T> => {
   const [progress, setProgress] = useState<number>(0);
   const [error, setError] = useState<string | null>(null);
@@ -95,8 +98,9 @@ export const useAppSSE = <T extends AppSSE | AppSSEWithId>({
         const parsedData = JSON.parse(event.data);
 
         if (parsedData?.message) {
-          //Trim the spaces at the start
-          parsedData.message = parsedData.message.trimStart();
+          if (trimMessageStart) {
+            parsedData.message = parsedData.message.trimStart();
+          }
 
           //!Add the line separator
           parsedData.message += LINE_SEPARATOR;
@@ -131,7 +135,7 @@ export const useAppSSE = <T extends AppSSE | AppSSEWithId>({
 
       handleOnMessage?.(event);
     },
-    [handleOnMessage, onError, onMessage],
+    [handleOnMessage, onError, onMessage, trimMessageStart],
   );
 
   const onerror: EventSourceHandlers['onerror'] = useCallback(

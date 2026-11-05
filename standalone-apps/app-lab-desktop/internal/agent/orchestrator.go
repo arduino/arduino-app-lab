@@ -18,6 +18,8 @@ const (
 	waitDelay = 2 * time.Second
 	// waitTimeout bounds Stop's own wait for the process to be reaped. Kept short: with shutdownGrace it caps teardown at ~5s, under any host's own shutdown budget.
 	waitTimeout = 2 * time.Second
+	// groupGrace is how long from the start of a Stop what the adapter started may take to exit, before the group is killed.
+	groupGrace = 2 * time.Second
 )
 
 // ExitInfo describes an unexpected agent exit, passed to the crash callback.
@@ -144,9 +146,11 @@ func (a *Agent) Stop() error {
 	if stdin != nil {
 		_ = stdin.Close()
 	}
+	start := time.Now()
 	pg.interrupt(cmd)
 	select {
 	case <-done:
+		pg.drain(start.Add(groupGrace)) // only a crash kills the rest at once
 		return pg.release()
 	case <-time.After(shutdownGrace):
 	}

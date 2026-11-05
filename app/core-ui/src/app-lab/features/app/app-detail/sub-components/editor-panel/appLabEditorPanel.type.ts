@@ -62,19 +62,22 @@ export type EditorPanelLogicParams = {
    * has been fetched. No-op if the content is already cached.
    */
   fetchFile?: (fileId: string) => Promise<unknown>;
+  /** The file of panel B's selected tab could not be read. */
+  onFileLoadError?: (fileId: string, error: unknown) => void;
+  /** Whether a tab names a file to read; without it, every tab but a brick does. */
+  canReadTab?: (fileId: string) => boolean;
   /**
-   * Persisted per-app open-files record. Used (alongside
-   * `filesContentLoaded`) by the split-view hydration effect to restore
-   * panel B tabs/selection, both panels' per-file markdown render modes,
-   * `isSplit`, and the split width on app load.
+   * Persisted per-app open-files record. Used (alongside `tabsHydrated`) by
+   * the split-view hydration effect to restore panel B tabs/selection, both
+   * panels' per-file markdown render modes, `isSplit`, and the split width on
+   * app load.
    */
   openFilesStore?: OpenFilesStoreItem | null;
   /**
-   * True once the file tree (catalogue) is known. Gates split-view
-   * hydration so persisted panel references can be pruned against the
-   * current `allFiles` catalogue.
+   * Panel A's stored tabs are in place. The split view is restored from the
+   * same record after them, and reset when they reset.
    */
-  filesContentLoaded?: boolean;
+  tabsHydrated?: boolean;
   /**
    * Patches split-related fields onto the per-app store record. Shallow
    * merges so callers can update one panel (or one field) without

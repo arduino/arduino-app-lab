@@ -1,7 +1,6 @@
+import dropZoneStyles from '@cloud-editor-mono/ide-workbench/lib/editor-panel/editor-split-drop-zone.module.scss';
 import clsx from 'clsx';
 import { CSSProperties, useLayoutEffect, useState } from 'react';
-
-import dropZoneStyles from '../../../editor-panel/editor-split-drop-zone.module.scss';
 
 const RIGHT_PANEL_ID = 'split-right';
 const LEFT_PANEL_ID = 'split-left';

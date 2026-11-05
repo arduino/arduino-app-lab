@@ -1,6 +1,6 @@
 import clsx from 'clsx';
 
-import { useTooltip } from '../../../../../tooltip';
+import { useTooltip } from '../../../essential/tooltip';
 import styles from './board-hardware.module.scss';
 
 export interface BoardHardwareProps {
@@ -19,7 +19,6 @@ export const BoardHardware = ({
   const { props: tooltipProps, renderTooltip } = useTooltip({
     content: label,
     direction: 'up',
-    timeout: 0,
   });
 
   return (

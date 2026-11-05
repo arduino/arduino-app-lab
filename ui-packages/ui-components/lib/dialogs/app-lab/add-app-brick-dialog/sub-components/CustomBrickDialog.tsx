@@ -34,6 +34,7 @@ export const CustomBrickDialog: React.FC<CustomBrickDialogProps> = ({
   const [name, setName] = useState('');
   const [loading, setLoading] = useState(false);
   const [mountInput, setMountInput] = useState(false);
+  const trimmedName = name.trim();
 
   useEffect(() => {
     if (open) {
@@ -75,12 +76,19 @@ export const CustomBrickDialog: React.FC<CustomBrickDialogProps> = ({
   }, [isRename]);
 
   const handleConfirm = async (): Promise<void> => {
-    if (!name) return;
+    if (!trimmedName) {
+      return;
+    }
     setLoading(true);
-    const result = await confirmAction(name, brick?.id);
-    setLoading(false);
-    if (result) {
-      onOpenChange(false);
+    try {
+      const result = await confirmAction(trimmedName, brick?.id);
+      if (result) {
+        onOpenChange(false);
+      }
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -97,7 +105,7 @@ export const CustomBrickDialog: React.FC<CustomBrickDialogProps> = ({
             loading={loading}
             iconPosition="right"
             onClick={handleConfirm}
-            disabled={!name}
+            disabled={!trimmedName}
           >
             {formatMessage(dialogMessages.buttonText)}
           </Button>
@@ -140,14 +148,14 @@ export const CustomBrickDialog: React.FC<CustomBrickDialogProps> = ({
           autoFocus
         />
       ) : null}
-      {isRename && name ? (
+      {isRename && trimmedName ? (
         <div className={styles['custom-brick-id-info']}>
           <InfoIconOutline />
           <XXXSmall>
             {formatMessage(messages.customBrickId, {
               brickId: (
                 <XXXSmall bold>
-                  {name.toLowerCase().replace(/\s+/g, '_')}
+                  {trimmedName.toLowerCase().replace(/\s+/g, '_')}
                 </XXXSmall>
               ),
             })}

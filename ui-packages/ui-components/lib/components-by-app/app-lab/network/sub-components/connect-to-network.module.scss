@@ -3,20 +3,6 @@
   flex-direction: column;
   gap: 8px;
 
-  .select-container {
-    background: #171e21;
-
-    &:hover {
-      background: #212a2e;
-      border-color: #434f54;
-    }
-
-    &--open {
-      border-color: #25c2c7 !important;
-      background: rgba(37, 194, 199, 0.08) !important;
-    }
-  }
-
   .error-message {
     display: flex;
     align-items: center;

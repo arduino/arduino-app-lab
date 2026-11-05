@@ -25,6 +25,7 @@ export interface WireToolCall {
   input?: unknown;
   output?: string;
   outsideWorkspace?: boolean;
+  outsideApp?: string;
 }
 
 export interface WireUpdate {
@@ -36,11 +37,13 @@ export interface WireUpdate {
   input?: unknown;
   output?: string;
   outsideWorkspace?: boolean;
+  outsideApp?: string;
   checklist?: WireChecklist;
   choices?: WireChoiceRequest;
   modelId?: string;
   models?: WireAgentModel[];
   modeId?: string;
+  modes?: WireAgentMode[];
   usedTokens?: number;
   contextSize?: number;
 }
@@ -64,6 +67,7 @@ export interface WireChoiceOption {
 
 export interface WireChoiceRequest {
   id: string;
+  kind?: string;
   title: string;
   options?: WireChoiceOption[];
   multiple?: boolean;
@@ -90,6 +94,7 @@ export interface WireAgentModel {
   id: string;
   name: string;
   description?: string;
+  free?: boolean;
 }
 
 export interface WireAgentMode {
@@ -106,6 +111,7 @@ export interface WireSessionSummary {
   pinned?: boolean;
   workspaceAppId?: string;
   workspaceName?: string;
+  agentId?: string;
 }
 
 // agent.RestartInfo, whose json tags pin these names. Its crash cause stays host-side (an error
@@ -115,6 +121,7 @@ export interface WireRestart {
   max?: number;
   gaveUp?: boolean;
   reason?: string;
+  resumed?: boolean;
 }
 
 export interface WireSessionState {
@@ -148,6 +155,7 @@ const toToolCall = (tc: WireToolCall): ToolCall => ({
   ...(tc.input !== undefined ? { input: tc.input } : {}),
   ...(tc.output !== undefined ? { output: tc.output } : {}),
   ...(tc.outsideWorkspace ? { outsideWorkspace: true } : {}),
+  ...(tc.outsideApp ? { outsideApp: tc.outsideApp } : {}),
 });
 
 // Returns null for update kinds the FE contract doesn't model (skipped upstream).
@@ -169,6 +177,7 @@ export const mapUpdate = (u: WireUpdate): AgentUpdate | null => {
         ...(u.input !== undefined ? { input: u.input } : {}),
         ...(u.output !== undefined ? { output: u.output } : {}),
         ...(u.outsideWorkspace ? { outsideWorkspace: true } : {}),
+        ...(u.outsideApp ? { outsideApp: u.outsideApp } : {}),
       };
     case 'checklist':
       return u.checklist
@@ -188,6 +197,7 @@ export const mapUpdate = (u: WireUpdate): AgentUpdate | null => {
       return {
         type: 'mode_change',
         ...(u.modeId !== undefined ? { modeId: u.modeId } : {}),
+        ...(u.modes ? { modes: u.modes.map(mapMode) } : {}),
       };
     case 'usage':
       return {
@@ -197,10 +207,22 @@ export const mapUpdate = (u: WireUpdate): AgentUpdate | null => {
       };
     case 'user_message':
       return { type: 'user_message', delta: u.delta ?? '' };
+    case 'replay_start':
+      return { type: 'replay_start' };
+    case 'message_error':
+      return { type: 'message_error', message: u.delta ?? '' };
+    case 'turn_stopped':
+      return { type: 'turn_stopped' };
     default:
       return null;
   }
 };
+
+// The chats of a forgotten app, from the event's second argument; undefined from a host that sends none.
+export const mapForgottenChats = (value: unknown): string[] | undefined =>
+  Array.isArray(value)
+    ? value.filter((id): id is string => typeof id === 'string')
+    : undefined;
 
 // Pass-through: options and the tool-call carry straight to the UI; the reply echoes the chosen id.
 export const mapPermissionRequest = (
@@ -224,12 +246,14 @@ export const mapRestart = (r: WireRestart): AgentRestart => ({
   max: r.max ?? 0,
   gaveUp: r.gaveUp ?? false,
   ...(r.reason ? { reason: r.reason } : {}),
+  ...(r.resumed ? { resumed: true } : {}),
 });
 
 const mapModel = (m: WireAgentModel): AgentModel => ({
   id: m.id,
   name: m.name,
   ...(m.description ? { description: m.description } : {}),
+  ...(m.free ? { free: true } : {}),
 });
 
 const mapMode = (m: WireAgentMode): AgentMode => ({
@@ -242,12 +266,13 @@ export const mapSessionSummary = (s: WireSessionSummary): SessionSummary => ({
   id: s.id,
   ...(s.title ? { title: s.title } : {}),
   ...(s.updatedAt ? { updatedAt: s.updatedAt } : {}),
-  ...(s.status === 'error' || s.status === 'running'
+  ...(s.status === 'error' || s.status === 'running' || s.status === 'cancelled'
     ? { status: s.status }
     : {}),
   ...(s.pinned ? { pinned: true } : {}),
   ...(s.workspaceAppId ? { workspaceAppId: s.workspaceAppId } : {}),
   ...(s.workspaceName ? { workspaceName: s.workspaceName } : {}),
+  ...(s.agentId ? { agentId: s.agentId } : {}),
 });
 
 const CHECKLIST_STATUSES: ChecklistItemStatus[] = [
@@ -274,6 +299,7 @@ const mapChecklist = (c: WireChecklist): Checklist => ({
 
 const mapChoiceRequest = (c: WireChoiceRequest): ChoiceRequest => ({
   id: c.id,
+  ...(c.kind === 'text' ? { kind: 'text' as const } : {}),
   title: c.title,
   options: (c.options ?? []).map(
     (o): ChoiceOption => ({

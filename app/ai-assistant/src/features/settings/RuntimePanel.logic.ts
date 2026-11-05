@@ -12,6 +12,7 @@ import {
   status,
   uninstall,
 } from '../../services';
+import { useAiAssistantStore } from '../../store';
 
 // Which long-running runtime op is in flight (drives the progress label).
 export type RuntimeOperation = 'install' | 'update' | 'uninstall';
@@ -59,6 +60,8 @@ export const useRuntimePanel = (
   // out (the runtime is gone, so the flow restarts at Install → Connect).
   onUninstalled: (agentId: AgentId) => void | Promise<void>,
 ): RuntimePanelLogic => {
+  const setRuntimeInstalled = useAiAssistantStore((s) => s.setRuntimeInstalled);
+
   const [statusById, setStatusById] = useState<
     Partial<Record<AgentId, RuntimeStatus>>
   >({});
@@ -73,14 +76,18 @@ export const useRuntimePanel = (
   // recognised as a user cancel and swallowed rather than surfaced as an error.
   const cancelledRef = useRef(false);
 
-  const refresh = useCallback(async (agentId: AgentId): Promise<void> => {
-    try {
-      const next = await status(agentId);
-      setStatusById((prev) => ({ ...prev, [agentId]: next }));
-    } catch {
-      // Leave the last known status in place on a failed refresh.
-    }
-  }, []);
+  const refresh = useCallback(
+    async (agentId: AgentId): Promise<void> => {
+      try {
+        const next = await status(agentId);
+        setStatusById((prev) => ({ ...prev, [agentId]: next }));
+        setRuntimeInstalled(agentId, next.installed);
+      } catch {
+        // Leave the last known status in place on a failed refresh.
+      }
+    },
+    [setRuntimeInstalled],
+  );
 
   // Resolve every agent's runtime status up front so each card can pick
   // Install / Connect / Manage without waiting on expansion.
@@ -88,10 +95,18 @@ export const useRuntimePanel = (
     agents.forEach((agent) => void refresh(agent.id));
   }, [agents, refresh]);
 
-  // Mirror progress events while an op is running.
+  // From a ref because the subscription is made once: another agent's install drove this one bar.
+  const operationAgentRef = useRef<AgentId>();
+  operationAgentRef.current = operation?.agentId;
   useEffect(() => {
     try {
-      return onProgress(setProgress);
+      return onProgress((event) => {
+        const mine = operationAgentRef.current;
+        if (event.agent && mine && event.agent !== mine) {
+          return;
+        }
+        setProgress(event);
+      });
     } catch {
       return undefined;
     }

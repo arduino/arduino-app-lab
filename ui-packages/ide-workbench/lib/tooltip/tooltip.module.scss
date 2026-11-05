@@ -1,0 +1,46 @@
+@use "../theme/shared.module.scss";
+
+.tooltip {
+    display: none;
+    position: absolute;
+    max-width: 210px;
+    width: max-content;
+    padding: 12px 16px;
+    background: var(--surface-bg-above);
+    color: var(--text-default);
+    box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.25); // TODO: Create suitable variable
+    border-radius: 4px;
+    white-space: pre-wrap;
+    // pre-wrap alone only breaks at whitespace, so a long unbroken filename paints outside the box.
+    overflow-wrap: break-word;
+    z-index: 99999;
+    box-sizing: border-box;
+
+    &--title {
+        padding: 2.5px 7px;
+        border-radius: 3px;
+        top: unset;
+        right: unset;
+
+        border: 1px solid var(--grayscale-smoke);
+        background: var(--tooltip-background);
+        color: var(--tooltip-foreground);
+
+        //Make the title not interactive
+        pointer-events: none;
+    }
+}
+
+.tooltip-show {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.tooltip-title {
+    span {
+        font-size: 14px !important;
+        font-weight: 600 !important;
+        color: var(--text-default) !important;
+    }
+}

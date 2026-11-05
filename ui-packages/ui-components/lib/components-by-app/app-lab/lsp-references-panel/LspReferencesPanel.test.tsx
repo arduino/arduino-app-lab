@@ -14,6 +14,14 @@
  * accessible names reading literally "References to {symbol}".
  */
 
+import {
+  ViewInstances,
+  viewInstances,
+} from '@cloud-editor-mono/ide-workbench/lib/code-mirror/codeMirrorViewInstances';
+import {
+  LspReferenceRow,
+  LspReferencesResult,
+} from '@cloud-editor-mono/ide-workbench/lib/code-mirror/extensions/lsp/lsp-references/lsp-references-types';
 import { EditorView } from '@codemirror/view';
 import {
   fireEvent,
@@ -24,14 +32,6 @@ import {
 import { IntlProvider } from 'react-intl';
 import { afterEach, beforeAll, describe, expect, it, Mock, vi } from 'vitest';
 
-import {
-  ViewInstances,
-  viewInstances,
-} from '../../../code-mirror/codeMirrorViewInstances';
-import {
-  LspReferenceRow,
-  LspReferencesResult,
-} from '../../../code-mirror/extensions/lsp/lsp-references/lsp-references-types';
 import { LspReferencesPanel } from './LspReferencesPanel';
 
 const MAIN_URI = 'file:///ws/main.py';

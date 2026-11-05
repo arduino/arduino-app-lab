@@ -106,7 +106,7 @@ $skeleton-opacity: 0.1 !default;
 
     .title {
       font-family: typography.$open-sans-font-family;
-      color: var(--text-subtle, #c9d2d2);
+      color: var(--text-default);
       font-size: 14px;
       font-weight: 700;
       line-height: 160%;
@@ -246,6 +246,16 @@ $skeleton-opacity: 0.1 !default;
   &:hover,
   &:focus {
     background-color: var(--component-bg-flexible, #aeb8b826);
+  }
+
+  &-disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+
+    &:hover,
+    &:focus {
+      background-color: transparent;
+    }
   }
 
   &.danger {

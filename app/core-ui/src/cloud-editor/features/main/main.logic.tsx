@@ -1,3 +1,4 @@
+import { useCloudContext } from '@bcmi-labs/cloud-sidebar';
 import { Config, parseArduinoFqbn } from '@cloud-editor-mono/common';
 import {
   codeInjectionsSubjectNext,
@@ -53,6 +54,7 @@ import {
   OnboardingLogic,
   OutputStringType,
   Preferences,
+  RbacCapability,
   ReadOnlyActionButtonsProps,
   ReadOnlyBarLogic,
   RenameDialogLogic,
@@ -108,6 +110,7 @@ import { useObservable } from '../../../common/hooks/useObservable';
 import { AuthContext } from '../../../common/providers/auth/authContext';
 import { ComponentContext } from '../../../common/providers/component/componentContext';
 import { useDialog } from '../../../common/providers/dialog/dialogProvider.logic';
+import { useRbac } from '../../../common/providers/rbac/rbacContextProvider.logic';
 import { SerialCommunicationContext } from '../../../common/providers/serial-communication/serialCommunicationContext';
 import { getFileIcon } from '../../../common/utils';
 import {
@@ -162,6 +165,7 @@ import {
 } from './hooks/routing';
 import {
   SketchBroadcastEvent,
+  useCopyLinkParams,
   useFileHandlers,
   useIsExampleRoute,
   useIsLibraryRoute,
@@ -181,7 +185,8 @@ import {
 
 export const useMainLogic: UseMainLogic =
   function (): ReturnType<UseMainLogic> {
-    const { user, canUseGenAi } = useContext(AuthContext);
+    const { user, canUseGenAi, policiesAreLoading } = useContext(AuthContext);
+    const rbac = useRbac();
     const {
       isSketchQueried,
       sketchID,
@@ -190,8 +195,9 @@ export const useMainLogic: UseMainLogic =
       scope,
       highlight,
       hideNumbers,
-      createExampleParam,
     } = useSketchParams();
+    const { createExampleParam, createWaitsForPolicies } = useCopyLinkParams();
+    const isReadOnly = !rbac[RbacCapability.EditSketch];
 
     const { headerless, isIotComponent } = useContext(ComponentContext);
 
@@ -253,7 +259,11 @@ export const useMainLogic: UseMainLogic =
       examplesMenuHandlers,
       allContentsRetrieved: allExampleContentsRetrieved,
       hydrateByPaths,
-    } = useGetExamplesQueries(userWasAuthenticated, isExampleSketchRoute);
+    } = useGetExamplesQueries(
+      userWasAuthenticated,
+      isExampleSketchRoute,
+      rbac[RbacCapability.CreateSketch],
+    );
 
     const {
       customLibraryFiles,
@@ -460,7 +470,7 @@ export const useMainLogic: UseMainLogic =
       selectedBoardData,
     } = useBoardsConfig(
       isExampleSketchRoute,
-      !!createExampleParam,
+      createExampleParam || createWaitsForPolicies,
       modifySketchData,
       promptBoardConfigSelection,
       isCreatedSketch ? sketchData.id : null,
@@ -471,6 +481,8 @@ export const useMainLogic: UseMainLogic =
       Boolean(isIotSketch || isIotComponent),
       deviceMetadata.iotDeviceId,
       iotDevicesGroups,
+      // The Device settings are hidden without sketch edit, so auto-selection stays on.
+      isReadOnly,
     );
 
     useComponentUpdate(
@@ -512,7 +524,7 @@ export const useMainLogic: UseMainLogic =
       errorFiles,
       iotCertIsMigrating,
     } = useCoreCommands(
-      !!viewMode,
+      isReadOnly,
       isExampleSketchRoute,
       isLibraryRoute,
       modifySketchData,
@@ -574,6 +586,14 @@ export const useMainLogic: UseMainLogic =
 
         const lastToastId = useRef<string>();
 
+        const { spaces } = useCloudContext();
+        const organizationId = isCreatedSketch
+          ? sketchData?.organizationId
+          : undefined;
+        const organizationName = organizationId
+          ? spaces?.find((space) => space.id === organizationId)?.name
+          : undefined;
+
         return {
           ...genericProps,
           onToggleVisibility: (isPublic: boolean): void => {
@@ -624,13 +644,14 @@ export const useMainLogic: UseMainLogic =
           ...(!isCreatedSketch
             ? { isOwned: false, isPublic: true }
             : { isOwned: true, isPublic: sketchData.isPublic }),
-          organizationId: isCreatedSketch
-            ? sketchData?.organizationId
-            : undefined,
+          organizationId,
+          organizationName,
+          rbac,
         };
       };
 
     const shareSketchLogic = useCallback(useShareSketchDialogLogic, [
+      rbac,
       isCreatedSketch,
       modifySketchData,
       sketchData,
@@ -718,6 +739,12 @@ export const useMainLogic: UseMainLogic =
 
       const { compileUsageExceeded } = useContext(AuthContext);
       const { notificationElement } = useContext(ComponentContext);
+      const headerActions = useHeaderActions({
+        sketchData: isCreatedSketch ? sketchData : undefined,
+        example,
+        inoFile: mainInoData,
+        files,
+      });
 
       const currentIotDevice =
         iotDevicesWithAssociationProp &&
@@ -745,6 +772,7 @@ export const useMainLogic: UseMainLogic =
         isVerifying,
         isPending,
         isCreating,
+        rbac,
         canUpload: manyBoardsMatchMetadata
           ? { value: true }
           : getCanUploadObj(
@@ -803,6 +831,8 @@ export const useMainLogic: UseMainLogic =
                   mainInoData,
                   files || [],
                 )
+              : isExampleSketchRoute && example && mainInoData
+              ? headerActions[HeaderItemId.Example].Download()
               : null,
         },
         devices: toolbarDevicesData,
@@ -829,6 +859,7 @@ export const useMainLogic: UseMainLogic =
     };
 
     const toolbarLogic = useCallback(useToolbarLogic, [
+      rbac,
       detectedDevices,
       iotDevicesWithAssociationProp,
       reactModalProps.isOpen,
@@ -872,6 +903,8 @@ export const useMainLogic: UseMainLogic =
       requestWebSerialBoardDetection,
       mainInoData,
       files,
+      isExampleSketchRoute,
+      example,
     ]);
 
     const deviceAssociationDialogLogic =
@@ -1019,7 +1052,7 @@ export const useMainLogic: UseMainLogic =
         replaceFileNameInvalidCharacters,
         makeUniqueFileName,
         getFileIcon,
-        isReadOnly: isLibraryRoute || !!viewMode,
+        isReadOnly: isLibraryRoute || isReadOnly,
         isExampleSketchRoute,
         hasSetHeightOnHover,
         dispatchNewFileAction,
@@ -1048,7 +1081,7 @@ export const useMainLogic: UseMainLogic =
       unsavedFileIds,
       updateOpenFilesOrder,
       validateFileName,
-      viewMode,
+      isReadOnly,
     ]);
 
     const onReceiveViewInstance = useCallback(
@@ -1063,7 +1096,8 @@ export const useMainLogic: UseMainLogic =
       openFiles,
     );
 
-    const autoSave = usePreferenceObservable(Preferences.AutoSave);
+    const autoSavePreference = usePreferenceObservable(Preferences.AutoSave);
+    const autoSave = isReadOnly || autoSavePreference;
 
     const selectFileById = useCallback(
       (fileId?: string) => selectFile({ fileId }),
@@ -1094,7 +1128,7 @@ export const useMainLogic: UseMainLogic =
       retrieveSketches,
       isLibraryRoute,
       isExampleSketchRoute,
-      !!viewMode,
+      isReadOnly,
       selectedFile,
       mainInoFile,
       compileErrors,
@@ -1185,7 +1219,7 @@ export const useMainLogic: UseMainLogic =
         onReceiveViewInstance,
         fontSize: Number(usePreferenceObservable(Preferences.FontSize)),
         gutter,
-        readOnly: !!viewMode,
+        readOnly: isReadOnly,
         hasHeader: showHeader,
         hasTabs: viewMode !== 'snippet',
       };
@@ -1202,6 +1236,7 @@ export const useMainLogic: UseMainLogic =
       onReceiveViewInstance,
       gutter,
       viewMode,
+      isReadOnly,
       showHeader,
       selectedFile?.fileId,
       saveCode,
@@ -1228,6 +1263,7 @@ export const useMainLogic: UseMainLogic =
 
       return {
         secrets: isCreatedSketch ? sketchData.secrets : undefined,
+        rbac,
         updateSecrets,
         openDeleteSecretDialog,
       };
@@ -1236,6 +1272,7 @@ export const useMainLogic: UseMainLogic =
     const secretsEditorLogic = useCallback(useSecretsEditorLogic, [
       sketchData,
       isCreatedSketch,
+      rbac,
       modifySketchData,
       setDialogInfo,
       setIsDialogOpen,
@@ -1272,7 +1309,7 @@ export const useMainLogic: UseMainLogic =
 
       const controlsProps = {} as EditorControlsProps;
 
-      if (viewMode) {
+      if (isReadOnly) {
         controlsProps.hideControls = true;
         controlsProps.editorControlsHandlers = undefined;
       } else {
@@ -1320,7 +1357,9 @@ export const useMainLogic: UseMainLogic =
       return {
         tabsBarLogic,
         codeEditorLogic,
-        secretsEditorLogic,
+        // Consumed by the secretsWorkspaceRenderer that EditSection
+        // registers on EditorPanel (SecretsPaneExtras contract).
+        paneExtras: { A: { secretsEditorLogic } },
         selectedFile: selectedFile
           ? {
               id: selectedFile.fileId,
@@ -1337,7 +1376,6 @@ export const useMainLogic: UseMainLogic =
         codeIsFormatting,
         isConcurrent: isConcurrent,
         hideTabs: viewMode === 'snippet',
-        isSnippet: viewMode === 'snippet',
       };
     };
 
@@ -1355,6 +1393,7 @@ export const useMainLogic: UseMainLogic =
       invalidateFilesList,
       cancelPendingFileActions,
       viewMode,
+      isReadOnly,
       tabsBarLogic,
       codeEditorLogic,
       secretsEditorLogic,
@@ -1507,38 +1546,42 @@ export const useMainLogic: UseMainLogic =
       const { mutateSketchWithLibraries } = useAssociateSketchToLibraries();
 
       return {
-        handleLibraryInclude: (code, meta): void => {
-          scrollToTop();
+        handleLibraryInclude: !rbac[RbacCapability.EditSketch]
+          ? undefined
+          : (code, meta): void => {
+              scrollToTop();
 
-          handleLibraryIncludeCode(code);
+              handleLibraryIncludeCode(code);
 
-          if (isCreatedSketch && meta) {
-            const currentLibs = sketchData.libraries;
-            const otherLibs = currentLibs.filter((l) => l.name !== meta.name);
+              if (isCreatedSketch && meta) {
+                const currentLibs = sketchData.libraries;
+                const otherLibs = currentLibs.filter(
+                  (l) => l.name !== meta.name,
+                );
 
-            const modifySketchMetadata = (
-              id: string,
-              libraries: SketchData['libraries'],
-            ): void => {
-              modifySketchData({ libraries });
-              mutateSketchWithLibraries({
-                id,
-                libraries,
-              });
-            };
+                const modifySketchMetadata = (
+                  id: string,
+                  libraries: SketchData['libraries'],
+                ): void => {
+                  modifySketchData({ libraries });
+                  mutateSketchWithLibraries({
+                    id,
+                    libraries,
+                  });
+                };
 
-            if (!meta.version) {
-              modifySketchMetadata(sketchData.id, otherLibs);
+                if (!meta.version) {
+                  modifySketchMetadata(sketchData.id, otherLibs);
 
-              return;
-            }
+                  return;
+                }
 
-            modifySketchMetadata(sketchData.id, [
-              ...otherLibs,
-              { name: meta.name, version: meta.version },
-            ]);
-          }
-        },
+                modifySketchMetadata(sketchData.id, [
+                  ...otherLibs,
+                  { name: meta.name, version: meta.version },
+                ]);
+              }
+            },
         handleGenAiApplyCode,
         handleGenAiApplyFixToCode,
         handleApplyPatchAvailability,
@@ -1546,7 +1589,9 @@ export const useMainLogic: UseMainLogic =
         isExampleSketchRoute,
         exampleIsFromLibrary,
         exampleIsFromCustomLibrary,
-        canModifySketchMetadata: isCreatedSketch,
+        canModifySketchMetadata:
+          isCreatedSketch && rbac[RbacCapability.EditSketch],
+        rbac,
         examplesMenuHandlers,
         libraryMenuHandlers,
         selectedBoard,
@@ -1568,7 +1613,7 @@ export const useMainLogic: UseMainLogic =
         newFileAction: setDispatchNewFileAction,
         validateFileName,
         replaceFileNameInvalidCharacters,
-        isReadOnly: isLibraryRoute || !!viewMode || isExampleSketchRoute,
+        isReadOnly: isLibraryRoute || isReadOnly || isExampleSketchRoute,
         genAiBannerLogic,
         scrollToLine,
         errorLines,
@@ -1608,7 +1653,8 @@ export const useMainLogic: UseMainLogic =
       openDeleteFileDialog,
       validateFileName,
       isLibraryRoute,
-      viewMode,
+      isReadOnly,
+      rbac,
       genAiBannerLogic,
       scrollToLine,
       errorLines,
@@ -1655,10 +1701,12 @@ export const useMainLogic: UseMainLogic =
         itemDataIsLoading:
           sketchDataIsNotLoaded && exampleIsLoading && customLibraryIsLoading,
         headerActions: viewMode ? undefined : headerActions,
+        rbac,
       };
     };
 
     const headerLogic = useCallback(useHeaderLogic, [
+      rbac,
       isLibraryRoute,
       isExampleSketchRoute,
       isCreatedSketch,
@@ -1734,63 +1782,74 @@ export const useMainLogic: UseMainLogic =
           ? sketchData
           : undefined;
 
-        const isMine = item?.userId === user?.[USER_CLAIM_ID];
+        const isMine = !!user && item?.userId === user[USER_CLAIM_ID];
         const isMineAndInCurrentOrg = isMine && !isPrivateSketchViewedFromOrg;
+        const opensInEditor = isMineAndInCurrentOrg || isLibraryRoute;
+        // A logged-out visitor (user null) keeps the button: clicking it asks them to log in first.
+        const canAddToSketches =
+          user === null || rbac[RbacCapability.CopyFromPreview];
+        const addToSketchesIsLoading = !!user && policiesAreLoading;
         const actionButtons: ReadOnlyActionButtonsProps =
           itemName && typeof user !== 'undefined'
             ? {
-                primary: {
-                  onClick: (): void => {
-                    const sketchUrl = `${
-                      Config.ROUTING_BASE_URL
-                        ? `/${Config.ROUTING_BASE_URL}`
-                        : ''
-                    }${
-                      isSketchQueried
-                        ? `/${sketchID}`
-                        : isLibraryRoute
-                        ? LIBRARIES_MATCH_PATH
-                        : EXAMPLES_MATCH_PATH
-                    }`;
+                primary:
+                  opensInEditor || canAddToSketches
+                    ? {
+                        onClick: (): void => {
+                          const sketchUrl = `${
+                            Config.ROUTING_BASE_URL
+                              ? `/${Config.ROUTING_BASE_URL}`
+                              : ''
+                          }${
+                            isSketchQueried
+                              ? `/${sketchID}`
+                              : isLibraryRoute
+                              ? LIBRARIES_MATCH_PATH
+                              : EXAMPLES_MATCH_PATH
+                          }`;
 
-                    const params: [string, string][] = Object.entries(search)
-                      .filter(([param, _]) => {
-                        return ![
-                          VIEW_MODE_PARAM,
-                          SCOPE_PARAM,
-                          HIGHLIGHT_PARAM,
-                          HIDE_NUMBERS_PARAM,
-                        ].includes(param);
-                      })
-                      .map(([key, value]) => [key, value]);
+                          const params: [string, string][] = Object.entries(
+                            search,
+                          )
+                            .filter(([param, _]) => {
+                              return ![
+                                VIEW_MODE_PARAM,
+                                SCOPE_PARAM,
+                                HIGHLIGHT_PARAM,
+                                HIDE_NUMBERS_PARAM,
+                              ].includes(param);
+                            })
+                            .map(([key, value]) => [key, value]);
 
-                    if (isExampleSketchRoute) {
-                      params.push([CREATE_EXAMPLE_PARAM, 'true']);
-                    }
+                          if (isExampleSketchRoute) {
+                            params.push([CREATE_EXAMPLE_PARAM, 'true']);
+                          }
 
-                    if (
-                      !isMineAndInCurrentOrg &&
-                      !isLibraryRoute &&
-                      !isExampleSketchRoute
-                    ) {
-                      params.push([CREATE_SKETCH_PARAM, 'true']);
-                    }
+                          if (
+                            !isMineAndInCurrentOrg &&
+                            !isLibraryRoute &&
+                            !isExampleSketchRoute
+                          ) {
+                            params.push([CREATE_SKETCH_PARAM, 'true']);
+                          }
 
-                    const result = getNewWindow(
-                      `${Config.NEW_WINDOW_ORIGIN}${sketchUrl}`,
-                      defaultStringifySearch(Object.fromEntries(params)),
-                      '_blank',
-                    );
+                          const result = getNewWindow(
+                            `${Config.NEW_WINDOW_ORIGIN}${sketchUrl}`,
+                            defaultStringifySearch(Object.fromEntries(params)),
+                            '_blank',
+                          );
 
-                    if (!result) {
-                      console.error('Read only item could not be opened');
-                    }
-                  },
-                  label:
-                    isMineAndInCurrentOrg || isLibraryRoute
-                      ? messages.readOnlyOpenInEditor
-                      : messages.readOnlyAddToSketches,
-                },
+                          if (!result) {
+                            console.error('Read only item could not be opened');
+                          }
+                        },
+                        label: opensInEditor
+                          ? messages.readOnlyOpenInEditor
+                          : messages.readOnlyAddToSketches,
+                      }
+                    : addToSketchesIsLoading
+                    ? undefined
+                    : null,
                 secondary: {
                   onClick: (): void => {
                     const headerItemId = isLibraryRoute
@@ -1821,6 +1880,8 @@ export const useMainLogic: UseMainLogic =
 
     const readOnlyBarLogic = useCallback(useReadOnlyBarLogic, [
       allFiles,
+      policiesAreLoading,
+      rbac,
       customLibrary,
       example,
       isCreatedSketch,
@@ -1844,7 +1905,10 @@ export const useMainLogic: UseMainLogic =
       headerLogic,
       editorPanelLogic,
       toolbarLogic,
-      consolePanelLogic,
+      // Without upload there is nothing to verify or upload, so there is no console.
+      consolePanelLogic: rbac[RbacCapability.UploadSketch]
+        ? consolePanelLogic
+        : undefined,
       dialogSwitchLogic,
       tabTitle: selectedFile?.fileName,
       isFullscreen,
@@ -1854,7 +1918,8 @@ export const useMainLogic: UseMainLogic =
       genAiBannerLogic,
       visibilityFromUrl,
       readOnlyBarLogic,
-      canUseGenAi,
+      // The banner opens the AI assistant, which the sidenav hides without sketch::update.
+      canUseGenAi: canUseGenAi && rbac[RbacCapability.EditSketch],
       viewMode,
     };
   };

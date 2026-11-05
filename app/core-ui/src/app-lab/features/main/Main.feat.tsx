@@ -1,4 +1,5 @@
 import {
+  AGENT_SETTINGS_SECTION_ID,
   AppLabWelcomeDialog,
   BoardUpdateDialog,
   CreateAppDialog,
@@ -11,9 +12,9 @@ import {
   PreparationRequiredDialog,
   SidePanel,
 } from '@cloud-editor-mono/ui-components/lib/components-by-app/app-lab';
-import { Outlet, useRouterState } from '@tanstack/react-router';
+import { Outlet, useNavigate, useRouterState } from '@tanstack/react-router';
 import clsx from 'clsx';
-import { lazy, Suspense, useEffect, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useState } from 'react';
 
 import { useAgentWorkspaces } from '../../hooks/useAgentWorkspaces';
 import { useAppsOnAgentExit } from '../../hooks/useAppsOnAgentExit';
@@ -75,6 +76,12 @@ const AppLabMain: React.FC = () => {
 
   useAppsOnAgentExit(aiAssistantActive);
 
+  const navigate = useNavigate();
+  const openAgentSettings = useCallback(
+    () => navigate({ to: '/settings', hash: AGENT_SETTINGS_SECTION_ID }),
+    [navigate],
+  );
+
   // Mount the chat panel on first entry into agent mode (keeps the bundle lazy), then keep it mounted —
   // hidden in Editor mode — so toggling modes never unmounts it. Seeded from the current route so a
   // deep-link straight to /ai-assistant renders it immediately.
@@ -134,7 +141,7 @@ const AppLabMain: React.FC = () => {
                     banner={<AgentModeBanner />}
                   />
                 )}
-                {/* Editor/app routes render here; hidden (not unmounted) while in agent mode. */}
+                {/* App routes render here. Agent Mode is a sibling route that renders nothing, so the app screen unmounts there. */}
                 <div className={styles['outlet']} hidden={aiAssistantActive}>
                   <Outlet />
                 </div>
@@ -145,6 +152,7 @@ const AppLabMain: React.FC = () => {
                       <AgentPanel
                         workspaces={agentWorkspaces}
                         active={aiAssistantActive}
+                        onOpenSettings={openAgentSettings}
                       />
                     </Suspense>
                   </div>

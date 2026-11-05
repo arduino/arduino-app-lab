@@ -1,5 +1,5 @@
 @use "../../../public/shared.module.scss";
-@use "../../code-editor/code-editor-variables.module.scss";
+@use "@cloud-editor-mono/ide-workbench/lib/code-editor/code-editor-variables.module.scss";
 
 .dropdown-menu-section {
   list-style: none;
@@ -42,6 +42,7 @@
   &.dropdown-menu-item-disabled {
     opacity: 0.5;
     background-color: var(--surface-bg-above);
+    cursor: not-allowed;
   }
 
   &.dropdown-menu-item-focused {

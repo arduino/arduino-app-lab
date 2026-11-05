@@ -53,6 +53,29 @@ export const onAgentModelImport: AppUIService['onAgentModelImport'] = (cb) =>
     }
   });
 
+// Wails event from the board MCP when the agent renames an app; the caller moves off the old id.
+export const onAgentRenamedApp: AppUIService['onAgentRenamedApp'] = (cb) =>
+  EventsOn('app:agent-renamed', (oldId, newId, newName) => {
+    if (typeof oldId === 'string' && typeof newId === 'string') {
+      cb(oldId, newId, typeof newName === 'string' ? newName : '');
+    }
+  });
+
+// Wails event from the board MCP when the agent renames or moves an app's file or folder; the caller moves its open tabs.
+export const onAgentRenamedAppFile: AppUIService['onAgentRenamedAppFile'] = (
+  cb,
+) =>
+  EventsOn('app:agent-renamed-file', (appId, appPath, from, to, isFolder) => {
+    if (
+      typeof appId === 'string' &&
+      typeof appPath === 'string' &&
+      typeof from === 'string' &&
+      typeof to === 'string'
+    ) {
+      cb(appId, appPath, from, to, isFolder === true);
+    }
+  });
+
 // Wails event from the board MCP when the agent starts an app; the caller opens its web UI once running.
 export const onAgentStartedApp: AppUIService['onAgentStartedApp'] = (cb) =>
   EventsOn('app:agent-started', (appId) => {

@@ -1,25 +1,16 @@
 import { NodeApi } from 'react-arborist';
 
-export interface BaseNode {
-  name: string;
-  path: string;
-  createdAt?: string;
-  modifiedAt?: string;
-}
+// The node data contract lives in the editor-panel package so the editor can
+// consume it without importing ui-components (ADR-0002); the react-arborist-bound
+// API type stays here with the tree UI.
+export type {
+  BaseNode,
+  FileNode,
+  FolderNode,
+  TreeNode,
+} from '@cloud-editor-mono/ide-workbench/lib/file-tree/fileTree.type';
 
-export interface FileNode extends BaseNode {
-  type: 'file';
-  extension: string;
-  mimeType: string;
-}
-
-export interface FolderNode extends BaseNode {
-  type: 'folder';
-  // null when folder content has not been listed yet
-  children: TreeNode[] | null;
-}
-
-export type TreeNode = FileNode | FolderNode;
+import type { TreeNode } from '@cloud-editor-mono/ide-workbench/lib/file-tree/fileTree.type';
 
 export type FileTreeApi = {
   handleFileCreate: (path?: string) => void;

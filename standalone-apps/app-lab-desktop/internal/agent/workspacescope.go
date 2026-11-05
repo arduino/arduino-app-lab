@@ -3,6 +3,8 @@ package agent
 import (
 	"path/filepath"
 	"strings"
+
+	"app-lab-desktop/internal/appid"
 )
 
 // Tool kinds that change files: reads and searches outside the workspace are fine, a write is what the user has to be told about.
@@ -21,7 +23,7 @@ func toolCallPaths(tc *ToolCall) []string {
 		return nil
 	}
 	var paths []string
-	for _, key := range []string{"file_path", "path", "notebook_path"} {
+	for _, key := range []string{"file_path", "filePath", "path", "notebook_path"} {
 		if p, ok := input[key].(string); ok && strings.TrimSpace(p) != "" {
 			paths = append(paths, p)
 		}
@@ -61,12 +63,11 @@ func resolvePath(sessionCwd, path string) string {
 }
 
 // appTargetedToolPrefixes are the board tools acting on one app, matched by NAME: other tools take an "id" that is not an app's (models_delete, bricks_get).
-var appTargetedToolPrefixes = []string{"apps_", "app_bricks_", "sketch_libraries_"}
+var appTargetedToolPrefixes = []string{"apps_", "app_bricks_", "app_files_", "sketch_libraries_"}
 
 // toolCallAppID reads the app a board tool is aimed at, "" when it targets none — apps_create names no app, and non-board tools have none at all.
 func toolCallAppID(tc *ToolCall) (string, bool) {
-	name := bareToolName(tc.Title)
-	if name == "apps_create" || !targetsAnApp(name) {
+	if !namesAnApp(tc.Title) {
 		return "", false
 	}
 	input, ok := tc.Input.(map[string]any)
@@ -74,11 +75,18 @@ func toolCallAppID(tc *ToolCall) (string, bool) {
 		return "", false
 	}
 	for _, key := range []string{"appId", "appID", "id"} {
-		if v, ok := input[key].(string); ok && strings.TrimSpace(v) != "" {
-			return strings.TrimSpace(v), true
+		// Read as the board tools read it, so a call names the app it acts on.
+		if v, ok := input[key].(string); ok && appid.Canonical(v) != "" {
+			return appid.Canonical(v), true
 		}
 	}
 	return "", false
+}
+
+// namesAnApp reports whether a board tool acts on an app it must name; apps_create makes a new one instead.
+func namesAnApp(title string) bool {
+	name := bareToolName(title)
+	return name != "apps_create" && targetsAnApp(name)
 }
 
 func targetsAnApp(name string) bool {
@@ -90,10 +98,15 @@ func targetsAnApp(name string) bool {
 	return false
 }
 
-// bareToolName drops the MCP wire prefix (mcp__arduino-board__apps_start -> apps_start).
+// isBoardTool reports a call to the board's MCP server, in either engine's spelling.
+func isBoardTool(title string) bool { return bareToolName(title) != title }
+
+// bareToolName drops the board server's prefix in either engine's spelling, and only that: an edit's title holds a "<board>__<app>" path.
 func bareToolName(title string) string {
-	if i := strings.LastIndex(title, "__"); i >= 0 {
-		return title[i+len("__"):]
+	for _, prefix := range []string{claudeToolName(boardMCPServerName, ""), openCodeToolName(boardMCPServerName, "")} {
+		if name, ok := strings.CutPrefix(title, prefix); ok && name != "" {
+			return name
+		}
 	}
 	return title
 }

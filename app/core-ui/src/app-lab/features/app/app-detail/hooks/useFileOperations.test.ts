@@ -11,13 +11,15 @@ import { createElement, ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
+  keepMovedBuffer,
   useFileOperations,
   UseFileOperationsReturn,
 } from './useFileOperations';
 
 const h = vi.hoisted(() => ({
   renameAppFile: vi.fn(() => Promise.resolve()),
-  getCodeSubjects: (): Map<string, unknown> => new Map(),
+  subjects: new Map<string, unknown>(),
+  unsaved: new Set<string>(),
 }));
 
 vi.mock(
@@ -28,11 +30,17 @@ vi.mock(
     getCodeSubjectById: (): never => {
       throw new Error('no subject');
     },
-    getCodeSubjects: h.getCodeSubjects,
+    getCodeSubjects: (): Map<string, unknown> => h.subjects,
+    isUnsavedFile: (id: string): boolean => h.unsaved.has(id),
     removeAppFile: vi.fn(),
     removeCodeSubject: vi.fn(),
     renameAppFile: h.renameAppFile,
-    renameCodeSubject: vi.fn(),
+    renameCodeSubject: (from: string, to: string): void => {
+      if (!h.subjects.has(from)) return;
+      h.subjects.set(to, h.subjects.get(from));
+      h.subjects.delete(from);
+      if (h.unsaved.delete(from)) h.unsaved.add(to);
+    },
     setCodeSubjects: vi.fn(),
   }),
 );
@@ -64,6 +72,8 @@ const renderOps = (): UseFileOperationsReturn => {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  h.subjects.clear();
+  h.unsaved.clear();
   h.renameAppFile.mockResolvedValue(undefined);
 });
 
@@ -103,5 +113,55 @@ describe('useFileOperations.renameFile', () => {
       renderOps().renameFile('python', 'py3', { nodeType: 'folder' }),
     ).rejects.toThrow();
     expect(renameDir).not.toHaveBeenCalled();
+  });
+
+  // The move keeps the content, so the refetch its new id triggers must not replace a buffer with typing not saved yet.
+  it('keeps a moved buffer with typing not saved yet, for every panel that shows it', async () => {
+    h.subjects.set('python/a.py', {});
+    h.unsaved.add('python/a.py');
+    await renderOps().renameFile('python/a.py', 'python/b.py', {
+      source: 'stream',
+      nodeType: 'file',
+    });
+
+    expect(keepMovedBuffer('python/b.py')).toBe(true);
+    expect(keepMovedBuffer('python/b.py')).toBe(true);
+    expect(keepMovedBuffer('python/a.py')).toBe(false);
+
+    // However late a refetch comes, the buffer stays until its typing is saved.
+    h.unsaved.delete('python/b.py');
+    expect(keepMovedBuffer('python/b.py')).toBe(false);
+  });
+
+  // An agent edit flushed to the board just before the move must reach the buffer.
+  it('reloads a moved buffer with nothing unsaved', async () => {
+    h.subjects.set('python/g.py', {});
+    await renderOps().renameFile('python/g.py', 'python/h.py', {
+      source: 'stream',
+      nodeType: 'file',
+    });
+
+    expect(keepMovedBuffer('python/h.py')).toBe(false);
+  });
+
+  // The file tree moves the buffer before the board does, so its rename keeps the refetch it always had.
+  it('marks nothing on a user rename', async () => {
+    h.subjects.set('python/e.py', {});
+    h.unsaved.add('python/e.py');
+    await renderOps().renameFile('python/e.py', 'python/f.py', {
+      nodeType: 'file',
+    });
+
+    expect(keepMovedBuffer('python/f.py')).toBe(false);
+  });
+
+  // Without a buffer there is nothing to keep, and skipping the fetch would leave the tab empty.
+  it('marks nothing for a file with no buffer', async () => {
+    await renderOps().renameFile('python/c.py', 'python/d.py', {
+      source: 'stream',
+      nodeType: 'file',
+    });
+
+    expect(keepMovedBuffer('python/d.py')).toBe(false);
   });
 });

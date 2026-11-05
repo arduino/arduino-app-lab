@@ -1,7 +1,7 @@
 import {
   ViewInstances,
   viewInstances,
-} from '@cloud-editor-mono/ui-components/lib/code-mirror/codeMirrorViewInstances';
+} from '@cloud-editor-mono/ide-workbench/lib/code-mirror/codeMirrorViewInstances';
 import type { SelectableFileData } from '@cloud-editor-mono/ui-components/lib/components-by-app/app-lab';
 import { EditorSelection, EditorState } from '@codemirror/state';
 import type { EditorView } from '@codemirror/view';

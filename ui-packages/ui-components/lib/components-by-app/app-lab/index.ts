@@ -1,8 +1,4 @@
-export * from '../../code-editor';
-export * from '../../code-mirror';
 export * from '../../dialogs/app-lab';
-export * from '../../editor-panel';
-export * from '../../editor-tabs-bar';
 export * from '../../essential/checkbox';
 export * from '../../essential/dropdown-menu';
 export * from '../../essential/input';
@@ -62,3 +58,7 @@ export * from './sketch-library-card';
 export * from './tabs';
 export * from './top-bar';
 export * from './workspace-layout';
+export * from '@cloud-editor-mono/ide-workbench/lib/code-editor/index';
+export * from '@cloud-editor-mono/ide-workbench/lib/code-mirror/index';
+export * from '@cloud-editor-mono/ide-workbench/lib/editor-panel/index';
+export * from '@cloud-editor-mono/ide-workbench/lib/editor-tabs-bar/index';

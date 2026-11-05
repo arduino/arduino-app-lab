@@ -74,6 +74,7 @@ const AppFilesSection: React.FC<AppEditSectionProps> = (
     onFolderExpand,
     checkPathConflict,
     closeFolder,
+    renamedFolder,
     sendAppLabNotification,
     lspReferencesResult,
     closeLspReferences,
@@ -148,6 +149,7 @@ const AppFilesSection: React.FC<AppEditSectionProps> = (
       onFolderExpand,
       checkPathConflict,
       closeFolder,
+      renamedFolder,
       sendAppLabNotification,
       hasSketch,
       boardOffline,
@@ -199,6 +201,7 @@ const AppFilesSection: React.FC<AppEditSectionProps> = (
       onFolderExpand,
       checkPathConflict,
       closeFolder,
+      renamedFolder,
       sendAppLabNotification,
       hasSketch,
       boardOffline,
@@ -239,6 +242,7 @@ const AppFilesSection: React.FC<AppEditSectionProps> = (
     const handleDragEnd = (): void => {
       if (dragOverTimerRef.current) clearTimeout(dragOverTimerRef.current);
       clearPreview();
+      draggingFileNodesRef.current = null;
       draggingBrickRef.current = null;
       setDragPointer(null);
       setIsDragOver(false);
@@ -341,9 +345,8 @@ const AppFilesSection: React.FC<AppEditSectionProps> = (
   return (
     <>
       <WorkspaceLayout
-        // Remount when the app loads so persisted panel sizes are read from
-        // the per-app storage key at mount.
-        key={app?.id}
+        // Remount when the app loads, so per-app panel sizes are read at mount; not on its id, which an agent rename changes in place.
+        key={app?.id ? 'loaded' : 'loading'}
         appId={app?.id}
         sideContent={(api): React.ReactNode => (
           <FilesManagerSection

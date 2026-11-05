@@ -73,19 +73,33 @@ export const ConfigureAppBrickDialog: React.FC<
   const handleConfirm = async (): Promise<void> => {
     if (!brickId) return;
     setLoading(true);
+    try {
+      const success = await confirmAction({
+        variables: variables.reduce(
+          (acc, variable) => ({
+            ...acc,
+            [variable.name!]: variable.value,
+          }),
+          {},
+        ),
+      });
+      if (success) {
+        setOpen(false);
+      }
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    const success = await confirmAction({
-      variables: variables.reduce(
-        (acc, variable) => ({
-          ...acc,
-          [variable.name!]: variable.value,
-        }),
-        {},
-      ),
-    });
-    setLoading(false);
-    if (success) {
-      setOpen(false);
+  const isMissingRequired = variables.some(
+    (variable) => variable.required && !variable.value.trim().length,
+  );
+
+  const handleEnter = (): void => {
+    if (!isMissingRequired && !loading) {
+      handleConfirm();
     }
   };
 
@@ -100,9 +114,7 @@ export const ConfigureAppBrickDialog: React.FC<
           variant={ButtonVariant.Primary}
           uppercase={false}
           loading={loading}
-          disabled={variables.some(
-            (variable) => variable.required && !variable.value.trim().length,
-          )}
+          disabled={isMissingRequired}
           type="submit"
           classes={{
             button: styles['action-button'],
@@ -133,6 +145,8 @@ export const ConfigureAppBrickDialog: React.FC<
                 autoCorrect="off"
                 spellCheck="false"
                 autoFocus={index === 0}
+                blurOnEnter={false}
+                onEnter={handleEnter}
                 onChange={(value: string): void =>
                   setVariables((prev) =>
                     prev.map((v) =>

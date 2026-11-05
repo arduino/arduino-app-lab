@@ -3,6 +3,8 @@ package boardmcp
 import (
 	"context"
 	"io"
+	"net/http"
+	"net/http/httptest"
 	"strings"
 	"testing"
 	"time"
@@ -58,6 +60,45 @@ func TestScanSSEForError(t *testing.T) {
 			}
 			if got != c.want {
 				t.Errorf("got %q, want %q", got, c.want)
+			}
+		})
+	}
+}
+
+// A start or stop that worked still ends its stream with SERVER_CLOSED: read as a failure, apps_stop told the agent the app was still running.
+func TestOrchestratorActionEndsOnServerClosed(t *testing.T) {
+	cases := []struct {
+		name, stream, wantErr string
+	}{
+		{
+			name:   "a clean close after progress",
+			stream: "event: message\ndata: {\"message\":\"stopping\"}\n\nevent: error\ndata: {\"code\":\"SERVER_CLOSED\"}\n\nevent: close\n\n",
+		},
+		{
+			name:    "a real error before the close",
+			stream:  "event: error\ndata: {\"code\":\"APP_NOT_FOUND\",\"message\":\"app not found\"}\n\nevent: error\ndata: {\"code\":\"SERVER_CLOSED\"}\n\n",
+			wantErr: "app not found",
+		},
+		{
+			name:    "an error with no message falls back to its code",
+			stream:  "event: error\ndata: {\"code\":\"APP_BUSY\"}\n\n",
+			wantErr: "APP_BUSY",
+		},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			board := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Content-Type", "text/event-stream")
+				_, _ = io.WriteString(w, c.stream)
+			}))
+			defer board.Close()
+
+			_, err := orchestratorAction(context.Background(), stubAccess{base: board.URL}, "/v1/apps/x/stop")
+			switch {
+			case c.wantErr == "" && err != nil:
+				t.Errorf("a finished action reported %q", err)
+			case c.wantErr != "" && (err == nil || !strings.Contains(err.Error(), c.wantErr)):
+				t.Errorf("err = %v, want one naming %q", err, c.wantErr)
 			}
 		})
 	}

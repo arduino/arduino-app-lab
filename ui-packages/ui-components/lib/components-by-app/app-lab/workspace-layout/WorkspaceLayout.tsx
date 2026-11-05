@@ -1,8 +1,8 @@
+import { SplitDragProvider } from '@cloud-editor-mono/ide-workbench/lib/editor-panel/SplitDragContext';
 import clsx from 'clsx';
 import React, { useEffect, useMemo, useRef } from 'react';
 import { Group, Panel, Separator } from 'react-resizable-panels';
 
-import { SplitDragProvider } from '../../../editor-panel/SplitDragContext';
 import {
   CONSOLE_PANEL_COLLAPSED_SIZE_PX,
   CONSOLE_PANEL_MIN_SIZE_PX,

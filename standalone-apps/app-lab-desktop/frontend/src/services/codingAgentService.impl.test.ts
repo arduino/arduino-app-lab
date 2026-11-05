@@ -204,7 +204,7 @@ describe('codingAgentService.impl — sign-in', () => {
 
 describe('codingAgentService.impl — degraded methods (not wired yet)', () => {
   it('reports not-authenticated status and returns empty collections', async () => {
-    expect(await svc.getAuthStatus()).toEqual({ authenticated: false });
+    expect(await svc.getAuthStatus('claude')).toEqual({ authenticated: false });
     expect(await svc.listModels()).toEqual([]);
   });
 });

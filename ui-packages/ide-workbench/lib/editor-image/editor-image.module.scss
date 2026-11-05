@@ -1,0 +1,37 @@
+@use "../theme/shared.module.scss";
+
+.container {
+    width: 100%;
+    overflow: auto;
+    text-align: center;
+    background-color: var(--editor-background);
+}
+
+.container-scaled {
+    display: flex;
+    justify-content: center;
+}
+
+.image {
+    margin: 12px;
+    cursor: zoom-in;
+}
+
+.image-zoomed {
+    cursor: zoom-out;
+}
+
+.image-scaled {
+    cursor: zoom-in;
+    max-width: 100%;
+    max-height: 100%;
+    min-height: 200px;
+    display: block;
+    height: fit-content;
+}
+
+.loaderContainer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}

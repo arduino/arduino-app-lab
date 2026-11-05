@@ -92,6 +92,7 @@ export type UseGetSketchStartUpQueries = (
 export type UseGetExamplesQueries = (
   userWasAuthenticated: boolean,
   isExampleSketchRoute: boolean,
+  canCreateSketch: boolean,
 ) => {
   example?: Example;
   exampleData?: RetrieveExampleFileContentsResult;
@@ -200,7 +201,7 @@ export type UseMainLogic = () => {
   dependentSidenavLogic: DependentSidenavLogic;
   toolbarLogic: ToolbarLogic;
   editorPanelLogic: EditorPanelLogic;
-  consolePanelLogic: ConsolePanelLogic;
+  consolePanelLogic?: ConsolePanelLogic;
   dialogSwitchLogic: DialogSwitchLogic;
   tabTitle?: string;
   isFullscreen: boolean;
@@ -250,6 +251,7 @@ export type UseBoardsConfig = (
   isIotSketch: boolean,
   initialIotDeviceId?: string | null,
   iotDevicesGroups?: IotDevicesGroups,
+  forceBoardAutoSelection?: boolean,
 ) => {
   setDetectedBoardAndPort: SetDetectedBoardAndPort;
   setDetectedUnknownBoard: SetDetectedUnknownBoard;
@@ -298,6 +300,12 @@ export type UseSketchParams = () => {
   scope?: FileLineScope;
   highlight?: number[];
   hideNumbers: boolean;
+};
+
+export type UseCopyLinkParams = () => {
+  createSketchParam: boolean;
+  createExampleParam: boolean;
+  createWaitsForPolicies: boolean;
 };
 
 export type UseFileHandlers = (

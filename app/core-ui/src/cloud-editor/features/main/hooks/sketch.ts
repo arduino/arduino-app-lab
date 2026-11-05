@@ -11,6 +11,7 @@ import {
   FileNameValidation,
   FileNameValidationItem,
   NewTabMenuItemIds,
+  RbacCapability,
   TabMenuItemIds,
   useI18n,
 } from '@cloud-editor-mono/ui-components';
@@ -20,7 +21,9 @@ import { useLocation as reactUse_useLocation } from 'react-use';
 
 import { useEditExampleNotification } from '../../../../common/hooks/notifications';
 import { useCreateSketchFromExisting } from '../../../../common/hooks/queries/create';
+import { AuthContext } from '../../../../common/providers/auth/authContext';
 import { NotificationsContext } from '../../../../common/providers/notifications/notificationsContext';
+import { useRbac } from '../../../../common/providers/rbac/rbacContextProvider.logic';
 import {
   EXAMPLES_MATCH_PATH,
   LIBRARIES_MATCH_PATH,
@@ -48,7 +51,11 @@ import {
   SOURCE_LIBRARY_ID_PARAM,
   VIEW_MODE_PARAM,
 } from '../../../../routing/routing.type';
-import { UseFileHandlers, UseSketchParams } from '../main.type';
+import {
+  UseCopyLinkParams,
+  UseFileHandlers,
+  UseSketchParams,
+} from '../main.type';
 import { invalidFileNameMessages } from '../messages';
 
 export enum SketchBroadcastEvent {
@@ -140,6 +147,21 @@ export const useSketchParams = function (): ReturnType<UseSketchParams> {
     scope,
     highlight: highlight && highlight.length > 0 ? highlight : undefined,
     hideNumbers: typeof hideNumbers === 'string' && hideNumbers !== 'false',
+  };
+};
+
+// Every reader of the copy-link params goes through here: without sketch::create the link opens as a plain one.
+export const useCopyLinkParams = function (): ReturnType<UseCopyLinkParams> {
+  const { createSketchParam, createExampleParam } = useSketchParams();
+  const canCreateSketch = useRbac()[RbacCapability.CreateSketch];
+  const { policiesAreLoading } = useContext(AuthContext);
+
+  return {
+    createSketchParam: Boolean(createSketchParam) && canCreateSketch,
+    createExampleParam: Boolean(createExampleParam) && canCreateSketch,
+    // sketch::create reads false until the policies load; handling the link as a plain one then redirects to preview.
+    createWaitsForPolicies:
+      Boolean(createSketchParam || createExampleParam) && policiesAreLoading,
   };
 };
 

@@ -82,10 +82,14 @@ export function useAppFiles({
       const rootFiles = new Set(
         fileTree?.filter((node) => node.type === 'file').map((n) => n.path),
       );
+      // A stat that fails rules its candidate out: an error here would leave no default file, and the tabs would never restore.
       const exists = await Promise.all(
         DEFAULT_FILE_CANDIDATES.map(async (candidate) =>
           candidate.includes('/')
-            ? !!(await statAppPath(`${appPath}/${candidate}`))
+            ? statAppPath(`${appPath}/${candidate}`).then(
+                (node) => !!node,
+                () => false,
+              )
             : rootFiles.has(candidate),
         ),
       );

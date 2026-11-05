@@ -43,8 +43,6 @@ export const Row = ({
 }: RowProps): JSX.Element => {
   const { props: tooltipProps, renderTooltip } = useTooltip({
     content: title,
-    timeout: 0,
-    renderDelay: 500,
   });
 
   const content = (

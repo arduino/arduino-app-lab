@@ -106,13 +106,27 @@ func WalkFilePaths(fss fs.FS, ignorePatterns []string) ([]string, error) {
 
 // ListFilePaths is WalkFilePaths over a board connection.
 func ListFilePaths(rootPath string, conn remote.RemoteConn) ([]string, error) {
-	return WalkFilePaths(getFS(rootPath, conn), defaultIgnorePatterns)
+	return WalkFilePaths(getFS(rootPath, dirsByListing{RemoteConn: conn, root: path.Clean(rootPath)}), defaultIgnorePatterns)
+}
+
+// dirsByListing lets the listings say what is a folder: remotefs asks file -L first, which calls a folder named like "v1:2", or a sticky one, a file.
+type dirsByListing struct {
+	remote.RemoteConn
+	root string
+}
+
+// Stats answers "folder" for every path but the root: WalkFilePaths opens only the root and what a listing showed as a folder.
+func (c dirsByListing) Stats(p string) (remote.FileInfo, error) {
+	if path.Clean(p) == c.root {
+		return c.RemoteConn.Stats(p)
+	}
+	return remote.FileInfo{Name: path.Base(p), IsDir: true}, nil
 }
 
 // ListDirectory returns the immediate children of rootPath, directories first
 // then alphabetical.
 func ListDirectory(rootPath string, conn remote.RemoteConn) ([]FSNode, error) {
-	entries, err := listConnEntries(conn, rootPath)
+	entries, err := ListConnEntries(conn, rootPath)
 	if err != nil {
 		return nil, err
 	}

@@ -1,10 +1,8 @@
 import {
-  IconAccountSettingsNormal,
-  IconMediaLibraryBooksNormal,
-} from '@arduino/react-icons';
-import {
   ArrowDown,
   Brick,
+  IconAccountSettingsNormal,
+  MediaLibraryBooksNormal,
   NavigationGroupOutline,
   NavigationTable,
   UserProfileOutline,
@@ -82,7 +80,7 @@ const getBackIcon = (
     }
     if (pathItem === 'learn' || pathItem === 'resources') {
       return (
-        <IconMediaLibraryBooksNormal
+        <MediaLibraryBooksNormal
           className={styles['back-app-button']}
           title="Learn"
         />
@@ -105,7 +103,7 @@ const getSectionIcon = (
     'my-apps': <NavigationGroupOutline className={styles['section-icon']} />,
     examples: <NavigationTable className={styles['section-icon']} />,
     inspirations: <NavigationTable className={styles['section-icon']} />,
-    learn: <IconMediaLibraryBooksNormal className={styles['learn-icon']} />,
+    learn: <MediaLibraryBooksNormal className={styles['learn-icon']} />,
     bricks: <Brick className={styles['section-icon']} />,
     settings: <IconAccountSettingsNormal className={styles['section-icon']} />,
     account: <UserProfileOutline className={styles['section-icon']} />,

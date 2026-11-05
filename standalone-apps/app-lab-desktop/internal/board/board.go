@@ -371,6 +371,7 @@ func (b *Board) GetLinuxDistribution() (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("failed to read os-release file: %w", err)
 	}
+	defer f.Close() // Close waits for the adb or ssh process; without it each call leaves a defunct child
 
 	s := bufio.NewScanner(f)
 	for s.Scan() {

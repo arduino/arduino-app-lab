@@ -1,4 +1,3 @@
-import { InfoIconOutline } from '@cloud-editor-mono/images/assets/icons';
 import { useEffect, useState } from 'react';
 
 import {
@@ -9,7 +8,6 @@ import {
   Small,
   useI18n,
   XXSmall,
-  XXXSmall,
 } from '../../../components-by-app/app-lab';
 import { AppLabDialog } from '../app-lab-dialog/AppLabDialog';
 import { messages } from './messages';
@@ -55,6 +53,8 @@ export const PasswordDialog: React.FC<PasswordDialogProps> = ({
     }
   }, [isSuccess, onOpenChange]);
 
+  const canConfirm = password.length > 0 && !isLoading;
+
   return (
     <AppLabDialog
       open={open}
@@ -65,7 +65,7 @@ export const PasswordDialog: React.FC<PasswordDialogProps> = ({
         <Button
           loading={isLoading}
           size={ButtonSize.Small}
-          disabled={password.length === 0 || isLoading}
+          disabled={password.length === 0}
           type="submit"
         >
           {formatMessage(messages.save)}
@@ -90,17 +90,24 @@ export const PasswordDialog: React.FC<PasswordDialogProps> = ({
           disabled={isLoading}
           sensitive
           autoFocus
+          blurOnEnter={false}
+          onEnter={(): void => {
+            if (canConfirm) {
+              onConfirm(password);
+            }
+          }}
+          error={
+            error
+              ? new Error(
+                  formatMessage(
+                    error.kind === 'password'
+                      ? messages.passwordWrong
+                      : messages.genericError,
+                  ),
+                )
+              : undefined
+          }
         />
-        {error && (
-          <div className={styles['error-message']}>
-            <InfoIconOutline />
-            <XXXSmall>
-              {error.kind === 'password'
-                ? formatMessage(messages.passwordWrong)
-                : formatMessage(messages.genericError)}
-            </XXXSmall>
-          </div>
-        )}
       </div>
     </AppLabDialog>
   );

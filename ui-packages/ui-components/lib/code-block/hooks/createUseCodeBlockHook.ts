@@ -1,17 +1,16 @@
-import { syntaxHighlighting, TagStyle } from '@codemirror/language';
-import { Extension } from '@codemirror/state';
-import { EditorView } from '@codemirror/view';
-import { RefCallback, useEffect, useRef } from 'react';
-
 import {
   customTags as tags,
   highlightStyle,
-} from '../../code-mirror/extensions/language/highlightStyle';
+} from '@cloud-editor-mono/ide-workbench/lib/code-mirror/extensions/language/highlightStyle';
 import {
   FileExt,
   fileExtCodeMirrorExtensionMap,
   languageToFileExtMap,
-} from '../../code-mirror/extensions/language/setup';
+} from '@cloud-editor-mono/ide-workbench/lib/code-mirror/extensions/language/setup';
+import { syntaxHighlighting, TagStyle } from '@codemirror/language';
+import { Extension } from '@codemirror/state';
+import { EditorView } from '@codemirror/view';
+import { RefCallback, useEffect, useRef } from 'react';
 
 export type UseCodeBlockCodeMirror = (code: string) => {
   ref: RefCallback<HTMLDivElement>;

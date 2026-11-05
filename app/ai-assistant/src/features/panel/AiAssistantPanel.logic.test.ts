@@ -1,19 +1,23 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { AgentRestart } from '../../services';
+import type { AgentRestart, SessionState } from '../../services';
 import { useAiAssistantStore, useChatStore } from '../../store';
 import { useAiAssistantPanelLogic } from './AiAssistantPanel.logic';
 
 const services = vi.hoisted(() => ({
   getAuthStatus: vi.fn<() => Promise<unknown>>(),
   start: vi.fn<(agentId: string) => Promise<void>>(),
-  validateAuth: vi.fn<() => Promise<void>>(),
+  validateAuth: vi.fn<() => Promise<SessionState>>(),
   restartListeners: [] as ((restart: AgentRestart) => void)[],
 }));
 
 vi.mock('../../services', () => ({
+  DEFAULT_AGENT_ID: 'claude',
+  listAgents: (): { id: string; comingSoon?: boolean }[] => [{ id: 'claude' }],
   getAuthStatus: services.getAuthStatus,
+  // The host names the agent in use; the probe reflects it rather than picking one.
+  currentAgent: (): Promise<string> => Promise.resolve('claude'),
   start: services.start,
   validateAuth: services.validateAuth,
   onRestart: (fn: (restart: AgentRestart) => void): VoidFunction => {
@@ -40,14 +44,18 @@ describe('useAiAssistantPanelLogic', () => {
       agentId: 'claude',
     });
     services.start.mockReset().mockResolvedValue(undefined);
-    services.validateAuth.mockReset().mockResolvedValue(undefined);
+    services.validateAuth.mockReset().mockResolvedValue({
+      sessionId: 'probe',
+      status: 'idle',
+    });
     services.restartListeners = [];
     useChatStore.getState().reset();
     useAiAssistantStore.setState({
-      auth: { authenticated: false },
+      selectedAgentId: undefined,
+      auth: {},
       authResolved: false,
       lastValidatedAt: undefined,
-      agentDown: false,
+      agentDown: undefined,
     });
   });
 
@@ -55,7 +63,8 @@ describe('useAiAssistantPanelLogic', () => {
   // first open takes the skip-the-probe path with authResolved still false — which used to hang.
   it('clears the loader on a first open that follows a sign-in made from Settings', async () => {
     useAiAssistantStore.setState({
-      auth: { authenticated: true, agentId: 'claude' },
+      selectedAgentId: 'claude',
+      auth: { claude: { authenticated: true, agentId: 'claude' } },
       authResolved: false,
       lastValidatedAt: Date.now(),
     });
@@ -76,12 +85,40 @@ describe('useAiAssistantPanelLogic', () => {
     expect(services.validateAuth).toHaveBeenCalled();
   });
 
+  // With sessions created on the first prompt, nothing else refreshes the sidebar after the start or fills the empty chat's pickers.
+  it('re-reads the session list after the start and seeds the empty chat from the validation session', async () => {
+    services.validateAuth.mockResolvedValue({
+      sessionId: 'probe',
+      status: 'idle',
+      modelId: 'opencode/big-pickle',
+      models: [{ id: 'opencode/big-pickle', name: 'Big Pickle' }],
+      modeId: 'build',
+      modes: [{ id: 'build', name: 'build' }],
+    });
+    const listVersion = useChatStore.getState().sessionListVersion;
+
+    const { result } = renderHook(() => useAiAssistantPanelLogic());
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    expect(useChatStore.getState().sessionListVersion).toBeGreaterThan(
+      listVersion,
+    );
+    expect(useChatStore.getState().newSessionPicks).toEqual({
+      modelId: 'opencode/big-pickle',
+      modeId: 'build',
+    });
+    expect(
+      useAiAssistantStore.getState().pickers?.models.map((m) => m.id),
+    ).toEqual(['opencode/big-pickle']);
+  });
+
   // Past the freshness window the credential is re-probed, and an expired one has to reach the login
   // screen rather than the chat.
   it('re-validates a stale credential and drops to connect when the probe says signed out', async () => {
     services.getAuthStatus.mockResolvedValue({ authenticated: false });
     useAiAssistantStore.setState({
-      auth: { authenticated: true, agentId: 'claude' },
+      selectedAgentId: 'claude',
+      auth: { claude: { authenticated: true, agentId: 'claude' } },
       authResolved: false,
       lastValidatedAt: Date.now() - 3_600_000,
     });

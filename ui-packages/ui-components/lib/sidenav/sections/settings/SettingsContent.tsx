@@ -10,7 +10,8 @@ import styles from './settings.module.scss';
 import { sections as renderSections, settingsItems } from './settingsSpec';
 
 const SettingsContent = (): JSX.Element => {
-  const { restorePreferences, handleOptOut } = useContext(SettingsContext);
+  const { restorePreferences, handleOptOut, hiddenSections } =
+    useContext(SettingsContext);
   const { formatMessage } = useI18n();
 
   return (
@@ -23,19 +24,21 @@ const SettingsContent = (): JSX.Element => {
           </Button>
         </div>
       ) : null}
-      {settingsItems.map((section) => {
-        return (
-          <div key={section.id} className={styles['section-container']}>
-            <div className={styles['section-header']}>
-              <section.Icon aria-hidden="true" />
-              <XXSmall uppercase>{formatMessage(section.label)}</XXSmall>
+      {settingsItems
+        .filter((section) => !hiddenSections?.includes(section.id))
+        .map((section) => {
+          return (
+            <div key={section.id} className={styles['section-container']}>
+              <div className={styles['section-header']}>
+                <section.Icon aria-hidden="true" />
+                <XXSmall uppercase>{formatMessage(section.label)}</XXSmall>
+              </div>
+              <div className={styles['section']}>
+                {renderSections[section.id]()}
+              </div>
             </div>
-            <div className={styles['section']}>
-              {renderSections[section.id]()}
-            </div>
-          </div>
-        );
-      })}
+          );
+        })}
       <Button type={ButtonType.Tertiary} onClick={restorePreferences}>
         <XSmall bold>{formatMessage(messages.restoreSettings)}</XSmall>
       </Button>

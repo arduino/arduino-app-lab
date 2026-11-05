@@ -61,7 +61,7 @@ export interface AiModelProps {
   inUseModelId?: string;
   model: BrickDetailModel;
   readOnly?: boolean;
-  isExample?: boolean;
+  isReadOnlyApp?: boolean;
   selectedModelId?: string;
   onModelSelect?: (modelId: string) => void;
   downloadEIModel?: (projectId: string, impulseId: string) => Promise<void>;

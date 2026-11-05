@@ -1,3 +1,4 @@
+import { setNetworkMode } from '@cloud-editor-mono/domain/src/services/services-by-app/app-lab';
 import {
   Board,
   SetupItemId,
@@ -786,5 +787,54 @@ describe('createUseSetupLogic - wifi list & custom wifi', () => {
       expect(result.current.currentStep).toBe(SetupItemId.NetworkSetup);
       expect(result.current.showConfirmButton).toBe(true);
     });
+  });
+});
+
+describe('createUseSetupLogic - LinuxCredentials step', () => {
+  it('enables network mode once with the password the user set', async () => {
+    isBoardMock = true;
+    networkCtxValue = {
+      ...networkCtxValue,
+      networkStatusChecked: true,
+      isConnected: true,
+    };
+    systemPropsMock = {
+      [SystemPropKey.SetupBoardName]: 'done',
+      [SystemPropKey.SetupKeyboard]: 'done',
+    } as Record<string, string>;
+
+    const { result: setupResult, rerender: rerenderSetup } = renderHook(
+      () => createUseSetupLogic(createMockBoardsProps())(),
+      { wrapper: ProvidersWrapper },
+    );
+    await vi.runAllTimersAsync();
+    act(() => {
+      rerenderSetup();
+    });
+
+    await waitFor(() => {
+      expect(setupResult.current.contentLogicMap).toBeDefined();
+    });
+
+    const useLinuxCredentialsLogic =
+      setupResult.current.contentLogicMap![SetupItemId.LinuxCredentials];
+    const { result, rerender } = renderHook(() => useLinuxCredentialsLogic(), {
+      wrapper: ProvidersWrapper,
+    });
+
+    act(() => {
+      result.current.setUserPassword('secret', 'secret');
+    });
+
+    linuxCredentialsCtxValue = {
+      ...linuxCredentialsCtxValue,
+      setUserPasswordIsSuccess: true,
+    };
+    act(() => {
+      rerender();
+    });
+
+    expect(setNetworkMode).toHaveBeenCalledTimes(1);
+    expect(setNetworkMode).toHaveBeenCalledWith(true, 'secret');
   });
 });

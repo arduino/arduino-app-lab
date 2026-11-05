@@ -8,8 +8,13 @@ import * as IDB from 'idb-keyval';
 import { BehaviorSubject } from 'rxjs';
 
 import { OPEN_FILES_KEY, useFiles } from '../../../../common/hooks/files';
+import {
+  AuthContext,
+  AuthContextValue,
+} from '../../../../common/providers/auth/authContext';
+import RbacContextProvider from '../../../../common/providers/rbac/RbacContextProvider';
 import { SKETCH_ID_ROUTE_PARAM } from '../../../../routing/routing.type';
-import { useSketchParams } from './sketch';
+import { useCopyLinkParams, useSketchParams } from './sketch';
 
 vi.mock('@tanstack/react-location', async (importOriginal) => {
   const actual = await importOriginal();
@@ -50,6 +55,79 @@ describe('useSketchParams', () => {
     const { result } = renderHook(useSketchParams);
     expect(result.current.isSketchQueried).toBe(false);
     expect(result.current.sketchID).not.toBeDefined();
+  });
+});
+
+describe('useCopyLinkParams', () => {
+  const renderInOrganization = (
+    search: string,
+    auth: Partial<Pick<AuthContextValue, 'policies' | 'policiesAreLoading'>>,
+  ): ReturnType<typeof useCopyLinkParams> => {
+    window.history.replaceState(null, '', `/${search}`);
+    // @ts-expect-error no need to return the actual complete route for test purposes
+    vi.mocked(useMatch).mockReturnValue({ params: {} });
+
+    return renderHook(useCopyLinkParams, {
+      wrapper: ({ children }: { children: React.ReactNode }) => (
+        <AuthContext.Provider
+          value={{
+            userNotTargetAudience: false,
+            isAuthInjected: false,
+            isViewMode: false,
+            isOrganizationSpace: true,
+            policiesAreLoading: false,
+            ...auth,
+          }}
+        >
+          <RbacContextProvider>{children}</RbacContextProvider>
+        </AuthContext.Provider>
+      ),
+    }).result.current;
+  };
+
+  afterEach(() => {
+    window.history.replaceState(null, '', '/');
+  });
+
+  it('ignores copy links without sketch::create', () => {
+    const viewer = { 'sketch::read': true, 'sketch::create': false };
+
+    expect(
+      renderInOrganization('?createSketch=true', { policies: viewer }),
+    ).toEqual({
+      createSketchParam: false,
+      createExampleParam: false,
+      createWaitsForPolicies: false,
+    });
+    expect(
+      renderInOrganization('?createExample=true', { policies: viewer }),
+    ).toEqual({
+      createSketchParam: false,
+      createExampleParam: false,
+      createWaitsForPolicies: false,
+    });
+  });
+
+  it('keeps copy links with sketch::create', () => {
+    const service = { 'sketch::read': true, 'sketch::create': true };
+
+    expect(
+      renderInOrganization('?createExample=true', { policies: service }),
+    ).toEqual({
+      createSketchParam: false,
+      createExampleParam: true,
+      createWaitsForPolicies: false,
+    });
+  });
+
+  it('waits for the policies before deciding', () => {
+    expect(
+      renderInOrganization('?createSketch=true', { policiesAreLoading: true }),
+    ).toEqual({
+      createSketchParam: false,
+      createExampleParam: false,
+      createWaitsForPolicies: true,
+    });
   });
 });
 

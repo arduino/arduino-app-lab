@@ -1,0 +1,8 @@
+.blocked {
+  display: inline-flex;
+}
+
+.blocked-tooltip {
+  max-width: 260px;
+  pointer-events: none !important;
+}

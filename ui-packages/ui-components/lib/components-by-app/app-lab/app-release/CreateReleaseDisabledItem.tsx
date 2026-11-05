@@ -18,6 +18,7 @@ export const CreateReleaseDisabledItem: React.FC<
   const { props: tooltipProps, renderTooltip } = useTooltip({
     content: reason,
     timeout: 0,
+    zIndex: 999999,
   });
 
   return (

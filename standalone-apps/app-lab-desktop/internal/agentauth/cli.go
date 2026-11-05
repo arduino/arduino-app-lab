@@ -5,6 +5,7 @@ package agentauth
 
 import (
 	"bufio"
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -77,6 +78,7 @@ func RunCLIStreaming(ctx context.Context, agent airuntime.AgentID, opts Options,
 	scan := func(r io.Reader) {
 		defer wg.Done()
 		sc := bufio.NewScanner(r)
+		sc.Split(scanLinesOrCR)
 		for sc.Scan() {
 			lineMu.Lock()
 			onLine(sc.Text())
@@ -95,6 +97,45 @@ func RunCLIStreaming(ctx context.Context, agent airuntime.AgentID, opts Options,
 		return err
 	}
 	return nil
+}
+
+// DeleteSessionCLI deletes a stored session through the agent's own CLI, for an engine whose ACP has no session/delete.
+func DeleteSessionCLI(ctx context.Context, agent airuntime.AgentID, sessionID string) error {
+	p, err := profileFor(agent)
+	if err != nil {
+		return err
+	}
+	if len(p.sessionDeleteArgs) == 0 {
+		return fmt.Errorf("agentauth: %s has no CLI command to delete a session", agent)
+	}
+	args := append(append([]string{}, p.sessionDeleteArgs...), sessionID)
+	return RunCLIStreaming(ctx, agent, Options{Method: None}, func(string) {}, nil, args...)
+}
+
+// scanLinesOrCR also ends a line at a lone \r: a spinner redraws with \r only, and one endless line stops the scanner.
+func scanLinesOrCR(data []byte, atEOF bool) (advance int, token []byte, err error) {
+	if atEOF && len(data) == 0 {
+		return 0, nil, nil
+	}
+	if i := bytes.IndexAny(data, "\r\n"); i >= 0 {
+		if data[i] == '\n' {
+			return i + 1, data[:i], nil
+		}
+		if i+1 < len(data) {
+			if data[i+1] == '\n' {
+				return i + 2, data[:i], nil
+			}
+			return i + 1, data[:i], nil
+		}
+		if atEOF {
+			return i + 1, data[:i], nil
+		}
+		return 0, nil, nil // a \n may follow in the next read
+	}
+	if atEOF {
+		return len(data), data, nil
+	}
+	return 0, nil, nil
 }
 
 // cliCommand resolves the agent CLI from the installed runtime's node_modules/.bin shim.

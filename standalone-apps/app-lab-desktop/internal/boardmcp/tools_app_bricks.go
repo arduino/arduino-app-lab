@@ -10,6 +10,8 @@ import (
 	"strings"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
+
+	"app-lab-desktop/internal/appid"
 )
 
 // appBricksListInput identifies the app whose configured bricks to list.
@@ -45,7 +47,7 @@ func registerAppBricksList(srv *mcp.Server, access BoardAccess) string {
 		Description: appBricksListDescription,
 		Annotations: &mcp.ToolAnnotations{ReadOnlyHint: true},
 	}, func(ctx context.Context, _ *mcp.CallToolRequest, in appBricksListInput) (*mcp.CallToolResult, any, error) {
-		appID := strings.TrimSpace(in.AppID)
+		appID := appid.Canonical(in.AppID)
 		if appID == "" {
 			return nil, nil, fmt.Errorf("app id is required")
 		}
@@ -150,7 +152,7 @@ func registerAppBricksAdd(srv *mcp.Server, access BoardAccess) {
 		Name:        "app_bricks_add",
 		Description: "Add a catalog Brick to an app: wires it into the app's app.yaml, with an optional AI model and config variables. Mutating — asks the user for permission. Pass the app id (apps_list) and the catalog brick id (bricks_list); read bricks_get first for the brick's required config.",
 	}, func(ctx context.Context, _ *mcp.CallToolRequest, in appBrickWriteInput) (*mcp.CallToolResult, any, error) {
-		appID, brickID := strings.TrimSpace(in.AppID), strings.TrimSpace(in.BrickID)
+		appID, brickID := appid.Canonical(in.AppID), strings.TrimSpace(in.BrickID)
 		if appID == "" || brickID == "" {
 			return nil, nil, fmt.Errorf("app id and brick id are required")
 		}
@@ -165,6 +167,7 @@ func registerAppBricksAdd(srv *mcp.Server, access BoardAccess) {
 		if _, err := orchestratorRequest(ctx, access, http.MethodPut, path, body); err != nil {
 			return nil, nil, err
 		}
+		access.RefreshManagedFiles(appID)
 		return textResult(fmt.Sprintf("Added brick %q to app %q. Remember to import it in the app's code (from arduino.app_bricks…).", brickID, appID)), nil, nil
 	})
 }
@@ -175,7 +178,7 @@ func registerAppBricksUpdate(srv *mcp.Server, access BoardAccess) {
 		Name:        "app_bricks_update",
 		Description: "Update a Brick already configured in an app: change its selected AI model and/or its config variables. Mutating — asks the user for permission. Pass the app id, the brick id (app_bricks_list), and the fields to change. On an installed App release only secret variables can be set: its model and other variables are frozen.",
 	}, func(ctx context.Context, _ *mcp.CallToolRequest, in appBrickWriteInput) (*mcp.CallToolResult, any, error) {
-		appID, brickID := strings.TrimSpace(in.AppID), strings.TrimSpace(in.BrickID)
+		appID, brickID := appid.Canonical(in.AppID), strings.TrimSpace(in.BrickID)
 		if appID == "" || brickID == "" {
 			return nil, nil, fmt.Errorf("app id and brick id are required")
 		}
@@ -187,6 +190,7 @@ func registerAppBricksUpdate(srv *mcp.Server, access BoardAccess) {
 		if _, err := orchestratorRequest(ctx, access, http.MethodPatch, path, body); err != nil {
 			return nil, nil, err
 		}
+		access.RefreshManagedFiles(appID)
 		return textResult(fmt.Sprintf("Updated brick %q in app %q.", brickID, appID)), nil, nil
 	})
 }
@@ -203,7 +207,7 @@ func registerAppBricksRemove(srv *mcp.Server, access BoardAccess) {
 		Name:        "app_bricks_remove",
 		Description: "Remove a Brick from an app: unwires it from the app's app.yaml. Mutating — asks the user for permission. Pass the app id and the brick id (app_bricks_list). Also remove its import from the app's code.",
 	}, func(ctx context.Context, _ *mcp.CallToolRequest, in appBrickRemoveInput) (*mcp.CallToolResult, any, error) {
-		appID, brickID := strings.TrimSpace(in.AppID), strings.TrimSpace(in.BrickID)
+		appID, brickID := appid.Canonical(in.AppID), strings.TrimSpace(in.BrickID)
 		if appID == "" || brickID == "" {
 			return nil, nil, fmt.Errorf("app id and brick id are required")
 		}
@@ -214,6 +218,7 @@ func registerAppBricksRemove(srv *mcp.Server, access BoardAccess) {
 		if _, err := orchestratorRequest(ctx, access, http.MethodDelete, path, nil); err != nil {
 			return nil, nil, err
 		}
+		access.RefreshManagedFiles(appID)
 		return textResult(fmt.Sprintf("Removed brick %q from app %q.", brickID, appID)), nil, nil
 	})
 }

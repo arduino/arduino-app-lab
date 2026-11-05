@@ -20,7 +20,7 @@ func readSessionCreated(dir string) (map[string]string, error) {
 		return nil, err
 	}
 	created := map[string]string{}
-	if err := json.Unmarshal(data, &created); err != nil {
+	if err := json.Unmarshal(data, &created); err != nil || created == nil { // null decodes to a nil map
 		return map[string]string{}, nil
 	}
 	return created, nil

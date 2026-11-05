@@ -2,7 +2,7 @@ import { InfoIconI } from '@cloud-editor-mono/images/assets/icons';
 import clsx from 'clsx';
 import React from 'react';
 
-import { useTooltip } from '../../../../tooltip';
+import { useTooltip } from '../../essential/tooltip';
 import styles from '../settings-section.module.scss';
 
 export interface InfoProps {
@@ -19,8 +19,8 @@ export const Info = ({
   const { props: tooltipProps, renderTooltip } = useTooltip({
     content: children,
     direction: 'up-right',
-    timeout: 0,
     title,
+    variant: 'card',
   });
 
   return (
@@ -29,7 +29,7 @@ export const Info = ({
       className={clsx(styles['settings-section-info'], className)}
     >
       <InfoIconI />
-      {renderTooltip(styles['tooltip-content'])}
+      {renderTooltip()}
     </div>
   );
 };

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"io"
+	"sort"
 	"strings"
 	"testing"
 
@@ -121,12 +122,13 @@ type recordingConn struct {
 	during  func() // runs while the turn is in flight
 }
 
-func (r *recordingConn) Prompt(_ context.Context, _ SessionID, _ string, before []string) error {
+func (r *recordingConn) Prompt(_ context.Context, _ SessionID, _ string, before []string) (bool, error) {
 	r.befores = append(r.befores, before)
+	cancels := r.cancels.Load()
 	if r.during != nil {
 		r.during()
 	}
-	return r.err
+	return r.cancels.Load() > cancels, r.err
 }
 
 // A new session's first prompt names the file without its text (the CLI titles the session from it); the next one brings the text.
@@ -232,6 +234,102 @@ func TestManagerResendsTheEditorAfterTheContextShrinks(t *testing.T) {
 	}
 	if conn.befores[3] != nil || len(conn.befores[4]) != 1 {
 		t.Errorf("around /clear = %v then %v, want nothing with the command and the context after it", conn.befores[3], conn.befores[4])
+	}
+}
+
+// The turn-end sync pushes only what the finishing chat touched while other chats run; a miss here pushes another chat's half-made edits, or strands this one's.
+func TestATurnRecordsWhatItTouched(t *testing.T) {
+	m, conn, sid := startRecording(t)
+	ctx := context.Background()
+	engine := &sdkConn{dialect: openCodeDialect, handler: m}
+	conn.during = func() {
+		m.HandleUpdate(sid, Update{Type: "tool_call", ToolCall: &ToolCall{ID: "c1", Title: "arduino-board_apps_start", Kind: "other", Input: map[string]any{"id": "app-started"}}})
+		m.HandleUpdate(sid, Update{Type: "tool_call", ToolCall: &ToolCall{ID: "c2", Title: "edit", Kind: "edit", Paths: []string{"board__app-a-111111/python/main.py"}}})
+		m.HandleUpdate(sid, Update{Type: "tool_call", ToolCall: &ToolCall{ID: "c3", Title: "read", Kind: "read", Paths: []string{"/tmp/board__app-b-222222/python/main.py"}}})
+		// Announced bare, as OpenCode does; its update names the app but not the tool, and reaches the record through the connection.
+		m.HandleUpdate(sid, Update{Type: "tool_call", ToolCall: &ToolCall{ID: "c4", Title: "arduino-board_apps_checkout", Kind: "other"}})
+		_ = engine.SessionUpdate(ctx, runningCall("c4", map[string]any{"id": "app-checked-out"}))
+	}
+	_ = m.Prompt(ctx, sid, "do it", nil)
+	conn.during = nil
+
+	apps, paths := m.Touched(sid)
+	sort.Strings(apps)
+	if strings.Join(apps, ",") != "app-checked-out,app-started" {
+		t.Errorf("apps = %v, want the two the board tools named", apps)
+	}
+	if len(paths) != 1 || paths[0] != "/tmp/board__app-a-111111/python/main.py" {
+		t.Errorf("paths = %v, want the edited file, resolved against the session cwd", paths)
+	}
+
+	m.HandleUpdate(sid, Update{Type: "tool_call", ToolCall: &ToolCall{ID: "c5", Title: "arduino-board_apps_stop", Input: map[string]any{"id": "late"}}})
+	if apps, _ := m.Touched(sid); len(apps) != 2 {
+		t.Errorf("an update outside a turn was recorded: %v", apps)
+	}
+	// A rename is told to every chat that used the app, not only to those opened on it.
+	m.RebindWorkspace("app-checked-out", "app-renamed", "Renamed")
+	if got := m.SessionsNamingApp("app-renamed"); len(got) != 1 || got[0] != sid {
+		t.Errorf("chats naming the renamed app = %v, want the one that checked it out", got)
+	}
+	_ = m.Prompt(ctx, sid, "next", nil)
+	if apps, paths := m.Touched(sid); len(apps)+len(paths) != 0 {
+		t.Errorf("the next turn starts with %v / %v, want nothing", apps, paths)
+	}
+}
+
+// A note goes once and first, never in a command or the message the engine titles the session from, and survives a failed or stopped turn.
+func TestANoteGoesOnceWithTheNextRealMessage(t *testing.T) {
+	m, conn, sid := startRecording(t)
+	ctx := context.Background()
+	m.Notify(sid, "the app was renamed")
+	m.Notify(sid, "the app was renamed") // the same note twice is one note
+
+	_ = m.Prompt(ctx, sid, "hello", nil) // the first message, which titles the session
+	_ = m.Prompt(ctx, sid, "/compact", nil)
+	conn.err = errors.New("overloaded")
+	_ = m.Prompt(ctx, sid, "failed", nil)
+	conn.err = nil
+	conn.during = func() { _ = m.Cancel(ctx, sid) }
+	_ = m.Prompt(ctx, sid, "stopped", nil)
+	conn.during = nil
+	_ = m.Prompt(ctx, sid, "delivered", inView("python/main.py", "import time\n"))
+	_ = m.Prompt(ctx, sid, "after", nil)
+
+	hasNote := func(before []string) bool {
+		return len(before) > 0 && strings.HasPrefix(before[0], "<app-lab-note>") && strings.Count(before[0], "the app was renamed") == 1
+	}
+	for i, want := range []bool{false, false, true, true, true, false} {
+		if got := hasNote(conn.befores[i]); got != want {
+			t.Errorf("prompt %d carried the note = %v, want %v (%q)", i, got, want, conn.befores[i])
+		}
+	}
+	if len(conn.befores[4]) != 2 || !strings.HasPrefix(conn.befores[4][1], "<editor-context>") {
+		t.Errorf("the delivering prompt = %q, want the note, then the editor block", conn.befores[4])
+	}
+}
+
+// The replay shows the user's own words: the note blocks, the editor block and the scope paragraph are App Lab's.
+func TestTheReplayShowsOnlyWhatTheUserTyped(t *testing.T) {
+	replayed := func(text string) (Update, bool) {
+		return toUpdate(acp.SessionUpdate{UserMessageChunk: &acp.SessionUpdateUserMessageChunk{Content: acp.TextBlock(text)}})
+	}
+	note := appLabNoteText([]string{"the app was renamed"})
+	if u, ok := replayed(note); ok {
+		t.Errorf("a note sent as its own block came back as %q", u.Delta)
+	}
+	editor, _ := editorContextText(editorSeen{}, inView("a.py", "print(1)\n"), false)
+	if u, ok := replayed(note + "\n" + note + "\n" + editor + "\nwhat now?"); !ok || u.Delta != "what now?" {
+		t.Errorf("joined chunk = %q, %v; want the user's text alone", u.Delta, ok)
+	}
+	focus := workspaceFocus(SessionWorkspace{AppID: "dXNlcjpibGluaw", Name: "Blink"})
+	if u, ok := replayed("list the files" + focus); !ok || u.Delta != "list the files" {
+		t.Errorf("first prompt = %q, %v; want it without the scope paragraph", u.Delta, ok)
+	}
+	// Claude Code writes a stopped turn into the history as a user message: it is the turn's stopped mark, not a bubble.
+	for _, mark := range []string{"[Request interrupted by user]", "[Request interrupted by user for tool use]"} {
+		if u, ok := replayed(mark); !ok || u.Type != "turn_stopped" {
+			t.Errorf("the engine's stop mark came back as %+v, want the stopped turn's mark", u)
+		}
 	}
 }
 

@@ -1,5 +1,11 @@
 import { ThreadMessage } from '@assistant-ui/react';
 import {
+  DeleteFileHandler,
+  FileNameValidationResult,
+  RenameFileHandler,
+  SelectableFileData,
+} from '@cloud-editor-mono/ide-workbench/lib/editor-tabs-bar/index';
+import {
   CodeIcon,
   TechReference,
 } from '@cloud-editor-mono/images/assets/icons';
@@ -38,16 +44,11 @@ import { FunctionComponent, SVGProps } from 'react';
 import { MessageDescriptor } from 'react-intl';
 
 import {
-  DeleteFileHandler,
-  FileNameValidationResult,
-  RenameFileHandler,
-  SelectableFileData,
-} from '../editor-tabs-bar';
-import {
   DropdownMenuItemType,
   DropdownMenuSectionType,
 } from '../essential/dropdown-menu';
 import { GenAiBannerLogic } from '../gen-ai-banner';
+import { RbacValue } from '../rbac';
 import {
   CategoryTree,
   ReferenceEntry,
@@ -58,13 +59,15 @@ import {
 import {
   Preferences,
   PreferenceValue,
+  SettingsItemId,
 } from './sections/settings/settings.type';
 
 export type SidenavStandardLibrary = LibrariesItem_Response;
 export type SidenavCustomLibrary = GetCustomLibrary_Response;
 
 export type DependentSidenavLogic = () => {
-  handleLibraryInclude: OnClickInclude;
+  // Left out when the user cannot edit the sketch; the Include button is then hidden.
+  handleLibraryInclude?: OnClickInclude;
   handleGenAiApplyCode: OnClickApplySketch;
   handleGenAiApplyFixToCode: OnClickApplyFixToSketch;
   handleApplyPatchAvailability: ApplyPatchAvailability;
@@ -73,6 +76,8 @@ export type DependentSidenavLogic = () => {
   exampleIsFromCustomLibrary?: boolean;
   pinnedLibraries?: SketchData['libraries'];
   canModifySketchMetadata?: boolean;
+  // Without sketch edit Examples, Libraries and the AI assistant are hidden: they only serve to change the sketch.
+  rbac?: RbacValue;
   examplesMenuHandlers: ExamplesMenuHandlerDictionary;
   libraryMenuHandlers: LibraryMenuHandlerDictionary;
   selectedBoard?: string;
@@ -237,7 +242,7 @@ export type UseSidenavSharedLogic = () => {
 };
 
 export type UseLibrariesLogic = () => {
-  onClickInclude: OnClickInclude;
+  onClickInclude?: OnClickInclude;
   pinnedLibraries?: Libs_CreateApi;
   getCustomLibraries: GetCustomLibraries;
   getFavoriteLibraries: GetFavoriteLibraries;
@@ -537,6 +542,7 @@ export type UseSettingsLogic = () => {
   restorePreferences: () => void;
   saveAllFiles: () => void;
   handleOptOut?: () => void;
+  hiddenSections?: SettingsItemId[];
 };
 
 export enum SidenavExamplesIds {
@@ -622,7 +628,8 @@ export type DownloadType = (
 ) => void;
 
 export type ExamplesMenuType = {
-  [ExamplesMenuItemIds.CopyInYourSketches]: CopyInYourSketchesType;
+  // Left out when the user cannot create sketches; the menu then hides the item.
+  [ExamplesMenuItemIds.CopyInYourSketches]?: CopyInYourSketchesType;
   [ExamplesMenuItemIds.Download]: DownloadType;
 };
 

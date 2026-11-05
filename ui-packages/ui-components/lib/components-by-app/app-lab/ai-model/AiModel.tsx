@@ -40,7 +40,7 @@ export const AiModel: React.FC<AiModelProps> = (props: AiModelProps) => {
     diskUsageWarning,
     modelDownloadInfo,
     readOnly,
-    isExample,
+    isReadOnlyApp,
     isUninstalling,
     isInstalledInApp,
   } = props;
@@ -63,7 +63,7 @@ export const AiModel: React.FC<AiModelProps> = (props: AiModelProps) => {
     model,
     inUseModelId,
     selectedModelId,
-    isExample,
+    isReadOnlyApp,
     readOnly,
     impulses,
     selectedImpulse,
@@ -86,14 +86,13 @@ export const AiModel: React.FC<AiModelProps> = (props: AiModelProps) => {
 
   const { props: tooltipProps, renderTooltip } = useTooltip({
     content: formatMessage(
-      isExample
-        ? messages.aiModelExampleTooltip
+      isReadOnlyApp
+        ? messages.aiModelReadOnlyAppTooltip
         : messages.aiModelDownloadToEnableTooltip,
     ),
     direction: 'right',
-    timeout: 0,
   });
-  const showTooltip = isExample || !isModelInstalled;
+  const showTooltip = isReadOnlyApp || !isModelInstalled;
 
   return (
     <div
@@ -119,7 +118,7 @@ export const AiModel: React.FC<AiModelProps> = (props: AiModelProps) => {
       <div className={styles['ai-model-container']}>
         {!hideRadio ? (
           <div className={styles['radio']} {...tooltipProps}>
-            {showTooltip && renderTooltip(styles['radio-tooltip'])}
+            {showTooltip && renderTooltip()}
           </div>
         ) : null}
         <div className={styles['ai-model-details']}>
@@ -205,7 +204,7 @@ export const AiModel: React.FC<AiModelProps> = (props: AiModelProps) => {
           isDownloading={isDownloading}
           diskUsageWarning={diskUsageWarning}
           setSelectedImpulseId={setSelectedImpulseId}
-          onModelSelect={isExample ? undefined : onModelSelect}
+          onModelSelect={isReadOnlyApp ? undefined : onModelSelect}
           downloadEIModel={downloadEIModel}
         />
       ) : null}

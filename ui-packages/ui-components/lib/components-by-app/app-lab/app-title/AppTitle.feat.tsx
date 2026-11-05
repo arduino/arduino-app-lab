@@ -48,6 +48,19 @@ interface AppTitleProps {
   appTitleLogic: AppTitleLogic;
 }
 
+const horizontalChromeWidth = (el: HTMLElement | null): number => {
+  if (!el) {
+    return 0;
+  }
+  const style = getComputedStyle(el);
+  return (
+    el.offsetWidth -
+    el.clientWidth +
+    parseFloat(style.paddingLeft) +
+    parseFloat(style.paddingRight)
+  );
+};
+
 const AppTitle: React.FC<AppTitleProps> = (props: AppTitleProps) => {
   const { appTitleLogic } = props;
 
@@ -86,14 +99,14 @@ const AppTitle: React.FC<AppTitleProps> = (props: AppTitleProps) => {
   const { props: tooltipProps, renderTooltip } = useTooltip({
     content: name,
     direction: 'down',
-    timeout: 0,
     tooltipType: 'title',
   });
 
   const measureWidth = useCallback((): void => {
     const width = truncatedRef.current?.getBoundingClientRect().width ?? 0;
     setInputWidth(
-      Math.min(Math.ceil(width) + 4, window.innerWidth < 1024 ? 100 : 200),
+      Math.min(Math.ceil(width) + 4, window.innerWidth < 1024 ? 100 : 200) +
+        horizontalChromeWidth(inputRef.current),
     );
   }, [truncatedRef]);
 
@@ -102,7 +115,7 @@ const AppTitle: React.FC<AppTitleProps> = (props: AppTitleProps) => {
 
     const raf = requestAnimationFrame(() => measureWidth());
     return () => cancelAnimationFrame(raf);
-  }, [measureWidth, name]);
+  }, [measureWidth, name, editing]);
 
   useEffect(() => {
     const el = truncatedRef.current;
@@ -163,13 +176,14 @@ const AppTitle: React.FC<AppTitleProps> = (props: AppTitleProps) => {
             <XSmall ref={truncatedRef} className={styles['app-name-text']}>
               {name}
             </XSmall>
-            {isTruncated && renderTooltip(styles['tooltip-content'])}
+            {isTruncated && renderTooltip()}
           </div>
         </div>
         {editing && (
           <Input
             ref={inputRef}
             inputStyle={InputStyle.AppLab}
+            outlined
             autoFocus
             type="text"
             value={name}
@@ -187,10 +201,10 @@ const AppTitle: React.FC<AppTitleProps> = (props: AppTitleProps) => {
                 onResetAppName();
               }
             }}
+            inputSize="small"
             classes={{
               input: styles['app-name-input'],
               inputError: styles['error-message'],
-              error: styles['app-name-input-error'],
             }}
             style={{
               width: inputWidth,

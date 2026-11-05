@@ -1,6 +1,4 @@
 export { default as CodeBlock } from './code-block/CodeBlock';
-export * from './code-editor';
-export * from './code-mirror';
 export { getInitials } from './common/utils';
 export { default as ConsolePanel } from './console-panel/ConsolePanel';
 export {
@@ -27,16 +25,18 @@ export {
   UNKNOWN_BOARD_NAME,
 } from './device-association-dialog';
 export * from './dialogs';
-export { EditorControl } from './editor-controls';
+export * from '@cloud-editor-mono/ide-workbench/lib/code-editor/index';
+export * from '@cloud-editor-mono/ide-workbench/lib/code-mirror/index';
+export { EditorControl } from '@cloud-editor-mono/ide-workbench/lib/editor-controls/index';
 export {
   type EditorControlsProps,
   type EditorPanelLogic,
+  type PaneContentContext,
+  type PaneContentRenderer,
   EditorPanel,
-} from './editor-panel';
+} from '@cloud-editor-mono/ide-workbench/lib/editor-panel/index';
 export {
   type AddFileHandler,
-  type DeleteFileDialogData,
-  type DeleteFileDialogLogic,
   type DeleteFileHandler,
   type FileNameValidationItem,
   type FileNameValidationResult,
@@ -46,13 +46,15 @@ export {
   type SelectableFileData,
   type TabsBarLogic,
   type ValidateFileName,
-  DeleteFileDialog,
   EditorTabsBar,
   FileNameValidation,
   NewTabMenuItemIds,
   SUPPORTED_IMAGE_TYPES,
   TabMenuItemIds,
-} from './editor-tabs-bar';
+} from '@cloud-editor-mono/ide-workbench/lib/editor-tabs-bar/index';
+// DeleteFileDialog (+ its Data/Logic types) moved to dialogs/editor and
+// flows through the './dialogs' star export above (ADR-0002 phase 4a-0a:
+// the dialog is rendered by apps, not by the editor cluster).
 export * from './essential/button';
 export {
   type ConfirmActionDialogLogic,
@@ -91,6 +93,7 @@ export { ToggleButton } from './essential/toggle-button';
 export { type GenAiBannerLogic, GenAiBanner } from './gen-ai-banner';
 export { type FormatMessage, useI18n } from './i18n/useI18n';
 export { type OnboardingLogic, Onboarding } from './onboarding';
+export * from './rbac';
 export {
   type ReadOnlyActionButtonsProps,
   type ReadOnlyBarLogic,

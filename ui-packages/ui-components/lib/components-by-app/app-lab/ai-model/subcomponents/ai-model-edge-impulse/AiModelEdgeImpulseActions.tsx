@@ -77,9 +77,14 @@ export const AiModelEdgeImpulseActions: React.FC<
                 dropdownMenuButtonWrapper:
                   styles['dropdown-menu-button-wrapper'],
                 dropdownMenuButton: styles['dropdown-menu-button'],
-                dropdownMenu: styles['dropdown-menu'],
-                dropdownMenuItem: styles['dropdown-menu-item'],
+                dropdownMenu: clsx(
+                  styles['dropdown-menu'],
+                  styles['impulse-dropdown-menu'],
+                ),
+                dropdownMenuItem: styles['impulse-dropdown-menu-item'],
               }}
+              useStaticPosition={false}
+              usePortal
               onAction={(key: Key): void => {
                 setSelectedImpulseId(key as string);
                 if (isModelInUse) {

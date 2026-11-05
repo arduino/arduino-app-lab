@@ -45,7 +45,7 @@ export type BrickDetailLogic = (
   readOnly: boolean;
   trainNewModelEnabled: boolean;
   addHuggingFaceModelEnabled: boolean;
-  isExample: boolean;
+  isReadOnlyApp: boolean;
   diskUsageWarning: (
     modelId: string,
   ) => { used: string; total: string } | undefined;

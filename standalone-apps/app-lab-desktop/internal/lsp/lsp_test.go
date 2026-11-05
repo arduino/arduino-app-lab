@@ -382,6 +382,112 @@ func TestFormatterStateSyncIsHeldUntilInitialize(t *testing.T) {
 	}
 }
 
+// The held didOpen is the recovery snapshot's own map, and every later didChange
+// is folded into that map. If the queue held the map, the formatter would get
+// the folded text and then the same didChange again.
+func TestHeldDidOpenKeepsItsTextWhenLaterChangesAreFolded(t *testing.T) {
+	mainR, mainW, err := os.Pipe()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer mainW.Close()
+	defer mainR.Close()
+	fmtR, fmtW, err := os.Pipe()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer fmtW.Close()
+
+	formatterId := getFormatterProcessId(LSP_Python)
+	formatterProc := &lspProcess{processId: formatterId, eventLspId: LSP_Python, stdin: fmtW}
+	mainProc := &lspProcess{processId: ProcessId(LSP_Python), stdin: mainW}
+
+	h := &LSPHandler{
+		activeLSPs:         map[LspId]bool{LSP_Python: true},
+		processes:          map[ProcessId]*lspProcess{ProcessId(LSP_Python): mainProc, formatterId: formatterProc},
+		formatterReady:     map[ProcessId]bool{},
+		formatterQueue:     map[ProcessId][]any{},
+		openFiles:          map[LspId]map[string]any{},
+		initializeRequests: map[LspId]any{},
+	}
+
+	const uri = "file:///ws/main.py"
+	didOpen := map[string]any{"method": methodDidOpen, "params": map[string]any{
+		"textDocument": map[string]any{"uri": uri, "version": float64(1), "text": "a = 1\n"},
+	}}
+	zero := map[string]any{"line": float64(0), "character": float64(0)}
+	didChange := map[string]any{"method": "textDocument/didChange", "params": map[string]any{
+		"textDocument":   map[string]any{"uri": uri, "version": float64(2)},
+		"contentChanges": []any{map[string]any{"range": map[string]any{"start": zero, "end": zero}, "text": "x=1\n"}},
+	}}
+	for _, msg := range []any{didOpen, didChange} {
+		if err := h.deliver(LSP_Python, mainProc, formatterProc, msg); err != nil {
+			t.Fatalf("deliver: %v", err)
+		}
+	}
+
+	h.markFormatterReady(formatterProc)
+
+	fmtReader := bufio.NewReader(fmtR)
+	readFramed(t, fmtReader) // initialized
+	held := readFramed(t, fmtReader)
+	text := held["params"].(map[string]any)["textDocument"].(map[string]any)["text"]
+	if text != "a = 1\n" {
+		t.Fatalf("held didOpen text = %q, want the text it was sent with", text)
+	}
+}
+
+// A crash restarts one process. The other one already has this state, and a
+// second initialize and didOpen make the client drop its diagnostics.
+func TestCrashReplayReachesOnlyTheRestartedProcess(t *testing.T) {
+	formatterId := getFormatterProcessId(LSP_Python)
+	for _, tc := range []struct {
+		target        ProcessId
+		wantMain      []string
+		wantFormatter []string
+		wantHeld      int
+	}{
+		{target: formatterId, wantFormatter: []string{methodInitialize}, wantHeld: 1},
+		{target: ProcessId(LSP_Python), wantMain: []string{methodInitialize, methodInitialized, methodDidChangeConfig, methodDidOpen}},
+	} {
+		t.Run(string(tc.target), func(t *testing.T) {
+			mainR, mainW, err := os.Pipe()
+			if err != nil {
+				t.Fatal(err)
+			}
+			fmtR, fmtW, err := os.Pipe()
+			if err != nil {
+				t.Fatal(err)
+			}
+			h := &LSPHandler{
+				activeLSPs: map[LspId]bool{LSP_Python: true},
+				processes: map[ProcessId]*lspProcess{
+					ProcessId(LSP_Python): {processId: ProcessId(LSP_Python), stdin: mainW},
+					formatterId:           {processId: formatterId, eventLspId: LSP_Python, stdin: fmtW},
+				},
+				formatterReady:     map[ProcessId]bool{},
+				formatterQueue:     map[ProcessId][]any{},
+				initializeRequests: map[LspId]any{LSP_Python: map[string]any{"id": float64(1), "method": methodInitialize}},
+				openFiles: map[LspId]map[string]any{LSP_Python: {
+					"file:///ws/main.py": map[string]any{"method": methodDidOpen, "params": map[string]any{}},
+				}},
+			}
+
+			h.replayStateAfterRestart(LSP_Python, tc.target)
+
+			if got := readMethods(t, mainW, mainR); !slices.Equal(got, tc.wantMain) {
+				t.Errorf("main process got %v, want %v", got, tc.wantMain)
+			}
+			if got := readMethods(t, fmtW, fmtR); !slices.Equal(got, tc.wantFormatter) {
+				t.Errorf("formatter got %v, want %v", got, tc.wantFormatter)
+			}
+			if held := len(h.formatterQueue[formatterId]); held != tc.wantHeld {
+				t.Errorf("formatter holds %d messages, want %d", held, tc.wantHeld)
+			}
+		})
+	}
+}
+
 // readMethods closes w and returns the method of every framed message left in r.
 func readMethods(t *testing.T, w *os.File, r *os.File) []string {
 	t.Helper()

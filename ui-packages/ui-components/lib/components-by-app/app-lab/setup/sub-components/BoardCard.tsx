@@ -2,7 +2,6 @@ import clsx from 'clsx';
 
 import { ArcSpinner as Loader } from '../../../../essential/loader';
 import { useI18n } from '../../../../i18n/useI18n';
-import { useTooltip } from '../../../../tooltip';
 import { Small, XSmall } from '../../../../typography';
 import {
   Badge,
@@ -10,6 +9,7 @@ import {
   BadgeStyle,
   BadgeVariant,
 } from '../../essential/badge';
+import { useTooltip } from '../../essential/tooltip';
 import { tooltipMessages, welcomeMessages } from '../messages';
 import styles from './board-card.module.scss';
 
@@ -65,7 +65,6 @@ const BoardCard: React.FC<BoardCardProps> = (props: BoardCardProps) => {
     content: formatMessage(tooltipMessages.chipConnectionTooltip, { chip }),
     tooltipType: 'title',
     direction: 'up',
-    timeout: 0,
   });
 
   const circledChipIcon = (

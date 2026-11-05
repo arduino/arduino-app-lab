@@ -45,6 +45,7 @@ export const CreateAppDialog: React.FC<CreateAppDialogProps> = ({
     undefined,
   );
   const isSubmittingRef = useRef(false);
+  const trimmedName = name.trim();
 
   useEffect(() => {
     if (app) {
@@ -78,17 +79,17 @@ export const CreateAppDialog: React.FC<CreateAppDialogProps> = ({
   const { mutateAsync: createApp, isPending } = useMutation({
     mutationKey: ['crate-app'],
     mutationFn: async () => {
-      if (name.length === 0) {
+      if (trimmedName.length === 0) {
         setErrorMessage(formatMessage(messages.appNameRequired));
         return;
       }
 
-      if (!validateAppName(name)) {
+      if (!validateAppName(trimmedName)) {
         return;
       }
 
       try {
-        const result = await confirmAction({ icon, name });
+        const result = await confirmAction({ icon, name: trimmedName });
 
         if (result) {
           onOpenChange(false);
@@ -157,7 +158,7 @@ export const CreateAppDialog: React.FC<CreateAppDialogProps> = ({
               <Button
                 variant={ButtonVariant.Primary}
                 loading={isPending}
-                disabled={name.length === 0 || isPending}
+                disabled={trimmedName.length === 0}
                 type="submit"
               >
                 {formatMessage(messages.confirmButton)}
@@ -187,12 +188,6 @@ export const CreateAppDialog: React.FC<CreateAppDialogProps> = ({
               error={errorMessage ? new Error(errorMessage) : undefined}
               placeholder={formatMessage(messages.inputPlaceholder)}
               autoFocus
-              classes={{
-                input: styles['app-name-input'],
-                inputContainer: styles['app-name-input-container'],
-                error: styles['app-name-input-error'],
-                inputError: styles['error-message'],
-              }}
               after={
                 <XXXSmall className={styles['app-name-length']}>
                   {[name.length, MAX_LENGTH].join(' / ')}

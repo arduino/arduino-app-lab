@@ -452,9 +452,7 @@ describe('useAiModelsLogic - downloadAIModelSSE', () => {
       },
       {
         event: StreamEventType.Done,
-        data: JSON.stringify(
-          'Extracted to /models/llamacpp/Qwen3.5-2B-Q4_K_M',
-        ),
+        data: JSON.stringify('Extracted to /models/llamacpp/Qwen3.5-2B-Q4_K_M'),
       },
     ]);
 
@@ -488,9 +486,7 @@ describe('useAiModelsLogic - downloadAIModelSSE', () => {
       },
       {
         event: StreamEventType.Done,
-        data: JSON.stringify(
-          'Extracted to /models/llamacpp/Qwen3.5-2B-Q4_K_M',
-        ),
+        data: JSON.stringify('Extracted to /models/llamacpp/Qwen3.5-2B-Q4_K_M'),
       },
     ]);
 
@@ -638,6 +634,68 @@ describe('useAiModelsLogic - downloadAIModelSSE', () => {
         variant: 'error',
         message: 'Insufficient space on the board.',
       }),
+    );
+  });
+
+  it.each([
+    ['invalid_model_url', 'The link is not a Hugging Face GGUF model.'],
+    [
+      'model_not_found',
+      'The model does not exist on Hugging Face, or it is not public.',
+    ],
+    [
+      'model_private_or_gated',
+      'The model is private or gated. Only public models can be downloaded.',
+    ],
+    ['model_disabled', 'The authors disabled this model on Hugging Face.'],
+    ['model_incompatible', 'The board does not support this model.'],
+    ['no_compatible_file', 'The repository has no GGUF model file.'],
+    [
+      'hub_unreachable',
+      'The board cannot reach Hugging Face. Check its internet connection.',
+    ],
+  ])('reports the %s code in our own wording', async (code, message) => {
+    scriptStream([
+      {
+        event: StreamEventType.Error,
+        data: JSON.stringify({ code, message: 'downloader text' }),
+      },
+    ]);
+
+    const { result } = renderHook(() => useAiModelsLogic(), {
+      wrapper: createWrapper(),
+    });
+
+    await act(async () => {
+      await result.current.downloadAIModelSSE(HF_SOURCE);
+    });
+
+    expect(notifications.sendAppLabNotification).toHaveBeenCalledWith(
+      expect.objectContaining({ variant: 'error', message }),
+    );
+  });
+
+  it('reports the downloader text for a code it does not know', async () => {
+    scriptStream([
+      {
+        event: StreamEventType.Error,
+        data: JSON.stringify({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'downloader text',
+        }),
+      },
+    ]);
+
+    const { result } = renderHook(() => useAiModelsLogic(), {
+      wrapper: createWrapper(),
+    });
+
+    await act(async () => {
+      await result.current.downloadAIModelSSE(HF_SOURCE);
+    });
+
+    expect(notifications.sendAppLabNotification).toHaveBeenCalledWith(
+      expect.objectContaining({ variant: 'error', message: 'downloader text' }),
     );
   });
 

@@ -1,4 +1,4 @@
-import { IconNavigationArrowRight } from '@arduino/react-icons';
+import { IconNavigationArrowRight } from '@cloud-editor-mono/images/assets/icons';
 import clsx from 'clsx';
 
 import { useI18n } from '../../../../i18n/useI18n';
@@ -23,15 +23,15 @@ export const Row = ({
   const { formatMessage } = useI18n();
 
   const { props: titleTooltipProps, renderTooltip: renderTitleTooltip } =
-    useTooltip({ content: title, timeout: 0 });
+    useTooltip({ content: title });
 
   const {
     props: descriptionTooltipProps,
     renderTooltip: renderDescriptionTooltip,
-  } = useTooltip({ content: description, timeout: 0 });
+  } = useTooltip({ content: description });
 
   const { props: arrowTooltipProps, renderTooltip: renderArrowTooltip } =
-    useTooltip({ content: formatMessage(messages.openExample), timeout: 0 });
+    useTooltip({ content: formatMessage(messages.openExample) });
 
   return (
     <button

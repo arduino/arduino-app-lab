@@ -30,6 +30,7 @@ vuln.json
 .env
 .figma.env
 .tool-versions
+mise.toml
 
 # TypeScript cache
 *.tsbuildinfo

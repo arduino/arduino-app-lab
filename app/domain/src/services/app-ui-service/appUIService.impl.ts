@@ -18,6 +18,15 @@ export let onAgentStartedApp: AppUIService['onAgentStartedApp'] = () => {
   return () => undefined;
 };
 
+export let onAgentRenamedApp: AppUIService['onAgentRenamedApp'] = () => {
+  return () => undefined;
+};
+
+export let onAgentRenamedAppFile: AppUIService['onAgentRenamedAppFile'] =
+  () => {
+    return () => undefined;
+  };
+
 export let onAgentWifiRequest: AppUIService['onAgentWifiRequest'] = () => {
   return () => undefined;
 };
@@ -31,6 +40,8 @@ export const setAppUIService = (service: AppUIService): void => {
   openUIWhenReady = service.openUIWhenReady;
   forwardNonUIPort = service.forwardNonUIPort;
   onAgentStartedApp = service.onAgentStartedApp;
+  onAgentRenamedApp = service.onAgentRenamedApp;
+  onAgentRenamedAppFile = service.onAgentRenamedAppFile;
   onAgentWifiRequest = service.onAgentWifiRequest;
   onAgentModelImport = service.onAgentModelImport;
 };

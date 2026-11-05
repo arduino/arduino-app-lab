@@ -7,16 +7,20 @@ import {
   getCodeSubjectById,
   getUnsavedFilesSubject,
   openLinkExternal,
+  readText,
   replaceFileNameInvalidCharacters,
   saveAppFile,
+  writeText,
 } from '@cloud-editor-mono/domain/src/services/services-by-app/app-lab';
 import type { SaveCode } from '@cloud-editor-mono/domain/src/services/services-by-app/shared';
 import { resolveFileIconComponent } from '@cloud-editor-mono/images/assets/file-icons';
 import {
+  AppLabPaneExtras,
   BRICK_FILE_EXTENSION,
   BrickDetailTabId,
   CodeEditorLogic,
   dismissSnackbar,
+  EditorClipboard,
   EditorControlsProps,
   EditorPanelLogic,
   isBrickDetailTabId,
@@ -51,6 +55,7 @@ import { makeAppBrickDetailLogic } from '../../../../../hooks/useBrickDetail';
 import { isAbsoluteId, splitFileName } from '../../hooks/filePaths';
 import { resolveNewTabInsertion } from '../../hooks/tabInsertion';
 import { metaFromPath } from '../../hooks/useEditorFileMeta';
+import { keepMovedBuffer } from '../../hooks/useFileOperations';
 import { usePreviewFileId } from '../../hooks/usePreviewFileId';
 import { EditorPanelLogicParams } from './appLabEditorPanel.type';
 import { messages } from './messages';
@@ -205,6 +210,18 @@ type LspEditorProps = Pick<
   ensureLspFileValue?: (fileId: string) => Promise<string | undefined>;
 };
 
+// App Lab's clipboard: the domain clipboard service, which the desktop shell
+// registers with its native Wails bridge (see the standalone app's
+// dependencies.ts). `preferInMemoryPaste` because the system clipboard is not a
+// dependable paste source here — only the shell registers an implementation, so
+// in the browser build the calls reject — and pasting what was last copied
+// inside the editor is the behaviour users get today.
+const appLabClipboard: EditorClipboard = {
+  readText: () => readText(),
+  writeText: (text) => writeText(text),
+  preferInMemoryPaste: true,
+};
+
 type CodeEditorHookParams = {
   file: SelectableFileData | undefined;
   fileTabs: SelectableFileData[];
@@ -281,6 +298,8 @@ function buildCodeEditorHook({
       useScrollPastEnd: true,
       gutter: readOnly ? undefined : DEFAULT_GUTTER,
       fileError: file?.error,
+      clipboard: appLabClipboard,
+      openExternalLink: openLinkExternal,
       ...lsp,
     };
   };
@@ -339,10 +358,12 @@ export const useCreateEditorPanelLogic: UseCreateEditorPanelLogic = function (
     openFiles: tabs,
     readOnly,
     fetchFile,
+    onFileLoadError,
+    canReadTab,
     previewFileId,
     allFiles,
     openFilesStore,
-    filesContentLoaded,
+    tabsHydrated,
     storeSplitState,
     isLspEnabled,
     lspWorkspaceDir,
@@ -387,15 +408,75 @@ export const useCreateEditorPanelLogic: UseCreateEditorPanelLogic = function (
     rightPanelPreviewFileIdRef,
   ] = usePreviewFileId(unsavedFiles$);
 
+  // Read, not watched: an effect that re-runs reloads its file over unsaved edits.
+  const onFileLoadErrorRef = useRef(onFileLoadError);
+  onFileLoadErrorRef.current = onFileLoadError;
+  const canReadTabRef = useRef(canReadTab);
+  canReadTabRef.current = canReadTab;
+  // A brick tab has no file to read.
+  const isReadable = useCallback(
+    (file: SelectableFileData): boolean =>
+      file.fileExtension !== BRICK_FILE_EXTENSION &&
+      (canReadTabRef.current?.(file.fileId) ?? true),
+    [],
+  );
+
+  const reportLoadError = useCallback(
+    (fileId: string) =>
+      (error: unknown): void =>
+        onFileLoadErrorRef.current
+          ? onFileLoadErrorRef.current(fileId, error)
+          : console.error('load file failed', error),
+    [],
+  );
+
+  // A click on the tab on screen changes no selection: a tab that a failed read left empty is read here.
+  const readEmptyTab = useCallback(
+    (file: SelectableFileData | undefined): void => {
+      if (
+        !file ||
+        !isReadable(file) ||
+        getSelectedCodeObservableValue(getCodeSubjectById, file.fileId)
+          ?.value !== undefined
+      ) {
+        return;
+      }
+      fetchFile?.(file.fileId).catch(reportLoadError(file.fileId));
+    },
+    [fetchFile, isReadable, reportLoadError],
+  );
+
+  // For the tabs not on screen: a load nobody waits for must not reject.
+  const preloadTab = useCallback(
+    (file: SelectableFileData) => {
+      if (!isReadable(file)) return;
+      fetchFile?.(file.fileId).catch((error) =>
+        console.error('load file failed', error),
+      );
+    },
+    [fetchFile, isReadable],
+  );
+
   // Mirror of panel A's selection-driven fetch: whenever panel B's selected
   // file changes, make sure its content/subject is loaded. Without this,
   // clicking a B tab whose subject was never instantiated (or was lost in
   // a rekey edge case) leaves the editor stuck reading a missing subject.
+  const rightPanelSelectedRef = useRef(rightPanelSelectedFile);
+  rightPanelSelectedRef.current = rightPanelSelectedFile;
+  const rightPanelSelectedId = rightPanelSelectedFile?.fileId;
   useEffect(() => {
-    if (rightPanelSelectedFile?.fileId) {
-      void fetchFile?.(rightPanelSelectedFile.fileId);
+    const file = rightPanelSelectedRef.current;
+    if (
+      file &&
+      rightPanelSelectedId &&
+      isReadable(file) &&
+      !keepMovedBuffer(rightPanelSelectedId)
+    ) {
+      fetchFile?.(rightPanelSelectedId).catch(
+        reportLoadError(rightPanelSelectedId),
+      );
     }
-  }, [fetchFile, rightPanelSelectedFile?.fileId]);
+  }, [fetchFile, rightPanelSelectedId, isReadable, reportLoadError]);
 
   // Tracks which panel the user last interacted with so file-tree clicks
   // open in the focused panel (defaulting to A). The ref mirrors the state
@@ -425,10 +506,19 @@ export const useCreateEditorPanelLogic: UseCreateEditorPanelLogic = function (
       isPreview?: boolean;
     }): void => {
       handleSetActiveEditorPanel('A');
+      if (params.fileId && params.fileId === selectedFile?.fileId) {
+        readEmptyTab(selectedFile);
+      }
       selectFile(params);
       focusActiveEditorPanel();
     },
-    [handleSetActiveEditorPanel, selectFile, focusActiveEditorPanel],
+    [
+      handleSetActiveEditorPanel,
+      selectedFile,
+      readEmptyTab,
+      selectFile,
+      focusActiveEditorPanel,
+    ],
   );
 
   const { formatMessage } = useI18n();
@@ -555,14 +645,25 @@ export const useCreateEditorPanelLogic: UseCreateEditorPanelLogic = function (
     );
   }, []);
 
-  // One-shot hydration of split-view state from the persisted per-app
-  // record. Gated on `filesContentLoaded` so we can resolve file ids
-  // against the real `allFiles` catalogue (dropping deleted entries from
-  // both panel B's tabs and the two markdown maps).
+  // Restored from the stored record after panel A's tabs (a write before them is dropped), keeping only ids `allFiles` has.
   const splitHydrationComplete = useRef(false);
+  // Panel A resets on a board switch that keeps this screen: the split state goes with it, and comes back from the next record.
+  useEffect(() => {
+    if (tabsHydrated || !splitHydrationComplete.current) return;
+    splitHydrationComplete.current = false;
+    setIsSplit(false);
+    setRightPanelTabs([]);
+    setRightPanelSelectedFile(undefined);
+    setRightPanelPreviewFileId(undefined);
+    setLeftPanelMarkdownStateByFileId(new Map());
+    setRightPanelMarkdownStateByFileId(new Map());
+    setLeftPanelBrickTabStateByFileId(new Map());
+    setRightPanelBrickTabStateByFileId(new Map());
+    handleSetActiveEditorPanel('A');
+  }, [tabsHydrated, setRightPanelPreviewFileId, handleSetActiveEditorPanel]);
   useEffect(() => {
     if (splitHydrationComplete.current) return;
-    if (!filesContentLoaded) return;
+    if (!tabsHydrated) return;
     if (!openFilesStore) return;
     splitHydrationComplete.current = true;
 
@@ -601,7 +702,8 @@ export const useCreateEditorPanelLogic: UseCreateEditorPanelLogic = function (
     // clicks it. Symmetric with the panel B branch below.
     const panelAItems = panelA?.items ?? openFilesStore.items ?? [];
     panelAItems.forEach((id) => {
-      if (allFilesById.has(id)) void fetchFile?.(id);
+      const file = allFilesById.get(id);
+      if (file) preloadTab(file);
     });
     if (panelA?.markdownByFileId) {
       setLeftPanelMarkdownStateByFileId(
@@ -624,7 +726,7 @@ export const useCreateEditorPanelLogic: UseCreateEditorPanelLogic = function (
         // Without this, files that aren't also open in panel A stay on the
         // loading skeleton because their content was never fetched (see
         // `openInPanelB` for the runtime equivalent).
-        resolvedTabs.forEach((file) => void fetchFile?.(file.fileId));
+        resolvedTabs.forEach(preloadTab);
         setRightPanelTabs(resolvedTabs);
         const selectedId = panelB.selected;
         const selected =
@@ -648,7 +750,7 @@ export const useCreateEditorPanelLogic: UseCreateEditorPanelLogic = function (
         }
       }
     }
-  }, [filesContentLoaded, openFilesStore, allFiles, fetchFile]);
+  }, [tabsHydrated, openFilesStore, allFiles, preloadTab]);
 
   // Mirror split-view mutations into the persisted store, guarded by the
   // hydration ref so initial hydration doesn't trigger an immediate
@@ -755,7 +857,7 @@ export const useCreateEditorPanelLogic: UseCreateEditorPanelLogic = function (
       // their code subject to be instantiated); without this call, opening
       // a never-selected file in the right panel would leave the editor
       // stuck on the loading skeleton.
-      void fetchFile?.(target.fileId);
+      preloadTab(target);
 
       // Seed B's markdown mode from A only on the first split — afterwards
       // the panel's mode is deliberately independent.
@@ -817,7 +919,7 @@ export const useCreateEditorPanelLogic: UseCreateEditorPanelLogic = function (
     },
     [
       leftPanelMarkdownStateByFileId,
-      fetchFile,
+      preloadTab,
       rightPanelSelectedFile?.fileId,
       setRightPanelPreviewFileId,
       rightPanelPreviewFileIdRef,
@@ -1403,11 +1505,16 @@ export const useCreateEditorPanelLogic: UseCreateEditorPanelLogic = function (
   const selectRightPanelFileAndFocus = useCallback(
     ({ fileId }: { fileId?: string }): void => {
       handleSetActiveEditorPanel('B');
+      if (fileId && fileId === rightPanelSelectedFile?.fileId) {
+        readEmptyTab(rightPanelSelectedFile);
+      }
       selectRightPanelFileById({ fileId });
       focusActiveEditorPanel();
     },
     [
       handleSetActiveEditorPanel,
+      rightPanelSelectedFile,
+      readEmptyTab,
       selectRightPanelFileById,
       focusActiveEditorPanel,
     ],
@@ -1666,11 +1773,27 @@ export const useCreateEditorPanelLogic: UseCreateEditorPanelLogic = function (
       hideControls: true,
     } as EditorControlsProps;
 
+    // App Lab-only state consumed by the renderers AppLabEditorPanel
+    // injects (appLabContentRenderers, secretsWorkspaceRenderer); opaque
+    // to the shared EditorPanel.
+    const paneExtras: { A: AppLabPaneExtras; B: AppLabPaneExtras } = {
+      A: {
+        brickDetailLogic,
+        brickSelectedTab,
+        setBrickSelectedTab,
+        secretsEditorLogic,
+      },
+      B: {
+        brickDetailLogic,
+        brickSelectedTab: rightPanelBrickSelectedTab,
+        setBrickSelectedTab: setRightPanelBrickSelectedTab,
+      },
+    };
+
     return {
       tabsBarLogic,
       codeEditorLogic,
-      secretsEditorLogic,
-      brickDetailLogic,
+      paneExtras,
       selectedFile: selectedFile
         ? {
             id: selectedFile.fileId,
@@ -1711,11 +1834,6 @@ export const useCreateEditorPanelLogic: UseCreateEditorPanelLogic = function (
         : undefined,
       splitPanelShouldRenderMarkdown: rightPanelShouldRenderMarkdown,
       splitPanelSetShouldRenderMarkdown: setRightPanelShouldRenderMarkdown,
-      brickSelectedTab,
-      setBrickSelectedTab,
-      splitPanelBrickDetailLogic: brickDetailLogic,
-      splitPanelBrickSelectedTab: rightPanelBrickSelectedTab,
-      splitPanelSetBrickSelectedTab: setRightPanelBrickSelectedTab,
       splitPanelCanSwitchMarkdownMode: !rightPanelSelectedFileIsUnsaved,
       storedSplitProportionLeft: openFilesStore?.splitProportionLeft,
       onSplitResize: handleSplitResize,

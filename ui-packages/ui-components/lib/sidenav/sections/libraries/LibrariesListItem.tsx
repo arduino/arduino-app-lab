@@ -639,21 +639,25 @@ const LibrariesListItem = forwardRef((props: LibraryListItemProps, ref) => {
             />
           ) : null}
 
-          <div className={styles['include-button-wrapper']}>
-            <Button
-              size={TextSize.XSmall}
-              classes={{
-                button: customLibIncludeDisabled
-                  ? styles['include-button-disabled']
-                  : styles['include-button'],
-              }}
-              onClick={customLibIncludeDisabled ? () => {} : handleClickInclude}
-              {...(customLibIncludeDisabled && tooltipProps)}
-            >
-              {formatMessage(messages.includeLibraryButton)}
-            </Button>
-            {customLibIncludeDisabled && renderTooltip()}
-          </div>
+          {onClickInclude && (
+            <div className={styles['include-button-wrapper']}>
+              <Button
+                size={TextSize.XSmall}
+                classes={{
+                  button: customLibIncludeDisabled
+                    ? styles['include-button-disabled']
+                    : styles['include-button'],
+                }}
+                onClick={
+                  customLibIncludeDisabled ? () => {} : handleClickInclude
+                }
+                {...(customLibIncludeDisabled && tooltipProps)}
+              >
+                {formatMessage(messages.includeLibraryButton)}
+              </Button>
+              {customLibIncludeDisabled && renderTooltip()}
+            </div>
+          )}
         </div>
 
         {(!isCustom && standardLibrary.examplesNumber > 0) ||

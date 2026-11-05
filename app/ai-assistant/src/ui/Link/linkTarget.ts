@@ -12,7 +12,7 @@ export type LinkTarget =
   | { kind: 'inert' };
 
 // Schemes worth handing to the OS: browser for http(s), mail client for mailto, dialer for tel.
-// These are also the only four react-markdown's sanitizer lets through, so nothing else arrives.
+// With file://, these are the only schemes Markdown's link sanitizer lets through; an image's src arrives as written.
 const EXTERNAL = /^(?:https?|mailto|tel):/i;
 const FILE_URL = /^file:\/\//i;
 // 'www.arduino.cc' — a scheme-less URL, which agents write often enough to be worth reading as one.
@@ -33,7 +33,11 @@ const decodePath = (path: string): string => {
 
 // Only file:///abs and file://localhost/abs name a local file; a real host is a remote share.
 const fileUrlPath = (url: string): string | undefined => {
-  const rest = url.replace(FILE_URL, '').replace(/^localhost(?=\/)/i, '');
+  // As for a plain path below, a '#L3' or query is a hint for a human, not part of the name.
+  const rest = (url.replace(FILE_URL, '').split(/[?#]/)[0] ?? '').replace(
+    /^localhost(?=\/)/i,
+    '',
+  );
   // file://C:/app/main.py — Windows tooling emits the drive in the authority position; it's a path.
   if (DRIVE.test(rest)) {
     return decodePath(rest);

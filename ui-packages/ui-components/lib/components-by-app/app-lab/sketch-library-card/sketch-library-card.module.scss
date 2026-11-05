@@ -31,21 +31,6 @@
       background: rgba(29, 160, 134, 0.06);
       color: #1da086;
     }
-
-    .tooltip-content {
-      width: 160px;
-      padding: 8px;
-      top: unset;
-      right: unset;
-      margin-left: 50%;
-      background: var(--component-bg-inverted, #ecf1f1);
-      color: var(--text-inverted-subtle, #5d6a6b);
-      font-size: 10px;
-
-      &.tooltip-show {
-        display: flex;
-      }
-    }
   }
 }
 

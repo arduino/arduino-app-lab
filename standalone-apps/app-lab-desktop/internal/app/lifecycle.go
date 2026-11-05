@@ -115,9 +115,12 @@ func (a *App) Shutdown(ctx context.Context) {
 	// Same reason: an install runs under the app context too, so quitting mid-`npm ci` would orphan npm and its
 	// download with nothing left to report to. Cancel returns immediately and is safe when idle.
 	a.runtimeMu.Lock()
-	rt := a.runtimeMgr
+	running := make([]*airuntime.Manager, 0, len(a.runtimeMgrs))
+	for _, rt := range a.runtimeMgrs {
+		running = append(running, rt)
+	}
 	a.runtimeMu.Unlock()
-	if rt != nil {
+	for _, rt := range running {
 		rt.Cancel()
 	}
 	flasher.ShutdownDaemon()
@@ -158,18 +161,23 @@ func (a *App) selectBoard(serial string, password string) error {
 			// hand the board over before swapping it (flush, stop, drop checkouts). See detachAgentForBoardChange.
 			// Re-selecting the current board (a reconnect, or a redundant frontend call) keeps the agent: nothing it knows changes.
 			detached := false
-			if !a.isSelectedBoard(b) {
+			sameBoard := a.isSelectedBoard(b)
+			if !sameBoard {
 				detached = a.detachAgentForBoardChange()
-			}
-			// The connection is changing; drop any watches pointing at the old one.
-			if a.watcher != nil {
-				a.watcher.UnwatchAll()
+				// The board is changing; drop any watches pointing at the old one.
+				if a.watcher != nil {
+					a.watcher.UnwatchAll()
+				}
 			}
 			// The old "changed once" premise is gone (the board is swapped repeatedly now); still open: the previous
 			// board's Conn/tunnels aren't closed, and this assignment stays unsynchronised for the non-agent readers (W1).
 			// The agent does survive a same-board re-select now, so it reads the board through boardSnapshot, which
 			// takes boardMu: a board MCP tool mid-turn must not see half of each board's Conn or tunnels.
 			a.setSelectedBoard(b)
+			// A re-select keeps the watches: the page that asked for them re-watches only when the board changes.
+			if sameBoard && a.watcher != nil {
+				a.watcher.Retarget(a.watchTarget())
+			}
 
 			a.lspHandler.OnBoardSelected()
 

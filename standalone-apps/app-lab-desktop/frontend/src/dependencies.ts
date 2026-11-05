@@ -1,7 +1,11 @@
 import {
   setAiRuntimeService,
   setCodingAgentService,
+  subscribeAgentGiveUp,
+  subscribeAgentStream,
+  subscribeSessionReads,
   subscribeWorkspaceAppForgotten,
+  subscribeWorkspaceAppRenamed,
 } from '@cloud-editor-mono/ai-assistant';
 import {
   setAppUIService,
@@ -64,6 +68,14 @@ export const injectDependencies = (): void => {
   // AI Assistant: Wails-backed runtime + agent (ACP).
   setCodingAgentService(StandaloneCodingAgentService);
   setAiRuntimeService(StandaloneAiRuntimeService);
-  // Runs for the whole session, so a deleted app's chat is forgotten with no agent UI mounted.
+  // These run for the whole session, so a deleted app's chat is forgotten, a read failure stops
+  // showing and an agent turn keeps building its thread with no agent UI mounted. The stream
+  // subscription is the store's alone: two ChatPanels can be mounted at once, and one subscription
+  // each doubled every update.
   subscribeWorkspaceAppForgotten();
+  subscribeWorkspaceAppRenamed();
+  subscribeSessionReads();
+  subscribeAgentStream();
+  // A give-up must reach the editor's docked panel too, with Agent Mode never opened.
+  subscribeAgentGiveUp();
 };

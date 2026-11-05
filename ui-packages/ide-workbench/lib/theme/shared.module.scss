@@ -1,0 +1,63 @@
+// The package's own theme surface. Previously reached across the package
+// boundary into ui-components/public/shared.module.scss, which cannot survive
+// publication: a consumer installs this package, not this repo.
+//
+// The tokens in this file are self-contained: they are `var(--token, fallback)`
+// pairs, so a host that defines the `--editor-*` custom properties (Cloud
+// Editor via art-ui and ce-tokens, App Lab via its vendored al-tokens) themes
+// the code surface, and a host that defines none still gets readable syntax
+// highlighting from the fallbacks. That is what keeps a private design system
+// an optional layer rather than a dependency.
+//
+// It does not cover the whole package. The package's stylesheets read 28
+// further custom properties with no fallback (--surface-bg-below-2,
+// --text-default, --border-default, --tooltip-background,
+// --editor-tab-foreground and the rest), which both apps define in
+// ui-components/public/{al,ce}-tokens.scss. A host that defines none of those
+// renders the editor chrome unstyled. Publishing the package means shipping
+// that list as a documented contract (ADR-0002 phase 4b).
+//
+// The find-and-replace panel reads eight optional `--editor-find-*` properties
+// (field height, radius, hover and focus border, input padding, letter spacing,
+// caret, button offset). Each has a fallback in
+// find-and-replace/find-and-replace.module.scss, so a host sets them only to
+// restyle the fields; App Lab sets them in app-lab-editor-panel.module.scss.
+
+// z-index scale, shared with the host apps by value rather than by import.
+$zIndexMax: 99999;
+$zIndex5: 10004;
+$zIndex4: 10003;
+$zIndex3: 10002;
+$zIndex2: 10001;
+$zIndex1: 10000;
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+// Only tokens read from JS belong here: CodeMirror styles cannot use var(),
+// everything else styles in CSS.
+:export {
+  editorSyntaxHighlightDatatypes: var(--editor-syntax-highlight-datatypes, #ff7519);
+  editorSyntaxHighlightFunctions: var(--editor-syntax-highlight-functions, #ff7519);
+  editorSyntaxHighlightStructures: var(--editor-syntax-highlight-structures, #afda00);
+  editorSyntaxHighlightConstants: var(--editor-syntax-highlight-constants, #5beff4);
+  editorSyntaxHighlightVariables: var(--editor-syntax-highlight-variables, #5beff4);
+  editorSyntaxHighlightNumeric: var(--editor-syntax-highlight-numeric, #f1d78f);
+  editorSyntaxHighlightString: var(--editor-syntax-highlight-string, #00ab75);
+  editorSyntaxHighlightComments: var(--editor-syntax-highlight-comments, #7f8c8d);
+  editorSyntaxHighlightNeutral: var(--editor-syntax-highlight-neutral, #dae3e3);
+  editorBackgroundSelection: var(--editor-background-selection, #aeb8b826);
+  editorActiveLineBackground: var(--editor-active-line-background, #aeb8b80d);
+  editorActiveLineGutterBackground: var(--editor-active-line-gutter-background, #374146);
+  editorSearchMatchBackground: var(--editor-search-match-background, #25c2c733);
+  editorSearchMatchBackgroundActive: var(--editor-search-match-background-active, #25c2c799);
+  editorBackground: var(--editor-background, #171e21);
+  editorCursorColor: var(--editor-cursor-color, #95a5a6);
+  editorLinesForegroundActive: var(--editor-lines-foreground-active, #ffffff);
+}

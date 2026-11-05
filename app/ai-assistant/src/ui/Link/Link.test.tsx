@@ -2,6 +2,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { Markdown } from '../../features/chat/Message/Markdown';
 import { FileOpenProvider } from './FileOpenContext';
 import { Link } from './Link';
 
@@ -79,5 +80,84 @@ describe('Link', () => {
     expect(screen.getByText('the image')).toBeInTheDocument();
     expect(screen.queryByRole('link')).not.toBeInTheDocument();
     expect(screen.queryByRole('button')).not.toBeInTheDocument();
+  });
+
+  // Markdown's default sanitizer turns a file:// URL into javascript:void(0), which renders as plain text.
+  it('opens a file:// link written in a reply', () => {
+    renderInChat(
+      <Markdown text="See [main.py](file:///abs/my-app/main.py)." />,
+    );
+
+    screen.getByRole('link', { name: 'main.py' }).click();
+    expect(openFile).toHaveBeenCalledWith('/abs/my-app/main.py');
+  });
+
+  it('opens a file:// image written in a reply, and loads no image', () => {
+    const { container } = render(
+      <FileOpenProvider value={openFile}>
+        <Markdown text="See ![main.py](file:///abs/my-app/main.py)." />
+      </FileOpenProvider>,
+    );
+
+    screen.getByRole('link', { name: 'main.py' }).click();
+    expect(openFile).toHaveBeenCalledWith('/abs/my-app/main.py');
+    expect(container.querySelector('img')).toBeNull();
+  });
+
+  // An image's src reaches Link as written: the link sanitizer would make a drive path javascript:void(0).
+  it.each([
+    ['C:/app/main.py', 'C:/app/main.py'],
+    ['C:\\app\\main.py', 'C:\\app\\main.py'],
+  ])('opens a drive-path image written in a reply: %s', (src, path) => {
+    renderInChat(<Markdown text={`See ![main.py](${src}).`} />);
+
+    screen.getByRole('link', { name: 'main.py' }).click();
+    expect(openFile).toHaveBeenCalledWith(path);
+  });
+
+  // The src as written can be URL-encoded or carry a line anchor; the tooltip names what a click opens.
+  it.each([
+    ['C:\\app\\main.py', 'C:\\app\\main.py'],
+    ['file:///abs/my-app/main.py', '/abs/my-app/main.py'],
+    ['python/main.py#L20', 'python/main.py'],
+  ])('names the file a reply image opens: %s', (src, path) => {
+    renderInChat(<Markdown text={`See ![main.py](${src}).`} />);
+
+    expect(screen.getByRole('link', { name: 'main.py' })).toHaveAttribute(
+      'title',
+      path,
+    );
+  });
+
+  it('names the file an image with no alt opens, in its text too', () => {
+    renderInChat(<Markdown text="See ![](my%20app/main.py)." />);
+
+    const link = screen.getByRole('link', { name: 'my app/main.py' });
+    expect(link).toHaveAttribute('title', 'my app/main.py');
+    link.click();
+    expect(openFile).toHaveBeenCalledWith('my app/main.py');
+  });
+
+  it('opens the file a file:// link with a line hint names', () => {
+    renderInChat(<Markdown text="See [main.py](file:///abs/main.py#L3)." />);
+
+    screen.getByRole('link', { name: 'main.py' }).click();
+    expect(openFile).toHaveBeenCalledWith('/abs/main.py');
+  });
+
+  it('keeps the address as the tooltip of a web image', () => {
+    render(<Markdown text="See ![diagram](https://docs.arduino.cc/a.png)." />);
+
+    expect(screen.getByRole('link', { name: /diagram/ })).toHaveAttribute(
+      'title',
+      'https://docs.arduino.cc/a.png',
+    );
+  });
+
+  it('still renders a javascript: link in a reply as plain text', () => {
+    renderInChat(<Markdown text="[run](javascript:alert(1))" />);
+
+    expect(screen.getByText('run')).toBeInTheDocument();
+    expect(screen.queryByRole('link')).not.toBeInTheDocument();
   });
 });

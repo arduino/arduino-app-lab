@@ -3,6 +3,7 @@ import { renderHook, waitFor } from '@testing-library/react';
 import React, { PropsWithChildren } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { useBoardLifecycleStore } from '../../store/boardLifecycle';
 import { useBoardConfiguration } from './boardConfigurationContextProvider.logic';
 
 vi.mock('../../store/boardLifecycle', async () => {
@@ -196,6 +197,26 @@ describe('useBoardConfiguration - setBoardConfiguration happy path', () => {
     expect(result.current.hasBoardConfigurationError).toBe(false);
     expect(result.current.setBoardNameIsError).toBe(false);
     expect(result.current.setKeyboardLayoutIsError).toBe(false);
+  });
+
+  it('sends and stores the trimmed board name', async () => {
+    const { result } = renderHook(() => useBoardConfiguration(), {
+      wrapper: createWrapper(),
+    });
+
+    result.current.setBoardConfiguration('  NewBoard  ', 'it');
+
+    await waitFor(
+      () => {
+        expect(result.current.setBoardNameIsSuccess).toBe(true);
+      },
+      { timeout: 1000 },
+    );
+
+    expect(setBoardNameMock).toHaveBeenCalledWith('NewBoard');
+    expect(useBoardLifecycleStore.setState).toHaveBeenCalledWith({
+      selectedConnectedBoard: expect.objectContaining({ name: 'NewBoard' }),
+    });
   });
 
   it('sets error message when setBoardName API fails', async () => {

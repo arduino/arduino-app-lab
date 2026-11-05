@@ -8,6 +8,7 @@ import { AudioContext as MockAudioContext } from 'standardized-audio-context-moc
 import { useObservable } from './src/common/hooks/useObservable';
 import AuthContextProvider from './src/common/providers/auth/AuthContextProvider';
 import { I18nProvider } from './src/common/providers/i18n/I18nContextProvider';
+import RbacContextProvider from './src/common/providers/rbac/RbacContextProvider';
 import {
   MappedPorts,
   UseSerialCommunication,
@@ -232,7 +233,11 @@ export const TestProviderWrapper: FC<any> = ({ children }) =>
       createElement(
         AuthContextProvider,
         null,
-        createElement(I18nProvider, null, children),
+        createElement(
+          RbacContextProvider,
+          null,
+          createElement(I18nProvider, null, children),
+        ),
       ),
     ),
   );

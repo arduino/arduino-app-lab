@@ -12,7 +12,9 @@ const services = vi.hoisted(() => ({
 }));
 
 vi.mock('../../services', () => ({
+  listAgents: (): { id: string; comingSoon?: boolean }[] => [{ id: 'claude' }],
   getAuthStatus: services.getAuthStatus,
+  currentAgent: (): Promise<string> => Promise.resolve('claude'),
   start: services.start,
   listSessions: services.listSessions,
 }));

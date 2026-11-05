@@ -35,7 +35,11 @@ import { useGetProposedSketchName } from '../../../../common/utils';
 import { UseGetSketchStartUpQueries } from '../main.type';
 import { getDefaultSketch, getMainInoFile } from '../utils';
 import { useNotFound, useRedirectToPreview } from './routing';
-import { SketchBroadcastEvent, useSketchParams } from './sketch';
+import {
+  SketchBroadcastEvent,
+  useCopyLinkParams,
+  useSketchParams,
+} from './sketch';
 
 function isSketchLocatable(
   isExampleSketchRoute: boolean,
@@ -78,15 +82,11 @@ export const useGetSketchStartUpQueries: UseGetSketchStartUpQueries = function (
     propSketchId = componentContext.sketchId;
   }
 
-  const {
-    isSketchQueried,
-    sketchID,
-    createExampleParam,
-    createSketchParam,
-    sketchIDIsLoading,
-    viewMode,
-    scope,
-  } = useSketchParams();
+  const { isSketchQueried, sketchID, sketchIDIsLoading, viewMode, scope } =
+    useSketchParams();
+
+  const { createExampleParam, createSketchParam, createWaitsForPolicies } =
+    useCopyLinkParams();
 
   const { data: queriedSketchData, isLoading: getSketchIsLoading } =
     useRetrieveSketch(
@@ -101,6 +101,7 @@ export const useGetSketchStartUpQueries: UseGetSketchStartUpQueries = function (
     Boolean(
       !viewMode &&
         !createSketchParam &&
+        !createWaitsForPolicies &&
         profile.user &&
         queriedSketchData &&
         !queriedSketchData.organizationId &&
@@ -244,7 +245,7 @@ export const useGetSketchStartUpQueries: UseGetSketchStartUpQueries = function (
         return { errorIsManaged: false };
       }
 
-      if (!viewMode && !createSketchParam) {
+      if (!viewMode && !createSketchParam && !createWaitsForPolicies) {
         setForceNotFound(true);
         return { errorIsManaged: false };
       }
@@ -264,6 +265,7 @@ export const useGetSketchStartUpQueries: UseGetSketchStartUpQueries = function (
     [
       bypassOrgHeader,
       createSketchParam,
+      createWaitsForPolicies,
       startupSketch.data?.organizationId,
       viewMode,
     ],
@@ -400,7 +402,8 @@ export const useGetSketchStartUpQueries: UseGetSketchStartUpQueries = function (
       !sketchDataIsLoaded ||
       mainInoIsRenaming ||
       createExampleParam ||
-      createSketchParam,
+      createSketchParam ||
+      createWaitsForPolicies,
     userWasAuthenticated,
     fileIsDeleting,
     deleteSketchFile,

@@ -1,0 +1,28 @@
+$skeletonChildren: 6;
+
+$defaultFontSize: 12;
+$defaultEditorPaddingBottom: 90;
+$defaultLineNumbersGutterWidth: 30;
+
+$contextMenuPadding: 4px;
+
+$editorFontSizeVar: var(--editor-font-size);
+$editorPaddingBottomVar: var(--editor-padding-bottom);
+
+:root {
+  --editor-font-size: #{$defaultFontSize};
+  --editor-padding-bottom: #{$defaultEditorPaddingBottom};
+  --line-numbers-gutter-width: calc(#{$defaultLineNumbersGutterWidth} + var(--editor-font-size) - #{$defaultFontSize});
+  // Width of `.cm-gutters` (line numbers + fold gutter): 48px at the default font size, growing with it.
+  --editor-gutters-width: calc((var(--editor-font-size) + var(--line-numbers-gutter-width) + 6) * 1px);
+}
+
+:export {
+  skeletonChildren: $skeletonChildren;
+  editorFontSize: --editor-font-size;
+  editorFontSizeVar: $editorFontSizeVar;
+  editorPaddingBottom: --editor-padding-bottom;
+  editorPaddingBottomVar: $editorPaddingBottomVar;
+  defaultLineNumbersGutterWidth: $defaultLineNumbersGutterWidth;
+  lineNumbersGutterWidth: --line-numbers-gutter-width;
+}

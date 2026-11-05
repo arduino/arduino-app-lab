@@ -1,4 +1,3 @@
-import clsx from 'clsx';
 import React, { useRef } from 'react';
 
 import {
@@ -72,7 +71,7 @@ export const LinuxCredentialsDialog: React.FC<LinuxCredentialsDialogProps> = ({
             size={ButtonSize.Small}
             variant={ButtonVariant.Primary}
             loading={isLoading}
-            disabled={!password || isLoading}
+            disabled={!password}
             type="submit"
           >
             {formatMessage(messages.confirm)}
@@ -87,13 +86,6 @@ export const LinuxCredentialsDialog: React.FC<LinuxCredentialsDialogProps> = ({
         value="arduino"
         disabled
         onChange={(): null => null}
-        classes={{
-          input: clsx([
-            styles['input'],
-            styles['username'],
-            styles['disabled'],
-          ]),
-        }}
       />
       <Input
         inputRef={passwordRef}
@@ -106,14 +98,9 @@ export const LinuxCredentialsDialog: React.FC<LinuxCredentialsDialogProps> = ({
         error={error ? new Error(error) : undefined}
         placeholder=""
         label={formatMessage(messages.passwordLabel)}
-        classes={{
-          input: clsx([styles['input'], styles['password']]),
-          inputContainer: clsx(styles['app-name-input-container']),
-          error: clsx(styles['app-name-input-error']),
-          inputError: clsx(styles['error-message']),
-        }}
-        onKeyDown={(e): void => {
-          if (e.key === 'Enter' && password && !isLoading) {
+        blurOnEnter={false}
+        onEnter={(): void => {
+          if (password && !isLoading) {
             handleSubmit();
           }
         }}

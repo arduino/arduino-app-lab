@@ -1,5 +1,6 @@
+import { statAppPath } from '@cloud-editor-mono/domain/src/services/services-by-app/app-lab';
 import { SelectableFileData } from '@cloud-editor-mono/ui-components/lib/components-by-app/app-lab';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { QueryKey, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useEvent } from 'react-use';
 
@@ -13,7 +14,12 @@ import {
   moveOpenFilesEntry,
   patchOpenFilesEntry,
 } from '../../../../services/openFilesStore';
-import { isAbsoluteId, withoutHostLocalIds } from './filePaths';
+import {
+  isAbsoluteId,
+  resolveAbsPath,
+  withoutHostLocalIds,
+  withoutIds,
+} from './filePaths';
 import { resolveNewTabInsertion } from './tabInsertion';
 import { useEditorFileMeta } from './useEditorFileMeta';
 import {
@@ -22,11 +28,42 @@ import {
 } from './useEditorFiles.type';
 import { usePreviewFileId } from './usePreviewFileId';
 
+export const openFilesQueryKey = (storeEntityId?: string): QueryKey => [
+  'get-stored-open-files',
+  storeEntityId,
+];
+
+// `items` mirrors panel A: it is what panel A is restored from, and all a record from before the panels holds.
+const storedTabIds = (record: OpenFilesStoreItem): string[] => [
+  ...(record.items ?? []),
+  ...(record.panes?.A?.items ?? []),
+  ...(record.panes?.B?.items ?? []),
+];
+
+// A stat that fails cannot tell, so its id is not reported as gone.
+const findGoneIds = async (
+  ids: string[],
+  appPath: string,
+): Promise<Set<string>> => {
+  const gone = await Promise.all(
+    ids.map((id) =>
+      statAppPath(resolveAbsPath(id, appPath)).then(
+        (node) => (node ? undefined : id),
+        () => undefined,
+      ),
+    ),
+  );
+  return new Set(gone.filter((id): id is string => id !== undefined));
+};
+
 export function useEditorFiles({
   storeEntityId,
+  boardId,
+  appPath,
   defaultFilePath,
   appDirListed,
   appBricks,
+  appBricksFailed,
   getUnsavedFilesSubject,
 }: UseEditorFilesParams): UseEditorFilesReturn {
   const enabled = appDirListed && defaultFilePath !== undefined;
@@ -35,9 +72,15 @@ export function useEditorFiles({
   );
   const [openFileIds, setOpenFileIds] = useState<string[]>([]);
 
+  const openFilesInitComplete = useRef(false);
+  // The same, as state: the ref alone re-renders nothing when it flips.
+  const [tabsHydrated, setTabsHydrated] = useState(false);
+  // The board the tabs on screen were restored on. A board switch gives the entity the next board's serial before the tabs reset, so a write then would store this board's tabs as the next one's.
+  const restoredOn = useRef<{ board?: string }>();
+
   const queryClient = useQueryClient();
-  const { data: openFilesStore } = useQuery({
-    queryKey: ['get-stored-open-files', storeEntityId],
+  const { data: storedRecord } = useQuery({
+    queryKey: openFilesQueryKey(storeEntityId),
     queryFn: async () => {
       if (!storeEntityId) {
         return null;
@@ -45,7 +88,74 @@ export function useEditorFiles({
       const storeItem = await getOpenFilesEntry(storeEntityId);
       return storeItem ? withoutHostLocalIds(storeItem) : null;
     },
+    // Without a store entity the record is unknown: an answer of none would restore the default file and store it as the next board's tabs.
+    enabled: !!storeEntityId,
   });
+
+  // The record and the board a check read, and that record without the tabs whose file is gone (deleted while this screen was unmounted, as in Agent Mode).
+  const [checked, setChecked] = useState<{
+    record: OpenFilesStoreItem;
+    board?: string;
+    bricksFailed: boolean;
+    withoutGone: OpenFilesStoreItem;
+  }>();
+  // A check holds only for what it saw: after a board switch an example app has the same record, and the first render still shows the last board's brick list.
+  const checkedNow =
+    !!checked &&
+    checked.record === storedRecord &&
+    checked.board === boardId &&
+    checked.bricksFailed === !!appBricksFailed;
+  useEffect(() => {
+    if (tabsHydrated || !storedRecord || !appPath || checkedNow) {
+      return undefined;
+    }
+    if (!appBricks) {
+      if (appBricksFailed) {
+        setChecked({
+          record: storedRecord,
+          board: boardId,
+          bricksFailed: true,
+          withoutGone: storedRecord,
+        });
+      }
+      return undefined;
+    }
+    // A brick tab is named by the brick's id, which a stat would not find in the app folder.
+    const brickIds = new Set(appBricks.map((brick) => brick.id));
+    const ids = Array.from(new Set(storedTabIds(storedRecord))).filter(
+      (id) => !brickIds.has(id),
+    );
+    let cancelled = false;
+    void findGoneIds(ids, appPath).then((gone) => {
+      if (cancelled) return;
+      setChecked({
+        record: storedRecord,
+        board: boardId,
+        bricksFailed: false,
+        withoutGone: gone.size
+          ? withoutIds(storedRecord, (id) => gone.has(id))
+          : storedRecord,
+      });
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    checkedNow,
+    tabsHydrated,
+    storedRecord,
+    appPath,
+    appBricks,
+    appBricksFailed,
+    boardId,
+  ]);
+
+  // Undefined until this record is checked, so neither panel restores a gone tab; once the tabs are restored, a newer record is used as it is.
+  const openFilesStore = useMemo(() => {
+    if (!storedRecord) return storedRecord;
+    if (checkedNow && checked) return checked.withoutGone;
+    return tabsHydrated ? storedRecord : undefined;
+  }, [storedRecord, checkedNow, checked, tabsHydrated]);
 
   const externalPaths = useMemo(
     () => openFileIds.filter(isAbsoluteId),
@@ -54,12 +164,9 @@ export function useEditorFiles({
 
   // Panel B is hydrated by the editor panel from this same record, so its tabs
   // are never in `openFileIds` — but they still resolve through the catalogue
-  // below. `items` is the pre-panels shape of the record.
+  // below.
   const storedFileIds = useMemo(
-    () => [
-      ...(openFilesStore?.panes?.A?.items ?? openFilesStore?.items ?? []),
-      ...(openFilesStore?.panes?.B?.items ?? []),
-    ],
+    () => (openFilesStore ? storedTabIds(openFilesStore) : []),
     [openFilesStore],
   );
 
@@ -102,8 +209,6 @@ export function useEditorFiles({
     }
   });
 
-  const openFilesInitComplete = useRef(false);
-
   useEffect(() => {
     const storedOpenFileNamesIsLoading = openFilesStore === undefined;
     if (
@@ -115,6 +220,8 @@ export function useEditorFiles({
     }
 
     openFilesInitComplete.current = true;
+    restoredOn.current = { board: boardId };
+    setTabsHydrated(true);
 
     const storedIds = openFilesStore?.items ?? [];
     const currOpenFilesIds =
@@ -124,7 +231,10 @@ export function useEditorFiles({
         ? [defaultFilePath]
         : [];
 
-    setOpenFileIds(currOpenFilesIds);
+    // A file opened while the stored tabs were checked stays open and selected.
+    setOpenFileIds((openedBefore) =>
+      Array.from(new Set([...currOpenFilesIds, ...openedBefore])),
+    );
 
     const lastSelectedFileId = openFilesStore?.selected;
     const currSelectedFileId =
@@ -132,17 +242,24 @@ export function useEditorFiles({
         ? lastSelectedFileId
         : currOpenFilesIds[0];
 
-    setSelectedFileId(currSelectedFileId ?? undefined);
-  }, [enabled, openFilesStore, defaultFilePath]);
+    setSelectedFileId(
+      (selectedBefore) => selectedBefore ?? currSelectedFileId ?? undefined,
+    );
+  }, [enabled, openFilesStore, defaultFilePath, boardId]);
 
   useEffect(() => {
     // Reset when the data source becomes unavailable so a new app's
     // hydration starts from a clean slate.
-    if (openFilesInitComplete.current && !enabled) {
-      openFilesInitComplete.current = false;
-      setSelectedFileId(undefined);
-      setOpenFileIds([]);
+    if (enabled) {
+      return;
     }
+    openFilesInitComplete.current = false;
+    restoredOn.current = undefined;
+    setTabsHydrated(false);
+    // Also before a restore: a file opened during the check belongs to the board or app that went.
+    setSelectedFileId(undefined);
+    setOpenFileIds((ids) => (ids.length ? [] : ids));
+    setChecked(undefined);
   }, [enabled]);
 
   // Single write path for the record, so host-local ids are dropped no matter
@@ -153,15 +270,19 @@ export function useEditorFiles({
         prevStoreItem: OpenFilesStoreItem | undefined,
       ) => OpenFilesStorePatch,
     ) => {
-      if (!storeEntityId) {
+      if (
+        !storeEntityId ||
+        !restoredOn.current ||
+        restoredOn.current.board !== boardId
+      ) {
         return;
       }
       await patchOpenFilesEntry(storeEntityId, buildPatch, withoutHostLocalIds);
       queryClient.invalidateQueries({
-        queryKey: ['get-stored-open-files', storeEntityId],
+        queryKey: openFilesQueryKey(storeEntityId),
       });
     },
-    [storeEntityId, queryClient],
+    [storeEntityId, boardId, queryClient],
   );
 
   const storeOpenFiles = useCallback(
@@ -338,7 +459,7 @@ export function useEditorFiles({
 
   const onAppRename = useCallback(
     async (newAppId: string) => {
-      if (!storeEntityId || !openFilesStore) {
+      if (!storeEntityId || !storedRecord) {
         return;
       }
       const prevAppId = storeEntityId.split('-')[0];
@@ -348,10 +469,10 @@ export function useEditorFiles({
 
       await moveOpenFilesEntry(storeEntityId, newStoreEntityId);
       queryClient.invalidateQueries({
-        queryKey: ['get-stored-open-files', storeEntityId],
+        queryKey: openFilesQueryKey(storeEntityId),
       });
     },
-    [openFilesStore, queryClient, storeEntityId],
+    [storedRecord, queryClient, storeEntityId],
   );
 
   // Resolve ids → SelectableFileData via the meta catalogue. Ids whose
@@ -378,6 +499,7 @@ export function useEditorFiles({
     selectedFile,
     previewFileId,
     openFilesStore,
+    tabsHydrated,
     selectFile,
     closeFile,
     updateOpenFile,

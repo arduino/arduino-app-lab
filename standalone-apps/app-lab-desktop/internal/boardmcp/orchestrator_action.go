@@ -111,10 +111,18 @@ func orchestratorAction(ctx context.Context, access BoardAccess, path string) (s
 				}
 			case "error":
 				var e struct {
+					Code    string `json:"code"`
 					Message string `json:"message"`
 				}
 				_ = json.Unmarshal([]byte(ev.data), &e)
+				// The board ends every stream this way, a successful start or stop included.
+				if e.Code == "SERVER_CLOSED" {
+					return strings.Join(progress, "\n"), nil
+				}
 				msg := e.Message
+				if msg == "" {
+					msg = e.Code
+				}
 				if msg == "" {
 					msg = "operation failed"
 				}

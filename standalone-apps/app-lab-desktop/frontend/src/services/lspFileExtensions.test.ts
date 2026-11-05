@@ -1,4 +1,4 @@
-import { LSP_LANGS } from '@cloud-editor-mono/ui-components/lib/code-mirror/extensions/lsp/lsp-consts';
+import { LSP_LANGS } from '@cloud-editor-mono/ide-workbench/lib/code-mirror/extensions/lsp/lsp-consts';
 import { describe, expect, it } from 'vitest';
 
 import goLspWorkspaceSource from '../../../internal/lsp/lsp_workspace.go?raw';

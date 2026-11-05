@@ -11,10 +11,27 @@ var nativeMutatingTools = []string{"Bash", "NotebookEdit"}
 // neverAutoApprovable: tools that must always be human-confirmed — dropped from the allowedTools list, and denied any "always" option on their permission prompt. board_exec (arbitrary board shell) is the case that matters: a persistent grant is keyed on the tool name alone, and App Lab can neither list nor revoke it. Match it through isNeverAutoApprovable, never by bare lookup.
 var neverAutoApprovable = map[string]bool{"board_exec": true}
 
-// isNeverAutoApprovable matches a tool by bare name ("board_exec") or by MCP-qualified call title ("mcp__arduino-board__board_exec").
+// Matched against the whole title: the separator is the engine's choice, and a false grants the shell.
 func isNeverAutoApprovable(tool string) bool {
-	if i := strings.LastIndex(tool, "__"); i >= 0 {
-		tool = tool[i+len("__"):]
+	for name := range neverAutoApprovable {
+		if denotesTool(tool, name) {
+			return true
+		}
 	}
-	return neverAutoApprovable[tool]
+	return false
+}
+
+// The separator check stops a longer name ending in ours ("xboard_exec") from matching.
+func denotesTool(title, name string) bool {
+	if title == name {
+		return true
+	}
+	if !strings.HasSuffix(title, name) {
+		return false
+	}
+	switch title[len(title)-len(name)-1] {
+	case '_', '-', ':', '.', '/':
+		return true
+	}
+	return false
 }

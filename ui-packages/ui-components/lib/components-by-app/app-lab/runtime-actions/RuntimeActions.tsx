@@ -38,13 +38,11 @@ const RuntimeActions = (props: RuntimeActionsProps): React.ReactElement => {
   const { props: tooltipPropsStop, renderTooltip: renderTooltipStop } =
     useTooltip({
       content: 'Stop',
-      timeout: 0,
     });
 
   const { props: tooltipPropsRun, renderTooltip: renderTooltipRun } =
     useTooltip({
       content: 'Run',
-      timeout: 0,
     });
 
   const getStatusBanner = (params: {

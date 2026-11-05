@@ -1,9 +1,9 @@
+import { SelectableFileData } from '@cloud-editor-mono/ide-workbench/lib/editor-tabs-bar/index';
 import { ChevronDown } from '@cloud-editor-mono/images/assets/icons';
 import clsx from 'clsx';
 import { useCallback, useContext } from 'react';
 import { useFilter } from 'react-aria';
 
-import { SelectableFileData } from '../../../editor-tabs-bar';
 import DropdownMenuButton from '../../../essential/dropdown-menu/DropdownMenuButton';
 import { SearchField } from '../../../essential/search-field';
 import useDebouncedSearch from '../../../essential/search-field/useDebouncedSearch';

@@ -22,7 +22,6 @@ export const BoardExtensionsFooter = ({
   const { props: tooltipPropsCarrier, renderTooltip: renderTooltipCarrier } =
     useTooltip({
       content: formatMessage(boardExtensionsMessages.applyButton),
-      timeout: 0,
     });
 
   return (

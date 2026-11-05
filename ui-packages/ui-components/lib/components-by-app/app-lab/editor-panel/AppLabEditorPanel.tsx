@@ -8,9 +8,12 @@ import {
   useI18n,
 } from '@cloud-editor-mono/ui-components/lib/components-by-app/app-lab';
 import clsx from 'clsx';
-import { memo, useCallback } from 'react';
+import { memo, ReactElement, useCallback } from 'react';
 
+import { secretsWorkspaceRenderer } from '../../../secrets-editor';
 import styles from './app-lab-editor-panel.module.scss';
+import { appLabContentRenderers } from './appLabContentRenderers';
+import { appLabEditorComponents } from './appLabEditorComponents';
 import { AppLabEditorPanelLogic } from './appLabEditorPanel.type';
 import { messages } from './messages';
 
@@ -37,7 +40,7 @@ const AppLabEditorPanel: React.FC<AppLabEditorPanelProps> = (
   // Contents for each banner kind the editor may ask for. Unknown kinds render
   // nothing rather than falling back to an unrelated message.
   const renderBanner = useCallback(
-    (kind: EditorBannerKind): JSX.Element | undefined => {
+    (kind: EditorBannerKind): ReactElement | undefined => {
       if (kind !== 'read-only') return undefined;
       return (
         <div className={styles['editor-banner']}>
@@ -62,6 +65,9 @@ const AppLabEditorPanel: React.FC<AppLabEditorPanelProps> = (
       editorPanelLogic={editorPanelLogic}
       getKeywords={getKeywords}
       onCopyCode={onCopyCode}
+      contentRenderers={appLabContentRenderers}
+      workspaceRenderers={[secretsWorkspaceRenderer]}
+      components={appLabEditorComponents}
       onFileError={onFileError}
       classes={{
         tabsBar: styles['editor-tabs-bar'],

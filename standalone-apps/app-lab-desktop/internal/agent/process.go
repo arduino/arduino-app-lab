@@ -1,6 +1,11 @@
 package agent
 
-import "os/exec"
+import (
+	"os/exec"
+	"time"
+)
+
+const drainPoll = 20 * time.Millisecond
 
 // processGroup ties the agent and its descendants into one OS group so the whole
 // tree dies together (POSIX process group on Unix, Job Object on Windows).
@@ -12,5 +17,7 @@ type processGroup interface {
 	// so the grace period is given regardless of what happens here.
 	interrupt(cmd *exec.Cmd)
 	terminate(cmd *exec.Cmd) error // forceful: kill the whole tree
+	// drain waits, until deadline, for what the adapter started to exit on its own: the Claude CLI needs its grace too.
+	drain(deadline time.Time)
 	release() error
 }

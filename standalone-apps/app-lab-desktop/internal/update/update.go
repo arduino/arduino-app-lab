@@ -3,9 +3,12 @@ package update
 import (
 	"app-lab-desktop/internal/board"
 	"context"
+	"errors"
 	"fmt"
 	"net/url"
 	"os"
+	"strings"
+	"sync/atomic"
 
 	"github.com/arduino/go-updater/releaser"
 	goUpdater "github.com/arduino/go-updater/updater"
@@ -13,9 +16,26 @@ import (
 	semver "go.bug.st/relaxed-semver"
 )
 
+// ErrUpdateInProgress is returned when CheckAndApplyUpdate is called while another call runs.
+// The frontend matches its text (APP_UPDATE_IN_PROGRESS in updaterContextProvider.logic.ts).
+var ErrUpdateInProgress = errors.New("an App Lab update is already in progress")
+
+// ErrLeftoverOldApp is returned when go-updater refuses to run because a previous update left
+// <name>.old.app next to the app.
+var ErrLeftoverOldApp = errors.New("a previous App Lab update left a backup copy")
+
+// goUpdaterLeftoverPrefix starts the error go-updater v0.3.0 returns for a leftover <name>.old.app
+// (updater/apply_darwin.go).
+const goUpdaterLeftoverPrefix = "temp app already exists: "
+
 type Updater struct {
 	releaser *releaser.Client
 	version  string
+	running  atomic.Bool
+
+	// Seams for tests: the real CheckForUpdates downloads a release and, on success, exits the process.
+	checkForUpdates func(targetPath string, current releaser.Version, client *releaser.Client, cb goUpdater.UpgradeConfirmCB) error
+	executable      func() (string, error)
 }
 
 func NewUpdater(version, userAgent, updateURL string) (*Updater, error) {
@@ -45,8 +65,10 @@ func NewUpdater(version, userAgent, updateURL string) (*Updater, error) {
 	)
 
 	return &Updater{
-		releaser: client,
-		version:  version,
+		releaser:        client,
+		version:         version,
+		checkForUpdates: goUpdater.CheckForUpdates,
+		executable:      os.Executable,
 	}, nil
 }
 
@@ -92,7 +114,25 @@ func (u *Updater) NewVersion(ctx context.Context) (string, error) {
 	return "", nil
 }
 
+// explainLeftoverOldApp rewords go-updater's refusal on a leftover <name>.old.app, and returns nil for
+// any other error. go-updater alone decides whether a leftover blocks the update: a check of its own
+// here would keep refusing after a go-updater release that recovers from the leftover. If go-updater
+// words the error differently, the user sees go-updater's text.
+func explainLeftoverOldApp(err error) error {
+	oldAppPath, found := strings.CutPrefix(err.Error(), goUpdaterLeftoverPrefix)
+	if !found {
+		return nil
+	}
+	oldAppPath = strings.TrimSuffix(oldAppPath, ", cannot update")
+	return fmt.Errorf("%w at %s, so the update cannot run", ErrLeftoverOldApp, oldAppPath)
+}
+
 func (u *Updater) CheckAndApplyUpdate(ctx context.Context, showConfirmDialog bool) error {
+	if !u.running.CompareAndSwap(false, true) {
+		return ErrUpdateInProgress
+	}
+	defer u.running.Store(false)
+
 	// Private function for showing a confirmation dialog before upgrading
 	confirmDialog := func(current releaser.Version, target releaser.Version) bool {
 		result, err := runtime.MessageDialog(ctx, runtime.MessageDialogOptions{
@@ -128,7 +168,7 @@ func (u *Updater) CheckAndApplyUpdate(ctx context.Context, showConfirmDialog boo
 		return nil
 	}
 
-	executablePath, err := os.Executable()
+	executablePath, err := u.executable()
 	if err != nil {
 		return fmt.Errorf("could not get executable path: %w", err)
 	}
@@ -138,8 +178,11 @@ func (u *Updater) CheckAndApplyUpdate(ctx context.Context, showConfirmDialog boo
 		updateConfirmCallback = confirmDialog
 	}
 
-	err = goUpdater.CheckForUpdates(executablePath, releaser.Version(u.version), u.releaser, updateConfirmCallback)
+	err = u.checkForUpdates(executablePath, releaser.Version(u.version), u.releaser, updateConfirmCallback)
 	if err != nil {
+		if leftover := explainLeftoverOldApp(err); leftover != nil {
+			return leftover
+		}
 		return fmt.Errorf("error checking for updates: %w", err)
 	}
 

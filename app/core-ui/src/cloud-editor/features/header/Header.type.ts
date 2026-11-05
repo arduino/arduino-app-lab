@@ -1,4 +1,5 @@
 import { ArduinoUser } from '@bcmi-labs/art-auth';
+import { RbacValue } from '@cloud-editor-mono/ui-components';
 
 export type HeaderLogic = () => {
   user?: ArduinoUser | null;
@@ -9,6 +10,7 @@ export type HeaderLogic = () => {
   itemName?: string;
   itemDataIsLoading?: boolean;
   headerActions?: HeaderActions;
+  rbac?: RbacValue;
 };
 
 export enum HeaderItemId {

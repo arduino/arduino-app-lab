@@ -1,5 +1,7 @@
-import { IconFileLoadDownloadArrow } from '@arduino/react-icons';
-import { Warning } from '@cloud-editor-mono/images/assets/icons';
+import {
+  IconFileLoadDownloadArrow,
+  Warning,
+} from '@cloud-editor-mono/images/assets/icons';
 import {
   Button,
   ButtonAppearance,
@@ -42,7 +44,6 @@ export const AiModelStandardActions: React.FC<AiModelStandardActionsProps> = ({
   const { props: tooltipPropsDownload, renderTooltip: renderTooltipDownload } =
     useTooltip({
       content: formatMessage(messages.aiModelDownloadLabel),
-      timeout: 0,
     });
 
   // order matters here: uninstalling takes precedence over installed,

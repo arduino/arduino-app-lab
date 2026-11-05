@@ -11,6 +11,7 @@ import (
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 
+	"app-lab-desktop/internal/appid"
 	"app-lab-desktop/internal/appmirror"
 	"app-lab-desktop/internal/arduinoapps"
 )
@@ -130,7 +131,7 @@ func registerAppsGet(srv *mcp.Server, access BoardAccess) string {
 		Description: "Get one Arduino App's details on the connected board (status, description, path, and its bricks). Read-only; pass the app id from apps_list.",
 		Annotations: &mcp.ToolAnnotations{ReadOnlyHint: true},
 	}, func(ctx context.Context, _ *mcp.CallToolRequest, in appGetInput) (*mcp.CallToolResult, any, error) {
-		id := strings.TrimSpace(in.ID)
+		id := appid.Canonical(in.ID)
 		if id == "" {
 			return nil, nil, fmt.Errorf("app id is required")
 		}
@@ -229,29 +230,42 @@ func requireUserApp(ctx context.Context, access BoardAccess, appID string) error
 func registerAppsCheckout(srv *mcp.Server, access BoardAccess) string {
 	mcp.AddTool(srv, &mcp.Tool{
 		Name:        "apps_checkout",
-		Description: "Check out an Arduino App's files from the connected board into a local working copy — use this to VIEW, read, or edit an app's files: check out, then use the Read, Edit and Write tools on the returned directory (do NOT read app files by cat-ing them via board_exec). Edits sync back to the board automatically — at the end of the turn and right before apps_start, apps_clone, or board_exec — but a running app never picks them up by itself: restart it to apply changes. Built-in examples (Inspirations, brick examples, core-and-foundational) and installed App releases check out READ-ONLY: read them freely, but edits to them never reach the board — apps_clone one first to get a copy you can change. Read-only itself; pass the app id from apps_list.",
+		Description: "Check out an Arduino App's files from the connected board into a local working copy — use this to VIEW, read, or edit an app's files: check out, then use the Read, Edit and Write tools on the returned directory (do NOT read app files by cat-ing them via board_exec). To rename, move or delete files or folders, use app_files_rename and app_files_delete, not Write. Edits sync back to the board automatically — at the end of the turn and right before apps_start, apps_clone, or board_exec — but a running app never picks them up by itself: restart it to apply changes. Built-in examples (Inspirations, brick examples, core-and-foundational) and installed App releases check out READ-ONLY: read them freely, but edits to them never reach the board — apps_clone one first to get a copy you can change. Read-only itself; pass the app id from apps_list.",
 		Annotations: &mcp.ToolAnnotations{ReadOnlyHint: true},
 	}, func(ctx context.Context, _ *mcp.CallToolRequest, in appGetInput) (*mcp.CallToolResult, any, error) {
-		id := strings.TrimSpace(in.ID)
+		id := appid.Canonical(in.ID)
 		if id == "" {
 			return nil, nil, fmt.Errorf("app id is required")
 		}
-		path, parked, readOnly, err := access.CheckoutApp(ctx, id)
+		co, err := access.CheckoutApp(ctx, id)
 		if err != nil {
 			return nil, nil, err
 		}
 		// The checkout is the agent's recovery step, so it must surface any earlier edits that never landed.
-		text := SyncIssueWarning(access.PendingSyncIssues()) + path
-		if readOnly {
-			text += "\n\n" + readOnlyCheckoutNotice
-		}
-		for _, rel := range parked {
-			text += fmt.Sprintf("\nnote: your uncommitted edits to %s conflicted with changes made on the board since checkout; the board's version is now in place and your edits were saved to %s — review it NOW and re-apply what you still need with Edit on the real file. The parked copy is internal plumbing and is cleaned up automatically at the end of the turn: never mention it to the user, never ask the user to delete it, and do not push it to the board via board_exec.",
-				rel, rel+appmirror.ParkedSuffix)
-		}
-		return textResult(text), nil, nil
+		return textResult(checkoutText(co, access.PendingSyncIssues())), nil, nil
 	})
 	return "apps_checkout"
+}
+
+// staleCheckoutWarning tells the agent a re-checkout kept the old copy because the board could not be read; %v is the reason.
+const staleCheckoutWarning = "warning: this checkout could not be refreshed from the board (%v). Some of its files may be out of date: changes made on the board since the app was last checked out may be missing here. " +
+	"Call apps_checkout again before you rely on these files; if it fails again, tell the user the board could not be read. Do not read the app's files through board_exec instead."
+
+// checkoutText is the apps_checkout result: warnings first, then the path and what the agent must know about the copy.
+func checkoutText(co Checkout, syncIssues []string) string {
+	text := SyncIssueWarning(syncIssues)
+	if co.Stale != nil {
+		text += fmt.Sprintf(staleCheckoutWarning, co.Stale) + "\n\n"
+	}
+	text += co.Path
+	if co.ReadOnly {
+		text += "\n\n" + readOnlyCheckoutNotice
+	}
+	for _, rel := range co.Parked {
+		text += fmt.Sprintf("\nnote: your uncommitted edits to %s conflicted with changes made on the board since checkout; the board's version is now in place and your edits were saved to %s — review it NOW and re-apply what you still need with Edit on the real file. The parked copy is internal plumbing and is cleaned up automatically at the end of the turn: never mention it to the user, never ask the user to delete it, and do not push it to the board via board_exec.",
+			rel, rel+appmirror.ParkedSuffix)
+	}
+	return text
 }
 
 type appLogsInput struct {
@@ -266,7 +280,7 @@ func registerAppsLogs(srv *mcp.Server, access BoardAccess) string {
 		Description: "Get a snapshot of an Arduino App's recent Python logs (stdout/Logger) on the connected board — the last lines, not a live stream. Read-only; pass the app id from apps_list.",
 		Annotations: &mcp.ToolAnnotations{ReadOnlyHint: true},
 	}, func(ctx context.Context, _ *mcp.CallToolRequest, in appLogsInput) (*mcp.CallToolResult, any, error) {
-		id := strings.TrimSpace(in.ID)
+		id := appid.Canonical(in.ID)
 		if id == "" {
 			return nil, nil, fmt.Errorf("app id is required")
 		}
@@ -310,15 +324,15 @@ type appCloneInput struct {
 func registerAppsStart(srv *mcp.Server, access BoardAccess) string {
 	mcp.AddTool(srv, &mcp.Tool{
 		Name:        "apps_start",
-		Description: "Start an Arduino App on the connected board. Only one app runs at a time, so this stops whatever is currently running. Pass the app id from apps_list. Mutating: requires user approval. Starting can be slow — on a freshly-flashed board it can take several minutes (image pulls, dependency installs, sketch build). If it doesn't finish quickly the tool returns while the start keeps running in the background; call apps_wait_running to wait for it to come up (don't hand-poll apps_get), and do NOT call apps_start again.",
+		Description: "Start an Arduino App on the connected board. Only one app runs at a time, and the board refuses this while another app runs: stop that one first with apps_stop. Pass the app id from apps_list. Mutating: requires user approval. Starting can be slow — on a freshly-flashed board it can take several minutes (image pulls, dependency installs, sketch build). If it doesn't finish quickly the tool returns while the start keeps running in the background; call apps_wait_running to wait for it to come up (don't hand-poll apps_get), and do NOT call apps_start again.",
 		Annotations: &mcp.ToolAnnotations{ReadOnlyHint: false},
 	}, func(ctx context.Context, _ *mcp.CallToolRequest, in appActionInput) (*mcp.CallToolResult, any, error) {
-		id := strings.TrimSpace(in.ID)
+		id := appid.Canonical(in.ID)
 		if id == "" {
 			return nil, nil, fmt.Errorf("app id is required")
 		}
 		// Push checked-out edits so the started app runs the latest code; refuse to start stale code if this app's sync failed.
-		failed, conflicts, withheld := access.FlushMirrorEdits()
+		failed, conflicts, withheld, notes := access.FlushMirrorEdits(id)
 		if failed[id] != nil {
 			return nil, nil, fmt.Errorf("the pending edits for this app could not be synced to the board (%v) — start aborted so the board doesn't run stale code. The local edits are preserved and will be re-pushed automatically; check the board connection and call apps_start again", failed[id])
 		}
@@ -331,7 +345,7 @@ func registerAppsStart(srv *mcp.Server, access BoardAccess) string {
 			note = fmt.Sprintf("Note: %v. The board is running the app's shipped files, not your local edits — to run your changes, apps_clone this app and start the copy.\n\n", withheld[id])
 		}
 		// Warnings don't abort the start (this app's checkout may be fine), but the agent must learn about stray or unlanded edits; rendered post-flush so they reflect the current state.
-		warn := SyncIssueWarning(access.PendingSyncIssues()) + GhostEditWarning(access.PendingGhostEdits())
+		warn := SyncIssueWarning(notes) + SyncIssueWarning(access.PendingSyncIssues()) + GhostEditWarning(access.PendingGhostEdits())
 		res := runAppAction(ctx, access, fmt.Sprintf("/v1/apps/%s/start", url.PathEscape(id)))
 		// The agent started this app; ask the UI to auto-open its web UI + forward ports once running (like a manual run).
 		access.RequestOpenAppUI(id)
@@ -340,20 +354,48 @@ func registerAppsStart(srv *mcp.Server, access BoardAccess) string {
 			// it keeps running in the background. The agent must poll, not assume success or failure.
 			return textResult(warn + note + "Starting the app — this can take several minutes on a freshly-flashed board (pulling images, installing dependencies, building the sketch). It is still booting in the background; call apps_wait_running to wait for it, and only report it started once that shows it running. Do NOT call apps_start again."), nil, nil
 		}
-		// Finished within the wait. Trust the actual status: a spurious SSE error with the app running still counts as started.
-		if st, err := appStatus(ctx, access, id); err == nil && strings.EqualFold(st, "running") {
-			return textResult(warn + note + "Started — the app is now running."), nil, nil
+		check, cancel := context.WithTimeout(ctx, startCheckCap)
+		st, boot, serr := startCheck(check, access, id)
+		cancel()
+		text, err := startOutcome(res, st, boot, serr, warn+note)
+		if err != nil {
+			return nil, nil, err
 		}
-		if res.err != nil {
-			return nil, nil, res.err
-		}
-		out := res.out
-		if out == "" {
-			out = "Started."
-		}
-		return textResult(warn + note + out), nil, nil
+		return textResult(text), nil, nil
 	})
 	return "apps_start"
+}
+
+// startCheck reads how a start whose stream ended came out: the board ends it once the app's containers run, and an app whose code fails at once reads "running" for a moment before it fails.
+func startCheck(ctx context.Context, access BoardAccess, id string) (string, appBoot, error) {
+	status, err := appStatus(ctx, access, id)
+	switch {
+	case err != nil:
+		return "", bootPending, err
+	case isFailedStatus(status):
+		return status, bootDown, nil
+	case !strings.EqualFold(status, "running") && !strings.EqualFold(status, "starting"):
+		return status, bootPending, nil
+	}
+	return waitForAppRunning(ctx, access, id, startCheckWait)
+}
+
+// startOutcome words a start that ended within the hand-off by the app's status (startCheck), after the warnings (said once, so kept on an error too).
+func startOutcome(res appActionResult, status string, boot appBoot, statusErr error, warn string) (string, error) {
+	switch {
+	case statusErr == nil && boot == bootUp:
+		return warn + "Started — the app is now running.", nil // a spurious stream error included
+	case res.err != nil:
+		return "", fmt.Errorf("%s%w", warn, res.err)
+	case statusErr != nil:
+		return warn + fmt.Sprintf("The start ended, but the app's status could not be read (%v). Call apps_wait_running, and only report the app started once that shows it running.", statusErr), nil
+	case boot == bootDown:
+		return "", fmt.Errorf("%sthe app is not running: it failed or stopped right after it started (status %q). Read apps_logs for the cause; do not report it as started", warn, status)
+	case strings.EqualFold(status, "running"):
+		return warn + "The app came up only a moment ago. Call apps_wait_running to check that it keeps running, and only report it started once that shows it running.", nil
+	default:
+		return "", fmt.Errorf("%sthe start ended but the app is not running (status %q). Call apps_wait_running to see whether it still comes up, and apps_logs for the cause if it does not; do not report it as started", warn, status)
+	}
 }
 
 // registerAppsStop adds apps_stop (mutating). Not read-only — permission-gated like apps_start.
@@ -363,7 +405,7 @@ func registerAppsStop(srv *mcp.Server, access BoardAccess) string {
 		Description: "Stop a running Arduino App on the connected board. Pass the app id from apps_list. Mutating: requires user approval. If it doesn't finish quickly the tool returns while the stop keeps running in the background; poll apps_get to confirm and do NOT call apps_stop again.",
 		Annotations: &mcp.ToolAnnotations{ReadOnlyHint: false},
 	}, func(ctx context.Context, _ *mcp.CallToolRequest, in appActionInput) (*mcp.CallToolResult, any, error) {
-		id := strings.TrimSpace(in.ID)
+		id := appid.Canonical(in.ID)
 		if id == "" {
 			return nil, nil, fmt.Errorf("app id is required")
 		}
@@ -390,7 +432,24 @@ func registerAppsStop(srv *mcp.Server, access BoardAccess) string {
 const (
 	waitDefaultTimeout = 60 * time.Second  // one call covers a typical boot; the agent re-calls for longer ones
 	waitMaxTimeout     = 120 * time.Second // cap so the tool call can't block for minutes and time out
-	waitPollInterval   = 2 * time.Second
+	startCheckWait     = 10 * time.Second  // how long apps_start checks the app once its stream ended, the settle included
+)
+
+var (
+	startCheckCap    = 20 * time.Second // with the 20 s hand-off, keeps apps_start under the engine's 60 s limit on a slow board
+	waitPollInterval = 2 * time.Second
+	// runningSettle is how long an app must keep reading "running" before a tool reports it running: one whose code fails at once reads "running" for a second or two first.
+	runningSettle      = 5 * time.Second
+	settlePollInterval = time.Second
+)
+
+// appBoot is how a wait for an app to come up ended.
+type appBoot int
+
+const (
+	bootPending appBoot = iota // the wait ran out first: the app was starting, not started, or up for less than runningSettle
+	bootUp                     // it read "running" for runningSettle
+	bootDown                   // it failed, or it stopped after it came up
 )
 
 type appWaitInput struct {
@@ -402,10 +461,10 @@ type appWaitInput struct {
 func registerAppsWaitRunning(srv *mcp.Server, access BoardAccess) string {
 	mcp.AddTool(srv, &mcp.Tool{
 		Name:        "apps_wait_running",
-		Description: "After apps_start, wait for the app to finish booting and report its status. Checks the board server-side and returns as soon as the app is running (or clearly failed), or when the wait budget elapses. Read-only — use this instead of repeatedly calling apps_get yourself. Pass the app id; optionally timeout_sec (default 60, max 120). If it returns still starting, just call it again.",
+		Description: "After apps_start, wait for the app to finish booting and report its status. Checks the board server-side and returns once the app has kept running for a few seconds (an app that fails right after it starts is reported as failed), or when the wait budget elapses. Read-only — use this instead of repeatedly calling apps_get yourself. Pass the app id; optionally timeout_sec (default 60, max 120). If it returns still starting, just call it again.",
 		Annotations: &mcp.ToolAnnotations{ReadOnlyHint: true},
 	}, func(ctx context.Context, _ *mcp.CallToolRequest, in appWaitInput) (*mcp.CallToolResult, any, error) {
-		id := strings.TrimSpace(in.ID)
+		id := appid.Canonical(in.ID)
 		if id == "" {
 			return nil, nil, fmt.Errorf("app id is required")
 		}
@@ -416,15 +475,23 @@ func registerAppsWaitRunning(srv *mcp.Server, access BoardAccess) string {
 		if timeout > waitMaxTimeout {
 			timeout = waitMaxTimeout
 		}
-		status, running, err := waitForAppRunning(ctx, access, id, timeout)
+		// Shorter than two settles, a wait could end on every call with the app up but not yet confirmed.
+		if floor := 2 * runningSettle; timeout < floor {
+			timeout = floor
+		}
+		status, boot, err := waitForAppRunning(ctx, access, id, timeout)
 		if err != nil {
 			return nil, nil, err
 		}
 		switch {
-		case running:
+		case boot == bootUp:
 			return textResult("The app is running."), nil, nil
 		case isFailedStatus(status):
 			return textResult(fmt.Sprintf("The app failed to start (status %q). Check apps_logs for the cause.", status)), nil, nil
+		case boot == bootDown:
+			return textResult(fmt.Sprintf("The app is not running: it stopped right after it came up (status %q). Check apps_logs for the cause.", status)), nil, nil
+		case strings.EqualFold(status, "running"):
+			return textResult("The app came up only a moment ago. Call apps_wait_running again to check that it keeps running before you report it started."), nil, nil
 		default:
 			return textResult(fmt.Sprintf("Still starting (status %q) after %s — it's booting in the background. Call apps_wait_running again to keep waiting.", status, timeout)), nil, nil
 		}
@@ -432,24 +499,47 @@ func registerAppsWaitRunning(srv *mcp.Server, access BoardAccess) string {
 	return "apps_wait_running"
 }
 
-// waitForAppRunning polls the app's status server-side until it is running, clearly failed, or the timeout elapses; returns the last status seen.
-func waitForAppRunning(ctx context.Context, access BoardAccess, id string, timeout time.Duration) (status string, running bool, err error) {
+// waitForAppRunning polls the app's status until it read "running" for runningSettle, the app is down, or the timeout ends; reads and polls end within the timeout.
+func waitForAppRunning(ctx context.Context, access BoardAccess, id string, timeout time.Duration) (status string, boot appBoot, err error) {
 	deadline := time.Now().Add(timeout)
+	reads, cancel := context.WithDeadline(ctx, deadline)
+	defer cancel()
+	var upSince time.Time
 	for {
-		status, err = appStatus(ctx, access, id)
-		if err != nil {
-			return "", false, err
+		read, readErr := appStatus(reads, access, id)
+		switch {
+		case readErr == nil:
+			status = read
+		case ctx.Err() != nil || reads.Err() == nil:
+			return "", bootPending, readErr
+		case status == "":
+			return "", bootPending, fmt.Errorf("the board did not answer within %s", timeout)
+		default:
+			return status, bootPending, nil // the timeout cut the read: the one before it stands
 		}
-		if strings.EqualFold(status, "running") {
-			return status, true, nil
+		poll := waitPollInterval
+		switch {
+		case strings.EqualFold(status, "running"):
+			if upSince.IsZero() {
+				upSince = time.Now()
+			}
+			if time.Since(upSince) >= runningSettle {
+				return status, bootUp, nil
+			}
+			poll = settlePollInterval
+		// Once up, only a restart ("starting") is not the app going down.
+		case isFailedStatus(status) || (!upSince.IsZero() && !strings.EqualFold(status, "starting")):
+			return status, bootDown, nil
+		default:
+			upSince = time.Time{}
 		}
-		if isFailedStatus(status) || !time.Now().Before(deadline) {
-			return status, false, nil
+		if !time.Now().Add(poll).Before(deadline) {
+			return status, bootPending, nil
 		}
 		select {
 		case <-ctx.Done():
-			return "", false, ctx.Err()
-		case <-time.After(waitPollInterval):
+			return "", bootPending, ctx.Err()
+		case <-time.After(poll):
 		}
 	}
 }
@@ -467,7 +557,7 @@ func registerAppsDelete(srv *mcp.Server, access BoardAccess) {
 		Description: "Permanently delete an Arduino App from the connected board: it is stopped if running, then its files and containers are removed. This CANNOT be undone. Mutating — asks the user for permission. Pass the app id from apps_list. Example apps cannot be deleted.",
 		Annotations: &mcp.ToolAnnotations{ReadOnlyHint: false},
 	}, func(ctx context.Context, _ *mcp.CallToolRequest, in appActionInput) (*mcp.CallToolResult, any, error) {
-		id := strings.TrimSpace(in.ID)
+		id := appid.Canonical(in.ID)
 		if id == "" {
 			return nil, nil, fmt.Errorf("app id is required")
 		}
@@ -486,7 +576,7 @@ func registerAppsEdit(srv *mcp.Server, access BoardAccess) {
 		Description: "Edit an Arduino App's details on the connected board: its name, description and/or icon. Pass the app id from apps_list plus at least one field to change; omitted fields are left as-is. Mutating — asks the user for permission. Example apps and App releases can't be edited, and a name already in use is rejected. Renaming needs the app stopped: if it is running or starting, first ask the user whether they want it stopped for the rename, then (only with their agreement) call apps_stop before renaming.",
 		Annotations: &mcp.ToolAnnotations{ReadOnlyHint: false},
 	}, func(ctx context.Context, _ *mcp.CallToolRequest, in appEditInput) (*mcp.CallToolResult, any, error) {
-		id := strings.TrimSpace(in.ID)
+		id := appid.Canonical(in.ID)
 		if id == "" {
 			return nil, nil, fmt.Errorf("app id is required")
 		}
@@ -502,6 +592,15 @@ func registerAppsEdit(srv *mcp.Server, access BoardAccess) {
 				return textResult(fmt.Sprintf("Not renamed: this app is %s, and it must be stopped before it can be renamed. Ask the user whether they want it stopped for the rename; only if they agree, call apps_stop, confirm with apps_get that it stopped, then call apps_edit again to rename it (start it again afterwards if that makes sense).", st)), nil, nil
 			}
 		}
+		// The rename moves the checkout too, so edits still waiting in it go to the board first, as before a file rename.
+		warn := ""
+		if in.Name != nil {
+			w, err := flushBeforeFileChange(access, id)
+			if err != nil {
+				return nil, nil, err
+			}
+			warn = w
+		}
 		// Only the fields set are sent (omitempty); the orchestrator leaves the rest unchanged.
 		body, err := json.Marshal(struct {
 			Name        *string `json:"name,omitempty"`
@@ -511,16 +610,23 @@ func registerAppsEdit(srv *mcp.Server, access BoardAccess) {
 		if err != nil {
 			return nil, nil, err
 		}
-		raw, err := orchestratorRequest(ctx, access, http.MethodPatch, "/v1/apps/"+url.PathEscape(id), body)
+		// Not cut by a Stop of the turn (the request still times out): the board may have moved the folder, and the rebind below must follow.
+		raw, err := orchestratorRequest(context.WithoutCancel(ctx), access, http.MethodPatch, "/v1/apps/"+url.PathEscape(id), body)
 		if err != nil {
 			return nil, nil, err
 		}
 		// A name change mints a new id and the old one stops resolving: carry the workspace over and hand the agent the id to use, or its next call 404s.
 		if newID := editedAppID(raw); newID != "" && newID != id {
-			access.RebindWorkspaceApp(id, newID, strings.TrimSpace(deref(in.Name)))
-			return textResult(fmt.Sprintf("Updated app %q; renaming gave it the new id %q — use that from now on, the old one no longer resolves.", id, newID)), nil, nil
+			note := access.RebindWorkspaceApp(id, newID, strings.TrimSpace(deref(in.Name)))
+			access.RefreshManagedFiles(newID)
+			text := fmt.Sprintf("Updated app %q; renaming gave it the new id %q — use that from now on, the old one no longer resolves.", id, newID)
+			if note != "" {
+				text = fmt.Sprintf("Updated app %q. %s", id, note) // the note names the new id and checkout folder
+			}
+			return textResult(warn + text), nil, nil
 		}
-		return textResult(fmt.Sprintf("Updated app %q.", id)), nil, nil
+		access.RefreshManagedFiles(id)
+		return textResult(warn + fmt.Sprintf("Updated app %q.", id)), nil, nil
 	})
 }
 
@@ -550,12 +656,12 @@ func registerAppsClone(srv *mcp.Server, access BoardAccess) {
 		Description: "Duplicate an existing Arduino App on the connected board into a new app (copies its files, sketch and bricks). Pass the source app id from apps_list; optionally a name and icon for the copy (the board derives a name if omitted). Returns the new app's id. Mutating — asks the user for permission. A name already in use is rejected.",
 		Annotations: &mcp.ToolAnnotations{ReadOnlyHint: false},
 	}, func(ctx context.Context, _ *mcp.CallToolRequest, in appCloneInput) (*mcp.CallToolResult, any, error) {
-		id := strings.TrimSpace(in.ID)
+		id := appid.Canonical(in.ID)
 		if id == "" {
 			return nil, nil, fmt.Errorf("app id is required")
 		}
 		// Flush the source app's checked-out edits so the clone copies the latest code; refuse to clone stale files if its sync failed.
-		failed, conflicts, withheld := access.FlushMirrorEdits()
+		failed, conflicts, withheld, notes := access.FlushMirrorEdits(id)
 		if failed[id] != nil {
 			return nil, nil, fmt.Errorf("the pending edits for this app could not be synced to the board (%v) — clone aborted so it doesn't copy stale files. Check the board connection and try again", failed[id])
 		}
@@ -563,7 +669,7 @@ func registerAppsClone(srv *mcp.Server, access BoardAccess) {
 			return nil, nil, fmt.Errorf("your edits to this app conflict with the board (%v) — clone aborted so it doesn't copy stale files. Retrying will not help: call apps_checkout to pick up the board's version first (it saves your edits as %s files to re-apply)", conflicts[id], appmirror.ParkedSuffix)
 		}
 		// Warnings don't abort the clone (this app's checkout may be fine), but the agent must learn about stray or unlanded edits; rendered post-flush so they reflect the current state.
-		warn := SyncIssueWarning(access.PendingSyncIssues()) + GhostEditWarning(access.PendingGhostEdits())
+		warn := SyncIssueWarning(notes) + SyncIssueWarning(access.PendingSyncIssues()) + GhostEditWarning(access.PendingGhostEdits())
 		body, err := json.Marshal(struct {
 			Name *string `json:"name,omitempty"`
 			Icon *string `json:"icon,omitempty"`
@@ -612,7 +718,7 @@ type appCreateInput struct {
 func registerAppsCreate(srv *mcp.Server, access BoardAccess) string {
 	mcp.AddTool(srv, &mcp.Tool{
 		Name:        "apps_create",
-		Description: "Create a new Arduino App on the connected board — scaffolds its folder, app.yaml and python/main.py. Returns the new app id; write the app's code and declare its bricks by editing those files afterward. The new app is a sibling of every other app on the board, never inside the one a scoped session is working on, and that session keeps its own app. Mutating: requires user approval.",
+		Description: "Create a new Arduino App on the connected board — scaffolds its folder, app.yaml, python/main.py and a sketch/ (sketch.ino and sketch.yaml). Returns the new app id; afterward write the app's code in its checkout (apps_checkout) and add its bricks with app_bricks_add. The new app is a sibling of every other app on the board, never inside the one a scoped session is working on, and that session keeps its own app. Mutating: requires user approval.",
 		Annotations: &mcp.ToolAnnotations{ReadOnlyHint: false},
 	}, func(ctx context.Context, _ *mcp.CallToolRequest, in appCreateInput) (*mcp.CallToolResult, any, error) {
 		name := strings.TrimSpace(in.Name)

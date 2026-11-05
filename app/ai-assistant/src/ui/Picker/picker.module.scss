@@ -42,6 +42,13 @@
   left: 0;
 }
 
+// Placed by PickerSubmenu in viewport coordinates, from its inline top and left.
+.picker-submenu {
+  position: fixed;
+  right: auto;
+  bottom: auto;
+}
+
 .picker-option-wrapper {
   display: flex;
   flex: 1;
@@ -60,6 +67,10 @@
   color: var(--text-subtle, #c9d2d2);
   font-size: 12px;
   line-height: 1.6;
+}
+
+.picker-group-label {
+  text-transform: uppercase;
 }
 
 .picker-option {
@@ -115,11 +126,29 @@
   text-overflow: ellipsis;
 }
 
+.picker-option-label--hinted {
+  flex: 0 1 auto;
+}
+
+.picker-option-hint {
+  flex: 1;
+  color: var(--text-subtle);
+  font-size: var(--picker-hint-font-size, 12px);
+  white-space: nowrap;
+}
+
 .picker-check {
   width: 14px;
   height: 14px;
   flex-shrink: 0;
   color: var(--text-default, #ffffff);
+}
+
+.picker-chevron {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  color: var(--text-default);
 }
 
 .picker-divider {

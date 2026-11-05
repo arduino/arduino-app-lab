@@ -17,6 +17,8 @@ const (
 
 // Progress is one install progress event; JSON tags match TS RuntimeProgress.
 type Progress struct {
+	// Whose install this is: two agents can install at once, and one bar showed both.
+	Agent   AgentID  `json:"agent,omitempty"`
 	Phase   Phase    `json:"phase"`
 	Pct     *float64 `json:"pct,omitempty"`
 	Message string   `json:"message,omitempty"`
