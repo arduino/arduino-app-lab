@@ -39,7 +39,7 @@ import {
   useI18n,
 } from '@cloud-editor-mono/ui-components/lib/components-by-app/app-lab';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { debounce } from 'lodash-es';
+import { debounce, isEqual, omit } from 'lodash-es';
 import { useCallback, useContext, useEffect, useMemo, useRef } from 'react';
 
 import { useIsBoard } from '../../../../hooks/useIsBoard';
@@ -48,6 +48,9 @@ import { useLspReferencesStore } from '../../../../store/lspReferences';
 import { messages } from '../messages';
 
 const LSP_INITIALIZING_STATE_DEBOUNCE_MS = 500;
+
+// What an app edit changes (a rename, the description, the icon): no file, and the watcher syncs app.yaml itself.
+const APP_EDIT_FIELDS = ['id', 'name', 'path', 'description', 'icon'];
 
 // One broken language-server install reports itself through several
 // independent paths — the start rejection, the initialize rejection, the index
@@ -131,17 +134,37 @@ export const useLSP = (appId: string, selectedBoard?: Board): UseLSP => {
     mutationFn: (appPath: string) => initLspWorkspace(appPath),
   });
 
+  // The detail of the last copy that finished, so a copy cut short by a rename runs again.
+  const copiedForRef = useRef<typeof appDetail>();
+
   // init LSP workspace (examples included: their read-only files still need to
   // be copied into the temp workspace so the Arduino preprocessor and
   // cross-file features work against a real on-disk sketch)
   useEffect(() => {
-    if (enabled && isBoard === false && appDetail?.path) {
-      workspaceReadyRef.current = initWorkspace(appDetail.path).catch(
-        (error) => {
-          console.error('Error init LSP app workspace', error);
-        },
-      );
+    if (!enabled || isBoard !== false || !appDetail?.path) {
+      copiedForRef.current = undefined;
+      return;
     }
+    const copiedFor = copiedForRef.current;
+    // An app edit changes no file, and a copy while the servers run loses their open documents.
+    if (
+      copiedFor &&
+      isEqual(
+        omit(copiedFor, APP_EDIT_FIELDS),
+        omit(appDetail, APP_EDIT_FIELDS),
+      )
+    ) {
+      copiedForRef.current = appDetail;
+      return;
+    }
+    copiedForRef.current = undefined;
+    workspaceReadyRef.current = initWorkspace(appDetail.path)
+      .then(() => {
+        copiedForRef.current = appDetail;
+      })
+      .catch((error) => {
+        console.error('Error init LSP app workspace', error);
+      });
   }, [enabled, isBoard, appDetail, initWorkspace]);
 
   const getLspWsFile = useCallback(async (fileUri: string): Promise<string> => {

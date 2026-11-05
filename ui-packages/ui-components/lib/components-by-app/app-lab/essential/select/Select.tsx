@@ -1,5 +1,4 @@
 import { CaretDown, Checkmark } from '@cloud-editor-mono/images/assets/icons';
-import type { Key } from '@react-types/shared';
 import clsx from 'clsx';
 import React, {
   forwardRef,
@@ -12,7 +11,8 @@ import { MessageDescriptor } from 'react-intl';
 
 import { DropdownMenuButton } from '../../../../essential/dropdown-menu';
 import { DropdownMenuButtonProps } from '../../../../essential/dropdown-menu/DropdownMenuButton';
-import { Input, InputStyle } from '../../../../essential/input';
+import { Input, InputStyle, InputSurface } from '../../../../essential/input';
+import { useI18n } from '../../../../i18n/useI18n';
 import styles from './select.module.scss';
 
 type SelectProps<T, L extends MessageDescriptor | string> = Pick<
@@ -21,11 +21,15 @@ type SelectProps<T, L extends MessageDescriptor | string> = Pick<
 > & {
   id?: string;
   name?: string;
-  value: string;
-  // Marks this item with a checkmark in the open menu.
-  selectedKey?: Key;
+  // Overrides the label looked up from `selectedId`; required when the selection is not one of `sections`.
+  displayValue?: string;
+  selectedId?: T;
   label?: string;
   disabled?: boolean;
+  outlined?: boolean;
+  surface?: InputSurface;
+  rounded?: boolean;
+  error?: Error;
   onChange: NonNullable<DropdownMenuButtonProps<T, L>['onAction']>;
   onEnter?: () => void;
 
@@ -49,6 +53,7 @@ export const Select = forwardRef(
   ) => {
     const [open, setOpen] = useState(false);
     const inputRef = useRef<HTMLDivElement | null>(null);
+    const { formatMessage } = useI18n();
 
     useImperativeHandle(ref, () => inputRef.current!);
 
@@ -63,17 +68,6 @@ export const Select = forwardRef(
         }
       }
 
-      function handleInputWidth(): void {
-        const dropdownMenu = document.querySelector(
-          `.${styles['dropdown-menu']}`,
-        ) as HTMLElement | null;
-        if (dropdownMenu && inputRef.current) {
-          const inputWidth = inputRef.current.offsetWidth;
-          dropdownMenu.style.width = `${inputWidth}px`;
-        }
-      }
-      handleInputWidth();
-
       document.addEventListener('click', handleClickOutside);
       return (): void => {
         document.removeEventListener('click', handleClickOutside);
@@ -83,30 +77,55 @@ export const Select = forwardRef(
     const {
       id,
       name,
-      value,
+      displayValue,
+      selectedId,
       label,
       disabled,
+      outlined,
+      surface = 'baseline',
+      rounded,
+      error,
       onChange,
       onEnter,
       sections,
-      selectedKey,
       classes,
     } = props;
 
-    const menuSections =
-      selectedKey === undefined
+    const toggleOpen = (): void => {
+      if (!disabled) {
+        setOpen((prev) => !prev);
+      }
+    };
+
+    const selectedLabel = sections
+      .flatMap((section) => section.items)
+      .find((item) => item.id === selectedId)?.label;
+    const value =
+      displayValue ??
+      (selectedLabel === undefined
+        ? ''
+        : typeof selectedLabel === 'string'
+        ? selectedLabel
+        : formatMessage(selectedLabel));
+
+    const markedSections =
+      selectedId === undefined
         ? sections
         : sections.map((section) => ({
             ...section,
             items: section.items.map((item) =>
-              item.id === selectedKey
+              item.id === selectedId
                 ? {
                     ...item,
+                    itemClassName: clsx(
+                      item.itemClassName,
+                      styles['dropdown-menu-item--selected'],
+                    ),
                     labelSuffix: (
-                      <Checkmark
-                        aria-hidden="true"
-                        className={styles['selected-check']}
-                      />
+                      <>
+                        {item.labelSuffix}
+                        <Checkmark aria-hidden="true" />
+                      </>
                     ),
                   }
                 : item,
@@ -121,11 +140,15 @@ export const Select = forwardRef(
         className={clsx(styles['container'], classes?.container, {
           [styles['disabled']]: disabled,
           [styles['open']]: open,
+          [styles.outlined]: outlined,
+          [styles['on-below-1']]: !outlined && surface === 'below-1',
+          [styles.rounded]: rounded,
+          [styles['has-error']]: !!error,
           [classes?.disabled || '']: disabled,
           [classes?.open || '']: open,
         })}
-        onClick={(): void => setOpen((prev) => !prev)}
-        onKeyUp={(): void => setOpen((prev) => !prev)}
+        onClick={toggleOpen}
+        onKeyUp={toggleOpen}
       >
         <Input
           inputStyle={InputStyle.AppLab}
@@ -134,57 +157,51 @@ export const Select = forwardRef(
           readOnly
           name={name}
           value={value}
-          onClick={(): void => setOpen((prev) => !prev)}
+          onClick={toggleOpen}
           onChange={onChange}
           onEnter={onEnter}
           label={label}
+          error={error}
           classes={{
             input: clsx(styles['input'], classes?.input),
             inputLabel: clsx(styles['input-label'], classes?.inputLabel),
           }}
         />
-        {!disabled && (
-          <DropdownMenuButton
-            isOpen={open}
-            sections={menuSections}
-            classes={{
-              dropdownMenu: clsx(
-                styles['dropdown-menu'],
-                classes?.dropdownMenu,
-              ),
-              dropdownMenuButton: clsx(
-                styles['dropdown-menu-button'],
-                classes?.dropdownMenuButton,
-              ),
-              dropdownMenuButtonWrapper: clsx(
-                styles['dropdown-menu-button-wrapper'],
-                classes?.dropdownMenuButtonWrapper,
-              ),
-              dropdownMenuPopover: styles['dropdown-menu-popover'],
-              dropdownMenuItem:
-                selectedKey !== undefined
-                  ? styles['dropdown-menu-item']
-                  : undefined,
-            }}
-            useStaticPosition={false}
-            onAction={(key): void => {
-              setOpen(false);
-              onChange(key);
-            }}
-            buttonChildren={
-              <CaretDown
-                className={clsx(
-                  styles['dropdown-menu-icon'],
-                  classes?.dropdownMenuIcon,
-                  {
-                    [styles['dropdown-menu-icon--open']]: open,
-                  },
-                )}
-                onClick={(): void => setOpen((prev) => !prev)}
-              />
-            }
-          />
-        )}
+        <DropdownMenuButton
+          isOpen={open && !disabled}
+          disabled={disabled}
+          sections={markedSections}
+          classes={{
+            dropdownMenu: clsx(styles['dropdown-menu'], classes?.dropdownMenu),
+            dropdownMenuButton: clsx(
+              styles['dropdown-menu-button'],
+              classes?.dropdownMenuButton,
+            ),
+            dropdownMenuButtonWrapper: clsx(
+              styles['dropdown-menu-button-wrapper'],
+              classes?.dropdownMenuButtonWrapper,
+            ),
+            dropdownMenuPopover: styles['dropdown-menu-popover'],
+            dropdownMenuItem: styles['dropdown-menu-item'],
+          }}
+          useStaticPosition={false}
+          onAction={(key): void => {
+            setOpen(false);
+            onChange(key);
+          }}
+          buttonChildren={
+            <CaretDown
+              className={clsx(
+                styles['dropdown-menu-icon'],
+                classes?.dropdownMenuIcon,
+                {
+                  [styles['dropdown-menu-icon--open']]: open,
+                },
+              )}
+              onClick={toggleOpen}
+            />
+          }
+        />
       </div>
     );
   },

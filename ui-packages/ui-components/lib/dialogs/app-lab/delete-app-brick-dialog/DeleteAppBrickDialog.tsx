@@ -35,10 +35,15 @@ export const DeleteAppBrickDialog: React.FC<DeleteAppBrickDialogProps> = ({
   const handleDelete = async (): Promise<void> => {
     if (!brick?.id) return;
     setLoading(true);
-    const result = await confirmAction(brick.id);
-    setLoading(false);
-    if (result) {
-      onOpenChange(false);
+    try {
+      const result = await confirmAction(brick.id);
+      if (result) {
+        onOpenChange(false);
+      }
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
     }
   };
 

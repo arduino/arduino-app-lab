@@ -1,0 +1,15 @@
+@use "../../../theme/shared.module.scss";
+
+$errorContentColor: var(--console-content-foreground-error);
+
+.errorLine {
+    background-color: var(--editor-syntax-highlight-error-background);
+}
+
+.errorContent[data-marker="value"] {
+    color: $errorContentColor;
+}
+
+:export {
+    errorContentColor: $errorContentColor;
+}

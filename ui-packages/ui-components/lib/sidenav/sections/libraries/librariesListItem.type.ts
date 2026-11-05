@@ -37,7 +37,7 @@ export interface CustomLibraryListItemProps {
 
 export interface CommonListItemProps {
   libraryMenuHandlers: LibraryMenuHandlerDictionary;
-  onClickInclude: OnClickInclude;
+  onClickInclude?: OnClickInclude;
   index?: number;
   hydrateExamplesByPaths: (paths: string[]) => Promise<void>;
 }

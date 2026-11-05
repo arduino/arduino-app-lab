@@ -56,6 +56,7 @@ let appFilesState: AppFilesState = {};
 
 export function resetAppFilesState(): void {
   appFilesState = {};
+  unsavedNow = new Set();
 }
 
 function createAppFilesState(
@@ -87,6 +88,9 @@ export function instantiateCodeSubject(
   return codeSubjects;
 }
 
+// The unsaved files as of now, for code that decides synchronously instead of subscribing.
+let unsavedNow: ReadonlySet<FileId> = new Set();
+
 function instantiateUnsavedFilesSubject():
   | Subject<SetUnsavedFileTuple>
   | Subject<Set<FileId>> {
@@ -103,9 +107,17 @@ function instantiateUnsavedFilesSubject():
   ) as Subject<SetUnsavedFileTuple> | Subject<Set<FileId>>;
 
   setAppFilesState({ unsavedFiles$ });
+  unsavedNow = new Set();
+  // A save still running for a reset state reports to its own instance, which must not overwrite the current set.
+  (unsavedFiles$ as Observable<Set<FileId>>).subscribe((ids) => {
+    if (appFilesState.unsavedFiles$ === unsavedFiles$) unsavedNow = ids;
+  });
 
   return unsavedFiles$;
 }
+
+export const isUnsavedFile = (fileId: FileId): boolean =>
+  unsavedNow.has(fileId);
 
 function instantiateCodeInjectionsSubject(): Subject<CodeSubjectInjection> {
   const codeSubjectInjections$ = new Subject<CodeSubjectInjection>().pipe(
@@ -325,36 +337,59 @@ export function createCodeSubject(
   // save it if is different from the previous one.
   // Read the fileId from the emission rather than the closure so a renamed
   // buffer (see `renameCodeSubject`) saves to its new path, not the old one.
-  const lastCodeUpdateSub = lastCodeUpdate$.subscribe(
-    async ({ context, value, meta, fileId: currentFileId }) => {
-      unsavedFiles$.next([currentFileId, true]);
+  const save = async (
+    currentFileId: FileId,
+    value: string,
+    hash: string | undefined,
+    saveCode: SaveCode,
+  ): Promise<void> => {
+    unsavedFiles$.next([currentFileId, true]);
 
-      try {
-        const result = await context.saveCode(currentFileId, value, meta.hash);
+    try {
+      const result = await saveCode(currentFileId, value, hash);
 
-        if (result && 'isUnsaved' in result && result?.isUnsaved) return;
-        unsavedFiles$.next([currentFileId, false]);
+      if (result && 'isUnsaved' in result && result?.isUnsaved) return;
+      unsavedFiles$.next([currentFileId, false]);
 
-        if (result && 'newHash' in result) {
-          codeSubjectNext(
-            currentFileId,
-            value,
-            context.saveCode,
-            undefined,
-            false,
-            result?.newHash,
-          );
-        }
-      } catch (error) {
-        console.error(error);
+      if (result && 'newHash' in result) {
+        codeSubjectNext(
+          currentFileId,
+          value,
+          saveCode,
+          undefined,
+          false,
+          result?.newHash,
+        );
       }
-    },
+    } catch (error) {
+      console.error(error);
+    }
+
+    // A rename that landed while this save was on its way sent it to the old path: save the same text at the new one, unless newer typing will.
+    const now = codeChange$.getValue();
+    if (
+      now.fileId !== currentFileId &&
+      now.value === value &&
+      getCodeSubjects().get(now.fileId) === codeChange$
+    ) {
+      unsavedFiles$.next([currentFileId, false]);
+      await save(now.fileId, value, hash, saveCode);
+    }
+  };
+
+  const lastCodeUpdateSub = lastCodeUpdate$.subscribe(
+    ({ context, value, meta, fileId: currentFileId }) =>
+      save(currentFileId, value, meta.hash, context.saveCode),
   );
 
   const lastIneffectualCodeChange$ = settledChange$.pipe(
     scan(
       (prev, curr) => ({
-        isSameCode: isCodeChangeWithCtx(curr) && !valueHasChanged(prev, curr),
+        // A rename re-emits the same text under a new id, which says nothing about whether that text was saved.
+        isSameCode:
+          isCodeChangeWithCtx(curr) &&
+          prev.fileId === curr.fileId &&
+          !valueHasChanged(prev, curr),
         value: curr.value,
         fileId: curr.fileId,
         meta: { doc: curr.meta.doc },
@@ -463,6 +498,13 @@ export function renameCodeSubject(oldPath: string, newPath: string): void {
   if (!subject) return;
   codeSubjects.set(newPath, subject);
   codeSubjects.delete(oldPath);
+  // Unsaved typing moves with the buffer, so the tab at the new path shows it.
+  if (isUnsavedFile(oldPath)) {
+    const unsavedFiles$ =
+      getUnsavedFilesSubject<Subject<SetUnsavedFileTuple>>();
+    unsavedFiles$.next([oldPath, false]);
+    unsavedFiles$.next([newPath, true]);
+  }
   const current = subject.getValue();
   subject.next({ ...current, fileId: newPath });
 }

@@ -1,11 +1,13 @@
 import {
+  GetCode,
+  GetCodeInstanceId,
+} from '@cloud-editor-mono/ide-workbench/lib/code-mirror/codeMirror.type';
+import {
   AiUserPlan,
   ManagedOtaErrors,
   TransmissionTag,
 } from '@cloud-editor-mono/infrastructure';
 import { IntRange } from 'type-fest';
-
-import { GetCode, GetCodeInstanceId } from '../code-mirror/codeMirror.type';
 
 export enum ConsolePanelStatus {
   IDLE = 'idle',

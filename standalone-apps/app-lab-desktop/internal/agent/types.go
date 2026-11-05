@@ -1,5 +1,7 @@
 package agent
 
+import "errors"
+
 // These mirror the TS domain contract; JSON tags match the TS fields.
 
 type SessionID string
@@ -9,6 +11,7 @@ type AgentModel struct {
 	ID          string `json:"id"`
 	Name        string `json:"name"`
 	Description string `json:"description,omitempty"` // ACP option description (carries the resolved version, e.g. "Opus 4.8 with 1M context · …")
+	Free        bool   `json:"free,omitempty"`        // the engine's catalogue prices its input at zero
 }
 
 // AgentMode is an operating mode the agent advertises for a session (ACP session mode); ID is passed back to SetMode.
@@ -18,17 +21,22 @@ type AgentMode struct {
 	Description string `json:"description,omitempty"` // ACP mode description (e.g. "Planning mode, no actual tool execution")
 }
 
+// The engine never advertised session/delete: nothing was attempted and nothing local was dropped.
+var ErrDeleteSessionUnsupported = errors.New("agent: this agent cannot delete sessions")
+
 // SessionSummary is one persisted session as listed for the sidebar (from ACP SessionInfo).
 type SessionSummary struct {
 	ID        string `json:"id"`
 	Title     string `json:"title,omitempty"`     // agent-generated summary; may be overridden by a client rename later
 	UpdatedAt string `json:"updatedAt,omitempty"` // ISO 8601 last-activity timestamp
-	Status    string `json:"status,omitempty"`    // last-turn outcome overlaid by App Lab: "error" or empty (idle); live states are FE-only
+	Status    string `json:"status,omitempty"`    // last-turn outcome overlaid by App Lab: "error", "cancelled" or empty (idle); live states are FE-only
 	Pinned    bool   `json:"pinned,omitempty"`    // client-side: user pinned this session to the top of the sidebar
 	// WorkspaceAppID is the app the session was opened for; empty is the general workspace, which sees the whole board.
 	WorkspaceAppID string `json:"workspaceAppId,omitempty"`
 	// WorkspaceName is that app's name when the session was opened, so the UI can still name an app the board no longer lists.
 	WorkspaceName string `json:"workspaceName,omitempty"`
+	// The engine whose store this session lives in; the sidebar would otherwise offer unopenable chats.
+	AgentID string `json:"agentId,omitempty"`
 }
 
 // SessionWorkspace scopes a session to one app the user picked; the zero value is the general workspace (whole board).
@@ -48,21 +56,25 @@ type NewSessionResult struct {
 
 // Update mirrors the TS AgentUpdate union, flattened for JSON to the webview.
 type Update struct {
-	Type             string         `json:"type"`                       // message_chunk | thinking | tool_call | tool_call_update | checklist | model_change | mode_change
-	Delta            string         `json:"delta,omitempty"`            // message_chunk, thinking
+	Type             string         `json:"type"`                       // message_chunk | thinking | tool_call | tool_call_update | checklist | model_change | mode_change | replay_start | message_error | turn_stopped
+	Delta            string         `json:"delta,omitempty"`            // message_chunk, thinking, message_error
 	ToolCall         *ToolCall      `json:"toolCall,omitempty"`         // tool_call
 	ID               string         `json:"id,omitempty"`               // tool_call_update
 	Status           string         `json:"status,omitempty"`           // tool_call_update
 	Output           string         `json:"output,omitempty"`           // tool_call_update
 	Input            any            `json:"input,omitempty"`            // tool_call_update (refined args)
 	OutsideWorkspace bool           `json:"outsideWorkspace,omitempty"` // tool_call_update: the call turned out to act on another app
+	OutsideApp       string         `json:"outsideApp,omitempty"`       // tool_call_update: the app it landed in, when a checkout holds it
 	Checklist        *Checklist     `json:"checklist,omitempty"`        // checklist
 	Choices          *ChoiceRequest `json:"choices,omitempty"`          // choices (form elicitation)
 	ModelID          string         `json:"modelId,omitempty"`          // model_change
 	Models           []AgentModel   `json:"models,omitempty"`           // model_change
 	ModeID           string         `json:"modeId,omitempty"`           // mode_change
+	Modes            []AgentMode    `json:"modes,omitempty"`            // mode_change, when it carries the session's whole list
 	UsedTokens       int            `json:"usedTokens,omitempty"`       // usage
 	ContextSize      int            `json:"contextSize,omitempty"`      // usage
+	// tool_call_update: the call as this update describes it, for the host's own bookkeeping; never sent.
+	Call *ToolCall `json:"-"`
 }
 
 type ToolCall struct {
@@ -73,8 +85,12 @@ type ToolCall struct {
 	Input  any      `json:"input,omitempty"` // the tool's raw arguments (ACP rawInput)
 	Paths  []string `json:"paths,omitempty"` // files the call touches, as the agent declared them (ACP locations)
 	// True when the call acts outside the session's workspace app; resolved host-side so badge, prompt and auto-approval are one decision.
-	OutsideWorkspace bool   `json:"outsideWorkspace,omitempty"`
-	Output           string `json:"output,omitempty"`
+	OutsideWorkspace bool `json:"outsideWorkspace,omitempty"`
+	// The app it lands in when it left the workspace: its name, or its checkout folder's when the name is not known.
+	OutsideApp string `json:"outsideApp,omitempty"`
+	Output     string `json:"output,omitempty"`
+	// The engine told that the call has no arguments: an empty input alone can also be arguments that never arrived.
+	noArguments bool
 }
 
 type ChecklistItem struct {
@@ -96,10 +112,18 @@ type ChoiceOption struct {
 	Description string `json:"description,omitempty"`
 }
 
+// How to ask: a list to pick from, or a field to type in. The engine's schema decides, not us.
+const (
+	ChoiceKindChoices = "choices"
+	ChoiceKindText    = "text"
+)
+
 // ChoiceRequest is a question the agent asks via an ACP form elicitation (e.g. Claude's AskUserQuestion).
 // Multiple allows several picks; AllowOther adds a free-text answer; ID correlates the reply (ChoiceSubmission).
 type ChoiceRequest struct {
-	ID         string         `json:"id"`
+	ID string `json:"id"`
+	// Empty means choices: the shape every engine sent before one asked for text.
+	Kind       string         `json:"kind,omitempty"`
 	Title      string         `json:"title"`
 	Options    []ChoiceOption `json:"options"`
 	Multiple   bool           `json:"multiple,omitempty"`

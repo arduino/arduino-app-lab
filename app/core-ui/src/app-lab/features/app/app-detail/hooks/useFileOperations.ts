@@ -3,6 +3,7 @@ import {
   createAppFolder,
   getCodeSubjectById,
   getCodeSubjects,
+  isUnsavedFile,
   removeAppFile,
   removeCodeSubject,
   renameAppFile,
@@ -97,6 +98,17 @@ function isNotFound(error: unknown): boolean {
   return (error as { cause?: number }).cause === 404;
 }
 
+// Buffers a stream rename moved with unsaved typing: the move kept the content, so until it is saved a refetch of the new id must not reload it.
+const movedFiles = new Set<string>();
+
+// Not consumed on read: both panels may refetch the one buffer.
+export const keepMovedBuffer = (path: string): boolean => {
+  if (!movedFiles.has(path)) return false;
+  if (getCodeSubjects().has(path) && isUnsavedFile(path)) return true;
+  movedFiles.delete(path);
+  return false;
+};
+
 export function useFileOperations({
   appId,
   appPath,
@@ -115,9 +127,17 @@ export function useFileOperations({
 
   // Local-only fan-out used by both `user` and `stream` paths.
   const applyRenameLocal = useCallback(
-    (from: string, to: string) => {
+    (from: string, to: string, markMoved = false) => {
       const descendants = pathsUnder(from);
       const rekey = (oldPath: string, newPath: string): void => {
+        // A buffer with nothing unsaved is reloaded as usual: an agent edit flushed just before the move is what the board has.
+        if (
+          markMoved &&
+          getCodeSubjects().has(oldPath) &&
+          isUnsavedFile(oldPath)
+        ) {
+          movedFiles.add(newPath);
+        }
         renameCodeSubject(oldPath, newPath);
         updateOpenFile?.(oldPath, newPath);
       };
@@ -135,7 +155,8 @@ export function useFileOperations({
       if (!from || !to || from === to) return;
       const { nodeType, source = 'user' } = opts ?? {};
 
-      applyRenameLocal(from, to);
+      // Only a stream rename lands after the board moved the file, so only its refetch could reload the buffer.
+      applyRenameLocal(from, to, source === 'stream');
 
       if (source === 'stream') {
         renameLspNode?.(from, to, nodeType);

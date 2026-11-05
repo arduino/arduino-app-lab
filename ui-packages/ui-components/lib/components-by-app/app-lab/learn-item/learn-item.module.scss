@@ -102,7 +102,13 @@ $skeleton-opacity: 0.1 !default;
         display: flex;
         justify-content: space-between;
         align-items: center;
+        gap: 8px;
         margin-top: 8px;
+
+        .content-categories {
+            display: flex;
+            min-width: 0;
+        }
 
         .category {
             font-family: typography.$open-sans-font-family;
@@ -111,6 +117,10 @@ $skeleton-opacity: 0.1 !default;
             background: var(--component-bg-below-1, #171e21);
             border-radius: 8px;
             padding: 4px 8px;
+            min-width: 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
 
             &:not(:last-child) {
                 margin-right: 8px;
@@ -119,6 +129,7 @@ $skeleton-opacity: 0.1 !default;
 
         .category-others {
             @extend .category;
+            flex-shrink: 0;
             border: 1px solid var(--border-strong, #7f8c8d);
             background: var(--component-bg-below-1, #aeb8b826);
         }
@@ -127,6 +138,8 @@ $skeleton-opacity: 0.1 !default;
             font-family: typography.$open-sans-font-family;
             font-size: 12px;
             color: var(--text-subtle, #c9d2d2);
+            flex-shrink: 0;
+            white-space: nowrap;
         }
     }
 }

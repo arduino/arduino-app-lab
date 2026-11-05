@@ -43,6 +43,7 @@ export const RenameAppDialog: React.FC<RenameAppDialogProps> = ({
   const [errorMessage, setErrorMessage] = useState<string | undefined>(
     undefined,
   );
+  const trimmedName = name.trim();
 
   useEffect(() => {
     if (app) {
@@ -76,12 +77,12 @@ export const RenameAppDialog: React.FC<RenameAppDialogProps> = ({
   const { mutateAsync: handleRenameApp, isPending } = useMutation({
     mutationKey: ['rename-app'],
     mutationFn: async () => {
-      if (!validateAppName(name)) {
+      if (trimmedName.length === 0 || !validateAppName(trimmedName)) {
         return;
       }
 
       try {
-        const result = await confirmAction({ icon, name });
+        const result = await confirmAction({ icon, name: trimmedName });
         if (result) {
           onOpenChange(false);
           sendNotification({
@@ -128,7 +129,7 @@ export const RenameAppDialog: React.FC<RenameAppDialogProps> = ({
               <Button
                 variant={ButtonVariant.Primary}
                 loading={isPending}
-                disabled={name.length === 0}
+                disabled={trimmedName.length === 0}
                 type="submit"
               >
                 {formatMessage(messages.confirmButton)}
@@ -154,15 +155,15 @@ export const RenameAppDialog: React.FC<RenameAppDialogProps> = ({
               type="text"
               value={name}
               onChange={onAppNameChange}
+              blurOnEnter={false}
+              onEnter={(): void => {
+                if (name.length > 0 && !isPending) {
+                  handleRenameApp();
+                }
+              }}
               error={errorMessage ? new Error(errorMessage) : undefined}
               placeholder={formatMessage(messages.inputPlaceholder)}
               autoFocus
-              classes={{
-                input: styles['app-name-input'],
-                inputContainer: styles['app-name-input-container'],
-                error: styles['app-name-input-error'],
-                inputError: styles['error-message'],
-              }}
               after={
                 <XXXSmall className={styles['app-name-length']}>
                   {[name.length, MAX_LENGTH].join(' / ')}

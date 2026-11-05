@@ -3,6 +3,8 @@ import {
   boardNeedsOSUpdate,
   getApps,
   onAgentModelImport,
+  onAgentRenamedApp,
+  onAgentRenamedAppFile,
   openLinkExternal,
   reloadApp,
 } from '@cloud-editor-mono/domain/src/services/services-by-app/app-lab';
@@ -14,8 +16,8 @@ import {
   UpdaterStatus,
   useI18n,
 } from '@cloud-editor-mono/ui-components/lib/components-by-app/app-lab';
-import { useQuery } from '@tanstack/react-query';
-import { useNavigate, useParams } from '@tanstack/react-router';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useNavigate, useParams, useRouter } from '@tanstack/react-router';
 import {
   useCallback,
   useContext,
@@ -33,16 +35,28 @@ import {
 } from '../../hooks/useCurrentSection';
 import { useIsBoard } from '../../hooks/useIsBoard';
 import { useReloadApp } from '../../hooks/useReloadApp';
-import { isModelImportSubscribed, stashModelImport } from '../../openAppFile';
+import {
+  clearAgentRenames,
+  isAgentFileRenameHandled,
+  isModelImportSubscribed,
+  recordAgentRename,
+  stashModelImport,
+} from '../../openAppFile';
 import { AuthContext } from '../../providers/auth/authContext';
 import { NetworkContext } from '../../providers/network/networkContext';
 import { SetupContext } from '../../providers/setup/setupContext';
 import { UpdaterContext } from '../../providers/updater/updaterContext';
+import {
+  entryKeyForApp,
+  moveOpenFilesForApp,
+  renameOpenFilesInApp,
+} from '../../services/openFilesStore';
 import { onStorageUnavailable } from '../../services/persistentStore';
 import { useBoardLifecycleStore } from '../../store/boardLifecycle';
 import { useCreateAppDialogStore } from '../../store/createAppDialog';
 import { useImportAppDialogStore } from '../../store/importAppDialog';
 import { useSystemPropsStore } from '../../store/systemProps';
+import { openFilesQueryKey } from '../app/app-detail/hooks/useEditorFiles';
 import { useCreateAppDialogLogic } from '../app/app-list/useCreateAppDialogLogic';
 import { useImportAppDialogLogic } from '../app/app-list/useImportAppDialogLogic';
 import { sendAppLabNotification } from '../notifications';
@@ -63,6 +77,9 @@ const FLASHER_TOOL_URL = 'https://www.arduino.cc/en/software/#flasher-tool';
 const ARDUINO_SUPPORT_URL = 'https://www.arduino.cc/en/contact-us/';
 const FLASHER_TUTORIAL_URL =
   'https://docs.arduino.cc/tutorials/BOARD_TYPE/update-image/';
+
+const isAgentModePath = (pathname: string): boolean =>
+  pathname.startsWith('/ai-assistant');
 
 export const useMainLogic: UseMainLogic =
   function (): ReturnType<UseMainLogic> {
@@ -92,6 +109,50 @@ export const useMainLogic: UseMainLogic =
           void navigate({ to: '/my-apps/$appId', params: { appId } });
         }),
       [navigate],
+    );
+    // An agent rename gives the app a new id. The app screen follows it itself; the open tabs and Agent Mode's exit have no mounted screen to do it.
+    const router = useRouter();
+    useEffect(
+      () =>
+        onAgentRenamedApp((oldId, newId) => {
+          if (isAgentModePath(router.state.location.pathname)) {
+            recordAgentRename(oldId, newId);
+          }
+          const { selectedConnectedBoard } = useBoardLifecycleStore.getState();
+          void moveOpenFilesForApp(
+            oldId,
+            newId,
+            selectedConnectedBoard?.serial,
+          );
+        }),
+      [router],
+    );
+    // An agent file rename: the app's editor moves its tabs itself while on screen, and with none, as in Agent Mode, the stored tabs follow here.
+    const queryClient = useQueryClient();
+    useEffect(
+      () =>
+        onAgentRenamedAppFile((appId, appPath, from, to) => {
+          if (isAgentFileRenameHandled(appPath)) {
+            return;
+          }
+          const { selectedConnectedBoard } = useBoardLifecycleStore.getState();
+          const serial = selectedConnectedBoard?.serial;
+          // Dropped first, so the next editor reads the store, whose queue serves it after this rename.
+          queryClient.removeQueries({
+            queryKey: openFilesQueryKey(entryKeyForApp(appId, serial)),
+          });
+          void renameOpenFilesInApp(appId, from, to, serial);
+        }),
+      [queryClient],
+    );
+    useEffect(
+      () =>
+        router.subscribe('onResolved', ({ toLocation }) => {
+          if (!isAgentModePath(toLocation.pathname)) {
+            clearAgentRenames();
+          }
+        }),
+      [router],
     );
 
     const useBoardUpdateDialogLogic =

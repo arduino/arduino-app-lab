@@ -11,7 +11,7 @@ import {
   IconStatusAttentionErrorOutlineFilled,
   IconStatusAttentionWarningOutlineFilled,
   IconStatusInformationItalicOutlineFilled,
-} from '@arduino/react-icons';
+} from '@cloud-editor-mono/images/assets/icons';
 import * as DismissableLayer from '@radix-ui/react-dismissable-layer';
 import { Portal } from '@radix-ui/react-portal';
 import clsx from 'clsx';

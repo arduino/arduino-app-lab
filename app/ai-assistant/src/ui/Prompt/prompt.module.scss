@@ -45,6 +45,7 @@
   font-size: typography.$font-size-x-small;
   font-weight: fonts.$font-weight-normal;
   line-height: var(--chat-line-height, 1.5) !important;
+  word-break: break-word;
 }
 
 .prompt-footer {

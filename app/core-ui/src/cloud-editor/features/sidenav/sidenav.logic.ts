@@ -12,11 +12,14 @@ import {
   ExamplesMenuHandlerDictionary,
   FileNameValidationResult,
   GetExampleLinkSearch,
+  hasPermissions,
   LibraryMenuHandlerDictionary,
   OnClickApplyFixToSketch,
   OnClickApplySketch,
   OnClickInclude,
+  RbacCapability,
   SelectableFileData,
+  SettingsItemId,
   SidenavExamplesIds,
   SidenavItemId,
   sidenavItems,
@@ -178,6 +181,12 @@ const exampleLinkToPath = `${Config.NEW_WINDOW_ORIGIN}${
   Config.ROUTING_BASE_URL ? `/${Config.ROUTING_BASE_URL}` : ''
 }${EXAMPLES_MATCH_PATH}`;
 
+const EDITING_SECTIONS = [
+  SidenavItemId.Examples,
+  SidenavItemId.Libraries,
+  SidenavItemId.GenAI,
+];
+
 const createSidenavSharedLogic =
   (
     examplesMenuHandlers: ExamplesMenuHandlerDictionary,
@@ -305,7 +314,7 @@ const createFilesLogic =
 
 const createLibrariesLogic =
   (
-    onClickInclude: OnClickInclude,
+    onClickInclude: OnClickInclude | undefined,
     pinnedLibraries: SketchData['libraries'] | undefined,
     canModifySketchMetadata: boolean,
     libraryMenuHandlers: LibraryMenuHandlerDictionary,
@@ -438,8 +447,18 @@ const createGenAILogic =
     };
   };
 
+// Without sketch edit, autosave and board auto-selection are always on, so their sections are hidden.
+const READ_ONLY_HIDDEN_SETTINGS = [
+  SettingsItemId.Sketch,
+  SettingsItemId.Device,
+];
+
 const createSettingsLogic =
-  (saveAllFiles: () => void, handleOptOut?: () => void): UseSettingsLogic =>
+  (
+    saveAllFiles: () => void,
+    handleOptOut?: () => void,
+    hideEditingSettings?: boolean,
+  ): UseSettingsLogic =>
   (): ReturnType<UseSettingsLogic> => {
     const { setPreference, restorePreferences } = usePreferences();
     return {
@@ -448,6 +467,7 @@ const createSettingsLogic =
       restorePreferences,
       saveAllFiles,
       handleOptOut,
+      hiddenSections: hideEditingSettings ? READ_ONLY_HIDDEN_SETTINGS : [],
     };
   };
 
@@ -501,9 +521,14 @@ export const createUseSidenavLogic = function (
       handleApplyPatchAvailability,
       openGenAIPolicyTermsDialog,
       hydrateByPaths,
+      rbac,
     } = dependentSidenavLogic();
     const navigate = useNavigate();
     const search = useSearch<SearchGenerics>();
+    const hideEditingSections = !hasPermissions(
+      [RbacCapability.EditSketch],
+      rbac,
+    );
     const nav = search[NAV_PARAM];
 
     const [isHidden, setIsHidden] = useState(hide);
@@ -532,6 +557,11 @@ export const createUseSidenavLogic = function (
     // Set the active item only if it is a valid sidenav item. If not, set the active item to undefined
     let activeItemId: SidenavItemId | undefined = Object.keys(SidenavItemId)
       .filter((key) => (!canUseGenAi ? key !== SidenavItemId.GenAI : true))
+      .filter(
+        (key) =>
+          !hideEditingSections ||
+          !EDITING_SECTIONS.includes(key as SidenavItemId),
+      )
       .find((id) => isEqualCaseInsensitive(id, nav)) as
       | SidenavItemId
       | undefined;
@@ -551,11 +581,17 @@ export const createUseSidenavLogic = function (
         dismissGenAiBanner();
       }
 
-      if (nav && !activeItemId) {
+      // Sections are also hidden while permissions load, so keep their link for when they arrive.
+      const isHiddenEditingSection =
+        hideEditingSections &&
+        EDITING_SECTIONS.some((id) => isEqualCaseInsensitive(id, nav));
+
+      if (nav && !activeItemId && !isHiddenEditingSection) {
         navigate({ search: { ...search, [NAV_PARAM]: undefined } });
       }
     }, [
       activeItemId,
+      hideEditingSections,
       dismissGenAiBanner,
       isGenAiBannerDismissed,
       nav,
@@ -615,6 +651,10 @@ export const createUseSidenavLogic = function (
 
       if (!canUseGenAi) {
         items.push(SidenavItemId.GenAI);
+      }
+
+      if (hideEditingSections) {
+        items.push(...EDITING_SECTIONS);
       }
 
       // In the future we can selectively remove links
@@ -701,6 +741,7 @@ export const createUseSidenavLogic = function (
         [SidenavItemId.Settings]: createSettingsLogic(
           saveAllFiles,
           handleOptOut,
+          hideEditingSections,
         ),
       },
       headerLogicMap: {

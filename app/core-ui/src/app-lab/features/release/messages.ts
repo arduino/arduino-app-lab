@@ -69,7 +69,7 @@ export const releaseMessages = defineMessages({
   },
   actionStop: {
     id: 'release.actionStop',
-    defaultMessage: 'Stop',
+    defaultMessage: 'Stop {releaseName}',
     description: 'Card action that aborts the running job',
   },
   actionHide: {

@@ -37,6 +37,7 @@ import {
   useRef,
   useState,
 } from 'react';
+import { MessageDescriptor } from 'react-intl';
 
 import { BoardScopedQuery } from '../../boardScopedQuery';
 import { sendAppLabNotification } from '../../features/notifications';
@@ -51,16 +52,24 @@ import {
   DownloadAIModelSSEOptions,
 } from './aiModelsContext';
 import { aiModelsMessages as messages } from './messages';
-import {
-  INSUFFICIENT_STORAGE_ERROR_CODE,
-  parseSseEvent,
-} from './parse-sse-event/parseSseEvent';
+import { parseSseEvent } from './parse-sse-event/parseSseEvent';
 import { isCompatibleEICategory } from './utils';
 
 export type UseEdgeImpulseParams = {
   enabled?: boolean;
 };
 const CHECK_STORAGE_KEY = 'ei_project_association_check_performed';
+
+const ERROR_CODE_MESSAGES = new Map<string, MessageDescriptor>([
+  ['insufficient_storage', messages.insufficientStorage],
+  ['invalid_model_url', messages.invalidModelUrl],
+  ['model_not_found', messages.modelNotFound],
+  ['model_private_or_gated', messages.modelPrivateOrGated],
+  ['model_disabled', messages.modelDisabled],
+  ['model_incompatible', messages.modelIncompatible],
+  ['no_compatible_file', messages.noCompatibleFile],
+  ['hub_unreachable', messages.hubUnreachable],
+]);
 
 // The install route's `source` is a model id the board declares, so the listing
 // already holds an entry for it. The download route's is a Hugging Face source,
@@ -539,9 +548,12 @@ export function useAiModelsLogic(
               if (hasNewerStream()) {
                 break;
               }
+              const codeMessage = streamEvent.code
+                ? ERROR_CODE_MESSAGES.get(streamEvent.code)
+                : undefined;
               failure = new Error(
-                streamEvent.code === INSUFFICIENT_STORAGE_ERROR_CODE
-                  ? formatMessage(messages.insufficientStorage)
+                codeMessage
+                  ? formatMessage(codeMessage)
                   : streamEvent.message ||
                     formatMessage(messages.downloadFailed),
               );

@@ -1,0 +1,23 @@
+.logo,
+.logo-small {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-default);
+
+  svg {
+    width: 100%;
+    height: 100%;
+  }
+}
+
+.logo {
+  width: 20px;
+  height: 20px;
+}
+
+.logo-small {
+  width: 16px;
+  height: 16px;
+}

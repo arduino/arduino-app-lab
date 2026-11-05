@@ -153,13 +153,13 @@ func listDirEntries(fss fs.FS, dir string) ([]fs.DirEntry, error) {
 	return entries, nil
 }
 
-// listConnEntries lists dir over a board connection, bounded and retried.
+// ListConnEntries lists dir over a board connection, bounded and retried.
 //
 // The trailing slash is what makes a file fail: `ls -laQ` of a file prints one
 // line and no "total" header, and ParseLsOutput drops the first line either way,
 // so without it a file lists as an empty directory. With it ls stops at ENOTDIR.
 // The parser never sees the path, so listing a real directory is unaffected.
-func listConnEntries(conn remote.RemoteConn, dir string) ([]remote.FileInfo, error) {
+func ListConnEntries(conn remote.RemoteConn, dir string) ([]remote.FileInfo, error) {
 	var entries []remote.FileInfo
 	err := retryBoardRead(dir, func() error {
 		var err error

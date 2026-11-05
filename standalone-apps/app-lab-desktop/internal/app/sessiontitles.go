@@ -20,7 +20,7 @@ func readSessionTitles(dir string) (map[string]string, error) {
 		return nil, err
 	}
 	titles := map[string]string{}
-	if err := json.Unmarshal(data, &titles); err != nil {
+	if err := json.Unmarshal(data, &titles); err != nil || titles == nil { // null decodes to a nil map
 		return map[string]string{}, nil
 	}
 	return titles, nil

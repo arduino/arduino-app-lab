@@ -18,7 +18,7 @@ export interface AiModelsTabProps {
   selectedModelId?: string;
   onModelSelect?: (modelId: string) => void;
   readOnly?: boolean;
-  isExample?: boolean;
+  isReadOnlyApp?: boolean;
   trainNewModelEnabled: boolean;
   addHuggingFaceModelEnabled?: boolean;
   addHuggingFaceModelDialogProps?: AddHuggingFaceModelDialogProps;
@@ -33,7 +33,7 @@ export const AiModelsTab: React.FC<AiModelsTabProps> = ({
   selectedModelId,
   onModelSelect,
   readOnly = false,
-  isExample = false,
+  isReadOnlyApp = false,
   trainNewModelEnabled,
   addHuggingFaceModelEnabled = false,
   addHuggingFaceModelDialogProps,
@@ -60,7 +60,7 @@ export const AiModelsTab: React.FC<AiModelsTabProps> = ({
       selectedModelId={selectedModelId}
       onModelSelect={onModelSelect}
       readOnly={readOnly}
-      isExample={isExample}
+      isReadOnlyApp={isReadOnlyApp}
       diskUsageWarning={diskUsageWarning(model.id)}
       downloadEIModel={downloadEIModel}
       downloadGenericModel={downloadGenericModel}

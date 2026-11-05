@@ -131,7 +131,7 @@ func (l *Learn) lazyInit(ctx context.Context) error {
 				continue
 			}
 
-			var tags []Tag
+			tags := []Tag{}
 			for _, t := range frontMatter.Tags {
 				trimmed := strings.TrimSpace(t)
 				normalized := strings.ReplaceAll(strings.ToLower(trimmed), " ", "-")

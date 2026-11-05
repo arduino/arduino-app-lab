@@ -18,19 +18,6 @@
     border: 1px solid var(--border-strong, #7f8c8d);
     margin: 12px;
     flex-shrink: 0;
-    position: relative;
-  }
-
-  .radio-tooltip {
-    background: var(--feedback-neutral-default, #aeb8b8);
-    border-radius: 3px;
-    color: #171e21;
-    font-size: 12px;
-    font-weight: 400;
-    padding: 2px 8px;
-    left: 28px;
-    top: 16px;
-    max-width: unset;
   }
 
   &.selectable {
@@ -298,6 +285,33 @@
   overflow: hidden;
 }
 
+.impulse-dropdown-menu.dropdown-menu {
+  width: 250px;
+  margin-left: unset;
+  overflow: hidden;
+}
+
+.impulse-dropdown-menu .impulse-dropdown-menu-item > span {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 4px;
+
+  .impulse-item-name {
+    flex: 1;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+    text-align: left;
+  }
+
+  svg {
+    width: 12px;
+    height: 12px;
+  }
+}
+
 .remove-model {
   color: var(--feedback-error-default, #ff8878);
   display: flex;
@@ -439,32 +453,6 @@
     }
     svg {
       flex-shrink: 0;
-    }
-  }
-
-  .dropdown-menu {
-    width: 250px;
-    top: 22px !important;
-    overflow: hidden;
-    margin-left: unset;
-  }
-
-  .dropdown-menu-item > span {
-    width: 100%;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 4px;
-    .impulse-item-name {
-      flex: 1;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-      overflow: hidden;
-      text-align: left;
-    }
-    svg {
-      width: 12px;
-      height: 12px;
     }
   }
 

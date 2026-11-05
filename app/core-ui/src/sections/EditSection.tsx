@@ -4,6 +4,7 @@ import {
   EditorPanelLogic,
   ReadOnlyBar,
   ReadOnlyBarLogic,
+  secretsWorkspaceRenderer,
   SplitConsole,
   Toolbar,
   ToolbarLogic,
@@ -20,7 +21,7 @@ type EditSectionProps =
   | {
       editorPanelLogic: EditorPanelLogic;
       toolbarLogic: ToolbarLogic;
-      consolePanelLogic: ConsolePanelLogic;
+      consolePanelLogic?: ConsolePanelLogic;
       getKeywords: () => KeywordMap | undefined;
       isCodeOnlyResource?: false | undefined;
     }
@@ -46,6 +47,7 @@ const EditSection: React.FC<EditSectionProps> = (props: EditSectionProps) => {
         <EditorPanel
           editorPanelLogic={editorPanelLogic}
           getKeywords={getKeywords}
+          workspaceRenderers={[secretsWorkspaceRenderer]}
           classes={{
             container: clsx({
               [styles['read-only-editor-panel-container-with-panel']]:
@@ -68,21 +70,30 @@ const EditSection: React.FC<EditSectionProps> = (props: EditSectionProps) => {
 
   const { toolbarLogic, consolePanelLogic } = props;
 
+  const editorPanel = (
+    <EditorPanel
+      editorPanelLogic={editorPanelLogic}
+      getKeywords={getKeywords}
+      workspaceRenderers={[secretsWorkspaceRenderer]}
+      classes={{
+        container: styles['editor-panel-container'],
+        tabsBar: styles['editor-tabs-bar-indent'],
+        tab: styles['editor-tab'],
+        selectedTab: styles['editor-selected-tab'],
+      }}
+    />
+  );
+
   return (
     <div className={styles.container}>
       <ToolbarMemo toolbarLogic={toolbarLogic} />
-      <SplitConsole consolePanelLogic={consolePanelLogic}>
-        <EditorPanel
-          editorPanelLogic={editorPanelLogic}
-          getKeywords={getKeywords}
-          classes={{
-            container: styles['editor-panel-container'],
-            tabsBar: styles['editor-tabs-bar-indent'],
-            tab: styles['editor-tab'],
-            selectedTab: styles['editor-selected-tab'],
-          }}
-        />
-      </SplitConsole>
+      {consolePanelLogic ? (
+        <SplitConsole consolePanelLogic={consolePanelLogic}>
+          {editorPanel}
+        </SplitConsole>
+      ) : (
+        editorPanel
+      )}
     </div>
   );
 };

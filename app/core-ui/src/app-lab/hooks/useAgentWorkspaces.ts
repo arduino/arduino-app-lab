@@ -1,8 +1,11 @@
-import type { AgentWorkspace } from '@cloud-editor-mono/ai-assistant';
+import {
+  type AgentWorkspace,
+  onTurnEnded,
+} from '@cloud-editor-mono/ai-assistant';
 import { getApps } from '@cloud-editor-mono/domain/src/services/services-by-app/app-lab';
 import { useI18n } from '@cloud-editor-mono/ui-components/lib/components-by-app/app-lab';
-import { useQuery } from '@tanstack/react-query';
-import { useMemo } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useEffect, useMemo } from 'react';
 
 import { BoardScopedQuery } from '../boardScopedQuery';
 import { useBoardLifecycleStore } from '../store/boardLifecycle';
@@ -20,6 +23,19 @@ export const useAgentWorkspaces = (enabled: boolean): AgentWorkspace[] => {
     queryFn: () => getApps({ query: {} }),
     enabled: enabled && boardIsReachable,
   });
+
+  // A turn can create an app; only this list, not every app's own detail, is read again.
+  const queryClient = useQueryClient();
+  useEffect(
+    () =>
+      onTurnEnded(() => {
+        void queryClient.invalidateQueries({
+          queryKey: [BoardScopedQuery.LIST_MY_APPS],
+          exact: true,
+        });
+      }),
+    [queryClient],
+  );
 
   return useMemo(
     () => [

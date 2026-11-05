@@ -1447,7 +1447,12 @@ export const useGetFileHash: UseGetFileHash = function (
 
     const visibleFiles = fileListResponse.filter((file) => !isHiddenFile(file));
 
-    const fileListSubjects = getCodeSubjects();
+    // The code subjects map is shared by every sketch opened in this page, e.g. the example a sketch was copied from.
+    const fileListSubjects = new Map(
+      [...getCodeSubjects()].filter(([path]) =>
+        path.startsWith(`${sketchPath}/`),
+      ),
+    );
 
     if (fileListSubjects.size === 0) return;
 
@@ -1494,12 +1499,21 @@ export const useGetFileHash: UseGetFileHash = function (
       (file) => !fileListSubjects.has(file.path),
     );
 
+    const visibleFilePaths = new Set(visibleFiles.map((file) => file.path));
+    const hasRemovedFiles = [...fileListSubjects.keys()].some(
+      (path) => !visibleFilePaths.has(path),
+    );
+
+    if (newFilesFromResponse.length || hasRemovedFiles) {
+      refetchSketchFiles();
+    }
+
+    // The files list can lag behind the user's own uploads, e.g. right after copying an example with several files.
     if (
-      newFilesFromResponse.length ||
-      fileListSubjects.size !== visibleFiles.length
+      hasRemovedFiles ||
+      newFilesFromResponse.some((file) => file.revision?.username !== username)
     ) {
       isConcurrentEditing = true;
-      refetchSketchFiles();
     }
 
     if (isConcurrentEditing) {
@@ -1511,6 +1525,7 @@ export const useGetFileHash: UseGetFileHash = function (
     managed404ErrorCount.current = 0;
   }, [
     fileListResponse,
+    sketchPath,
     username,
     refetchSketchFiles,
     onConcurrentEditingDetected,

@@ -3,7 +3,7 @@ import {
   IconOperationDeleteNormal,
   IconOperationEditPenNormal,
   IconOperationPinNormal,
-} from '@arduino/react-icons';
+} from '@cloud-editor-mono/images/assets/icons';
 import {
   DropdownMenuButton,
   useI18n,

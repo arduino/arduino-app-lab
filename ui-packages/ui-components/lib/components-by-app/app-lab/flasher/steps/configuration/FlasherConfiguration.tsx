@@ -41,6 +41,8 @@ const REQUIRED_FREE_SPACE_BYTES = 10 * 1024 * 1024 * 1024; // 10 GB
 const knownImage = (image?: OSImageRelease): OSImageRelease | undefined =>
   image?.version_label ? image : undefined;
 
+const imageVersionId = (version: OSImageRelease): string => version.id || '';
+
 export const FlasherConfiguration: React.FC<FlasherConfigurationProps> = ({
   flashEvent,
   loading,
@@ -60,6 +62,13 @@ export const FlasherConfiguration: React.FC<FlasherConfigurationProps> = ({
   const [preserve, setPreserve] = useState(true);
   const [preserveSupported, setPreserveSupported] = useState(true);
   const [hasEnoughSpace, setHasEnoughSpace] = useState(true);
+
+  const imageVersionLabel = (version: OSImageRelease): string =>
+    version.latest
+      ? formatMessage(messages.imageVersionLatest, {
+          version: version.version_label,
+        })
+      : version.version_label || '';
 
   useEffect(() => {
     const loadResources = async (): Promise<void> => {
@@ -145,13 +154,13 @@ export const FlasherConfiguration: React.FC<FlasherConfigurationProps> = ({
       bold: (text: string) => <b>{text}</b>,
     }),
     direction: 'up-right',
-    timeout: 0,
+    variant: 'card',
   });
 
   const { props: noImagesTooltipProps, renderTooltip: renderNoImagesTooltip } =
     useTooltip({
       content: formatMessage(messages.configurationStepNoImagesTooltip),
-      timeout: 0,
+      variant: 'card',
     });
 
   const handleConfirm = (): void => {
@@ -211,14 +220,10 @@ export const FlasherConfiguration: React.FC<FlasherConfigurationProps> = ({
                 id="image-version"
                 name="image-version"
                 disabled={disabled}
-                value={
-                  imageVersion
-                    ? [
-                        imageVersion.version_label,
-                        imageVersion.latest ? ' (Latest)' : '',
-                      ].join('')
-                    : ''
+                displayValue={
+                  imageVersion ? imageVersionLabel(imageVersion) : ''
                 }
+                selectedId={imageVersion && imageVersionId(imageVersion)}
                 label={formatMessage(
                   messages.configurationStepImageVersionLabel,
                 )}
@@ -230,22 +235,16 @@ export const FlasherConfiguration: React.FC<FlasherConfigurationProps> = ({
                     items:
                       imageVersions.length > 1
                         ? imageVersions.map((version) => ({
-                            id: version.id || '',
-                            label: [
-                              version.version_label,
-                              version.latest ? ' (Latest)' : '',
-                            ].join(''),
+                            id: imageVersionId(version),
+                            label: imageVersionLabel(version),
                           }))
                         : [],
                   },
                 ]}
-                classes={{
-                  disabled: stepStyles['image-version--disabled'],
-                  input: stepStyles['image-version-input'],
-                  inputLabel: stepStyles['image-version-input-label'],
-                }}
                 onChange={(key: Key): void =>
-                  setImageVersion(imageVersions.find((v) => v.id === key))
+                  setImageVersion(
+                    imageVersions.find((v) => imageVersionId(v) === key),
+                  )
                 }
               />
               {disabled && imageVersions.length > 1 && (
@@ -285,7 +284,7 @@ export const FlasherConfiguration: React.FC<FlasherConfigurationProps> = ({
                       <div className={stepStyles['info-icon']}>
                         <AppLabInfo />
                       </div>
-                      {renderTooltip(stepStyles['tooltip-content'])}
+                      {renderTooltip()}
                     </div>
                   </div>
                 </div>
@@ -308,8 +307,7 @@ export const FlasherConfiguration: React.FC<FlasherConfigurationProps> = ({
             <XXSmall className={stepStyles['flash-event-title']}>
               {[
                 formatMessage(messages.configurationStepImageVersionLabel),
-                imageVersion?.version_label,
-                imageVersion?.latest ? '(Latest)' : null,
+                imageVersion && imageVersionLabel(imageVersion),
               ]
                 .filter((it) => !!it)
                 .join(' ')}
@@ -360,9 +358,7 @@ export const FlasherConfiguration: React.FC<FlasherConfigurationProps> = ({
                 className={stepStyles['flash-button-wrapper']}
               >
                 <Button
-                  disabled={
-                    !imagesLoaded || !hasEnoughSpace || flashEvent !== null
-                  }
+                  disabled={!imagesLoaded || !hasEnoughSpace}
                   loading={flashEvent !== null}
                   variant={ButtonVariant.Primary}
                   onClick={handleConfirm}
@@ -372,8 +368,7 @@ export const FlasherConfiguration: React.FC<FlasherConfigurationProps> = ({
                 >
                   {formatMessage(messages.configurationStepAction)}
                 </Button>
-                {imagesUnavailable &&
-                  renderNoImagesTooltip(stepStyles['tooltip-content'])}
+                {imagesUnavailable && renderNoImagesTooltip()}
               </div>
             </>
           )}

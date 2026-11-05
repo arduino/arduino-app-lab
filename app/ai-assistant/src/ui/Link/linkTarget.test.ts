@@ -68,6 +68,21 @@ describe('linkTarget', () => {
       'file://C:/app/main.py',
       { kind: 'file', path: 'C:/app/main.py' },
     ],
+    [
+      'a file URL with a line hint',
+      'file:///abs/main.py#L3',
+      { kind: 'file', path: '/abs/main.py' },
+    ],
+    [
+      'a file URL with a query',
+      'file:///abs/main.py?raw=1',
+      { kind: 'file', path: '/abs/main.py' },
+    ],
+    [
+      'an escaped # in a file URL',
+      'file:///abs/v%231.py',
+      { kind: 'file', path: '/abs/v#1.py' },
+    ],
     ['a remote share', 'file://evil.com/share/x', { kind: 'inert' }],
     ['a script URL', 'javascript:alert(1)', { kind: 'inert' }],
     ['a script URL, shouting', 'JavaScript:alert(1)', { kind: 'inert' }],

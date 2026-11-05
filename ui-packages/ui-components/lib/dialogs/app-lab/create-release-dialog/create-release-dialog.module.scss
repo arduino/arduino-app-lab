@@ -66,22 +66,9 @@ $control-width: 212px;
     width: 90px;
   }
 
-  // The design fills every field of the dialog the same way, with no border at rest.
-  .label-input,
-  .target-select {
-    background: var(--component-bg-below-1);
-    border-color: transparent;
-  }
-
   .label-input-container,
   .target-select {
     width: 100%;
-
-    // The fixed height keeps the fields as tall as they are with the inputs' default 14px text.
-    input {
-      font-size: 12px;
-      height: 21px;
-    }
   }
 }
 
@@ -97,21 +84,6 @@ $control-width: 212px;
       fill: var(--text-subtle);
     }
   }
-}
-
-.tooltip {
-  background: var(--component-bg-above);
-  border-radius: 3px;
-  color: var(--text-default);
-  font-size: 12px;
-  padding: 8px 12px;
-  max-width: 260px;
-}
-
-.tooltip-body {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
 }
 
 .option-label {

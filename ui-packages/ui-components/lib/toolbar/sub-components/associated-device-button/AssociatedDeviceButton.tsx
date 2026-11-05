@@ -10,7 +10,7 @@ import { memo, useRef } from 'react';
 import { Button, ButtonType } from '../../../essential/button';
 import { WrapperTitle } from '../../../essential/wrapper-title';
 import { useI18n } from '../../../i18n/useI18n';
-import { Small, Text, TextSize, XXSmall } from '../../../typography';
+import { Small, TextSize, XXSmall } from '../../../typography';
 import { messages } from '../../messages';
 import {
   IotPortName,
@@ -26,6 +26,8 @@ export interface AssociatedDeviceButtonProps {
   deviceIsIot?: boolean;
   isOtaCompatible?: boolean;
   isIotToolbar?: boolean;
+  isReadOnly?: boolean;
+  canChangeIotDevice?: boolean;
   onClickDeviceChange?: SetToolbarSelection;
   boardsConfigIsUnknown: boolean;
   boardBubbleBadgeNumber: number;
@@ -47,6 +49,8 @@ const AssociatedDeviceButton: React.FC<AssociatedDeviceButtonProps> = (
     deviceIsIot,
     isOtaCompatible,
     isIotToolbar,
+    isReadOnly = false,
+    canChangeIotDevice = true,
     onClickDeviceChange,
     boardsConfigIsUnknown,
     boardBubbleBadgeNumber,
@@ -54,6 +58,7 @@ const AssociatedDeviceButton: React.FC<AssociatedDeviceButtonProps> = (
     connectionLost = false,
     selectedBoardHasAltPort,
     switchToAltPort,
+    classes,
   } = props;
   const buttonRef = useRef<HTMLButtonElement>(null);
   const { formatMessage } = useI18n();
@@ -85,15 +90,9 @@ const AssociatedDeviceButton: React.FC<AssociatedDeviceButtonProps> = (
 
   const renderUnknownSelectionInfoNode = (): JSX.Element => {
     const thirdPartyDeviceLabel = (
-      <Text size={TextSize.XXSmall} bold>
-        {formatMessage(messages.thirdPartyDevice)}
-      </Text>
+      <XXSmall bold>{formatMessage(messages.thirdPartyDevice)}</XXSmall>
     );
-    const boardLabel = (
-      <Text size={TextSize.XXSmall} bold>
-        {board}
-      </Text>
-    );
+    const boardLabel = <XXSmall bold>{board}</XXSmall>;
 
     const boardLabelStartsWithVowel = ['a', 'e', 'i', 'o', 'u'].includes(
       board[0].toLowerCase(),
@@ -106,19 +105,19 @@ const AssociatedDeviceButton: React.FC<AssociatedDeviceButtonProps> = (
           styles['unknown-selection-info-tooltip-show'],
         )}
       >
-        <Text size={TextSize.XXSmall}>
+        <XXSmall>
           {formatMessage(messages.unknownDevice, {
             article: boardLabelStartsWithVowel ? 'an' : 'a',
             thirdPartyDeviceLabel,
             boardLabel,
           })}
-        </Text>
+        </XXSmall>
       </div>
     );
   };
 
   const renderIcon = (): JSX.Element => {
-    if (selectedBoardHasAltPort && switchToAltPort)
+    if (!isReadOnly && selectedBoardHasAltPort && switchToAltPort)
       return (
         <PortSwitch
           onSwitch={switchToAltPort}
@@ -189,9 +188,7 @@ const AssociatedDeviceButton: React.FC<AssociatedDeviceButtonProps> = (
         role="tooltip"
       >
         <div className={clsx(styles['association-node-info-popover'])}>
-          <Text size={TextSize.XXSmall}>
-            {formatMessage(messages.iotSetupTabMessage)}
-          </Text>
+          <XXSmall>{formatMessage(messages.iotSetupTabMessage)}</XXSmall>
         </div>
       </div>
     );
@@ -205,7 +202,7 @@ const AssociatedDeviceButton: React.FC<AssociatedDeviceButtonProps> = (
       key={`${ToolbarItemIds.AssociationNode}-info-button`}
       size={TextSize.XSmall}
       onClick={
-        !isIotToolbar
+        !isIotToolbar && !isReadOnly
           ? (e): void => {
               buttonRef.current?.blur();
               return onClickDeviceChange && onClickDeviceChange(e);
@@ -217,7 +214,7 @@ const AssociatedDeviceButton: React.FC<AssociatedDeviceButtonProps> = (
           styles['text-button'],
           styles['text-button-icon'],
           styles['association-info-button-board-name'],
-          isIotToolbar ? styles['disable-button'] : undefined,
+          isIotToolbar || isReadOnly ? styles['disable-button'] : undefined,
         ),
         textButtonText: styles['text-button-label'],
       }}
@@ -248,17 +245,20 @@ const AssociatedDeviceButton: React.FC<AssociatedDeviceButtonProps> = (
       title={!isIotToolbar ? portInfo : undefined}
       id="association-node"
     >
-      <div className={styles.container}>
+      <div className={clsx(styles.container, classes?.['button-container'])}>
         {renderBoardBubbleBadge()}
         {renderAssociatedDeviceButton()}
-        {isIotToolbar ? renderIotDevicePopover() : null}
+        {isIotToolbar && canChangeIotDevice ? renderIotDevicePopover() : null}
       </div>
     </WrapperTitle>
   ) : (
-    <div id="association-node" className={styles.container}>
+    <div
+      id="association-node"
+      className={clsx(styles.container, classes?.['button-container'])}
+    >
       {renderBoardBubbleBadge()}
       {renderAssociatedDeviceButton()}
-      {isIotToolbar ? renderIotDevicePopover() : null}
+      {isIotToolbar && canChangeIotDevice ? renderIotDevicePopover() : null}
       {portInfo}
     </div>
   );

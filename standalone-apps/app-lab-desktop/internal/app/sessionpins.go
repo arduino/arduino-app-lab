@@ -20,7 +20,7 @@ func readSessionPins(dir string) (map[string]bool, error) {
 		return nil, err
 	}
 	pins := map[string]bool{}
-	if err := json.Unmarshal(data, &pins); err != nil {
+	if err := json.Unmarshal(data, &pins); err != nil || pins == nil { // null decodes to a nil map
 		return map[string]bool{}, nil
 	}
 	return pins, nil

@@ -4,6 +4,7 @@ import {
   useExternalStoreRuntime,
 } from '@assistant-ui/react';
 import { Config, setCSSVariable } from '@cloud-editor-mono/common';
+import { codeBlockTags } from '@cloud-editor-mono/ide-workbench/lib/code-mirror/extensions/language/codeBlockHighLightStyle';
 import {
   Apply,
   ApplyFix,
@@ -33,7 +34,6 @@ import { useMeasure } from 'react-use';
 import CodeBlock from '../../../../code-block/CodeBlock';
 import CodeDiffBlock from '../../../../code-diff-block/CodeDiffBlock';
 import CodeDiffSummary from '../../../../code-diff-block/CodeDiffSummary';
-import { codeBlockTags } from '../../../../code-mirror/extensions/language/codeBlockHighLightStyle';
 import { DetailsWrapper } from '../../../../details-wrapper';
 import { CopyToClipboard } from '../../../../essential/copy-to-clipboard';
 import { HintLabel } from '../../../../essential/hint-label';

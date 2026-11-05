@@ -651,6 +651,20 @@ describe('FileTree folder open state', () => {
       type: 'folder',
       children: [
         {
+          name: 'inner',
+          path: `${folderPath}/inner`,
+          type: 'folder',
+          children: [
+            {
+              name: 'deep.py',
+              path: `${folderPath}/inner/deep.py`,
+              type: 'file',
+              extension: 'py',
+              mimeType: 'text/x-python',
+            },
+          ],
+        },
+        {
           name: 'main.py',
           path: `${folderPath}/main.py`,
           type: 'file',
@@ -689,9 +703,85 @@ describe('FileTree folder open state', () => {
     expect(row?.getAttribute('aria-expanded')).toBe('false');
   });
 
-  // The renamed folder is a new row id, so react-arborist has it closed while
-  // the consumer has carried the listing over to the new path.
-  it('reopens a renamed folder that was open', async () => {
+  // The agent renames on the board, so the tree hears of it only from the consumer.
+  it.each([
+    ['reopens', true],
+    ['keeps closed', false],
+  ])('%s a folder renamed outside the tree', (_, wasOpen) => {
+    const { getByText, queryByText, rerender } = render(
+      <FileTree
+        {...baseProps}
+        nodes={folderNodes()}
+        selectedNode={undefined}
+      />,
+    );
+    fireEvent.click(getByText('sub'));
+    fireEvent.click(getByText('inner'));
+    // Closing a folder leaves its subfolder open, for when it opens again.
+    if (!wasOpen) fireEvent.click(getByText('sub'));
+    const renamedFolder = { from: 'sub', to: 'sub2', seq: 1 };
+
+    rerender(
+      <FileTree
+        {...baseProps}
+        nodes={folderNodes()}
+        selectedNode={undefined}
+        renamedFolder={renamedFolder}
+      />,
+    );
+    rerender(
+      <FileTree
+        {...baseProps}
+        nodes={folderNodes('sub2')}
+        selectedNode={undefined}
+        renamedFolder={renamedFolder}
+      />,
+    );
+
+    expect(queryByText('main.py') !== null).toBe(wasOpen);
+    const row = getByText('sub2').closest('[role="treeitem"]');
+    expect(row?.getAttribute('aria-expanded')).toBe(String(wasOpen));
+
+    if (!wasOpen) fireEvent.click(getByText('sub2'));
+    expect(queryByText('deep.py')).not.toBeNull();
+  });
+
+  const renameThroughMenu = async (
+    getByText: (text: string) => HTMLElement,
+    folder: string,
+    newName: string,
+  ): Promise<void> => {
+    // Radix places the menu with `DOMRect.fromRect`, which jsdom does not define: its rejection would be reported as an unhandled error.
+    vi.stubGlobal('DOMRect', {
+      fromRect: (rect: { x: number; y: number }) => ({
+        ...rect,
+        width: 0,
+        height: 0,
+        top: rect.y,
+        bottom: rect.y,
+        left: rect.x,
+        right: rect.x,
+      }),
+    });
+    fireEvent.contextMenu(getByText(folder));
+    act(() => {
+      vi.advanceTimersByTime(50);
+    });
+    fireEvent.click(getByText('Rename'));
+    act(() => {
+      vi.advanceTimersByTime(50);
+    });
+
+    const input = document.querySelector('input') as HTMLInputElement;
+    expect(input).not.toBeNull();
+    fireEvent.change(input, { target: { value: newName } });
+    await act(async () => {
+      fireEvent.keyDown(input, { key: 'Enter' });
+    });
+  };
+
+  // The renamed folder and its subfolders are new row ids, which react-arborist has closed.
+  it('reopens a renamed folder that was open, and the subfolder open in it', async () => {
     vi.useFakeTimers();
     const onFileRename = vi.fn(() => Promise.resolve());
     const { getByText, queryByText, rerender } = render(
@@ -704,51 +794,75 @@ describe('FileTree folder open state', () => {
     );
 
     fireEvent.click(getByText('sub'));
-    expect(queryByText('main.py')).not.toBeNull();
+    fireEvent.click(getByText('inner'));
+    expect(queryByText('deep.py')).not.toBeNull();
 
-    // Rename it through the row's context menu, as the user does. Radix places
-    // the menu with `DOMRect.fromRect`, which jsdom does not define — and the
-    // rejection that follows is reported as an unhandled error.
-    vi.stubGlobal('DOMRect', {
-      fromRect: (rect: { x: number; y: number }) => ({
-        ...rect,
-        width: 0,
-        height: 0,
-        top: rect.y,
-        bottom: rect.y,
-        left: rect.x,
-        right: rect.x,
-      }),
-    });
-    fireEvent.contextMenu(getByText('sub'));
-    act(() => {
-      vi.advanceTimersByTime(50);
-    });
-    fireEvent.click(getByText('Rename'));
-    act(() => {
-      vi.advanceTimersByTime(50);
-    });
-
-    const input = document.querySelector('input') as HTMLInputElement;
-    expect(input).not.toBeNull();
-    fireEvent.change(input, { target: { value: 'renamed' } });
-    await act(async () => {
-      fireEvent.keyDown(input, { key: 'Enter' });
-    });
+    await renameThroughMenu(getByText, 'sub', 'renamed');
 
     expect(onFileRename).toHaveBeenCalledWith('sub', 'renamed', 'folder');
 
-    // The consumer's listing comes back under the new path.
+    // The consumer reports the rename once the board has done it, then lists the folder under its new path.
+    const renamedFolder = { from: 'sub', to: 'renamed', seq: 1 };
+    rerender(
+      <FileTree
+        {...baseProps}
+        nodes={folderNodes()}
+        selectedNode={undefined}
+        onFileRename={onFileRename}
+        renamedFolder={renamedFolder}
+      />,
+    );
     rerender(
       <FileTree
         {...baseProps}
         nodes={folderNodes('renamed')}
         selectedNode={undefined}
         onFileRename={onFileRename}
+        renamedFolder={renamedFolder}
       />,
     );
 
     expect(queryByText('main.py')).not.toBeNull();
+    expect(queryByText('deep.py')).not.toBeNull();
+    vi.unstubAllGlobals();
+    vi.useRealTimers();
+  });
+
+  // A refused name, here one taken by a folder with an `inner` of its own, leaves no folder open that the user did not open.
+  it('opens nothing for a rename the consumer does not report done', async () => {
+    vi.useFakeTimers();
+    const nodes = [...folderNodes('other'), ...folderNodes()];
+    const onFileRename = vi.fn(() => Promise.resolve());
+    const { getByText, getAllByText, rerender } = render(
+      <FileTree
+        {...baseProps}
+        nodes={nodes}
+        selectedNode={undefined}
+        onFileRename={onFileRename}
+      />,
+    );
+    fireEvent.click(getByText('sub'));
+    fireEvent.click(getByText('inner'));
+
+    await renameThroughMenu(getByText, 'sub', 'other');
+    rerender(
+      <FileTree
+        {...baseProps}
+        nodes={nodes}
+        selectedNode={undefined}
+        onFileRename={onFileRename}
+      />,
+    );
+
+    const row = (element: HTMLElement): Element | null =>
+      element.closest('[role="treeitem"]');
+    expect(row(getByText('other'))?.getAttribute('aria-expanded')).toBe(
+      'false',
+    );
+    fireEvent.click(getByText('other'));
+    const [otherInner] = getAllByText('inner');
+    expect(row(otherInner)?.getAttribute('aria-expanded')).toBe('false');
+    expect(getAllByText('deep.py')).toHaveLength(1);
     vi.unstubAllGlobals();
     vi.useRealTimers();
   });

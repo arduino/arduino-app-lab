@@ -1,4 +1,4 @@
-import { IconNavigationArrowChevronNormalUp } from '@arduino/react-icons';
+import { IconNavigationArrowChevronNormalUp } from '@cloud-editor-mono/images/assets/icons';
 import clsx from 'clsx';
 import React, { useId, useState } from 'react';
 

@@ -1,0 +1,18 @@
+.container {
+    display: inline-flex;
+    gap: 4px;
+    align-items: center;
+    flex-shrink: 0;
+    width: fit-content;
+
+    &.container-with-background {
+        background: var(--surface-bg-below-1, #171E21);
+        border: 1px solid var(--border-inverted, #232B2E);
+        border-radius: 10px;
+        padding: 1px;
+    }
+}
+
+.active {
+    // Active state is handled by Button variant
+}

@@ -1,4 +1,9 @@
 import {
+  FileNameValidation,
+  FileNameValidationItem,
+  SelectableFileData,
+} from '@cloud-editor-mono/ide-workbench/lib/editor-tabs-bar/index';
+import {
   ThreeDots,
   UnsavedBadge,
 } from '@cloud-editor-mono/images/assets/icons';
@@ -13,11 +18,6 @@ import {
   useState,
 } from 'react';
 
-import {
-  FileNameValidation,
-  FileNameValidationItem,
-  SelectableFileData,
-} from '../../../editor-tabs-bar';
 import DropdownMenuButton from '../../../essential/dropdown-menu/DropdownMenuButton';
 import { XSmall, XXSmall } from '../../../typography';
 import { FileMenuItemIds } from '../../sidenav.type';

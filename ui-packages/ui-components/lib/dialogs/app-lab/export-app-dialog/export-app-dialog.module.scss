@@ -55,22 +55,13 @@
     height: 16px;
 
     path {
-      fill: var(--accent-default, #25C2C7);
+      fill: var(--accent-default, #25c2c7);
     }
   }
 
   &:hover {
     opacity: 0.8;
   }
-}
-
-.tooltip-content {
-  background: var(--component-bg-above, #374146);
-  border-radius: 3px;
-  color: var(--text-default, #ffffff);
-  font-size: 12px;
-  font-weight: 400;
-  padding: 16px 24px;
 }
 
 .action-button {
@@ -95,7 +86,7 @@
     svg {
       height: 56px;
       width: 56px;
-      color: var(--feedback-warning-default, #C1AB15);
+      color: var(--feedback-warning-default, #c1ab15);
     }
   }
 
@@ -128,8 +119,8 @@
     }
 
     .input {
-      background: #25C2C7;
-      border: 1px solid #25C2C7;
+      background: #25c2c7;
+      border: 1px solid #25c2c7;
     }
   }
 

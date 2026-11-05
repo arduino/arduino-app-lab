@@ -1,0 +1,105 @@
+@use "@cloud-editor-mono/ui-components/public/shared.module.scss";
+@use "@cloud-editor-mono/arduino-sass/src/typography" as typography;
+
+// Inside the composer, whose gap sets it 8px above the input box; capped like the box so the rows line up.
+.queued {
+  width: 100%;
+  max-width: var(--chat-content-max-width);
+  margin-inline: auto;
+}
+
+.queued,
+.queued-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+// A row and the accordion header are the same bar.
+@mixin bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 8px;
+  background: var(--component-bg-below-1);
+}
+
+.queued-item {
+  @include bar;
+  padding: 5px 4px 5px 10px;
+}
+
+.queued-header {
+  @include bar;
+  height: 38px;
+  padding: 0 10px;
+}
+
+.queued-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--icon-default);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.queued-chevron {
+  width: 12px;
+  height: 12px;
+  flex: none;
+  transition: transform 0.2s ease;
+
+  &--expanded {
+    transform: rotate(180deg);
+  }
+}
+
+.queued-text {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text-inverted-subtle);
+  font-size: typography.$font-size-x-small;
+  line-height: 1.6;
+  letter-spacing: 0.14px;
+}
+
+.queued-remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--icon-default);
+  cursor: pointer;
+
+  &:hover {
+    background: var(--component-bg-flexible);
+  }
+
+  svg {
+    width: 16px;
+    height: 16px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .queued-chevron {
+    transition: none;
+  }
+}

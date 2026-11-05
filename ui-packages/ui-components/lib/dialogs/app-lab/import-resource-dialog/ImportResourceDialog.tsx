@@ -126,7 +126,6 @@ export const ImportResourceDialog: React.FC<ImportResourceDialogProps> = ({
             variant={ButtonVariant.Primary}
             size={ButtonSize.Small}
             loading={isInstalling}
-            disabled={isInstalling}
             onClick={(): void => confirmReleaseInstall?.()}
           >
             {formatMessage(

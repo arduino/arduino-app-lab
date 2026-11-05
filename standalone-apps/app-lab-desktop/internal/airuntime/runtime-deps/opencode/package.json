@@ -1,0 +1,9 @@
+{
+  "name": "arduino-app-lab-ai-runtime-opencode",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Pinned AI agent runtime packages for Arduino App Lab (OpenCode agent). Installed with `npm ci` into a per-user app-data runtime directory by internal/airuntime. OpenCode ships a native per-platform binary as an optional dependency, so npm installs only the host's; Node is needed to install, not to run. Versions are pinned EXACTLY (no ^/~/latest) and bumped deliberately — see internal/airuntime/VERSIONING.md.",
+  "dependencies": {
+    "opencode-ai": "1.18.33"
+  }
+}

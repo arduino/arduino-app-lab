@@ -102,7 +102,7 @@ func TestOnlyAppToolsAreMatchedByAppID(t *testing.T) {
 		}
 	}
 
-	appTools := []string{"apps_start", "apps_delete", "app_bricks_add", "sketch_libraries_add"}
+	appTools := []string{"apps_start", "apps_delete", "app_bricks_add", "app_files_rename", "app_files_delete", "sketch_libraries_add"}
 	for _, tool := range appTools {
 		key := "id"
 		if strings.HasPrefix(tool, "app_bricks_") {
@@ -133,5 +133,128 @@ func TestRelativePathsAreAnchoredToTheSessionCwd(t *testing.T) {
 	}
 	if !actsOutsideWorkspace(rel("board__user-other-9de4f0/python/main.py"), "user:blink", ws, root) {
 		t.Error("a relative path in another app was not flagged")
+	}
+}
+
+// The prefix is the engine's; the name behind it is what decides the app scope and the grant key.
+func TestBareToolNameStripsTheWirePrefix(t *testing.T) {
+	cases := map[string]string{
+		"mcp__arduino-board__apps_start":     "apps_start",
+		"apps_start":                         "apps_start", // bare, as our MCP server declares it
+		"Edit":                               "Edit",       // a native tool carries no prefix
+		"":                                   "",
+		"arduino-board_apps_start":           "apps_start", // OpenCode: one underscore, no wrapping
+		"mcp__arduino-board__app_bricks_add": "app_bricks_add",
+		"arduino-board_sketch_libraries_add": "sketch_libraries_add",
+		// A native name of its own, underscores and all: trimming inside it would lose the tool.
+		"read_file":                "read_file",
+		"sketch_libraries_add":     "sketch_libraries_add",
+		"arduino_board_apps_start": "arduino_board_apps_start", // not the server name
+		// Another server's tool, and an edit whose title holds a "<board>__<app>" mirror path: none is a board tool.
+		"mcp__another-server__apps_start":                              "mcp__another-server__apps_start",
+		"Edit 2923045065__user-blink-6b812e/python/main.py":            "Edit 2923045065__user-blink-6b812e/python/main.py",
+		"/root/ai-mirror/2923045065__user-blink-6b812e/python/main.py": "/root/ai-mirror/2923045065__user-blink-6b812e/python/main.py",
+	}
+	for title, want := range cases {
+		if got := bareToolName(title); got != want {
+			t.Errorf("bareToolName(%q) = %q, want %q", title, got, want)
+		}
+	}
+}
+
+// The app a board tool names scopes both the "outside this app" badge and the "Always allow" grant.
+func TestBoardToolsAreScopedUnderEitherEnginesNaming(t *testing.T) {
+	const mine, theirs = "dXNlcjpibGluaw", "dXNlcjpvdGhlcg"
+	for _, title := range []string{
+		"mcp__arduino-board__apps_start", // Claude's adapter
+		"arduino-board_apps_start",       // OpenCode: a single underscore
+		// A bare name carrying underscores of its own, in both spellings.
+		"mcp__arduino-board__sketch_libraries_add",
+		"arduino-board_sketch_libraries_add",
+	} {
+		t.Run(title, func(t *testing.T) {
+			own := &ToolCall{Kind: "other", Title: title, Input: map[string]any{"id": mine}}
+			other := &ToolCall{Kind: "other", Title: title, Input: map[string]any{"id": theirs}}
+
+			if got, ok := toolCallAppID(other); !ok || got != theirs {
+				t.Fatalf("toolCallAppID = %q, %v; want the app the call names", got, ok)
+			}
+			if !actsOutsideWorkspace(other, mine, "", "") {
+				t.Error("starting another app was not flagged as outside the workspace")
+			}
+			if actsOutsideWorkspace(own, mine, "", "") {
+				t.Error("starting the workspace app was flagged as outside it")
+			}
+			ownKey, _ := grantKey(own)
+			otherKey, _ := grantKey(other)
+			if ownKey == otherKey {
+				t.Errorf("both apps share the grant key %q, so one always-allow covers every app", ownKey)
+			}
+		})
+	}
+}
+
+// A model sometimes pads an app id with "=": it still names the same app, so the call is not outside it and shares its grant.
+func TestAPaddedAppIDNamesTheSameApp(t *testing.T) {
+	const mine = "dXNlcjpxYS1pbXAtbDQtMTAwMjQxLWk"
+	padded := &ToolCall{Kind: "other", Title: "mcp__arduino-board__apps_start", Input: map[string]any{"id": mine + "="}}
+	if got, ok := toolCallAppID(padded); !ok || got != mine {
+		t.Errorf("toolCallAppID = %q, %v; want %q", got, ok, mine)
+	}
+	if actsOutsideWorkspace(padded, mine, "", "") {
+		t.Error("a call on the chat's own app, with a padded id, was flagged as outside it")
+	}
+	plain := &ToolCall{Kind: "other", Title: "mcp__arduino-board__apps_start", Input: map[string]any{"id": mine}}
+	paddedKey, _ := grantKey(padded)
+	plainKey, _ := grantKey(plain)
+	if paddedKey != plainKey {
+		t.Errorf("grant keys differ: %q and %q", paddedKey, plainKey)
+	}
+	if _, ok := toolCallAppID(&ToolCall{Title: "mcp__arduino-board__apps_start", Input: map[string]any{"id": "=="}}); ok {
+		t.Error("an id of padding alone named an app")
+	}
+}
+
+// A model also passes the id decoded (user:<folder>) or in base64's standard alphabet; the board tools take both, so each names the same app here too.
+func TestADecodedAppIDNamesTheSameApp(t *testing.T) {
+	const mine = "dXNlcjpxYS1pbXAtbDQtMTAwMjQxLWk" // user:qa-imp-l4-100241-i
+	call := func(id string) *ToolCall {
+		return &ToolCall{Kind: "other", Title: "mcp__arduino-board__apps_start", Input: map[string]any{"id": id}}
+	}
+	plainKey, _ := grantKey(call(mine))
+	for _, spelling := range []string{"user:qa-imp-l4-100241-i", " user:qa-imp-l4-100241-i\n"} {
+		if got, ok := toolCallAppID(call(spelling)); !ok || got != mine {
+			t.Errorf("toolCallAppID(%q) = %q, %v; want %q", spelling, got, ok, mine)
+		}
+		if actsOutsideWorkspace(call(spelling), mine, "", "") {
+			t.Errorf("a call on the chat's own app, as %q, was flagged as outside it", spelling)
+		}
+		if key, _ := grantKey(call(spelling)); key != plainKey {
+			t.Errorf("grant key for %q = %q, want %q", spelling, key, plainKey)
+		}
+	}
+	if got, _ := toolCallAppID(call("dXNlcjp+")); got != "dXNlcjp-" { // user:~
+		t.Errorf("an id in the standard alphabet read as %q, want %q", got, "dXNlcjp-")
+	}
+}
+
+// A native title can hold "__" of its own (a Python package's __init__.py, a __main__.py): it is no board tool, and its grant is the file's.
+func TestANativeTitleWithDoubleUnderscoresIsNoBoardTool(t *testing.T) {
+	for name, tc := range map[string]*ToolCall{
+		"Claude, cwd-relative": {Title: "Edit python/__init__.py", Kind: "edit",
+			Input: map[string]any{"file_path": "/root/ai-mirror/python/__init__.py", "old_string": "a", "new_string": "SECRET = 'x'"}},
+		"Claude, in a mirror folder": {Title: "Edit 2923045065__user-blink-6b812e/python/__init__.py", Kind: "edit",
+			Input: map[string]any{"file_path": "/root/ai-mirror/2923045065__user-blink-6b812e/python/__init__.py", "old_string": "a", "new_string": "SECRET = 'x'"}},
+		"OpenCode": {Title: "/root/ai-mirror/2923045065__user-blink-6b812e/python/__main__.py", Kind: "edit",
+			Paths: []string{"/root/ai-mirror/2923045065__user-blink-6b812e/python/__main__.py"},
+			Input: map[string]any{"filepath": "/root/ai-mirror/2923045065__user-blink-6b812e/python/__main__.py", "diff": "+SECRET = 'x'"}},
+	} {
+		if isBoardTool(tc.Title) || bareToolName(tc.Title) != tc.Title || namesAnApp(tc.Title) {
+			t.Errorf("%s: isBoardTool %v, bareToolName %q, namesAnApp %v; want false, the title, false",
+				name, isBoardTool(tc.Title), bareToolName(tc.Title), namesAnApp(tc.Title))
+		}
+		if key, ok := grantKey(tc); !ok || key != "edit\x00"+tc.Title+"\x00" {
+			t.Errorf("%s: grant key %q (%v), want the file's own key with no edit text", name, key, ok)
+		}
 	}
 }

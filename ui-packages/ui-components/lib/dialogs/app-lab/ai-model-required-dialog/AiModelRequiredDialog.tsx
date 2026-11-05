@@ -14,7 +14,8 @@ export const AiModelRequiredDialog: React.FC<AiModelRequiredDialogProps> = (
   props: AiModelRequiredDialogProps,
 ) => {
   const { logic } = props;
-  const { open, onOpenChange, onDownloadModel, isExample, modelName } = logic();
+  const { open, onOpenChange, onDownloadModel, isReadOnlyApp, modelName } =
+    logic();
 
   const { formatMessage } = useI18n();
 
@@ -30,8 +31,8 @@ export const AiModelRequiredDialog: React.FC<AiModelRequiredDialogProps> = (
           type="submit"
         >
           {formatMessage(
-            isExample
-              ? messages.confirmButtonExample
+            isReadOnlyApp
+              ? messages.confirmButtonReadOnlyApp
               : messages.confirmButtonApp,
           )}
         </Button>
@@ -43,16 +44,16 @@ export const AiModelRequiredDialog: React.FC<AiModelRequiredDialogProps> = (
       <Ai className={styles['ai-icon']} />
       <Medium bold>
         {formatMessage(
-          isExample
-            ? messages.dialogBodyTitleExample
+          isReadOnlyApp
+            ? messages.dialogBodyTitleReadOnlyApp
             : messages.dialogBodyTitleApp,
           { modelName },
         )}
       </Medium>
       <XSmall>
         {formatMessage(
-          isExample
-            ? messages.dialogBodyDescriptionExample
+          isReadOnlyApp
+            ? messages.dialogBodyDescriptionReadOnlyApp
             : messages.dialogBodyDescriptionApp,
           { modelName: <XSmall bold>{modelName}</XSmall> },
         )}

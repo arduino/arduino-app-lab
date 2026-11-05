@@ -1,7 +1,6 @@
 import { AddLibrary as AddLibraryIcon } from '@cloud-editor-mono/images/assets/icons';
 import { useEffect, useId, useRef, useState } from 'react';
 
-import { useTooltip } from '../../../../tooltip';
 import {
   Button,
   ButtonAppearance,
@@ -9,6 +8,7 @@ import {
   ButtonVariant,
 } from '../../essential/button';
 import { IconButton } from '../../essential/icon-button';
+import { useTooltip } from '../../essential/tooltip';
 import styles from './add-sketch-library-button.module.scss';
 
 export type AddSketchLibraryPopover = {
@@ -124,8 +124,8 @@ export const AddSketchLibraryButton: React.FC<AddSketchLibraryButtonProps> = ({
         </Button>
       </span>
     ),
-    timeout: 300,
     role: 'dialog',
+    variant: 'card',
     ariaLabel: [text, ...(listItems ?? [])].join(' '),
     keepOpen: focusInside,
   });
@@ -209,7 +209,7 @@ export const AddSketchLibraryButton: React.FC<AddSketchLibraryButtonProps> = ({
         onBlur={handleBlur}
         onKeyDown={handleTriggerKeyDown}
       />
-      {renderTooltip(styles['popover'])}
+      {renderTooltip()}
     </div>
   );
 };

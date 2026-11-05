@@ -9,11 +9,15 @@ import { useSearchField } from 'react-aria';
 import { useSearchFieldState } from 'react-stately';
 
 import { IconButton } from '../icon-button';
+import { InputStyle } from '../input/input.type';
 import styles from './search-field.module.scss';
 import { Flavor } from './search-field.type';
 
 type SearchFieldProps = AriaSearchFieldProps & {
   flavor?: Flavor;
+  inputStyle?: InputStyle;
+  // App Lab only: a border instead of the filled background.
+  outlined?: boolean;
   classes?: {
     container?: string;
     input?: string;
@@ -22,7 +26,14 @@ type SearchFieldProps = AriaSearchFieldProps & {
 
 const SearchField = forwardRef(
   (props: SearchFieldProps, searchRef: React.ForwardedRef<HTMLDivElement>) => {
-    const { classes, label, flavor = Flavor.Square } = props;
+    const {
+      classes,
+      label,
+      flavor = Flavor.Square,
+      inputStyle = InputStyle.CloudEditor,
+      outlined = false,
+    } = props;
+    const isAppLab = inputStyle === InputStyle.AppLab;
     const state = useSearchFieldState(props);
     const inputRef = useRef(null);
     const { labelProps, inputProps, clearButtonProps } = useSearchField(
@@ -46,7 +57,9 @@ const SearchField = forwardRef(
       <div
         ref={searchRef}
         className={clsx(styles['input-container'], classes?.container, {
-          [styles.rounded]: flavor === Flavor.Rounded,
+          [styles.rounded]: !isAppLab && flavor === Flavor.Rounded,
+          [styles['app-lab']]: isAppLab,
+          [styles.outlined]: isAppLab && outlined,
         })}
       >
         <VisuallyHidden>

@@ -3,6 +3,7 @@ package fs
 import (
 	"errors"
 	"os"
+	"path"
 	"slices"
 	"strings"
 	"sync"
@@ -304,5 +305,39 @@ func TestListDirectoryBoundsConcurrentListings(t *testing.T) {
 
 	if got := conn.peak.Load(); got > maxConcurrentBoardReads {
 		t.Errorf("want at most %d listings in flight, saw %d", maxConcurrentBoardReads, got)
+	}
+}
+
+// treeConn serves a folder tree by path; its Stats answers as file -L does, which calls a folder named like "v1:2" a file.
+type treeConn struct {
+	remote.RemoteConn
+	dirs map[string][]remote.FileInfo
+}
+
+func (c treeConn) List(p string) ([]remote.FileInfo, error) {
+	entries, ok := c.dirs[strings.TrimSuffix(p, "/")]
+	if !ok {
+		return nil, errors.New("ls: cannot access: No such file or directory")
+	}
+	return entries, nil
+}
+
+func (c treeConn) Stats(p string) (remote.FileInfo, error) {
+	_, isDir := c.dirs[p]
+	return remote.FileInfo{Name: path.Base(p), IsDir: isDir && !strings.Contains(path.Base(p), ":")}, nil
+}
+
+// A checkout holds every file the listings show: trusting file -L, the files of a folder named like "v1:2" dropped out of it.
+func TestListFilePathsTrustsTheListings(t *testing.T) {
+	conn := treeConn{dirs: map[string][]remote.FileInfo{
+		"/apps/demo":             {{Name: "python", IsDir: true}},
+		"/apps/demo/python":      {{Name: "v1:2", IsDir: true}, {Name: "main.py"}},
+		"/apps/demo/python/v1:2": {{Name: "three.py"}},
+	}}
+
+	got, err := ListFilePaths("/apps/demo", conn)
+
+	if want := []string{"python/v1:2/three.py", "python/main.py"}; err != nil || !slices.Equal(got, want) {
+		t.Errorf("ListFilePaths = %v, %v; want %v", got, err, want)
 	}
 }

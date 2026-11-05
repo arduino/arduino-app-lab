@@ -3,18 +3,47 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   deleteSession,
   listSessions,
+  onWorkspaceAppForgotten,
   pinSession,
   renameSession,
   SessionId,
   SessionSummary,
 } from '../../services';
-import { useAiAssistantStore, useChatStore } from '../../store';
+import {
+  lastTurnFailed,
+  opensSessionOnFirstPrompt,
+  useAiAssistantStore,
+  useChatStore,
+} from '../../store';
 import {
   groupSessionsByApp,
   SessionDotState,
   sessionDotState,
   SessionFolder,
+  titleIfNamed,
 } from '../../utils';
+
+// A read that fails while the agent restarts is asked again, or its rows keep the typing dot of a turn that died.
+const LIST_RETRY_MS = [2000, 5000];
+
+// The chats of a forgotten app, as the host keeps them: deleted, or unbound when their turn still runs.
+interface ForgottenChats {
+  deleted: Set<SessionId>;
+  unbound: Set<SessionId>;
+}
+
+const withoutForgottenChats = (
+  rows: SessionSummary[],
+  { deleted, unbound }: ForgottenChats,
+): SessionSummary[] =>
+  rows.flatMap((row) => {
+    if (deleted.has(row.id)) {
+      return [];
+    }
+    return unbound.has(row.id)
+      ? [{ ...row, workspaceAppId: undefined, workspaceName: undefined }]
+      : [row];
+  });
 
 export interface AgentSidePanelLogic {
   pinnedSessions: SessionSummary[];
@@ -49,17 +78,19 @@ export const useAgentSidePanelLogic = (
 ): AgentSidePanelLogic => {
   const currentSessionId = useChatStore((s) => s.currentSessionId);
   const draftSessionId = useChatStore((s) => s.draftSessionId);
+  const opensOnFirstPrompt = useAiAssistantStore(opensSessionOnFirstPrompt);
   const streamingSessions = useChatStore((s) => s.streamingSessions);
+  const sessionListVersion = useChatStore((s) => s.sessionListVersion);
   const requestOpenSession = useChatStore((s) => s.requestOpenSession);
   const forgetSession = useChatStore((s) => s.forgetSession);
+  const discardThread = useChatStore((s) => s.discardThread);
+  const retitleSession = useChatStore((s) => s.retitleSession);
   const requestNewSession = useChatStore((s) => s.requestNewSession);
   // Sessions whose background turn finished with an unseen reply (drives the "reply ready" dot).
   const replyReadySessions = useChatStore((s) => s.replyReadySessions);
   const currentHasError = useChatStore((s) =>
     currentSessionId
-      ? !!s.threads[currentSessionId]?.messages.some(
-          (m) => m.status === 'error',
-        )
+      ? lastTurnFailed(s.threads[currentSessionId]?.messages)
       : false,
   );
 
@@ -80,23 +111,90 @@ export const useAgentSidePanelLogic = (
   const editInputRef = useRef<HTMLInputElement>(null);
   // Enter/Escape already handled the edit; the ensuing blur must not re-save (or re-save on Escape).
   const skipBlurSave = useRef(false);
+  const retryRef = useRef<ReturnType<typeof setTimeout>>();
+  // A read still running at unmount must not schedule another.
+  const mountedRef = useRef(true);
+  // By chat, not by app: a live app can have the same id, as one created again or one on another board.
+  const forgottenRef = useRef<ForgottenChats>({
+    deleted: new Set(),
+    unbound: new Set(),
+  });
+  const sessionsRef = useRef(sessions);
+  sessionsRef.current = sessions;
 
-  const refresh = useCallback(async (): Promise<void> => {
-    try {
-      setSessions(await listSessions());
-    } catch {
-      // Keep the last known rows: swapping them for [] makes a dead agent look like a fresh install.
-      // Nothing marks them stale — a dead agent already dims the whole panel, and a transient failure
-      // is corrected by the next refresh.
-    }
+  // Resolves with the rows it read, or undefined when the read failed.
+  const refresh = useCallback(async (): Promise<
+    SessionSummary[] | undefined
+  > => {
+    clearTimeout(retryRef.current);
+    const read = async (
+      attempt: number,
+    ): Promise<SessionSummary[] | undefined> => {
+      try {
+        const listed = await listSessions();
+        const { deleted } = forgottenRef.current;
+        deleted.forEach((id) => {
+          if (!listed.some((row) => row.id === id)) {
+            deleted.delete(id); // gone from the host: an id is never used again
+          }
+        });
+        const rows = withoutForgottenChats(listed, forgottenRef.current);
+        setSessions(rows);
+        return rows;
+      } catch {
+        // Keep the last known rows: swapping them for [] makes a dead agent look like a fresh install.
+        const delay = LIST_RETRY_MS[attempt];
+        if (delay !== undefined && mountedRef.current) {
+          retryRef.current = setTimeout(() => void read(attempt + 1), delay);
+        }
+        return undefined;
+      }
+    };
+    return read(0);
+  }, []);
+  useEffect(() => {
+    const retry = retryRef;
+    const mounted = mountedRef;
+    mounted.current = true;
+    return (): void => {
+      mounted.current = false;
+      clearTimeout(retry.current);
+    };
   }, []);
 
-  // Refresh the list on mount and whenever the open session, any live turn, or the agent's own liveness changes,
+  // Refresh the list on mount and whenever the open session, any live turn, a late title or the agent's own liveness changes,
   // so titles, status dots and the board's folders stay current while the panel stays mounted (it no longer
   // opens/closes like the popover).
   useEffect(() => {
     void refresh();
-  }, [refresh, currentSessionId, streamingSessions, agentDown]);
+  }, [
+    refresh,
+    currentSessionId,
+    streamingSessions,
+    agentDown,
+    sessionListVersion,
+  ]);
+
+  // The rows go at once, and stay out of the reads made before the host is done: a row left there would open a chat it is deleting.
+  useEffect(
+    () =>
+      onWorkspaceAppForgotten((appId, chatIds) => {
+        const streaming = useChatStore.getState().streamingSessions;
+        const { deleted, unbound } = forgottenRef.current;
+        // An older host names no chat: the rows on the app stand in, a chat it keeps among them included.
+        const named =
+          chatIds ??
+          sessionsRef.current
+            .filter((row) => row.workspaceAppId === appId)
+            .map((row) => row.id);
+        named.forEach((id) => (streaming[id] ? unbound : deleted).add(id));
+        setSessions((rows) =>
+          withoutForgottenChats(rows, forgottenRef.current),
+        );
+        void refresh();
+      }),
+    [refresh],
+  );
 
   // Focus the rename input when editing starts (accessible alternative to autoFocus).
   useEffect(() => {
@@ -119,7 +217,7 @@ export const useAgentSidePanelLogic = (
       setActionError(undefined);
       setConfirmingId(undefined);
       setEditingId(session.id);
-      setDraftTitle(session.title ?? '');
+      setDraftTitle(titleIfNamed(session.title) ?? '');
     },
     [setActionError],
   );
@@ -128,14 +226,22 @@ export const useAgentSidePanelLogic = (
     async (id: SessionId): Promise<void> => {
       setActionError(undefined);
       setEditingId(undefined);
+      const title = draftTitle.trim();
+      let renamed = false;
       try {
-        await renameSession(id, draftTitle.trim());
+        await renameSession(id, title);
+        renamed = true;
       } catch {
         setActionError('rename');
       }
-      await refresh();
+      const rows = await refresh();
+      // A blank title gives the session back its engine title, which only the list knows.
+      const row = rows?.find((s) => s.id === id);
+      if (renamed && (title || row)) {
+        retitleSession(id, titleIfNamed(title || row?.title));
+      }
     },
-    [draftTitle, refresh, setActionError],
+    [draftTitle, refresh, retitleSession, setActionError],
   );
 
   const onRenameBlur = useCallback(
@@ -177,6 +283,9 @@ export const useAgentSidePanelLogic = (
         await deleteSession(id);
         // Its workspace must stop offering it, or returning to that workspace reopens a session the agent no longer has.
         forgetSession(id);
+        // And drop what the session still held: a queued prompt would otherwise drain at its turn's end into
+        // a session the agent has already deleted, writing the failure into a thread nobody can reach.
+        discardThread(id);
         // Deleting the session currently open leaves the chat pointing at nothing — start a fresh one.
         if (id === currentSessionId) {
           requestNewSession();
@@ -193,6 +302,7 @@ export const useAgentSidePanelLogic = (
     [
       currentSessionId,
       forgetSession,
+      discardThread,
       requestNewSession,
       refresh,
       setActionError,
@@ -268,7 +378,10 @@ export const useAgentSidePanelLogic = (
     isFolderOpen,
     toggleFolder,
     currentSessionId,
-    isDraftSession: !!draftSessionId && draftSessionId === currentSessionId,
+    // An empty chat has no session yet, so no current id: New Session is the selected entry.
+    isDraftSession:
+      (opensOnFirstPrompt && !currentSessionId) ||
+      (!!draftSessionId && draftSessionId === currentSessionId),
     dotState,
     onNewSession,
     onSelectSession,

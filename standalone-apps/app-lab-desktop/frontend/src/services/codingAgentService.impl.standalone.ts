@@ -5,26 +5,38 @@ import {
   AuthMethod,
   AuthStatus,
   CodingAgentService,
+  ProviderSignInPrompt,
 } from '@cloud-editor-mono/ai-assistant';
 
 import {
   AgentAuthStatus,
+  AgentAwaitTurn,
   AgentCancel,
   AgentCancelLogin,
+  AgentCancelProviderSignIn,
   AgentChoicesReply,
   AgentCloseSession,
+  AgentConnectWithoutCredential,
+  AgentCurrent,
+  AgentDeleteProviderKey,
   AgentDeleteSession,
   AgentDisconnect,
   AgentGetSessionState,
   AgentListSessions,
   AgentLoadSession,
+  AgentMarkSessionRead,
   AgentNewSession,
+  AgentNewSessionState,
   AgentPermissionReply,
   AgentPinSession,
   AgentPrompt,
+  AgentProviderCredentials,
+  AgentProviders,
+  AgentProviderSignIn,
   AgentRenameSession,
   AgentResolveFile,
   AgentSetDefault,
+  AgentSetProviderKey,
   AgentSetSessionMode,
   AgentSetSessionModel,
   AgentSignIn,
@@ -32,11 +44,13 @@ import {
   AgentStart,
   AgentStop,
   AgentSubmitLoginToken,
+  AgentSwitch,
   AgentValidateAuth,
 } from '../../wailsjs/go/app/App';
 import { agent } from '../../wailsjs/go/models';
 import { EventsOn } from '../../wailsjs/runtime/runtime';
 import {
+  mapForgottenChats,
   mapPermissionRequest,
   mapRestart,
   mapSessionState,
@@ -47,16 +61,31 @@ import {
   WireUpdate,
 } from './codingAgentService.mapper';
 
-// Claude is the only live agent (backed by the Wails runtime + ACP). Codex and
-// OpenCode are surfaced as disabled "coming soon" cards until their auth flows land.
+// Claude and OpenCode are live; Codex is a disabled "coming soon" card until its auth flow lands.
 const AGENTS: AgentDescriptor[] = [
   {
     id: 'claude',
     name: 'Claude Code',
     description: 'Use your Claude Pro/Max account or an Anthropic API key',
     provider: 'Anthropic',
+    authMethods: ['subscription', 'api_key'],
     apiKeyPrefix: 'sk-ant-',
     apiKeyUrl: 'https://platform.claude.com/login?returnTo=%2Fsettings%2Fkeys',
+    preview: true,
+  },
+  {
+    id: 'opencode',
+    name: 'OpenCode',
+    description: 'Open-source coding Agent · use it with OpenCode or Gemini',
+    provider: 'OpenCode',
+    // As many providers as you like: the engine offers the models of every one whose key is set.
+    perProviderKeys: true,
+    usableWithoutKey: true,
+    persistsNewSession: true,
+    // No browser sign-in: session/authenticate returns success without doing anything.
+    authMethods: ['api_key'],
+    // Bring-your-own-provider: the provider comes from what the user configures, not the key's shape.
+    apiKeyPrefix: '',
     preview: true,
   },
   {
@@ -64,15 +93,8 @@ const AGENTS: AgentDescriptor[] = [
     name: 'Codex',
     description: 'Use your ChatGPT Plus/Pro account or an OpenAI API key',
     provider: 'OpenAI',
+    authMethods: ['subscription', 'api_key'],
     apiKeyPrefix: 'sk-',
-    comingSoon: true,
-  },
-  {
-    id: 'opencode',
-    name: 'OpenCode',
-    description: 'Open-source coding agent · bring your own model & API key',
-    provider: 'OpenCode',
-    apiKeyPrefix: '',
     comingSoon: true,
   },
 ];
@@ -81,12 +103,21 @@ export const start: CodingAgentService['start'] = async (agentId) => {
   await AgentStart(agentId);
 };
 
-export const validateAuth: CodingAgentService['validateAuth'] = async () => {
-  await AgentValidateAuth();
-};
+export const validateAuth: CodingAgentService['validateAuth'] = async () =>
+  mapSessionState(await AgentValidateAuth());
+
+export const newSessionState: CodingAgentService['newSessionState'] =
+  async () => mapSessionState(await AgentNewSessionState());
 
 export const stop: CodingAgentService['stop'] = async () => {
   await AgentStop();
+};
+
+// Rejects when the mirror still holds edits the board does not have: Go refuses rather than delete them.
+export const switchAgent: CodingAgentService['switchAgent'] = async (
+  agentId,
+) => {
+  await AgentSwitch(agentId);
 };
 
 export const listAgents: CodingAgentService['listAgents'] = () =>
@@ -114,6 +145,10 @@ export const pinSession: CodingAgentService['pinSession'] = async (
   await AgentPinSession(sessionId, pinned);
 };
 
+export const markSessionRead: CodingAgentService['markSessionRead'] = async (
+  sessionId,
+) => AgentMarkSessionRead(sessionId);
+
 export const renameSession: CodingAgentService['renameSession'] = async (
   sessionId,
   title,
@@ -135,6 +170,10 @@ export const prompt: CodingAgentService['prompt'] = async (
   // No editor (Agent Mode) reaches Go as a nil context, which sends the agent nothing.
   const editor = editorContext && agent.EditorContext.createFrom(editorContext);
   await AgentPrompt(sessionId, text, editor as agent.EditorContext);
+};
+
+export const awaitTurn: CodingAgentService['awaitTurn'] = async (sessionId) => {
+  await AgentAwaitTurn(sessionId);
 };
 
 export const cancel: CodingAgentService['cancel'] = async (sessionId) => {
@@ -203,29 +242,41 @@ export const onLoginUrl: CodingAgentService['onLoginUrl'] = (handler) =>
 // Go dropped a deleted app's grants and chats — from the delete dialog, or from the agent's own apps_delete.
 export const onWorkspaceAppForgotten: CodingAgentService['onWorkspaceAppForgotten'] =
   (handler) =>
-    EventsOn('agent:workspace-app-forgotten', (appId: string) =>
-      handler(appId),
+    EventsOn(
+      'agent:workspace-app-forgotten',
+      (appId: string, chatIds?: unknown) =>
+        handler(appId, mapForgottenChats(chatIds)),
+    );
+
+// The agent's apps_edit renamed an app; Go moves its chats to the new id right after sending this.
+export const onWorkspaceAppRenamed: CodingAgentService['onWorkspaceAppRenamed'] =
+  (handler) =>
+    EventsOn(
+      'app:agent-renamed',
+      (oldId: string, newId: string, newName: string) =>
+        handler(oldId, newId, newName),
     );
 
 // Reports a persisted subscription login (or an API key set this session) so a returning user skips connect.
-export const getAuthStatus: CodingAgentService['getAuthStatus'] =
-  async (): Promise<AuthStatus> => {
-    try {
-      const status = await AgentAuthStatus('claude');
-      return status.authenticated
-        ? {
-            authenticated: true,
-            agentId: status.agentId as AgentId,
-            isDefault: status.isDefault,
-            method: status.method ? (status.method as AuthMethod) : undefined,
-            account: status.account || undefined,
-            connectedAt: status.connectedAt || undefined,
-          }
-        : { authenticated: false };
-    } catch {
-      return { authenticated: false };
-    }
-  };
+export const getAuthStatus: CodingAgentService['getAuthStatus'] = async (
+  agentId,
+): Promise<AuthStatus> => {
+  try {
+    const status = await AgentAuthStatus(agentId);
+    return status.authenticated
+      ? {
+          authenticated: true,
+          agentId: status.agentId as AgentId,
+          isDefault: status.isDefault,
+          method: status.method ? (status.method as AuthMethod) : undefined,
+          account: status.account || undefined,
+          connectedAt: status.connectedAt || undefined,
+        }
+      : { authenticated: false };
+  } catch {
+    return { authenticated: false };
+  }
+};
 
 // Subscription sign-in: runs the agent CLI's browser-OAuth login in Go; resolves when it completes.
 export const authenticate: CodingAgentService['authenticate'] = async (
@@ -240,6 +291,64 @@ export const authenticate: CodingAgentService['authenticate'] = async (
 };
 
 // API-key sign-in: stores the key in Go, injected as ANTHROPIC_API_KEY at the next agent start.
+export const listProviders: CodingAgentService['listProviders'] = async (
+  agentId,
+) => (await AgentProviders(agentId)) ?? [];
+
+export const listProviderCredentials: CodingAgentService['listProviderCredentials'] =
+  async (agentId) => (await AgentProviderCredentials(agentId)) ?? [];
+
+export const setProviderKey: CodingAgentService['setProviderKey'] = async (
+  agentId,
+  providerId,
+  apiKey,
+) => {
+  try {
+    const verified = await AgentSetProviderKey(agentId, providerId, apiKey);
+    return { ok: true, verified };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : String(e) };
+  }
+};
+
+export const deleteProviderKey: CodingAgentService['deleteProviderKey'] =
+  async (agentId, providerId) => {
+    await AgentDeleteProviderKey(agentId, providerId);
+  };
+
+// OpenCode's own login for a provider signed in to rather than keyed; its code arrives through onProviderSignIn.
+export const signInProvider: CodingAgentService['signInProvider'] = async (
+  agentId,
+  providerId,
+) => {
+  try {
+    await AgentProviderSignIn(agentId, providerId);
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : String(e) };
+  }
+};
+
+export const cancelProviderSignIn: CodingAgentService['cancelProviderSignIn'] =
+  async (agentId) => {
+    await AgentCancelProviderSignIn(agentId);
+  };
+
+export const onProviderSignIn: CodingAgentService['onProviderSignIn'] = (
+  handler,
+) =>
+  EventsOn('agent:provider-sign-in', (prompt: ProviderSignInPrompt) =>
+    handler(prompt),
+  );
+
+export const currentAgent: CodingAgentService['currentAgent'] = async () =>
+  (await AgentCurrent()) as AgentId;
+
+export const connectWithoutKey: CodingAgentService['connectWithoutKey'] =
+  async (agentId) => {
+    await AgentConnectWithoutCredential(agentId);
+  };
+
 export const authenticateApiKey: CodingAgentService['authenticateApiKey'] =
   async (agentId, apiKey) => {
     try {

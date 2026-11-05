@@ -615,7 +615,15 @@ describe('useBrickDetailLogic train new model visibility', () => {
     const { result } = renderHook(() => useBrickDetailLogic(brickId, appId), {
       wrapper,
     });
-    await waitFor(() => expect(result.current.brick).toBeDefined());
+    await waitFor(() => {
+      expect(result.current.brick).toBeDefined();
+      if (appId) {
+        expect(
+          queryClient.getQueryState([BoardScopedQuery.LIST_MY_APPS, appId])
+            ?.status,
+        ).toBe('success');
+      }
+    });
     return result.current;
   };
 
@@ -674,7 +682,60 @@ describe('useBrickDetailLogic train new model visibility', () => {
       'app-1',
     );
 
-    await waitFor(() => expect(logic.isExample).toBe(true));
+    expect(logic.isReadOnlyApp).toBe(true);
     expect(logic.trainNewModelEnabled).toBe(false);
+  });
+
+  it('fixes the model of an installed release like an example', async () => {
+    domainServices.getAppDetail.mockResolvedValue({
+      id: 'app-1',
+      name: 'Release app',
+      status: 'stopped',
+      example: false,
+      release: true,
+    });
+
+    const logic = await renderBrick(
+      BRICK_ID,
+      { ...brick([]), ai_frameworks_compatibility: ['edgeimpulse'] },
+      'app-1',
+    );
+
+    expect(logic.isReadOnlyApp).toBe(true);
+    expect(logic.trainNewModelEnabled).toBe(false);
+  });
+
+  it('disables add Hugging Face model for an installed release', async () => {
+    const llmBrick: BrickDetails = {
+      id: 'arduino:llm',
+      name: 'LLM',
+      author: 'Arduino',
+      compatible_models: [],
+    };
+
+    domainServices.getAppDetail.mockResolvedValue({
+      id: 'app-1',
+      name: 'My app',
+      status: 'stopped',
+      example: false,
+      release: false,
+    });
+    const regular = await renderBrick('arduino:llm', llmBrick, 'app-1');
+    expect(regular.isReadOnlyApp).toBe(false);
+    expect(regular.addHuggingFaceModelEnabled).toBe(true);
+
+    queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    });
+    domainServices.getAppDetail.mockResolvedValue({
+      id: 'app-1',
+      name: 'Release app',
+      status: 'stopped',
+      example: false,
+      release: true,
+    });
+    const release = await renderBrick('arduino:llm', llmBrick, 'app-1');
+    expect(release.isReadOnlyApp).toBe(true);
+    expect(release.addHuggingFaceModelEnabled).toBe(false);
   });
 });

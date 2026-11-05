@@ -3,6 +3,7 @@ import {
   PageLayout,
   TopBar,
 } from '@cloud-editor-mono/ui-components/lib/components-by-app/app-lab';
+import { useNavigate } from '@tanstack/react-router';
 import { lazy, Suspense, useCallback } from 'react';
 
 import { createUseSettingsLogic } from './settings.logic';
@@ -16,6 +17,11 @@ const AgentSettings = lazy(() =>
 
 const Settings: React.FC = () => {
   const settingsLogic = useCallback(() => createUseSettingsLogic()(), []);
+  const navigate = useNavigate();
+  const openAgentMode = useCallback(
+    (): void => void navigate({ to: '/ai-assistant' }),
+    [navigate],
+  );
 
   return (
     <PageLayout header={<TopBar pathItems={['settings']} />}>
@@ -24,7 +30,7 @@ const Settings: React.FC = () => {
           settingsLogic={settingsLogic}
           agentSection={
             <Suspense fallback={null}>
-              <AgentSettings />
+              <AgentSettings onStartBuilding={openAgentMode} />
             </Suspense>
           }
         />

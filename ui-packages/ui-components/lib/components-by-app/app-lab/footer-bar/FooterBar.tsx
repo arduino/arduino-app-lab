@@ -84,8 +84,6 @@ const FooterBar: React.FC<FooterBarProps> = (props: FooterBarProps) => {
     renderTooltip: renderTooltipAppName,
   } = useTooltip({
     content: runningApp?.name,
-    timeout: 0,
-    renderDelay: 500,
   });
 
   const { props: tooltipLspLoading, renderTooltip: renderTooltipLspLoading } =
@@ -93,7 +91,6 @@ const FooterBar: React.FC<FooterBarProps> = (props: FooterBarProps) => {
       content: formatMessage(messages.lspLoadingTooltip, {
         progress: lspState?.type === 'progress' ? lspState.progress : 0,
       }),
-      timeout: 0,
     });
 
   // Mirrors the loading tooltip: the failure occupies the same footer slot, so
@@ -106,13 +103,11 @@ const FooterBar: React.FC<FooterBarProps> = (props: FooterBarProps) => {
               reason: lspState.message,
             })
           : formatMessage(messages.lspErrorTooltipNoReason),
-      timeout: 0,
     });
 
   const { props: tooltipPropsStop, renderTooltip: renderTooltipStop } =
     useTooltip({
       content: formatMessage(messages.stopButton),
-      timeout: 0,
     });
 
   return (

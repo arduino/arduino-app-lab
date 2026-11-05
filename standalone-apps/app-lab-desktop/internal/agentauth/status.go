@@ -14,7 +14,7 @@ import (
 	"app-lab-desktop/internal/airuntime"
 )
 
-// claudeConfigFile is where the Claude CLI records the signed-in account in the (isolated) config dir.
+// Where the Claude CLI records the signed-in account inside the isolated config dir.
 const claudeConfigFile = ".claude.json"
 
 // SubscriptionAccount is the persisted subscription login read from the isolated config.
@@ -24,12 +24,23 @@ type SubscriptionAccount struct {
 	ConnectedAt string // approximate connect time (the CLI's first-start, ISO 8601)
 }
 
-// ReadSubscriptionAccount reads the agent's config dir for a persisted subscription login. A missing or unparseable config reads as not-logged-in; an invalid token still surfaces on the first prompt.
+// An agent with no browser sign-in must not be answered from another engine's file; unparseable reads as out.
 func ReadSubscriptionAccount(agent airuntime.AgentID) (SubscriptionAccount, error) {
+	p, err := profileFor(agent)
+	if err != nil {
+		return SubscriptionAccount{}, err
+	}
+	if p.subscription == nil {
+		return SubscriptionAccount{}, nil
+	}
 	configDir, err := airuntime.AgentConfigDir(agent)
 	if err != nil {
 		return SubscriptionAccount{}, err
 	}
+	return p.subscription.read(configDir)
+}
+
+func readClaudeAccount(configDir string) (SubscriptionAccount, error) {
 	data, err := os.ReadFile(filepath.Join(configDir, claudeConfigFile))
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -52,6 +63,11 @@ func ReadSubscriptionAccount(agent airuntime.AgentID) (SubscriptionAccount, erro
 		Email:       cfg.OAuthAccount.EmailAddress,
 		ConnectedAt: cfg.FirstStartTime,
 	}, nil
+}
+
+// clearClaudeAccount removes the oauthAccount block App Lab reads as "logged in".
+func clearClaudeAccount(configDir string) error {
+	return stripOAuthMarker(filepath.Join(configDir, claudeConfigFile))
 }
 
 // cliLogoutTimeout bounds the CLI's own logout so a wedged process can't hang a sign-out.
@@ -96,8 +112,10 @@ func SignOut(ctx context.Context, agent airuntime.AgentID) error {
 		}
 	}
 
-	if err := stripOAuthMarker(filepath.Join(configDir, claudeConfigFile)); err != nil {
-		return err
+	if p.subscription != nil {
+		if err := p.subscription.clear(configDir); err != nil {
+			return err
+		}
 	}
 	if cliErr != nil {
 		return fmt.Errorf("signed out of App Lab, but the agent CLI could not clear its own stored credential: %w", cliErr)

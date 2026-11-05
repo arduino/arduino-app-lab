@@ -4,6 +4,7 @@ import { EmptyFn } from '@cloud-editor-mono/common';
 import {
   AccountViewFilled,
   AccountViewFilledCrossed,
+  Error as ErrorIcon,
 } from '@cloud-editor-mono/images/assets/icons';
 import clsx from 'clsx';
 import { isNil } from 'lodash-es';
@@ -20,11 +21,10 @@ import { Text, TextSize } from '../../typography';
 import { IconButton } from '../icon-button';
 import { BasicInput, BasicInputProps } from './BasicInput';
 import styles from './input.module.scss';
-import { InputStyle } from './input.type';
+import { InputSize, InputStyle, InputSurface } from './input.type';
 
 export type InputProps = BasicInputProps & {
   small?: boolean;
-  bold?: boolean;
   error?: Error;
   autoSelect?: boolean;
   hideErrorOnFocus?: boolean;
@@ -43,6 +43,13 @@ export type InputProps = BasicInputProps & {
     e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => void;
   inputStyle?: InputStyle;
+  // App Lab only; Cloud Editor uses `small`, which App Lab reads as `inputSize="small"`.
+  inputSize?: InputSize;
+  outlined?: boolean;
+  surface?: InputSurface;
+  // App Lab only: the error takes space in the layout under the field instead of overlapping
+  // what follows it. The root ref still points to the field.
+  errorBelow?: boolean;
   classes?: {
     input?: string;
     inputContainer?: string;
@@ -90,17 +97,24 @@ export const Input = forwardRef(
       style,
       hideErrorOnFocus,
       small = false,
-      bold = false,
       type = 'text',
       autoSelect,
       autoFocus,
       multiline,
       inputStyle = InputStyle.CloudEditor,
+      inputSize,
+      outlined = false,
+      surface = 'baseline',
+      errorBelow = false,
       classes,
       styles: _styles,
       inputRef: externalInputRef,
       ...other
     } = props;
+
+    const isAppLab = inputStyle === InputStyle.AppLab;
+    const appLabSize = inputSize ?? (small ? 'small' : 'medium');
+    const cloudEditorSmall = small && !isAppLab;
 
     const setInputRef = useCallback(
       (node: HTMLInputElement | null) => {
@@ -151,7 +165,7 @@ export const Input = forwardRef(
       e.preventDefault();
       e.stopPropagation();
       inputRef.current?.focus();
-      inputStyle !== InputStyle.AppLab && inputRef.current?.select();
+      !isAppLab && inputRef.current?.select();
       handleClick(e);
     };
 
@@ -172,106 +186,139 @@ export const Input = forwardRef(
     );
 
     const showError = !!error && !(focus && hideErrorOnFocus);
+    const isErrorBelow = isAppLab && errorBelow;
+
+    const errorMessage = showError ? (
+      <Text
+        className={clsx(
+          isErrorBelow
+            ? [
+                styles['input-error-below'],
+                {
+                  [styles.filled]:
+                    appLabSize === 'x-small' || appLabSize === 'small',
+                },
+              ]
+            : styles['input-error'],
+          classes?.inputError,
+        )}
+        size={isAppLab ? TextSize.XXXSmall : TextSize.XXSmall}
+        semibold={isAppLab}
+        style={_styles?.inputError}
+      >
+        {isAppLab && <ErrorIcon className={styles['error-icon']} />}
+        {error?.message}
+      </Text>
+    ) : null;
 
     return (
-      <div
-        ref={ref}
-        className={clsx(
-          styles.input,
-          classes?.input,
-          {
-            [styles['has-content']]:
-              !(isNil(value) || value === '') || before || after,
-            [styles.focused]: focus,
-            [styles.disabled]: disabled,
-            [styles['has-error']]: showError,
-            [styles.small]: small,
-            [styles.sensitive]: sensitive,
-            [styles['app-lab']]: inputStyle === InputStyle.AppLab,
-            [classes?.error ?? '']: showError,
-          },
-          className,
-        )}
-        onClick={onClick}
-        style={style}
-      >
-        {label && (
-          <span
-            className={clsx(styles['input-label'], classes?.inputLabel, {
-              [styles.small]: small,
-              [styles.bold]: bold,
-            })}
-          >
-            {' '}
-            <span>{label}</span>
-            {required && <span className={styles['required-mark']}>*</span>}
-          </span>
-        )}
+      <>
         <div
-          className={clsx(styles['input-container'], classes?.inputContainer, {
-            [styles.focused]: focus,
-            [styles['has-error']]: showError,
-            [styles.small]: small,
-          })}
+          ref={ref}
+          className={clsx(
+            styles.input,
+            classes?.input,
+            {
+              [styles['has-content']]:
+                !(isNil(value) || value === '') || before || after,
+              [styles.focused]: focus,
+              [styles.disabled]: disabled,
+              [styles['has-error']]: showError,
+              [styles.small]: cloudEditorSmall,
+              [styles['has-label']]: !!label,
+              [styles['has-trailing-icon']]:
+                !!props.sensitive || (isAppLab && !!children),
+              [styles['app-lab']]: isAppLab,
+              [styles.outlined]: isAppLab && outlined,
+              [styles['on-below-1']]:
+                isAppLab && !outlined && surface === 'below-1',
+              [styles[`size-${appLabSize}`] ?? '']:
+                isAppLab && appLabSize !== 'medium',
+              [classes?.error ?? '']: showError,
+            },
+            className,
+          )}
+          onClick={onClick}
+          style={style}
         >
-          {before && <span className={styles['input-before']}>{before}</span>}
-          {multiline ? (
-            <textarea
-              value={value}
-              onChange={(e): void => onInputChange(e.currentTarget.value)}
-              onKeyDown={(e): void => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                  e.preventDefault();
-                  props.onEnter?.();
-                }
-              }}
-              onFocus={props.onFocus}
-              className={clsx(
-                classes?.inputTextArea,
-                styles['text-area'],
-                styles['monospace'],
-              )}
-              disabled={disabled}
-              placeholder={props.placeholder}
-            />
-          ) : (
-            <BasicInput
-              ref={setInputRef}
-              value={value}
-              onBlur={onInputBlur}
-              onFocus={onInputFocus}
-              onChange={onInputChange}
-              className={clsx(styles['basic-input'], styles['input-content'], {
-                [styles.monospace]: monospace,
+          {label && (
+            <span
+              className={clsx(styles['input-label'], classes?.inputLabel, {
+                [styles.small]: cloudEditorSmall,
               })}
-              disabled={disabled}
-              required={required}
-              type={sensitive ? 'password' : type}
-              {...other}
-            />
+            >
+              {' '}
+              <span>{label}</span>
+              {required && <span>*</span>}
+            </span>
           )}
-          {after && <span className={styles['input-after']}>{after}</span>}
-          {children}
-          {props.sensitive && (
-            <IconButton
-              classes={{ button: styles['input-eye'] }}
-              label={sensitive ? 'Show text' : 'Hide text'}
-              title={sensitive ? 'Show text' : 'Hide text'}
-              Icon={sensitive ? AccountViewFilled : AccountViewFilledCrossed}
-              onPress={(): void => setSensitive((prev) => !prev)}
-            ></IconButton>
-          )}
-        </div>
-        {showError ? (
-          <Text
-            className={clsx([styles['input-error'], classes?.inputError])}
-            size={TextSize.XXSmall}
-            style={_styles?.inputError}
+          <div
+            className={clsx(
+              styles['input-container'],
+              classes?.inputContainer,
+              {
+                [styles.focused]: focus,
+                [styles['has-error']]: showError,
+                [styles.small]: cloudEditorSmall,
+              },
+            )}
           >
-            {error?.message}
-          </Text>
-        ) : null}
-      </div>
+            {before && <span className={styles['input-before']}>{before}</span>}
+            {multiline ? (
+              <textarea
+                value={value}
+                onChange={(e): void => onInputChange(e.currentTarget.value)}
+                onKeyDown={(e): void => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    props.onEnter?.();
+                  }
+                }}
+                onFocus={props.onFocus}
+                className={clsx(
+                  classes?.inputTextArea,
+                  styles['text-area'],
+                  styles['monospace'],
+                )}
+                disabled={disabled}
+                placeholder={props.placeholder}
+              />
+            ) : (
+              <BasicInput
+                ref={setInputRef}
+                value={value}
+                onBlur={onInputBlur}
+                onFocus={onInputFocus}
+                onChange={onInputChange}
+                className={clsx(
+                  styles['basic-input'],
+                  styles['input-content'],
+                  {
+                    [styles.monospace]: monospace,
+                  },
+                )}
+                disabled={disabled}
+                required={required}
+                type={sensitive ? 'password' : type}
+                {...other}
+              />
+            )}
+            {after && <span className={styles['input-after']}>{after}</span>}
+            {children}
+            {props.sensitive && (
+              <IconButton
+                classes={{ button: styles['input-eye'] }}
+                label={sensitive ? 'Show text' : 'Hide text'}
+                title={sensitive ? 'Show text' : 'Hide text'}
+                Icon={sensitive ? AccountViewFilled : AccountViewFilledCrossed}
+                onPress={(): void => setSensitive((prev) => !prev)}
+              ></IconButton>
+            )}
+          </div>
+          {!isErrorBelow && errorMessage}
+        </div>
+        {isErrorBelow && errorMessage}
+      </>
     );
   },
 );

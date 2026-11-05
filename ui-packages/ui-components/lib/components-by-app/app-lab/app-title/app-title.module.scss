@@ -62,31 +62,16 @@
       }
     }
 
-    &-input {
-      padding: 0px 4px;
+    &-input input {
       font-size: 14px;
-      border: 2px solid #25c2c7 !important;
-      background-color: #15addf33 !important;
-      border: 2px solid #25c2c7 !important;
-      background-color: #15addf33 !important;
-      input {
-        font-size: 14px;
-        font-weight: 700;
-      }
-
-      &-error {
-        border-color: var(--feedback-error-default, #ff8878) !important;
-      }
+      font-weight: 700;
     }
 
-    .error-message {
-      background-color: rgba(255, 136, 120, 0.15);
-      color: var(--feedback-error-default, #ff8878);
-      z-index: 1;
+    .app-name-input .error-message {
+      // Above the workspace side panel (z-index 1), which comes later in the DOM.
+      z-index: 2;
       position: fixed;
-      padding: 2px 6px;
-      border-radius: 3px;
-      left: 0;
+      right: auto;
       top: 52px;
     }
   }

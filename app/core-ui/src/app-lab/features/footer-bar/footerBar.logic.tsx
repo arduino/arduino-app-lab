@@ -26,6 +26,7 @@ import { useBoardItem } from '../../hooks/useBoardItem';
 import { UseBoards } from '../../hooks/useBoards';
 import { useIsBoard } from '../../hooks/useIsBoard';
 import { useTerminal } from '../../hooks/useTerminal';
+import { markAgentModeExit } from '../../openAppFile';
 import { useFooterNotifications } from '../../providers/footer-notifications/footerNotificationsContext';
 import { LanguageServerContext } from '../../providers/language-server/languageServerContext';
 import { NetworkContext } from '../../providers/network/networkContext';
@@ -248,6 +249,10 @@ export const createUseFooterBarLogic = function (
 
     const onOpenAiAssistant = (): void => {
       if (aiAssistantActive) {
+        // A back() with no entry to return to resolves nothing, so the mark would stay for the next navigation.
+        if (router.history.canGoBack()) {
+          markAgentModeExit();
+        }
         router.history.back();
         return;
       }

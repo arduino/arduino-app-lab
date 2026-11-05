@@ -13,6 +13,7 @@ import {
   BatchFile,
   useCreateDefaultSketch,
   useGetCustomLibraries,
+  useGetFileHash,
   useRetrieveBatchFileContents,
   useRetrieveFileContents,
   useRetrieveFilesList,
@@ -360,6 +361,103 @@ describe('createApiServiceQueries', () => {
         expect(domain.retrieveCustomLibraryCode).toHaveBeenCalledTimes(2),
       );
       expect(domain.retrieveCustomLibraries).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  describe('useGetFileHash', () => {
+    const SKETCH_PATH = '/sketches/Blink_copy';
+    const SKETCH_INO = `${SKETCH_PATH}/Blink_copy.ino`;
+
+    const serverFile = (
+      path: string,
+      username = 'me',
+    ): GetFilesList_Response[number] => ({
+      href: 'mock_href',
+      mimetype: 'text/plain',
+      modifiedAt: new Date().toISOString(),
+      path,
+      name: path.split('/').pop() as string,
+      type: 'file',
+      revision: {
+        filename: path.split('/').pop() as string,
+        hash: 'hash-1',
+        modifiedAt: new Date().toISOString(),
+        username,
+      },
+    });
+
+    const renderFileHash = (
+      refetchSketchFiles: () => void,
+    ): ReturnType<typeof renderHook<ReturnType<typeof useGetFileHash>, void>> =>
+      renderHook(
+        () =>
+          useGetFileHash(
+            true,
+            refetchSketchFiles,
+            () => undefined,
+            SKETCH_PATH,
+            SKETCH_INO,
+            'me',
+          ),
+        { wrapper },
+      );
+
+    beforeEach(() => {
+      domain.getCodeSubjects().clear();
+      domain.setCodeSubjects({
+        path: SKETCH_INO,
+        content: 'void setup() {}',
+        hash: 'hash-1',
+      } as Parameters<typeof domain.setCodeSubjects>[0]);
+    });
+
+    afterEach(() => {
+      domain.getCodeSubjects().clear();
+      vi.mocked(domain.retrieveFilesList).mockReset();
+    });
+
+    it('ignores code subjects left by the example the sketch was copied from', async () => {
+      domain.setCodeSubjects({
+        path: 'examples/01.Basics/Blink/Blink.ino',
+        content: 'void setup() {}',
+      } as Parameters<typeof domain.setCodeSubjects>[0]);
+      vi.mocked(domain.retrieveFilesList).mockResolvedValue([
+        serverFile(SKETCH_INO),
+      ]);
+      const refetchSketchFiles = vi.fn();
+
+      const { result } = renderFileHash(refetchSketchFiles);
+
+      await waitFor(() => expect(domain.retrieveFilesList).toHaveBeenCalled());
+      await new Promise((resolve) => setTimeout(resolve, 50));
+      expect(result.current.isConcurrent).toBe(false);
+      expect(refetchSketchFiles).not.toHaveBeenCalled();
+    });
+
+    it('reloads the files list without a warning for a file the user uploaded', async () => {
+      vi.mocked(domain.retrieveFilesList).mockResolvedValue([
+        serverFile(SKETCH_INO),
+        serverFile(`${SKETCH_PATH}/Blink.txt`),
+      ]);
+      const refetchSketchFiles = vi.fn();
+
+      const { result } = renderFileHash(refetchSketchFiles);
+
+      await waitFor(() => expect(refetchSketchFiles).toHaveBeenCalled());
+      expect(result.current.isConcurrent).toBe(false);
+    });
+
+    it('reports a file added to the sketch by another user', async () => {
+      vi.mocked(domain.retrieveFilesList).mockResolvedValue([
+        serverFile(SKETCH_INO),
+        serverFile(`${SKETCH_PATH}/other.h`, 'someone-else'),
+      ]);
+      const refetchSketchFiles = vi.fn();
+
+      const { result } = renderFileHash(refetchSketchFiles);
+
+      await waitFor(() => expect(result.current.isConcurrent).toBe(true));
+      expect(refetchSketchFiles).toHaveBeenCalled();
     });
   });
 });

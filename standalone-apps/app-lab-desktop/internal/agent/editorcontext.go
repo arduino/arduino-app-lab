@@ -40,6 +40,28 @@ const (
 // The user never sees this block, so the replay strips it. Greedy: a file may itself contain the closing tag.
 var editorContextBlock = regexp.MustCompile(`^\s*<editor-context>[\s\S]*</editor-context>\s*`)
 
+// App Lab's notes go ahead of the editor block, and the replay strips them the same way.
+var appLabNoteBlocks = regexp.MustCompile(`^\s*(?:<app-lab-note>[\s\S]*?</app-lab-note>\s*)+`)
+
+// typedText is a replayed prompt without what App Lab added to it: the notes, the editor block and the scope paragraph.
+func typedText(prompt string) string {
+	for _, block := range []*regexp.Regexp{appLabNoteBlocks, editorContextBlock} {
+		if loc := block.FindStringIndex(prompt); loc != nil {
+			prompt = prompt[loc[1]:]
+		}
+	}
+	if i := strings.LastIndex(prompt, focusParagraph); i >= 0 {
+		prompt = prompt[:i]
+	}
+	return prompt
+}
+
+// appLabNoteText wraps App Lab's notes in tags the replay strips, and tells the model they are not the user's request.
+func appLabNoteText(notes []string) string {
+	return "<app-lab-note>\nFrom App Lab, not from the user: what changed outside this chat since your last turn. The request is the message after this block.\n" +
+		strings.Join(notes, "\n") + "\n</app-lab-note>"
+}
+
 // editorSeen is what a session's agent has been shown already, so a prompt repeats nothing it knows.
 type editorSeen struct {
 	files     map[string]string // path → hash of the content it saw

@@ -17,7 +17,10 @@ import {
   BoardUpdateLog,
   BoardUpdateProgress,
 } from '@cloud-editor-mono/infrastructure';
-import { UpdaterStatus } from '@cloud-editor-mono/ui-components/lib/components-by-app/app-lab';
+import {
+  UpdaterStatus,
+  useI18n,
+} from '@cloud-editor-mono/ui-components/lib/components-by-app/app-lab';
 import { useQuery } from '@tanstack/react-query';
 import {
   useCallback,
@@ -32,6 +35,7 @@ import { BoardScopedQuery } from '../../boardScopedQuery';
 import { useIsBoard } from '../../hooks/useIsBoard';
 import { useBoardLifecycleStore } from '../../store/boardLifecycle';
 import { NetworkContext } from '../network/networkContext';
+import { updaterMessages as messages } from './messages';
 
 export type UseUpdater = () => {
   canStartUpdate: boolean;
@@ -53,8 +57,23 @@ export type UseUpdater = () => {
 };
 
 const UPDATE_IN_PROGRESS = 'OPERATION_IN_PROGRESS';
+// The text of `ErrUpdateInProgress` in standalone-apps/app-lab-desktop/internal/update/update.go.
+const APP_UPDATE_IN_PROGRESS = 'an App Lab update is already in progress';
+const UPDATE_FLOW_STATUSES = [
+  UpdaterStatus.UpdatingBoard,
+  UpdaterStatus.UpdatingApp,
+  UpdaterStatus.Restarting,
+];
 export const useUpdater: UseUpdater = (): ReturnType<UseUpdater> => {
-  const [status, _setStatus] = useState<UpdaterStatus>(UpdaterStatus.None);
+  const { formatMessage } = useI18n();
+  const [status, setStatusState] = useState<UpdaterStatus>(UpdaterStatus.None);
+  // `checkForUpdates` reads it after awaiting the checks, when its own `status` can be stale.
+  // It is written with the state, not in an effect: an answer can land before the effect runs.
+  const statusRef = useRef(status);
+  const _setStatus = useCallback((s: UpdaterStatus): void => {
+    statusRef.current = s;
+    setStatusState(s);
+  }, []);
   const [bypassSkipUpdate, setBypassSkipUpdate] = useState<boolean>(false);
   const [releaseNotes, setReleaseNotes] = useState<{
     content: string;
@@ -78,6 +97,20 @@ export const useUpdater: UseUpdater = (): ReturnType<UseUpdater> => {
   const logsStreamAbortController = useRef<AbortController>();
 
   const boardUpdateDoneFired = useRef<boolean | null>(false);
+  // Set once a board update flow has completed. `restarting`, `done`, a repeated
+  // `done` and a second log stream can each report the end of one flow.
+  const boardUpdateDoneHandled = useRef(false);
+  // Identifies the current flow, so the reconnect loop and the apply request of an
+  // earlier flow cannot act on a retry.
+  const boardUpdateFlowId = useRef(0);
+  const appUpdateInFlight = useRef(false);
+
+  // The provider is mounted once per session, so every new flow must reset the refs.
+  const beginBoardUpdateFlow = useCallback((): void => {
+    boardUpdateFlowId.current += 1;
+    boardUpdateDoneFired.current = false;
+    boardUpdateDoneHandled.current = false;
+  }, []);
 
   const updateInDevMode = isFFEnabled('UPDATE_IN_DEV_MODE');
 
@@ -94,7 +127,7 @@ export const useUpdater: UseUpdater = (): ReturnType<UseUpdater> => {
 
   const skipUpdate = useCallback((): void => {
     _setStatus(UpdaterStatus.Skipped);
-  }, []);
+  }, [_setStatus]);
 
   const checkReleaseNotes = useCallback(async (newAppVersion: string) => {
     try {
@@ -180,6 +213,9 @@ export const useUpdater: UseUpdater = (): ReturnType<UseUpdater> => {
   }, []);
 
   const startAppUpdate = useCallback(async (): Promise<void> => {
+    if (appUpdateInFlight.current) return;
+    appUpdateInFlight.current = true;
+
     try {
       _setStatus(UpdaterStatus.UpdatingApp);
       // The App Lab update doesn't report progress: drop whatever the board
@@ -195,13 +231,28 @@ export const useUpdater: UseUpdater = (): ReturnType<UseUpdater> => {
       _setStatus(UpdaterStatus.Restarting);
     } catch (err) {
       console.debug('App Lab update failed', err);
-      pushBoardLog('App Lab update failed');
+      const reason = err instanceof Error ? err.message : String(err);
+      if (reason === APP_UPDATE_IN_PROGRESS) {
+        // The first update outlived a reload of this page and may be replacing the app now.
+        pushBoardLog(formatMessage(messages.appUpdateAlreadyRunning));
+      } else {
+        pushBoardLog(
+          reason
+            ? formatMessage(messages.appUpdateFailedWithReason, { reason })
+            : formatMessage(messages.appUpdateFailed),
+        );
+      }
 
       _setStatus(UpdaterStatus.UpdateFailed);
+    } finally {
+      appUpdateInFlight.current = false;
     }
-  }, [pushBoardLog]);
+  }, [_setStatus, formatMessage, pushBoardLog]);
 
   const onBoardUpdateDone = useCallback((): void => {
+    if (boardUpdateDoneHandled.current) return;
+    boardUpdateDoneHandled.current = true;
+
     pushBoardLog('Board update completed successfully.');
     setBoardUpdateSucceeded(true);
 
@@ -215,7 +266,7 @@ export const useUpdater: UseUpdater = (): ReturnType<UseUpdater> => {
     }
 
     _setStatus(UpdaterStatus.UpdateComplete);
-  }, [isBoard, newAppVersion, pushBoardLog, startAppUpdate]);
+  }, [_setStatus, isBoard, newAppVersion, pushBoardLog, startAppUpdate]);
 
   const onLogReceived = useCallback(
     (log: BoardUpdateLog) => {
@@ -275,16 +326,25 @@ export const useUpdater: UseUpdater = (): ReturnType<UseUpdater> => {
 
           if (log.event === 'restarting') {
             boardUpdateDoneFired.current = true;
+            const flowId = boardUpdateFlowId.current;
+            // A `done` event can complete the flow while this loop waits, and a retry
+            // can start a new one.
+            const flowEnded = (): boolean =>
+              boardUpdateDoneHandled.current ||
+              flowId !== boardUpdateFlowId.current;
             // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
             (async () => {
+              if (flowEnded()) return;
               pushBoardLog('Reconnecting to board...');
               // After restarting event, wait before polling the orchestrator
               // Current version might not shutdown instantly
               await new Promise((res) => setTimeout(res, 5000));
 
               for (let attempts = 0; attempts < 10; attempts++) {
+                if (flowEnded()) return;
                 try {
                   const version = await getVersion();
+                  if (flowEnded()) return;
                   console.debug('Got orchestrator version', version);
                   if (version) {
                     pushBoardLog('Connection established');
@@ -296,6 +356,7 @@ export const useUpdater: UseUpdater = (): ReturnType<UseUpdater> => {
                 }
                 await new Promise((res) => setTimeout(res, 1500));
               }
+              if (flowEnded()) return;
               console.debug(
                 'Failed to pool for orchestrator version after update',
               );
@@ -357,6 +418,7 @@ export const useUpdater: UseUpdater = (): ReturnType<UseUpdater> => {
       logsStreamAbortController.current,
     );
   }, [
+    _setStatus,
     abortStream,
     isBoard,
     onBoardUpdateDone,
@@ -439,6 +501,21 @@ export const useUpdater: UseUpdater = (): ReturnType<UseUpdater> => {
           ?.message;
 
         if (boardErrorMessage?.includes(UPDATE_IN_PROGRESS)) {
+          if (statusRef.current === UpdaterStatus.UpdateComplete) {
+            // The frontend cannot tell this answer from a stale one about the flow that
+            // just completed. Joining it would reset the refs, and a stream that then
+            // closes without `done` would report the completed update as failed.
+            if (boardUpdateDoneHandled.current) return;
+            // The reconnect loop gave up without `done`, so the board may still be
+            // updating. Listen for its `done` with the refs and the result as they are:
+            // a stream that closes without `done` then leaves the result in place.
+            listenBoardUpdateLogs();
+            return;
+          }
+          // During a flow this is a second stream of the same update: keep its refs.
+          if (!UPDATE_FLOW_STATUSES.includes(statusRef.current)) {
+            beginBoardUpdateFlow();
+          }
           _setStatus(UpdaterStatus.UpdatingBoard);
           listenBoardUpdateLogs();
           return;
@@ -485,6 +562,8 @@ export const useUpdater: UseUpdater = (): ReturnType<UseUpdater> => {
       }
     },
     [
+      _setStatus,
+      beginBoardUpdateFlow,
       checkAppUpdateQuery,
       checkBoardUpdateQuery,
       checkMandatoryUpdates,
@@ -501,15 +580,23 @@ export const useUpdater: UseUpdater = (): ReturnType<UseUpdater> => {
     _setStatus(UpdaterStatus.UpdatingBoard);
     // A retry starts indeterminate again, until the first progress event.
     setBoardUpdateProgress(undefined);
+    beginBoardUpdateFlow();
+    const flowId = boardUpdateFlowId.current;
     pushBoardLog('Starting board update...');
 
     try {
       listenBoardUpdateLogs();
       await applyBoardUpdate(true);
     } catch {
-      _setStatus(UpdaterStatus.UpdateFailed);
+      // The request can fail after `done`, when the daemon restarts before it answers.
+      if (
+        flowId === boardUpdateFlowId.current &&
+        !boardUpdateDoneHandled.current
+      ) {
+        _setStatus(UpdaterStatus.UpdateFailed);
+      }
     }
-  }, [listenBoardUpdateLogs, pushBoardLog]);
+  }, [_setStatus, beginBoardUpdateFlow, listenBoardUpdateLogs, pushBoardLog]);
 
   const startUpdate = useCallback((): void => {
     if (boardUpdates) {
@@ -520,7 +607,13 @@ export const useUpdater: UseUpdater = (): ReturnType<UseUpdater> => {
       console.error('startUpdate called but no updates are available');
       _setStatus(UpdaterStatus.AlreadyUpToDate);
     }
-  }, [boardUpdates, newAppVersion, startAppUpdate, startBoardUpdate]);
+  }, [
+    _setStatus,
+    boardUpdates,
+    newAppVersion,
+    startAppUpdate,
+    startBoardUpdate,
+  ]);
 
   useEffect(() => {
     if (status === UpdaterStatus.UpdateFailed) {
@@ -528,9 +621,12 @@ export const useUpdater: UseUpdater = (): ReturnType<UseUpdater> => {
     }
   }, [abortStream, status]);
 
-  const setStatus = useCallback((s: UpdaterStatus) => {
-    _setStatus(s);
-  }, []);
+  const setStatus = useCallback(
+    (s: UpdaterStatus) => {
+      _setStatus(s);
+    },
+    [_setStatus],
+  );
 
   const setBoardLogs = useCallback((logs: string[]) => {
     _setBoardLogs(logs);

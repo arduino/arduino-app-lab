@@ -8,6 +8,8 @@ import (
 	"strings"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
+
+	"app-lab-desktop/internal/appid"
 )
 
 type sketchLibInput struct {
@@ -21,7 +23,7 @@ func registerSketchLibrariesList(srv *mcp.Server, access BoardAccess) string {
 		Name:        "sketch_libraries_list",
 		Description: "List the Arduino libraries used by an app's sketch on the connected board: the explicitly-added `libraries` and the `dependencies` they pull in. Read-only. Pass the app id from apps_list.",
 	}, func(ctx context.Context, _ *mcp.CallToolRequest, in appActionInput) (*mcp.CallToolResult, any, error) {
-		id := strings.TrimSpace(in.ID)
+		id := appid.Canonical(in.ID)
 		if id == "" {
 			return nil, nil, fmt.Errorf("app id is required")
 		}
@@ -41,7 +43,7 @@ func registerSketchLibrariesAdd(srv *mcp.Server, access BoardAccess) {
 		Description: "Add an Arduino library (with its dependencies) to an app's sketch on the connected board. Pass the app id from apps_list and the library as 'Name' or 'Name@Version' (omit the version for the latest). Mutating — asks the user for permission. Example apps and App releases can't be altered. Returns the libraries that were added.",
 		Annotations: &mcp.ToolAnnotations{ReadOnlyHint: false},
 	}, func(ctx context.Context, _ *mcp.CallToolRequest, in sketchLibInput) (*mcp.CallToolResult, any, error) {
-		id, lib := strings.TrimSpace(in.ID), strings.TrimSpace(in.Library)
+		id, lib := appid.Canonical(in.ID), strings.TrimSpace(in.Library)
 		if id == "" || lib == "" {
 			return nil, nil, fmt.Errorf("app id and library are required")
 		}
@@ -54,6 +56,7 @@ func registerSketchLibrariesAdd(srv *mcp.Server, access BoardAccess) {
 		if err != nil {
 			return nil, nil, err
 		}
+		access.RefreshManagedFiles(id)
 		return textResult(body), nil, nil
 	})
 }
@@ -65,7 +68,7 @@ func registerSketchLibrariesRemove(srv *mcp.Server, access BoardAccess) {
 		Description: "Remove an Arduino library from an app's sketch on the connected board; its dependencies are left in place (they may be shared with other libraries). Pass the app id from apps_list and the library as 'Name' or 'Name@Version'. Mutating — asks the user for permission. Example apps and App releases can't be altered. Returns the libraries that were removed.",
 		Annotations: &mcp.ToolAnnotations{ReadOnlyHint: false},
 	}, func(ctx context.Context, _ *mcp.CallToolRequest, in sketchLibInput) (*mcp.CallToolResult, any, error) {
-		id, lib := strings.TrimSpace(in.ID), strings.TrimSpace(in.Library)
+		id, lib := appid.Canonical(in.ID), strings.TrimSpace(in.Library)
 		if id == "" || lib == "" {
 			return nil, nil, fmt.Errorf("app id and library are required")
 		}
@@ -77,6 +80,7 @@ func registerSketchLibrariesRemove(srv *mcp.Server, access BoardAccess) {
 		if err != nil {
 			return nil, nil, err
 		}
+		access.RefreshManagedFiles(id)
 		return textResult(body), nil, nil
 	})
 }

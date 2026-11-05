@@ -3,10 +3,11 @@ import {
   useI18n,
 } from '@cloud-editor-mono/ui-components/lib/components-by-app/app-lab';
 import clsx from 'clsx';
-import { ReactNode } from 'react';
+import { ReactNode, useContext } from 'react';
+import { type IntlShape, IntlContext } from 'react-intl';
 
 import { messages } from '../../../messages';
-import { ChatMessage, MessagePart, useChatStore } from '../../../store';
+import { ChatMessage } from '../../../store';
 import {
   Checklist,
   FileOpenProvider,
@@ -15,25 +16,21 @@ import {
   Timeline,
   Typing,
 } from '../../../ui';
+import { Markdown, StreamingMarkdown } from './Markdown';
+import { useMessageLogic } from './Message.logic';
+import styles from './message.module.scss';
+import { activityHeader, currentPhase } from './utils/activityHeader';
 import {
   type MessageSegment,
-  activityHeader,
-  currentPhase,
-  Markdown,
   mergeThinking,
-  messageSegments,
   thinkingSpan,
   thoughtLabel,
-  timelineItems,
-  useElapsedSeconds,
-  useTypewriter,
-  visibleParts,
-  withoutTransportError,
-} from './Message.logic';
-import styles from './message.module.scss';
+} from './utils/messageSegments';
+import { timelineItems } from './utils/timelineItems';
 
 interface MessageProps {
   message: ChatMessage;
+  sessionId: string | null; // the session this panel displays, for the choices it already resolved
   streaming?: boolean; // the active turn: show live activity; once settled it's curated
   tokens?: number; // live token count for the streaming loader
   turnStartedAt?: number; // epoch ms the turn started, for the elapsed-time counter
@@ -42,68 +39,34 @@ interface MessageProps {
 
 export const Message: React.FC<MessageProps> = ({
   message,
+  sessionId,
   streaming = false,
   tokens,
   turnStartedAt,
   onOpenFile,
 }) => {
   const { formatMessage } = useI18n();
-  const currentSessionId = useChatStore((s) => s.currentSessionId);
-
-  // A pending (unresolved) choice suppresses the live loader — the turn is waiting on
-  // the user. The choice UI itself renders in the composer via PendingChoices, not here.
-  const resolvedChoiceIds = useChatStore((s) =>
-    currentSessionId
-      ? s.threads[currentSessionId]?.resolvedChoiceIds
-      : undefined,
-  );
-
-  // Ordered render blocks — narration, activity, plans and choices in the order the agent
-  // produced them, so nothing written before/between tools is dropped or flashes away.
-  const parts = visibleParts(
-    message.errorKind === 'network'
-      ? withoutTransportError(message.parts)
-      : message.parts,
-  );
-  const segments = messageSegments(parts);
-  const lastSegment = segments[segments.length - 1];
-  const tailKind = lastSegment?.kind;
-
-  const pendingChoices = segments
-    .filter(
-      (s): s is Extract<MessageSegment, { kind: 'choices' }> =>
-        s.kind === 'choices',
-    )
-    .flatMap((s) => s.choices)
-    .filter((q) => !(resolvedChoiceIds ?? []).includes(q.id));
-
-  // The live loader shows while the agent is working with nothing live at the tail (the tail is not
-  // answer text). A pending choice suppresses it — the turn is waiting on the user.
-  const showLoader =
-    streaming && tailKind !== 'text' && pendingChoices.length === 0;
-  // Only the trailing text run is "live": stream it with the typewriter; earlier runs are settled.
-  const revealTail = streaming && tailKind === 'text';
-  const tailText = revealTail
-    ? (lastSegment as Extract<MessageSegment, { kind: 'text' }>).text
-    : '';
-  const revealedTail = useTypewriter(tailText, streaming, revealTail);
-  const elapsedSeconds = useElapsedSeconds(
+  // For its list formatter, which useI18n does not expose; null without an IntlProvider.
+  const intl: IntlShape | null = useContext(IntlContext);
+  const {
+    parts,
+    segments,
+    revealTail,
+    revealedTail,
     showLoader,
-    streaming ? turnStartedAt : undefined,
-  );
+    awaitingApproval,
+    elapsedSeconds,
+    choiceAnswers,
+    userText,
+  } = useMessageLogic({ message, sessionId, streaming, turnStartedAt });
 
   if (message.role === 'user') {
     // Choice answers are echoed as their own user turn; render each as a two-line
     // bubble (the question, muted, above the picked answer) instead of plain text.
-    const answers = message.parts.filter(
-      (part): part is Extract<MessagePart, { type: 'choice-answer' }> =>
-        part.type === 'choice-answer',
-    );
-
-    if (answers.length > 0) {
+    if (choiceAnswers.length > 0) {
       return (
         <>
-          {answers.map((part) => (
+          {choiceAnswers.map((part) => (
             <div key={part.id} className={styles['choice-answer']}>
               <Text
                 size={TextSize.XXSmall}
@@ -122,13 +85,9 @@ export const Message: React.FC<MessageProps> = ({
       );
     }
 
-    const text = message.parts
-      .map((part) => (part.type === 'text' ? part.text : ''))
-      .join('');
-
     return (
       <div className={clsx(styles['message'], styles['message--user'])}>
-        <Text>{text}</Text>
+        <Text>{userText}</Text>
       </div>
     );
   }
@@ -152,12 +111,29 @@ export const Message: React.FC<MessageProps> = ({
     return null;
   }
 
+  // The turn has started and nothing came yet: the loader says so, with the time that goes by. A stop says so at once.
+  if (parts.length === 0 && showLoader && !message.cancelled) {
+    return (
+      <div className={styles['message--assistant']}>
+        <Typing
+          label={
+            awaitingApproval
+              ? formatMessage(messages.permWaiting)
+              : currentPhase(parts, elapsedSeconds, formatMessage)
+          }
+          elapsedSeconds={elapsedSeconds}
+          tokens={tokens}
+        />
+      </div>
+    );
+  }
+
   if (parts.length === 0) {
     return (
       <div className={styles['message--assistant']}>
         {message.cancelled ? (
           <Text size={TextSize.XXSmall} className={styles['cancelled']}>
-            You stopped the agent
+            {formatMessage(messages.chatStoppedByUser)}
           </Text>
         ) : (
           <Text>...</Text>
@@ -171,11 +147,10 @@ export const Message: React.FC<MessageProps> = ({
 
     switch (segment.kind) {
       case 'text':
-        return (
-          <Markdown
-            key={`text-${i}`}
-            text={isLast && revealTail ? revealedTail : segment.text}
-          />
+        return isLast && revealTail ? (
+          <StreamingMarkdown key={`text-${i}`} text={revealedTail} />
+        ) : (
+          <Markdown key={`text-${i}`} text={segment.text} />
         );
       case 'activity': {
         // Terminal "Done" row only on a trailing activity block; if the turn ends with text, that
@@ -188,12 +163,17 @@ export const Message: React.FC<MessageProps> = ({
           return (
             <Timeline
               key={`activity-${i}`}
-              summary={activityHeader(segment.parts)}
+              summary={activityHeader(
+                segment.parts,
+                formatMessage,
+                streaming,
+                intl?.formatList,
+              )}
               items={timelineItems(
                 segment.parts,
                 done,
+                formatMessage,
                 liveTail,
-                formatMessage(messages.permOutsideWorkspace),
               )}
             />
           );
@@ -203,7 +183,11 @@ export const Message: React.FC<MessageProps> = ({
         return thinking.length > 0 ? (
           <Thinking
             key={`activity-${i}`}
-            label={liveTail ? 'Thinking' : thoughtLabel(span.start, span.end)}
+            label={
+              liveTail
+                ? formatMessage(messages.chatThinking)
+                : thoughtLabel(formatMessage, span.start, span.end)
+            }
           >
             <Markdown text={thinking} />
           </Thinking>
@@ -236,13 +220,19 @@ export const Message: React.FC<MessageProps> = ({
         {segments.map((segment, i) => renderSegment(segment, i))}
         {showLoader && (
           <Typing
-            label={currentPhase(parts, elapsedSeconds)}
+            label={
+              awaitingApproval
+                ? formatMessage(messages.permWaiting)
+                : currentPhase(parts, elapsedSeconds, formatMessage)
+            }
             elapsedSeconds={elapsedSeconds}
             tokens={tokens}
           />
         )}
         {message.cancelled && (
-          <Text className={styles['cancelled']}>You stopped the agent</Text>
+          <Text className={styles['cancelled']}>
+            {formatMessage(messages.chatStoppedByUser)}
+          </Text>
         )}
       </div>
     </FileOpenProvider>

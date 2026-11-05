@@ -2,10 +2,10 @@ import { Bin, Pencil } from '@cloud-editor-mono/images/assets/icons';
 import * as ContextMenu from '@radix-ui/react-context-menu';
 import clsx from 'clsx';
 
-import { useTooltip } from '../../../tooltip';
 import { XXSmall } from '../../../typography';
 import { useI18n } from '../../shared';
 import BrickIcon from '../brick-icon/BrickIcon';
+import { useTooltip } from '../essential/tooltip';
 import styles from './brick-item.module.scss';
 import { BrickItemProps } from './BrickItem.type';
 import { messages } from './messages';
@@ -27,7 +27,6 @@ const BrickItem: React.FC<BrickItemProps> = (props: BrickItemProps) => {
 
   const { props: tooltipProps, renderTooltip } = useTooltip({
     content: formatMessage(messages.missingConfigTooltip),
-    timeout: 0,
   });
 
   const handleDragStart = (e: React.DragEvent<HTMLDivElement>): void => {

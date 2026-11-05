@@ -9,7 +9,7 @@
 import {
   IconNavigationArrowLeft,
   IconNavigationCloseNormal,
-} from '@arduino/react-icons';
+} from '@cloud-editor-mono/images/assets/icons';
 import * as Dialog from '@radix-ui/react-dialog';
 import { Slot, SlotProps } from '@radix-ui/react-slot';
 import clsx from 'clsx';

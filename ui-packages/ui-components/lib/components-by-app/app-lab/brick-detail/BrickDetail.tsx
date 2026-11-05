@@ -70,7 +70,7 @@ const BrickDetail: React.FC<BrickDetailProps> = ({
     readOnly,
     trainNewModelEnabled,
     addHuggingFaceModelEnabled,
-    isExample,
+    isReadOnlyApp,
     configureDialogProps,
     trainNewModelDialogProps,
     onTrainNewModelClick,
@@ -166,7 +166,7 @@ const BrickDetail: React.FC<BrickDetailProps> = ({
             readOnly ? undefined : onPreSelectedModelChange || updateModelInUse
           }
           readOnly={readOnly}
-          isExample={isExample}
+          isReadOnlyApp={isReadOnlyApp}
           trainNewModelEnabled={trainNewModelEnabled}
           addHuggingFaceModelEnabled={addHuggingFaceModelEnabled}
           addHuggingFaceModelDialogProps={addHuggingFaceModelDialogProps}

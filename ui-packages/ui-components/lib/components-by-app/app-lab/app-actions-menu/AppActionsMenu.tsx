@@ -48,8 +48,6 @@ export const AppActionsMenu = ({
     setShowTooltip,
   } = useTooltip({
     content: title,
-    timeout: 0,
-    renderDelay: 500,
   });
 
   return (

@@ -1,4 +1,7 @@
 import { FileLineScope, trimFileExtension } from '@cloud-editor-mono/common';
+import { CodeEditorText } from '@cloud-editor-mono/ide-workbench/lib/code-mirror/codeMirror.type';
+import { REVERTIBLE_INJECT_ID_SUFFIX } from '@cloud-editor-mono/ide-workbench/lib/code-mirror/utils';
+import { SUPPORTED_IMAGE_TYPES } from '@cloud-editor-mono/ide-workbench/lib/editor-tabs-bar/EditorTabsBar.type';
 import {
   createAliveRequest,
   CreateUser_Response,
@@ -29,9 +32,6 @@ import {
   saveLibraryRequest,
   SketchSecrets,
 } from '@cloud-editor-mono/infrastructure';
-import { CodeEditorText } from '@cloud-editor-mono/ui-components/lib/code-mirror/codeMirror.type';
-import { REVERTIBLE_INJECT_ID_SUFFIX } from '@cloud-editor-mono/ui-components/lib/code-mirror/utils';
-import { SUPPORTED_IMAGE_TYPES } from '@cloud-editor-mono/ui-components/lib/editor-tabs-bar/EditorTabsBar.type';
 import dotenv from 'dotenv';
 import { uniqueId } from 'lodash-es';
 import {

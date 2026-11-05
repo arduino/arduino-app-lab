@@ -24,7 +24,6 @@ export const ErrorBanner: React.FC<ErrorBannerProps> = ({
 
   const { props: tooltipProps, renderTooltip } = useTooltip({
     content: message,
-    timeout: 0,
   });
 
   const handleCopy = useCallback(async () => {

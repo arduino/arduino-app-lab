@@ -1,6 +1,42 @@
 @use "sass:color";
 @use "@cloud-editor-mono/arduino-sass";
+@use "@cloud-editor-mono/arduino-sass/src/typography" as typography;
 @use "@cloud-editor-mono/ui-components/public/shared.module.scss";
+
+$app-lab-label-height: 12px;
+
+@mixin app-lab-error {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 4px 2px;
+  color: var(--feedback-error-default);
+  line-height: 1.6;
+  letter-spacing: 0.1px;
+  overflow-wrap: anywhere;
+
+  .error-icon {
+    flex-shrink: 0;
+    margin: 0 1px;
+  }
+}
+
+@mixin app-lab-error-filled {
+  background: var(--feedback-error-subtle);
+  border-radius: 4px;
+}
+
+// Sibling of the field, so a long message pushes the content below it down.
+.input-error-below {
+  @include app-lab-error;
+
+  margin: 4px -1px 0;
+
+  &.filled {
+    @include app-lab-error-filled;
+  }
+}
 
 .text-area::-webkit-scrollbar {
   background-color: transparent;
@@ -34,73 +70,6 @@
   position: relative;
   width: 100%;
   padding: 4px 0;
-
-  &.app-lab {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    padding: 5px 12px;
-    border-radius: 4px;
-    border: 1px solid #434f54;
-    background: #171e21;
-    width: auto;
-
-    .input-label {
-      position: unset;
-      transform: unset;
-      color: #c9d2d2;
-
-      span {
-        font-size: 10px;
-        font-weight: 600;
-        letter-spacing: 0.1px;
-      }
-    }
-
-    .input-container {
-      height: 100%;
-      background: transparent;
-      color: #c9d2d2;
-      border: none;
-      outline: none;
-      padding: unset;
-
-      &.focused {
-        border: none;
-        box-shadow: unset;
-      }
-
-      .input-content {
-        &[type="password"]::-ms-reveal {
-          display: none;
-        }
-      }
-    }
-
-    .input-eye {
-      position: unset;
-      transform: unset;
-    }
-
-    &:focus-within {
-      border: 1px solid #25c2c7;
-      background: rgba(37, 194, 199, 0.08);
-      box-shadow: unset;
-    }
-
-    &.disabled {
-      .input-container {
-        background: transparent;
-        opacity: 0.5;
-      }
-    }
-
-    &:hover:not(:focus-within):not(.disabled) {
-      border: 1px solid #434f54;
-      background: #212a2e;
-      cursor: text;
-    }
-  }
 
   .input-error {
     position: absolute;
@@ -262,6 +231,206 @@
       width: 24px;
       height: 24px;
       color: var(--text-default);
+    }
+  }
+
+  &.app-lab {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    box-sizing: border-box;
+    width: auto;
+    height: 36px;
+    padding: 3px 11px;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    background: var(--surface-bg-below-1);
+    cursor: text;
+
+    &.outlined {
+      border-color: var(--border-default);
+      background: var(--component-bg-baseline);
+    }
+
+    &.on-below-1 {
+      background: var(--surface-bg-baseline);
+    }
+
+    // Absolute in every state, so the move between inside and above the text is animated.
+    .input-label {
+      --transition: all ease-out 0.1s;
+
+      top: 3px;
+      left: 11px;
+      transform: translateY(0);
+      pointer-events: none;
+      color: var(--text-subtle);
+      font-size: typography.$font-size-xxx-small;
+      font-weight: 600;
+      line-height: $app-lab-label-height;
+      letter-spacing: 0.1px;
+    }
+
+    .input-container {
+      position: static;
+      flex: 1;
+      min-height: 0;
+      height: auto;
+      padding: 0;
+      border: none;
+      background: transparent;
+      font-size: typography.$font-size-xx-small;
+      line-height: 1.6;
+      letter-spacing: 0.12px;
+
+      &.focused,
+      &.has-error {
+        border: none;
+        box-shadow: none;
+      }
+
+      .input-content {
+        height: 100%;
+        padding: 0;
+        caret-color: var(--text-subtle);
+
+        &::placeholder {
+          color: var(--text-subtle);
+          opacity: 1;
+        }
+
+        &[type="password"]::-ms-reveal {
+          display: none;
+        }
+      }
+    }
+
+    &.has-label:not(.size-x-small):not(.size-small) .input-container {
+      margin-top: $app-lab-label-height;
+    }
+
+    // An empty, unfocused field shows its label where the text goes.
+    &.has-label:not(:focus-within):not(.has-content) {
+      .input-label {
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: typography.$font-size-xx-small;
+        font-weight: 400;
+        letter-spacing: 0.12px;
+      }
+
+      .input-content::placeholder {
+        color: transparent;
+      }
+    }
+
+    &.has-trailing-icon .input-container {
+      padding-right: 24px;
+    }
+
+    .input-eye {
+      right: 11px;
+
+      svg {
+        width: 16px;
+        height: 16px;
+      }
+    }
+
+    &:hover:not(:focus-within):not(.disabled):not(.has-error) {
+      background-image: linear-gradient(var(--component-bg-hover), var(--component-bg-hover));
+    }
+
+    &.outlined:hover:not(:focus-within):not(.disabled):not(.has-error) {
+      background-image: none;
+      border-color: var(--border-strong);
+    }
+
+    &:focus-within {
+      border-color: var(--border-selected);
+
+      .input-content::placeholder {
+        color: var(--text-default);
+        opacity: 0.5;
+      }
+    }
+
+    &.has-error {
+      border-color: var(--feedback-error-default);
+    }
+
+    &.outlined.has-error {
+      background: transparent;
+    }
+
+    &.disabled {
+      cursor: default;
+
+      .input-label,
+      .input-container {
+        background: transparent;
+        opacity: 0.5;
+      }
+    }
+
+    .input-error {
+      @include app-lab-error;
+
+      // Measured from the padding box: 1px border + 4px gap, and 1px outside the border.
+      top: calc(100% + 5px);
+      left: -2px;
+      right: -2px;
+    }
+
+    &.size-x-small {
+      height: 20px;
+      padding: 0 11px 0 3px;
+
+      &.has-label:not(:focus-within):not(.has-content) .input-label {
+        left: 3px;
+      }
+    }
+
+    &.size-small {
+      height: 28px;
+      padding: 0 11px 0 7px;
+
+      &.has-label:not(:focus-within):not(.has-content) .input-label {
+        left: 7px;
+      }
+    }
+
+    // X-small and small have no room for a label above the text.
+    &.size-x-small,
+    &.size-small {
+      &.has-label:focus-within .input-label,
+      &.has-label.has-content .input-label {
+        display: none;
+      }
+
+      .input-error {
+        @include app-lab-error-filled;
+      }
+    }
+
+    &.size-large {
+      height: 48px;
+      padding: 5px 11px;
+
+      .input-label {
+        top: 5px;
+      }
+
+      .input-container {
+        font-size: typography.$font-size-x-small;
+        line-height: 1.6;
+        letter-spacing: 0.14px;
+      }
+
+      &.has-label:not(:focus-within):not(.has-content) .input-label {
+        font-size: typography.$font-size-x-small;
+        letter-spacing: 0.14px;
+      }
     }
   }
 }

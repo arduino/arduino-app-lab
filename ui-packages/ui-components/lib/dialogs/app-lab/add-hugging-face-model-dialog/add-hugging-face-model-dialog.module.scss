@@ -1,5 +1,3 @@
-@use "@cloud-editor-mono/arduino-sass/src/typography" as typography;
-
 .body {
   gap: 24px;
 
@@ -32,34 +30,6 @@
       flex: 1;
       display: flex;
       flex-direction: column;
-    }
-
-    .input {
-      position: relative;
-      box-sizing: border-box;
-      height: 36px;
-      justify-content: center;
-      border-radius: 4px;
-      border: 1px solid var(--border-default);
-      background: var(--component-bg-baseline);
-
-      &-error {
-        border-color: var(--feedback-error-default);
-      }
-    }
-
-    .input-container {
-      font-size: typography.$font-size-xx-small;
-      letter-spacing: 0.12px;
-      box-shadow: none !important;
-    }
-
-    .error {
-      display: block;
-      margin-top: 4px;
-      padding: 4px 4px 2px;
-      color: var(--feedback-error-default);
-      overflow-wrap: anywhere;
     }
 
     .action {

@@ -1,0 +1,51 @@
+@use 'sass:math';
+
+.loader {
+  --loader-spinner-size: 42px;
+  --loader-spinner-stroke-width: 5px;
+
+  &.tiny {
+    --loader-spinner-size: 14px;
+    --loader-spinner-stroke-width: 2px;
+  } 
+
+  width: var(--loader-spinner-size);
+  height: var(--loader-spinner-size);
+  
+  svg {
+    height: 100%;
+    width: 100%;
+    overflow: visible;
+  }
+  svg > g {
+    transform-origin: center;
+    animation: rotate 2s linear infinite;
+    background-color: red;
+  }
+  svg circle {
+    animation: spin-dash 2s ease-in-out infinite;
+    stroke-width: var(--loader-spinner-stroke-width);
+  }
+}
+
+@keyframes rotate {
+  100% {
+    transform:rotate(360deg)
+  }
+}
+
+@keyframes spin-dash {
+  0% {
+    stroke-dasharray: 1, calc(math.$pi * var(--loader-spinner-size));
+    stroke-dashoffset: 0;
+  }
+  50% {
+    stroke-dasharray: calc(0.445 * math.$pi * var(--loader-spinner-size)), calc(math.$pi * var(--loader-spinner-size));
+    stroke-dashoffset: calc(-0.125 * math.$pi * var(--loader-spinner-size));
+  }
+  100% {
+    stroke-dasharray: calc(0.445 * math.$pi * var(--loader-spinner-size)), calc(math.$pi * var(--loader-spinner-size));
+    stroke-dashoffset: calc(-0.886 * math.$pi * var(--loader-spinner-size));
+  }
+}
+

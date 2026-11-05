@@ -1,0 +1,34 @@
+@use "../../../theme/shared.module.scss";
+
+// Container fills the pane below the tabs bar, like the built-in
+// renderers do (compare .markdown-container in the App Lab bucket).
+.csv-table-container {
+    flex: 1;
+    min-height: 0;
+    padding: 16px;
+    overflow: auto;
+    background: var(--editor-background);
+    height: 100%;
+}
+
+.csv-read-only-note {
+    margin: 0 0 8px;
+    font-size: 12px;
+    opacity: 0.7;
+}
+
+.csv-table {
+    border-collapse: collapse;
+    font-size: 13px;
+
+    th,
+    td {
+        border: 1px solid var(--editor-border-color);
+        padding: 4px 10px;
+        text-align: left;
+    }
+
+    th {
+        font-weight: 600;
+    }
+}

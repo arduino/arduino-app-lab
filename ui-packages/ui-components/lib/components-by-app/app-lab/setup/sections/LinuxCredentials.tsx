@@ -78,6 +78,7 @@ const LinuxCredentials = forwardRef((props: LinuxCredentialsProps, ref) => {
           id="username"
           value="arduino"
           inputStyle={InputStyle.AppLab}
+          outlined
           disabled
           label={formatMessage(linuxCredentialsMessages.usernameLabel)}
           // eslint-disable-next-line @typescript-eslint/no-empty-function
@@ -89,6 +90,7 @@ const LinuxCredentials = forwardRef((props: LinuxCredentialsProps, ref) => {
           id="password"
           value={password}
           inputStyle={InputStyle.AppLab}
+          outlined
           disabled={setUserPasswordIsLoading}
           onChange={setPassword}
           onEnter={handlePasswordEnter}
@@ -97,10 +99,6 @@ const LinuxCredentials = forwardRef((props: LinuxCredentialsProps, ref) => {
           error={
             setUserPasswordIsError ? new Error(userPasswordErrorMsg) : undefined
           }
-          classes={{
-            error: styles['input-error-state'],
-            inputError: styles['input-error'],
-          }}
         />
       </div>
       <div className={setupStyles['input-container']}>
@@ -109,6 +107,7 @@ const LinuxCredentials = forwardRef((props: LinuxCredentialsProps, ref) => {
           ref={passwordConfirmationInputRef}
           value={passwordConfirmation}
           inputStyle={InputStyle.AppLab}
+          outlined
           disabled={setUserPasswordIsLoading}
           onChange={setPasswordConfirmation}
           onEnter={handlePasswordConfirmationEnter}
@@ -121,10 +120,6 @@ const LinuxCredentials = forwardRef((props: LinuxCredentialsProps, ref) => {
               ? new Error(userPasswordConfirmationErrorMsg)
               : undefined
           }
-          classes={{
-            error: styles['input-error-state'],
-            inputError: styles['input-error'],
-          }}
         />
         {setUserPasswordIsSuccess && (
           <XXSmall bold className={setupStyles['message']}>

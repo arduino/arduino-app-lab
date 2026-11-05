@@ -1,4 +1,4 @@
-import { IconNavigationMenuMoreHorizontal } from '@arduino/react-icons';
+import { IconNavigationMenuMoreHorizontal } from '@cloud-editor-mono/images/assets/icons';
 import { useState } from 'react';
 
 import { useI18n } from '../../../../i18n/useI18n';
@@ -28,7 +28,7 @@ export const BoardItem = ({
   const [isSwitcherOpen, setIsSwitcherOpen] = useState(false);
 
   const { props: nameTooltipProps, renderTooltip: renderNameTooltip } =
-    useTooltip({ content: board?.name, timeout: 0, renderDelay: 500 });
+    useTooltip({ content: board?.name });
 
   const {
     props: switcherTooltipProps,
@@ -36,8 +36,6 @@ export const BoardItem = ({
     setShowTooltip: setShowSwitcherTooltip,
   } = useTooltip({
     content: formatMessage(messages.boardSwitcherTooltip),
-    timeout: 0,
-    renderDelay: 500,
   });
 
   return (

@@ -9,25 +9,30 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"path"
 	"path/filepath"
 )
 
-//go:embed runtime-deps/package.json runtime-deps/package-lock.json
+//go:embed runtime-deps
 var runtimeDepsFS embed.FS
 
+// One set per agent: they install different packages, each recorded against its own lockfile.
+func depsPath(agent AgentID, name string) string {
+	return path.Join("runtime-deps", string(agent), name)
+}
+
 const (
-	embeddedPackageJSON = "runtime-deps/package.json"
-	embeddedLockfile    = "runtime-deps/package-lock.json"
+	packageJSONName = "package.json"
+	lockfileName    = "package-lock.json"
 )
 
-// materializeDeps writes the embedded package.json + lockfile into runtimeDir.
-func materializeDeps(runtimeDir string) error {
-	for _, name := range []string{embeddedPackageJSON, embeddedLockfile} {
-		data, err := runtimeDepsFS.ReadFile(name)
+func materializeDeps(runtimeDir string, agent AgentID) error {
+	for _, name := range []string{packageJSONName, lockfileName} {
+		data, err := runtimeDepsFS.ReadFile(depsPath(agent, name))
 		if err != nil {
-			return fmt.Errorf("read embedded %s: %w", name, err)
+			return fmt.Errorf("read embedded %s for %s: %w", name, agent, err)
 		}
-		dst := filepath.Join(runtimeDir, filepath.Base(name))
+		dst := filepath.Join(runtimeDir, name)
 		if err := os.WriteFile(dst, data, 0o644); err != nil {
 			return fmt.Errorf("write %s: %w", dst, err)
 		}
@@ -35,9 +40,8 @@ func materializeDeps(runtimeDir string) error {
 	return nil
 }
 
-// lockfileSHA256 returns the hex sha256 of the embedded lockfile.
-func lockfileSHA256() (string, error) {
-	data, err := runtimeDepsFS.ReadFile(embeddedLockfile)
+func lockfileSHA256(agent AgentID) (string, error) {
+	data, err := runtimeDepsFS.ReadFile(depsPath(agent, lockfileName))
 	if err != nil {
 		return "", err
 	}
@@ -45,9 +49,8 @@ func lockfileSHA256() (string, error) {
 	return hex.EncodeToString(sum[:]), nil
 }
 
-// pinnedPackages returns the embedded package.json dependencies (name -> version).
-func pinnedPackages() (map[string]string, error) {
-	data, err := runtimeDepsFS.ReadFile(embeddedPackageJSON)
+func pinnedPackages(agent AgentID) (map[string]string, error) {
+	data, err := runtimeDepsFS.ReadFile(depsPath(agent, packageJSONName))
 	if err != nil {
 		return nil, err
 	}

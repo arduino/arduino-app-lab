@@ -36,7 +36,7 @@ import {
 import { UseGetExamplesQueries } from '../main.type';
 import { useNotFound } from './routing';
 import { useNavigateToNotFound } from './routingUtils';
-import { useSketchParams } from './sketch';
+import { useCopyLinkParams, useSketchParams } from './sketch';
 import { useHydrateBuiltinExamples } from './useHydrateBuiltinExamples';
 
 const emptyExampleFiles: CompleteExample['files'] = [];
@@ -46,6 +46,7 @@ export const BUILTIN_EXAMPLES_QUERY_KEY = ['examples'];
 export const useGetExamplesQueries: UseGetExamplesQueries = function (
   userWasAuthenticated: boolean,
   isExampleSketchRoute: boolean,
+  canCreateSketch: boolean,
 ): ReturnType<UseGetExamplesQueries> {
   const [bypassOrgHeader, setBypassOrgHeader] = useState(false);
   const [attemptedOrgErrorManagement, setAttemptedOrgErrorManagement] =
@@ -54,7 +55,6 @@ export const useGetExamplesQueries: UseGetExamplesQueries = function (
   const {
     sourceLibraryID,
     customLibraryID,
-    createExampleParam,
     exampleID,
     sketchID,
     viewMode,
@@ -62,6 +62,7 @@ export const useGetExamplesQueries: UseGetExamplesQueries = function (
   } = useSketchParams();
 
   const navigate = useNavigate();
+  const { createExampleParam, createWaitsForPolicies } = useCopyLinkParams();
 
   const { navigateToNotFound } = useNavigateToNotFound();
 
@@ -325,41 +326,45 @@ export const useGetExamplesQueries: UseGetExamplesQueries = function (
     allContentsRetrieved,
   ]);
 
-  const examplesMenuHandlers = useMemo(
-    () => ({
-      [ExamplesMenuItemIds.CopyInYourSketches]: (
-        exampleID: string,
-        sourceLibraryID?: string,
-        customLibraryID?: string,
-      ): void => {
-        const sketchUrl = `${
-          Config.ROUTING_BASE_URL ? `/${Config.ROUTING_BASE_URL}` : ''
-        }${EXAMPLES_MATCH_PATH}`;
+  const examplesMenuHandlers = useMemo(() => {
+    const copyInYourSketches = (
+      exampleID: string,
+      sourceLibraryID?: string,
+      customLibraryID?: string,
+    ): void => {
+      const sketchUrl = `${
+        Config.ROUTING_BASE_URL ? `/${Config.ROUTING_BASE_URL}` : ''
+      }${EXAMPLES_MATCH_PATH}`;
 
-        const search = {
-          [SOURCE_LIBRARY_ID_PARAM]: sourceLibraryID,
-          [EXAMPLE_ID_PARAM]: exampleID,
-          [CUSTOM_LIBRARY_ID_PARAM]: customLibraryID,
-          [CREATE_EXAMPLE_PARAM]: true,
-        };
+      const search = {
+        [SOURCE_LIBRARY_ID_PARAM]: sourceLibraryID,
+        [EXAMPLE_ID_PARAM]: exampleID,
+        [CUSTOM_LIBRARY_ID_PARAM]: customLibraryID,
+        [CREATE_EXAMPLE_PARAM]: true,
+      };
 
-        if (isExampleSketchRoute) {
-          navigate({
-            to: sketchUrl,
-            search,
-          });
-        } else {
-          const result = getNewWindow(
-            `${Config.NEW_WINDOW_ORIGIN}${sketchUrl}`,
-            defaultStringifySearch(search),
-            '_blank',
-          );
+      if (isExampleSketchRoute) {
+        navigate({
+          to: sketchUrl,
+          search,
+        });
+      } else {
+        const result = getNewWindow(
+          `${Config.NEW_WINDOW_ORIGIN}${sketchUrl}`,
+          defaultStringifySearch(search),
+          '_blank',
+        );
 
-          if (!result) {
-            throw new Error('Example sketch could not be opened');
-          }
+        if (!result) {
+          throw new Error('Example sketch could not be opened');
         }
-      },
+      }
+    };
+
+    return {
+      [ExamplesMenuItemIds.CopyInYourSketches]: canCreateSketch
+        ? copyInYourSketches
+        : undefined,
       [ExamplesMenuItemIds.Download]: (
         examplePath: string,
         exampleFiles: RetrieveFileContentsResult[],
@@ -381,9 +386,8 @@ export const useGetExamplesQueries: UseGetExamplesQueries = function (
           },
         });
       },
-    }),
-    [isExampleSketchRoute, navigate, sketchID],
-  );
+    };
+  }, [canCreateSketch, isExampleSketchRoute, navigate, sketchID]);
 
   return {
     example,
@@ -392,7 +396,7 @@ export const useGetExamplesQueries: UseGetExamplesQueries = function (
       exampleInoContents !== undefined ? exampleFileContents : undefined,
     exampleIsFromLibrary: Boolean(sourceLibraryID),
     exampleIsFromCustomLibrary: Boolean(customLibraryID),
-    exampleIsLoading: isLoading || createExampleParam,
+    exampleIsLoading: isLoading || createExampleParam || createWaitsForPolicies,
     examplesMenuHandlers,
     allContentsRetrieved,
     hydrateByPaths,

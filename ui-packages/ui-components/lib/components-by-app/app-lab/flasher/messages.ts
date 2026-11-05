@@ -16,6 +16,11 @@ export const messages = defineMessages({
     defaultMessage: 'Build version',
     description: 'Label for the image selection field',
   },
+  imageVersionLatest: {
+    id: 'app-lab.flasher.image-version-latest',
+    defaultMessage: '{version} (Latest)',
+    description: 'Image version name when it is the latest available image',
+  },
   configurationStepImageVersionAction: {
     id: 'app-lab.flasher.configuration-step-image-version-action',
     defaultMessage: 'Change',

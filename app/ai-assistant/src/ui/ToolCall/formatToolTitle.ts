@@ -12,6 +12,8 @@ const MCP_TOOL_LABELS: Record<string, string> = {
   apps_delete: 'Delete app',
   apps_edit: 'Edit app details',
   apps_clone: 'Clone app',
+  app_files_rename: 'Rename file or folder',
+  app_files_delete: 'Delete file or folder',
   sketch_libraries_list: 'List sketch libraries',
   sketch_libraries_add: 'Add sketch library',
   sketch_libraries_remove: 'Remove sketch library',
@@ -58,10 +60,17 @@ const stripKeyFromPath = (path: string): string => {
 };
 
 // Strip the mirror root and checkout key from a title or a whole tool output: the absolute form whole, because the mirror root has spaces on macOS and a token-wise pass would leave its first half behind, then the relative `<key>/…` form per token via stripKeyFromPath. The span stops at a space followed by '/', so an earlier absolute path on the same line survives.
-const MIRROR_PATH = /(^|\s)\/(?:[^\s\n]|\s(?!\/))*?\/ai-mirror\/[^/\s\n]+\/?/g;
+const MIRROR_PATH =
+  /(^|\s)\/(?:[^\s\n]|\s(?!\/))*?\/ai-mirror\/([^/\s\n]+)(\/?)/g;
+// The host names a checkout after its app plus a 6-hex suffix; anything else in the mirror root is a file or folder the row must name.
+const CHECKOUT_KEY = /(?:^|-)[0-9a-f]{6}$/;
 export const stripKeysFromText = (text: string): string =>
   text
-    .replace(MIRROR_PATH, '$1')
+    .replace(
+      MIRROR_PATH,
+      (_path, lead: string, segment: string, slash: string) =>
+        CHECKOUT_KEY.test(segment) ? lead : `${lead}${segment}${slash}`,
+    )
     .replace(/\S+/g, (token) =>
       token.includes('/') ? stripKeyFromPath(token) : token,
     );
@@ -76,8 +85,14 @@ export const fileNameFromPath = (path: string): string => {
 // Turn an MCP tool's wire name (mcp__<server>__<tool>) into a readable label; native tool titles keep
 // their text but get the opaque local-mirror key stripped from any path token (so the permission popup
 // and timeline show `assets/style.css`, not `<checkout-key>/assets/style.css`).
-// The bare tool name behind an MCP wire title (mcp__<server>__<tool>); null for a native tool.
+// OpenCode spells the board's MCP server with one underscore where Claude uses the mcp__ form.
+const BOARD_SERVER_PREFIX = 'arduino-board_';
+
+// The bare tool name behind an MCP wire title, in either engine's spelling; null for a native tool.
 export const mcpToolName = (title: string): string | null => {
+  if (title.startsWith(BOARD_SERVER_PREFIX)) {
+    return title.slice(BOARD_SERVER_PREFIX.length) || null;
+  }
   if (!title.startsWith('mcp__')) {
     return null;
   }
@@ -85,12 +100,9 @@ export const mcpToolName = (title: string): string | null => {
 };
 
 export const formatToolTitle = (title: string): string => {
-  if (!title.startsWith('mcp__')) {
-    return stripKeysFromText(title);
-  }
   const tool = mcpToolName(title);
   if (!tool) {
-    return title;
+    return stripKeysFromText(title);
   }
   const mapped = MCP_TOOL_LABELS[tool];
   if (mapped) {

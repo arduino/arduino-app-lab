@@ -9,7 +9,6 @@ import {
   TrainNewModelDialogProps,
 } from '../../../../../../../../dialogs/app-lab/train-new-model-dialog/TrainNewModelDialog';
 import { useI18n } from '../../../../../../../../i18n/useI18n';
-import { useTooltip } from '../../../../../../../../tooltip';
 import { XXSmall } from '../../../../../../../../typography';
 import {
   Button,
@@ -17,7 +16,7 @@ import {
   ButtonSize,
   ButtonVariant,
 } from '../../../../../../essential/button';
-import { useTooltip as useAppLabTooltip } from '../../../../../../essential/tooltip';
+import { useTooltip } from '../../../../../../essential/tooltip';
 import { messages } from '../../../../../messages';
 import styles from './train-new-model-section.module.scss';
 
@@ -48,13 +47,12 @@ export const TrainNewModelSection: React.FC<TrainNewModelSectionProps> = ({
         }}
       />
     ),
-    timeout: 0,
+    variant: 'card',
   });
 
   const { props: buttonTooltipProps, renderTooltip: renderButtonTooltip } =
-    useAppLabTooltip({
+    useTooltip({
       content: formatMessage(messages.trainNewModelButton),
-      timeout: 0,
     });
 
   return (
@@ -67,7 +65,7 @@ export const TrainNewModelSection: React.FC<TrainNewModelSectionProps> = ({
             </XXSmall>
             <div {...descriptionTooltipProps} className={styles['info']}>
               <InfoIconI />
-              {renderDescriptionTooltip(styles['info-tooltip'])}
+              {renderDescriptionTooltip()}
             </div>
           </div>
           {!hideAction && (

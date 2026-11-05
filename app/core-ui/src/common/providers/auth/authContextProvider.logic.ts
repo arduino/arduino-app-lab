@@ -10,10 +10,12 @@ import {
   getCompileUsageExceeded,
   getGenAiInteractions,
   getIsUnauthorizedEvents$,
+  getSpace,
   isAuthenticated,
   login,
   NO_AUTH_TOKEN_PLACEHOLDER,
   retrieveAuth0User,
+  retrieveUserPolicies,
   retrieveUserRestrictionsRecap,
   setTokenNotRequired,
 } from '@cloud-editor-mono/domain';
@@ -106,6 +108,20 @@ export function useAuth(
     enabled: !!profile,
   });
 
+  const space = getSpace();
+
+  const { data: policiesResponse, isLoading: policiesAreLoading } = useQuery({
+    queryKey: [
+      'user-policies',
+      (profile as ArduinoUser)?.[USER_CLAIM_ID],
+      space,
+    ],
+    queryFn: retrieveUserPolicies,
+    enabled: !!profile && !!space,
+    // A role change takes effect on the next session.
+    staleTime: Infinity,
+  });
+
   const { isSuccess: analyticsSuccess } = useQuery({
     queryKey: ['analytics', (profile as ArduinoUser)?.[USER_CLAIM_ID]],
     queryFn: () => (profile ? analyticsBootstrap(profile) : Promise.reject()),
@@ -141,5 +157,9 @@ export function useAuth(
     aiUserPlan: restrictionsResponse && getAiUserPlan(restrictionsResponse),
     genAiInteractions:
       restrictionsResponse && getGenAiInteractions(restrictionsResponse),
+    isViewMode: !!viewMode,
+    isOrganizationSpace: !!space,
+    policies: policiesResponse?.policies,
+    policiesAreLoading,
   };
 }

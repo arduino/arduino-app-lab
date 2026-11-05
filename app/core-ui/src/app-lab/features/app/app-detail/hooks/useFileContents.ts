@@ -7,7 +7,7 @@ import {
   setCodeSubjects,
 } from '@cloud-editor-mono/domain/src/services/services-by-app/app-lab';
 import { useQueryClient } from '@tanstack/react-query';
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 
 import { resetModuleScopedState } from '../../../../../../lib/app-components/app-lab/utils';
 import { isAbsoluteId, resolveAbsPath } from './filePaths';
@@ -35,11 +35,17 @@ export function useFileContents({
     return () => resetModuleScopedState();
   }, []);
 
+  // Read at call time: an agent rename moves the open app, and a new fetchFile would make every selection effect reload its file.
+  const appPathRef = useRef(appPath);
+  appPathRef.current = appPath;
+  const hasAppPath = !!appPath;
+
   const fetchFile = useCallback(
     async (id: string, cause: CodeReloadCause = 'refetch'): Promise<void> => {
       if (!id) return;
-      if (!isAbsoluteId(id) && !appPath) return;
-      const absPath = resolveAbsPath(id, appPath);
+      const currentAppPath = hasAppPath ? appPathRef.current : undefined;
+      if (!isAbsoluteId(id) && !currentAppPath) return;
+      const absPath = resolveAbsPath(id, currentAppPath);
 
       const content = await queryClient.fetchQuery({
         queryKey: [GET_FILE_CONTENT_QUERY_KEY, absPath],
@@ -57,7 +63,7 @@ export function useFileContents({
       }
       getUnsavedFilesSubjectNext(id, false);
     },
-    [appPath, queryClient],
+    [hasAppPath, queryClient],
   );
 
   const refreshFileContents = useCallback(

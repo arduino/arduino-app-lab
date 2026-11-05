@@ -1,4 +1,4 @@
-import { KeywordMap } from './code-mirror';
+import { KeywordMap } from '@cloud-editor-mono/ide-workbench/lib/code-mirror/index';
 
 export const ARDUINO_KEYWORDS: KeywordMap = {
   type: ['boolean', 'byte', 'word', 'String'],

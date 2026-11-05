@@ -36,11 +36,11 @@ export const messages = defineMessages({
     defaultMessage: 'Edit model',
     description: 'Label for the edit model action',
   },
-  aiModelExampleTooltip: {
-    id: 'app-lab.aiModelExampleTooltip',
-    defaultMessage: "Models can't be changed in examples",
+  aiModelReadOnlyAppTooltip: {
+    id: 'app-lab.aiModelReadOnlyAppTooltip',
+    defaultMessage: "App not editable.\nModels can't be changed.",
     description:
-      'Tooltip shown on the model selection radio inside example apps',
+      'Tooltip shown on the model selection radio inside example apps and installed releases. The line break is kept on screen.',
   },
   aiModelDownloadToEnableTooltip: {
     id: 'app-lab.aiModelDownloadToEnableTooltip',

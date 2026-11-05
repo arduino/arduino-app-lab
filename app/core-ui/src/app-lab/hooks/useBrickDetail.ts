@@ -124,7 +124,8 @@ export const useBrickDetailLogic = (
   });
 
   const readOnly = !appId;
-  const isExample = appDetail?.example === true;
+  const isReadOnlyApp =
+    appDetail?.example === true || appDetail?.release === true;
 
   const { data: brick, isLoading: isBrickLoading } = useQuery({
     queryKey: [BoardScopedQuery.GET_BRICK_DETAILS, brickId],
@@ -734,7 +735,7 @@ export const useBrickDetailLogic = (
     (brick?.ai_frameworks_compatibility
       ? brick.ai_frameworks_compatibility.includes(EDGE_IMPULSE_AI_FRAMEWORK)
       : !EI_TRAIN_NEW_MODEL_INCOMPATIBLE_BRICK_IDS.includes(brick?.id ?? '')) &&
-    !isExample;
+    !isReadOnlyApp;
 
   const [trainNewModelDialogOpen, setTrainNewModelDialogOpen] = useState(false);
 
@@ -780,7 +781,7 @@ export const useBrickDetailLogic = (
 
   const addHuggingFaceModelEnabled =
     HUGGING_FACE_MODEL_COMPATIBLE_BRICK_IDS.includes(brick?.id ?? '') &&
-    !isExample;
+    !isReadOnlyApp;
 
   const downloadHuggingFaceModel = useCallback(
     (source: string): Promise<void> =>
@@ -877,7 +878,7 @@ export const useBrickDetailLogic = (
     addHuggingFaceModelDialogProps,
     diskUsageWarning,
     trainNewModelEnabled,
-    isExample,
+    isReadOnlyApp,
     openExternalLink,
     openModelPage,
     onTrainNewModelClick,

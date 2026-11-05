@@ -1,3 +1,4 @@
+import { BOARD_FQBN } from '@cloud-editor-mono/common';
 import {
   createProjectHubDraft,
   exportAppArchive,
@@ -21,6 +22,7 @@ import { useCallback, useMemo, useRef, useState } from 'react';
 import { MessageDescriptor } from 'react-intl';
 
 import { sendAppLabNotification } from '../../features/notifications';
+import { useBoardLifecycleStore } from '../../store/boardLifecycle';
 import { useBoardResourcesStore } from '../../store/boardResources';
 
 type PublishPhase = 'exporting' | 'uploading';
@@ -48,9 +50,11 @@ const SUPERSEDED = 'publish/superseded';
 
 const RAM_THRESHOLD_BYTES = 3 * 1024 ** 3;
 
-function boardSkuFromRam(
+export function projectHubBoardSku(
+  fqbn?: string,
   totalRamBytes?: number,
 ): ProjectHubBoardSku | undefined {
+  if (fqbn === BOARD_FQBN.VENTUNO_Q) return PROJECT_HUB_BOARD_SKU.VENTUNO_Q;
   if (!totalRamBytes) return undefined;
 
   return totalRamBytes > RAM_THRESHOLD_BYTES
@@ -67,6 +71,9 @@ export const usePublish = (): {
   const { formatMessage } = useI18n();
   const ramTotal = useBoardResourcesStore(
     (state) => state.resources?.ram?.total,
+  );
+  const boardFqbn = useBoardLifecycleStore(
+    (state) => state.selectedConnectedBoard?.fqbn,
   );
 
   const [phase, setPhase] = useState<PublishPhase | null>(null);
@@ -181,10 +188,10 @@ export const usePublish = (): {
         appName: [app.icon, app.name].filter(Boolean).join(' ').trim(),
         fileName: `${app.name}.zip`,
         includeData,
-        board: boardSkuFromRam(ramTotal),
+        board: projectHubBoardSku(boardFqbn, ramTotal),
       });
     },
-    [runPublish, ramTotal],
+    [runPublish, boardFqbn, ramTotal],
   );
 
   const abortPublish = useCallback((): void => {

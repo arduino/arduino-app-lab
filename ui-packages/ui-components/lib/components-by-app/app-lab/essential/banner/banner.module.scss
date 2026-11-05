@@ -135,11 +135,25 @@
 }
 
 .operation-actions-item {
-  span {
+  > span {
     display: flex;
+    width: 100%;
+    min-width: 0;
     padding: 7px 0;
     align-items: center;
     gap: 8px;
+
+    > .operation-action-label {
+      flex: 1;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    > svg {
+      flex: 0 0 auto;
+    }
   }
 
   &.danger {

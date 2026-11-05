@@ -2,16 +2,25 @@ import { ChevronDown } from '@cloud-editor-mono/images/assets/icons';
 import { useTooltip } from '@cloud-editor-mono/ui-components/lib/components-by-app/app-lab';
 import clsx from 'clsx';
 
-import { Picker, pickerStyles } from '../../../ui';
+import {
+  type PickerOptionContent,
+  type PickerSubmenuAnchor,
+  Picker,
+  pickerStyles,
+} from '../../../ui';
 import styles from './chat-input.module.scss';
 
 interface PickerItem {
   id: string;
   name: string;
   description?: string;
+  hint?: string;
   icon?: string;
   // Sets this item apart from the ones listed after it
   dividerAfter?: boolean;
+  groupLabel?: string;
+  submenu?: boolean;
+  expanded?: boolean;
 }
 
 interface ChatInputPickerProps {
@@ -21,6 +30,10 @@ interface ChatInputPickerProps {
   isOpen: boolean;
   // The model picker appends the resolved version to the name.
   getLabel?: (item: PickerItem) => string;
+  // Marks a row other than the selected item too, such as the one whose second level holds it.
+  isSelected?: (item: PickerItem) => boolean;
+  // Keeps the trigger in place without opening the menu, while there is nothing to pick from yet.
+  disabled?: boolean;
   // Which edge the menu is pinned to: one at the left edge has to open the other way, or it extends past the panel, whose overflow then clips it.
   align?: 'left' | 'right';
   // Which way the menu opens. Defaults to 'up': the trigger normally sits right above the composer, pinned to the
@@ -29,7 +42,8 @@ interface ChatInputPickerProps {
   onToggle: VoidFunction;
   onClose: VoidFunction;
   onSelect: (id: string) => void;
-  classes?: { trigger?: string; value?: string; icon?: string };
+  classes?: { trigger?: string; value?: string; icon?: string; menu?: string };
+  renderSubmenu?: (anchor: PickerSubmenuAnchor) => React.ReactNode;
 }
 
 export const ChatInputPicker: React.FC<ChatInputPickerProps> = ({
@@ -38,12 +52,15 @@ export const ChatInputPicker: React.FC<ChatInputPickerProps> = ({
   label,
   isOpen,
   getLabel = (item: PickerItem): string => item.name,
+  isSelected = (item: PickerItem): boolean => item.id === selected.id,
+  disabled = false,
   align = 'right',
   direction = 'up',
   onToggle,
   onClose,
   onSelect,
   classes,
+  renderSubmenu,
 }: ChatInputPickerProps) => {
   const {
     props: tooltipProps,
@@ -51,35 +68,31 @@ export const ChatInputPicker: React.FC<ChatInputPickerProps> = ({
     setShowTooltip,
   } = useTooltip({
     content: selected.description,
-    timeout: 0,
-    renderDelay: 500,
   });
 
   return (
     <Picker
       items={items}
       isOpen={isOpen}
-      isSelected={(item): boolean => item.id === selected.id}
+      isSelected={isSelected}
       onSelect={onSelect}
       onClose={onClose}
-      getOption={(
-        item,
-      ): {
-        label: string;
-        Icon?: string;
-        description?: string;
-        dividerAfter?: boolean;
-      } => ({
+      getOption={(item): PickerOptionContent => ({
         label: getLabel(item),
         Icon: item.icon,
         description: item.description,
+        hint: item.hint,
         dividerAfter: item.dividerAfter,
+        groupLabel: item.groupLabel,
+        submenu: item.submenu,
+        expanded: item.expanded,
       })}
+      renderSubmenu={renderSubmenu}
       align={align}
       direction={direction}
       classes={{
         container: styles['chat-input-picker'],
-        menu: styles['chat-input-picker-menu'],
+        menu: clsx(styles['chat-input-picker-menu'], classes?.menu),
       }}
       renderTrigger={(): React.ReactNode => (
         <div
@@ -96,6 +109,7 @@ export const ChatInputPicker: React.FC<ChatInputPickerProps> = ({
             aria-label={label}
             aria-haspopup="listbox"
             aria-expanded={isOpen}
+            disabled={disabled}
             onClick={(): void => {
               // Don't leave the hint hanging over the menu that's about to open.
               setShowTooltip(false);

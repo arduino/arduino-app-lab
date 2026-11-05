@@ -1,12 +1,9 @@
 import { ClipboardService } from './clipboard-service.type';
+import * as webClipboard from './clipboardService.web.impl';
 
-export let readText: ClipboardService['readText'] = function () {
-  throw new Error('readText service not implemented');
-};
+export let readText: ClipboardService['readText'] = webClipboard.readText;
 
-export let writeText: ClipboardService['writeText'] = function () {
-  throw new Error('writeText service not implemented');
-};
+export let writeText: ClipboardService['writeText'] = webClipboard.writeText;
 
 export const setClipboardService = (service: ClipboardService): void => {
   readText = service.readText;

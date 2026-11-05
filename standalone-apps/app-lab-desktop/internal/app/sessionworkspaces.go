@@ -34,6 +34,9 @@ func readSessionWorkspaces(dir string) (map[string]sessionWorkspaceEntry, error)
 	}
 	entries := map[string]sessionWorkspaceEntry{}
 	if err := json.Unmarshal(data, &entries); err == nil {
+		if entries == nil { // null decodes to a nil map
+			return map[string]sessionWorkspaceEntry{}, nil
+		}
 		return entries, nil
 	}
 	// The first version of this file mapped straight to an app id: keep those picks instead of dropping them silently.

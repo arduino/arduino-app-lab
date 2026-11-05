@@ -199,10 +199,12 @@ function appLabChunking(id) {
   if (id.includes('react-')) {
     return 'b-split';
   }
-  if (
-    id.includes('ui-packages/ui-components') &&
-    !id.includes('ui-packages/ui-components/lib/code-editor') // separate code-editor to permit code splitting of keywords
-  ) {
+  // The exclusion that used to sit here kept ui-components/lib/code-editor out
+  // of this chunk, so the .ino keyword table could split off on its own. The
+  // editor cluster moved to ui-packages/ide-workbench (ADR-0002 phase 4a) and
+  // is not matched by this rule at all, so it is already outside b-split and
+  // the exclusion named a path that no longer exists.
+  if (id.includes('ui-packages/ui-components')) {
     return 'b-split';
   }
   return null;

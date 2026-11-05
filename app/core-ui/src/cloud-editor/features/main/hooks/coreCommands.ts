@@ -646,6 +646,7 @@ export const useCoreCommands: UseCoreCommands = function (
 
   useEffect(() => {
     if (
+      isReadOnly ||
       isExampleSketchRoute ||
       isLibraryRoute ||
       !isCreatedSketch(initialSketchData) ||
@@ -681,6 +682,7 @@ export const useCoreCommands: UseCoreCommands = function (
       board_type: selectedBoardType,
     });
   }, [
+    isReadOnly,
     initialSketchData,
     modifySketchData,
     mutateSketchWithDevice,

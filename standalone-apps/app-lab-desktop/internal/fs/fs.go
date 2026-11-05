@@ -24,28 +24,8 @@ import (
 	"app-lab-desktop/internal/lsp"
 )
 
-func ReadFileContent(fss fs.FS, path string) (string, error) {
-	f, err := fss.Open(path)
-	if err != nil {
-		return "", err
-	}
-	defer f.Close()
-
-	data, err := io.ReadAll(f)
-	if err != nil {
-		return "", err
-	}
-
-	return string(data), nil
-}
-
 func WriteFileContent(conn remote.RemoteConn, path string, content string) error {
-	reader := strings.NewReader(content)
-	err := conn.WriteFile(reader, path)
-	if err != nil {
-		if errors.Is(err, syscall.ENOSPC) {
-			return fmt.Errorf("BOARD_STORAGE_FULL")
-		}
+	if err := WriteBoardFile(conn, path, content); err != nil {
 		return err
 	}
 
@@ -57,14 +37,49 @@ func WriteFileContent(conn remote.RemoteConn, path string, content string) error
 	return nil
 }
 
+// WriteBoardFile writes a board file and nothing else: WriteFileContent also copies it into the LSP workspace, which holds only the app open in the editor.
+func WriteBoardFile(conn remote.RemoteConn, path string, content string) error {
+	if err := conn.WriteFile(strings.NewReader(content), path); err != nil {
+		if errors.Is(err, syscall.ENOSPC) {
+			return fmt.Errorf("BOARD_STORAGE_FULL")
+		}
+		return err
+	}
+	return nil
+}
+
+// ReadBoardFile reads a board file as it is: GetFileContent also copies it into the LSP workspace, which holds only the app open in the editor.
+func ReadBoardFile(conn remote.RemoteConn, p string) (string, error) {
+	// Stats reports a missing file and a folder: over SSH a cat of either ends cleanly, with nothing read.
+	info, err := conn.Stats(p)
+	if err != nil {
+		return "", err
+	}
+	if info.IsDir {
+		return "", syscall.EISDIR
+	}
+	r, err := conn.ReadFile(p)
+	if err != nil {
+		return "", err
+	}
+	data, err := io.ReadAll(r)
+	// Over adb only the close reports a failed cat, e.g. on a file without read permission.
+	if cerr := r.Close(); err == nil && cerr != nil && !errors.Is(cerr, io.EOF) {
+		err = cerr
+	}
+	if err != nil {
+		return "", err
+	}
+	return string(data), nil
+}
+
 func GetFileContent(p string, conn remote.RemoteConn, hostReads *hostread.AllowSet) (string, error) {
 	if strings.HasPrefix(p, lsp.FileScheme) {
 		return getLocalFileContent(p, hostReads)
 	}
 
-	dir, file := path.Dir(p), path.Base(p)
-
-	data, err := ReadFileContent(getFS(dir, conn), file)
+	// The file tree lists a link to a folder as a file, and remotefs panics reading a folder.
+	data, err := ReadBoardFile(conn, p)
 	if err != nil {
 		return "", err
 	}
@@ -209,9 +224,9 @@ func copyDirectory(conn remote.RemoteConn, srcPath string, dstPath string) error
 			if err != nil {
 				return fmt.Errorf("failed to read file %s: %w", entry.Name, err)
 			}
-			defer sourceFile.Close()
 
 			err = conn.WriteFile(sourceFile, dstEntryPath)
+			_ = sourceFile.Close() // not deferred: in this loop a deferred close holds every file's adb or ssh process until the folder is copied
 			if err != nil {
 				return fmt.Errorf("failed to write file %s: %w", dstEntryPath, err)
 			}

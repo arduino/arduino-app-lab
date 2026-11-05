@@ -1,7 +1,7 @@
-import { IconTimeClockNormal } from '@arduino/react-icons';
 import {
   ChatAgent,
   CloseX,
+  IconTimeClockNormal,
   PlusSmall,
 } from '@cloud-editor-mono/images/assets/icons';
 import {
@@ -18,7 +18,9 @@ import { useCallback, useState } from 'react';
 
 import { useChatStore } from '../../store';
 import { Button, Picker, WorkspaceChip } from '../../ui';
+import { titleIfNamed } from '../../utils';
 import { ChatPanel } from '../chat/ChatPanel/ChatPanel';
+import { AgentStoppedPrompt } from '../panel/AiAssistantPanel';
 import { SessionStateIcon } from '../side-panel/SessionStateIcon';
 import styles from './agent-panel-container.module.scss';
 import { useAgentPanelContainerLogic } from './agentPanelContainer.logic';
@@ -44,6 +46,11 @@ export const AgentPanelContainer: React.FC<AgentPanelContainerProps> = ({
   const {
     authenticated,
     starting,
+    agentDown,
+    agentDownReason,
+    reconnecting,
+    reconnect,
+    reviving,
     onNewSession,
     historyOpen,
     toggleHistory,
@@ -67,7 +74,7 @@ export const AgentPanelContainer: React.FC<AgentPanelContainerProps> = ({
         : messages.noAgentTitle,
     );
   const { props: titleTooltipProps, renderTooltip: renderTitleTooltip } =
-    useTooltip({ content: title, timeout: 0, renderDelay: 500 });
+    useTooltip({ content: title });
 
   return (
     <div className={styles['container']}>
@@ -102,7 +109,9 @@ export const AgentPanelContainer: React.FC<AgentPanelContainerProps> = ({
             getOption={(
               session,
             ): { label: string; Icon: React.ReactElement } => ({
-              label: session.title ?? formatMessage(messages.historyUntitled),
+              label:
+                titleIfNamed(session.title) ??
+                formatMessage(messages.historyUntitled),
               Icon: <SessionStateIcon state={dotState(session)} />,
             })}
             emptyState={formatMessage(messages.historyEmpty)}
@@ -136,10 +145,16 @@ export const AgentPanelContainer: React.FC<AgentPanelContainerProps> = ({
         </div>
       </div>
       <div className={styles['body']}>
-        {starting ? (
+        {starting || reviving ? (
           <div className={styles['empty-state']}>
             <ArduinoLoader className={styles['empty-state-icon']} />
           </div>
+        ) : agentDown ? (
+          <AgentStoppedPrompt
+            reason={agentDownReason}
+            reconnecting={reconnecting}
+            onReconnect={reconnect}
+          />
         ) : authenticated ? (
           <ChatPanel
             docked
@@ -149,6 +164,7 @@ export const AgentPanelContainer: React.FC<AgentPanelContainerProps> = ({
             lockedWorkspaceName={appName}
             onScreen={!agentModeActive}
             getEditorContext={getEditorContext}
+            onOpenSettings={onSetupAgent}
           />
         ) : (
           <div className={styles['empty-state']}>

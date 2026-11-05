@@ -1,5 +1,7 @@
 import { StreamEventType } from '@cloud-editor-mono/infrastructure';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, renderHook, waitFor } from '@testing-library/react';
+import { PropsWithChildren } from 'react';
 import { createIntl } from 'react-intl';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -43,7 +45,14 @@ vi.mock(
   },
 );
 
+import { BoardScopedQuery } from '../../boardScopedQuery';
 import { useRelease } from './releaseContextProvider.logic';
+
+let queryClient = new QueryClient();
+
+const wrapper = ({ children }: PropsWithChildren): JSX.Element => (
+  <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+);
 
 type Handlers = {
   onopen?: () => Promise<void>;
@@ -114,6 +123,7 @@ describe('useRelease', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    queryClient = new QueryClient();
     buildStream = {};
     build = deferred<Blob>();
     save = deferred<string | undefined>();
@@ -130,7 +140,7 @@ describe('useRelease', () => {
   });
 
   it('opens the events stream before it starts the build', async () => {
-    const { result } = renderHook(() => useRelease());
+    const { result } = renderHook(() => useRelease(), { wrapper });
     await startBuild(result);
 
     expect(getReleaseBuildEvents).toHaveBeenCalledTimes(1);
@@ -145,7 +155,7 @@ describe('useRelease', () => {
   });
 
   it('holds the form over the copy step, then asks where to save', async () => {
-    const { result } = renderHook(() => useRelease());
+    const { result } = renderHook(() => useRelease(), { wrapper });
     const { dialog } = await startBuild(result);
     let released = false;
     void dialog.then(() => {
@@ -176,11 +186,11 @@ describe('useRelease', () => {
     expect(
       result.current.bannerProps[0].type === 'operation' &&
         result.current.bannerProps[0].actions?.map((a) => a.label),
-    ).toEqual(['Stop', 'Hide in notifications']);
+    ).toEqual([`Stop ${releaseName}`, 'Hide in notifications']);
   });
 
   it('asks where to save when the copy step is followed by done', async () => {
-    const { result } = renderHook(() => useRelease());
+    const { result } = renderHook(() => useRelease(), { wrapper });
     const { dialog } = await startBuild(result);
     progress('copying the app', 0);
     emit(StreamEventType.Done, { build_id: sentBuildId() });
@@ -190,7 +200,7 @@ describe('useRelease', () => {
   });
 
   it('asks where to save when the archive arrives with no later step', async () => {
-    const { result } = renderHook(() => useRelease());
+    const { result } = renderHook(() => useRelease(), { wrapper });
     const { dialog } = await startBuild(result);
     progress('copying the app', 0);
 
@@ -206,7 +216,7 @@ describe('useRelease', () => {
   });
 
   it('reports the download once the archive is where the user chose', async () => {
-    const { result } = renderHook(() => useRelease());
+    const { result } = renderHook(() => useRelease(), { wrapper });
     await startBuild(result);
     progress('python environment', 20);
     progress('archive', 90);
@@ -234,7 +244,7 @@ describe('useRelease', () => {
   });
 
   it('ends quietly when the user closes the save dialog', async () => {
-    const { result } = renderHook(() => useRelease());
+    const { result } = renderHook(() => useRelease(), { wrapper });
     await startBuild(result);
     progress('compose files', 10);
 
@@ -246,7 +256,7 @@ describe('useRelease', () => {
   });
 
   it('offers the build log when the build fails', async () => {
-    const { result } = renderHook(() => useRelease());
+    const { result } = renderHook(() => useRelease(), { wrapper });
     const { dialog } = await startBuild(result);
     emit(StreamEventType.Message, {
       build_id: sentBuildId(),
@@ -291,7 +301,7 @@ describe('useRelease', () => {
 
   it('fails the build the daemon refuses to start', async () => {
     startReleaseBuild.mockRejectedValue(new Error('the app is not found'));
-    const { result } = renderHook(() => useRelease());
+    const { result } = renderHook(() => useRelease(), { wrapper });
     const { dialog } = await startBuild(result);
 
     await expect(dialog).resolves.toBeUndefined();
@@ -304,7 +314,7 @@ describe('useRelease', () => {
   });
 
   it('ignores the events of a build it did not start', async () => {
-    const { result } = renderHook(() => useRelease());
+    const { result } = renderHook(() => useRelease(), { wrapper });
     const { dialog } = await startBuild(result);
     let released = false;
     void dialog.then(() => {
@@ -329,7 +339,7 @@ describe('useRelease', () => {
 
   it('follows builds of two Apps on one stream and one card', async () => {
     chooseReleaseSavePath.mockReturnValue(new Promise(() => undefined));
-    const { result } = renderHook(() => useRelease());
+    const { result } = renderHook(() => useRelease(), { wrapper });
     await startBuild(result);
     progress('compose files', 10);
     await startBuild(result, {
@@ -350,17 +360,27 @@ describe('useRelease', () => {
         },
       ]),
     );
+    expect(
+      result.current.bannerProps[0].type === 'operation' &&
+        result.current.bannerProps[0].actions?.map((a) => a.label),
+    ).toEqual([
+      `Stop ${releaseName}`,
+      'Stop Ghostwriter 2026-07-17 16:10',
+      'Hide in notifications',
+    ]);
   });
 
   it('stops a build without reporting the failure the stop causes', async () => {
-    const { result } = renderHook(() => useRelease());
+    const { result } = renderHook(() => useRelease(), { wrapper });
     await startBuild(result);
     progress('compose files', 10);
     await waitFor(() => expect(result.current.bannerProps).toHaveLength(1));
 
     const stop =
       result.current.bannerProps[0].type === 'operation'
-        ? result.current.bannerProps[0].actions?.find((a) => a.id === 'stop')
+        ? result.current.bannerProps[0].actions?.find((a) =>
+            a.id.startsWith('stop-'),
+          )
         : undefined;
     act(() => stop?.onSelect());
     await act(async () =>
@@ -379,7 +399,7 @@ describe('useRelease', () => {
   });
 
   it('lists a hidden build in the notifications panel until it ends', async () => {
-    const { result } = renderHook(() => useRelease());
+    const { result } = renderHook(() => useRelease(), { wrapper });
     await startBuild(result);
     progress('compose files', 10);
     await waitFor(() => expect(result.current.bannerProps).toHaveLength(1));
@@ -406,7 +426,7 @@ describe('useRelease', () => {
   });
 
   it('shows the card again from its notifications panel entry', async () => {
-    const { result } = renderHook(() => useRelease());
+    const { result } = renderHook(() => useRelease(), { wrapper });
     await startBuild(result);
     progress('compose files', 10);
     await waitFor(() => expect(result.current.bannerProps).toHaveLength(1));
@@ -437,7 +457,7 @@ describe('useRelease', () => {
     });
 
     it('names the App in its card', async () => {
-      const { result } = renderHook(() => useRelease());
+      const { result } = renderHook(() => useRelease(), { wrapper });
       act(() => result.current.startPreparation('app-1', 'Magic Storyteller'));
       emit(
         StreamEventType.Progress,
@@ -460,9 +480,33 @@ describe('useRelease', () => {
       ).toEqual(['Hide in notifications']);
     });
 
+    it('lists a hidden preparation and restores its card from notifications', async () => {
+      const { result } = renderHook(() => useRelease(), { wrapper });
+      act(() => result.current.startPreparation('app-1', 'Magic Storyteller'));
+
+      const hide =
+        result.current.bannerProps[0].type === 'operation'
+          ? result.current.bannerProps[0].actions?.find((a) => a.id === 'hide')
+          : undefined;
+      act(() => hide?.onSelect());
+
+      expect(result.current.bannerProps).toEqual([]);
+      expect(setNotification).toHaveBeenCalledWith(
+        expect.objectContaining({
+          label: 'Getting Magic Storyteller ready',
+          onClick: expect.any(Function),
+        }),
+      );
+
+      const { id, onClick } = setNotification.mock.calls[0][0];
+      act(() => onClick());
+      expect(result.current.bannerProps).toHaveLength(1);
+      expect(removeNotification).toHaveBeenCalledWith(id);
+    });
+
     it('reports success once, ignoring the closing error after done', async () => {
       const onPrepared = vi.fn();
-      const { result } = renderHook(() => useRelease());
+      const { result } = renderHook(() => useRelease(), { wrapper });
       act(() =>
         result.current.startPreparation('app-1', 'Magic Storyteller', {
           onPrepared,
@@ -483,7 +527,7 @@ describe('useRelease', () => {
     });
 
     it('reports the message the caller gives on success', async () => {
-      const { result } = renderHook(() => useRelease());
+      const { result } = renderHook(() => useRelease(), { wrapper });
       act(() =>
         result.current.startPreparation('app-1', 'Magic Storyteller', {
           successMessage: 'Magic Storyteller correctly imported',
@@ -500,9 +544,45 @@ describe('useRelease', () => {
       });
     });
 
+    it('refreshes the model lists once the models are installed', async () => {
+      const invalidateQueries = vi.spyOn(queryClient, 'invalidateQueries');
+      const { result } = renderHook(() => useRelease(), { wrapper });
+      act(() => result.current.startPreparation('app-1', 'Magic Storyteller'));
+      await waitFor(() => expect(prepareApp).toHaveBeenCalled());
+
+      emit(StreamEventType.Done, { id: 'app-1' }, prepareStream);
+
+      expect(invalidateQueries).toHaveBeenCalledWith({
+        queryKey: [BoardScopedQuery.GET_INSTALLED_MODELS],
+      });
+      expect(invalidateQueries).toHaveBeenCalledWith({
+        queryKey: [BoardScopedQuery.GET_BRICK_DETAILS],
+      });
+    });
+
+    it('refreshes the model lists when the preparation fails', async () => {
+      const invalidateQueries = vi.spyOn(queryClient, 'invalidateQueries');
+      const { result } = renderHook(() => useRelease(), { wrapper });
+      act(() => result.current.startPreparation('app-1', 'Magic Storyteller'));
+      await waitFor(() => expect(prepareApp).toHaveBeenCalled());
+
+      emit(
+        StreamEventType.Error,
+        { code: 'INTERNAL_SERVER_ERROR', message: 'no network' },
+        prepareStream,
+      );
+
+      expect(invalidateQueries).toHaveBeenCalledWith({
+        queryKey: [BoardScopedQuery.GET_INSTALLED_MODELS],
+      });
+      expect(invalidateQueries).toHaveBeenCalledWith({
+        queryKey: [BoardScopedQuery.GET_BRICK_DETAILS],
+      });
+    });
+
     it('reports a failed download', async () => {
       const onPrepared = vi.fn();
-      const { result } = renderHook(() => useRelease());
+      const { result } = renderHook(() => useRelease(), { wrapper });
       act(() =>
         result.current.startPreparation('app-1', 'Magic Storyteller', {
           onPrepared,

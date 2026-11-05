@@ -17,8 +17,10 @@ import {
   BannerAction,
   BannerProps,
   BuildLogLine,
+  Notification,
   useI18n,
 } from '@cloud-editor-mono/ui-components/lib/components-by-app/app-lab';
+import { useQueryClient } from '@tanstack/react-query';
 import {
   createElement,
   useCallback,
@@ -28,6 +30,7 @@ import {
   useState,
 } from 'react';
 
+import { BoardScopedQuery } from '../../boardScopedQuery';
 import { sendAppLabNotification } from '../../features/notifications';
 import { releaseMessages } from '../../features/release/messages';
 import { useFooterNotifications } from '../footer-notifications/footerNotificationsContext';
@@ -61,6 +64,8 @@ const MAX_LOG_LINES = 2000;
 
 const buildNotificationId = (buildId: string): string =>
   `release-build-${buildId}`;
+const prepareNotificationId = (appId: string): string =>
+  `release-prepare-${appId}`;
 
 type StreamPayload = {
   build_id?: string;
@@ -114,9 +119,31 @@ const parsePayload = (data: string): StreamPayload | undefined => {
   }
 };
 
+type ListedNotification = Notification & { id: string };
+
+// A hidden job is listed in the notifications panel until it ends or its card is shown again.
+// An entry is added once: progress events change the job, not its entry.
+const useListedNotifications = (listed: ListedNotification[]): void => {
+  const { setNotification, removeNotification } = useFooterNotifications();
+  const shown = useRef(new Set<string>());
+  useEffect(() => {
+    const listedIds = new Set(listed.map((notification) => notification.id));
+    shown.current.forEach((id) => {
+      if (listedIds.has(id)) return;
+      removeNotification(id);
+      shown.current.delete(id);
+    });
+    listed.forEach((notification) => {
+      if (shown.current.has(notification.id)) return;
+      shown.current.add(notification.id);
+      setNotification(notification);
+    });
+  }, [listed, removeNotification, setNotification]);
+};
+
 export const useRelease: UseRelease = () => {
   const { formatMessage } = useI18n();
-  const { setNotification, removeNotification } = useFooterNotifications();
+  const queryClient = useQueryClient();
 
   const [builds, setBuilds] = useState<BuildJob[]>([]);
   const [prepares, setPrepares] = useState<PrepareJob[]>([]);
@@ -403,7 +430,17 @@ export const useRelease: UseRelease = () => {
             : formatMessage(releaseMessages.prepareFailed, { appName }),
           variant: succeeded ? 'success' : 'error',
         });
-        if (succeeded) callbacks?.onPrepared?.();
+        // Preparation downloads the models, and a failed one may have
+        // downloaded some before it stopped.
+        void queryClient.invalidateQueries({
+          queryKey: [BoardScopedQuery.GET_INSTALLED_MODELS],
+        });
+        void queryClient.invalidateQueries({
+          queryKey: [BoardScopedQuery.GET_BRICK_DETAILS],
+        });
+        if (succeeded) {
+          callbacks?.onPrepared?.();
+        }
       };
 
       const handlers: EventSourceHandlers = {
@@ -444,7 +481,7 @@ export const useRelease: UseRelease = () => {
       };
       void prepareApp(appId, handlers, abortController).then(onEnd, onEnd);
     },
-    [formatMessage],
+    [formatMessage, queryClient],
   );
 
   const hideAction = useCallback(
@@ -457,55 +494,56 @@ export const useRelease: UseRelease = () => {
     [formatMessage],
   );
 
-  // A hidden build is listed in the notifications panel until it ends or its card is shown again.
-  const buildNotifications = useRef(new Set<string>());
-  useEffect(() => {
-    const listed = buildsHidden ? builds.filter((job) => !job.blocking) : [];
-    const listedIds = new Set(
-      listed.map((job) => buildNotificationId(job.buildId)),
-    );
-    buildNotifications.current.forEach((id) => {
-      if (listedIds.has(id)) return;
-      removeNotification(id);
-      buildNotifications.current.delete(id);
-    });
-    listed.forEach((job) => {
-      const id = buildNotificationId(job.buildId);
-      if (buildNotifications.current.has(id)) return;
-      buildNotifications.current.add(id);
-      setNotification({
-        id,
-        label: formatMessage(releaseMessages.notificationSaving, {
-          releaseName: job.releaseName,
-        }),
-        icon: createElement(AppRelease),
-        onClick: () => setBuildsHidden(false),
-      });
-    });
-  }, [
-    builds,
-    buildsHidden,
-    formatMessage,
-    removeNotification,
-    setNotification,
-  ]);
+  const buildNotifications = useMemo(
+    (): ListedNotification[] =>
+      buildsHidden
+        ? builds
+            .filter((job) => !job.blocking)
+            .map((job) => ({
+              id: buildNotificationId(job.buildId),
+              label: formatMessage(releaseMessages.notificationSaving, {
+                releaseName: job.releaseName,
+              }),
+              icon: createElement(AppRelease),
+              onClick: () => setBuildsHidden(false),
+            }))
+        : [],
+    [builds, buildsHidden, formatMessage],
+  );
+  useListedNotifications(buildNotifications);
+
+  const prepareNotifications = useMemo(
+    (): ListedNotification[] =>
+      preparesHidden
+        ? prepares.map((job) => ({
+            id: prepareNotificationId(job.appId),
+            label: formatMessage(releaseMessages.bannerPreparingTitle, {
+              count: 1,
+              appName: job.appName,
+            }),
+            icon: createElement(AppRelease),
+            onClick: () => setPreparesHidden(false),
+          }))
+        : [],
+    [prepares, preparesHidden, formatMessage],
+  );
+  useListedNotifications(prepareNotifications);
 
   const buildBanner = useMemo((): BannerProps | null => {
     const visible = builds.filter((job) => !job.blocking);
     if (buildsHidden || visible.length === 0) return null;
 
     const actions: BannerAction[] = [
-      ...(visible.length === 1
-        ? [
-            {
-              id: 'stop',
-              label: formatMessage(releaseMessages.actionStop),
-              labelPrefix: createElement(Stop),
-              danger: true,
-              onSelect: (): void => stopBuild(visible[0]),
-            },
-          ]
-        : []),
+      ...visible.map((job) => ({
+        id: `stop-${job.buildId}`,
+        label: formatMessage(releaseMessages.actionStop, {
+          releaseName: job.releaseName,
+        }),
+        labelPrefix: createElement(Stop),
+        truncateLabel: true,
+        danger: true,
+        onSelect: (): void => stopBuild(job),
+      })),
       hideAction(() => setBuildsHidden(true)),
     ];
 

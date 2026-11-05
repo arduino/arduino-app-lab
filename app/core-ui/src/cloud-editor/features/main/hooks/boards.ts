@@ -65,7 +65,7 @@ import {
   portSelectionReset,
   resetPortSelectionSubjects,
 } from '../portSelection.reactive';
-import { useSketchParams } from './sketch';
+import { useCopyLinkParams, useSketchParams } from './sketch';
 import {
   ARDUINO_PACKAGER,
   ARDUINO_UNSTABLE_SERIAL_NUMBER_BOARDS,
@@ -100,6 +100,7 @@ export const useBoardsConfig: UseBoardsConfig = function (
   isIotSketch: boolean,
   initialIotDeviceId?: string | null,
   iotDevicesGroups?: IotDevicesGroups,
+  forceBoardAutoSelection = false,
 ): ReturnType<UseBoardsConfig> {
   const bypassAutoSelectionQuota = useRef<BypassAutoSelectionReason[]>([]);
   const waitingForUploadCompletion = useRef(false); // ** completion is upload finish + 3 seconds
@@ -115,9 +116,11 @@ export const useBoardsConfig: UseBoardsConfig = function (
     uploadIsUploading,
     forceUpdate: forceUpdateSerialCommCtx,
   } = useContext(SerialCommunicationContext);
-  const boardAutoSelection = Boolean(
-    usePreferenceObservable(Preferences.BoardAutoSelection),
+  const boardAutoSelectionPreference = usePreferenceObservable(
+    Preferences.BoardAutoSelection,
   );
+  const boardAutoSelection =
+    forceBoardAutoSelection || Boolean(boardAutoSelectionPreference);
 
   const { formatMessage } = useContext(IntlContext);
 
@@ -1492,12 +1495,14 @@ export const useDeviceMetadata: UseDeviceMetadata = function (
   thingDeviceDetails?: ShowThingV1Device_ResponseWithArchAndOriginalName,
   thingDeviceDetailsIsLoading?: boolean,
 ): ReturnType<UseDeviceMetadata> {
-  const { sketchID, sketchIDIsLoading, createSketchParam } = useSketchParams();
+  const { sketchID, sketchIDIsLoading } = useSketchParams();
+  const { createSketchParam, createWaitsForPolicies } = useCopyLinkParams();
 
   const sketchDataWillChangeToACopy = Boolean(
     sketchIDIsLoading ||
       (sketchID && !!sketchData && sketchID !== sketchData.id) ||
-      createSketchParam,
+      createSketchParam ||
+      createWaitsForPolicies,
   );
 
   if (sketchDataWillChangeToACopy) {

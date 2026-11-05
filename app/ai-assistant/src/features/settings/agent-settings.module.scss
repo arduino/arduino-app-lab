@@ -1,6 +1,5 @@
 @use "@cloud-editor-mono/arduino-sass/src/fonts" as fonts;
 @use "@cloud-editor-mono/arduino-sass/src/typography" as typography;
-@use "@cloud-editor-mono/arduino-sass/src/variables" as variables;
 
 .section {
   display: flex;
@@ -68,7 +67,7 @@
   align-items: flex-start;
   gap: 16px;
   padding-top: 16px;
-  border-top: 1px solid var(--border-inverted, #232b2e);
+  border-top: 1px solid var(--border-inverted);
 }
 
 .footer-actions {
@@ -79,22 +78,10 @@
   gap: 16px;
 }
 
-.footer-default-button {
-  padding: 0;
-  border: 0;
-  background: none;
-  cursor: pointer;
-  color: var(--text-default, #ffffff);
-  font-family: variables.$font-sans;
-  font-size: typography.$font-size-xx-small;
-  font-weight: fonts.$font-weight-semibold;
 
-  &:not(:disabled):hover {
-    text-decoration: underline;
-  }
-
-  &:disabled {
-    opacity: 0.5;
-    cursor: default;
-  }
+.providers-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
+

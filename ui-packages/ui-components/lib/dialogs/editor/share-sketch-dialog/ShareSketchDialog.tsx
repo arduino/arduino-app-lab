@@ -6,6 +6,7 @@ import { GenericDialog } from '../../../essential/generic-dialog';
 import { Input } from '../../../essential/input';
 import { Radio, RadioGroup } from '../../../essential/radio-group';
 import { useI18n } from '../../../i18n/useI18n';
+import { Rbac, RbacCapability } from '../../../rbac';
 import { Medium, XSmall } from '../../../typography';
 import { shareSketchDialogMessages as messages } from '../messages';
 import styles from './share-sketch-dialog.module.scss';
@@ -62,35 +63,39 @@ const ShareSketchDialog: React.FC<ShareSketchDialogProps> = (
         <GenericDialog.Body classes={{ container: styles['body-container'] }}>
           <>
             {rest.isOwned ? (
-              <div>
-                <Medium bold>{formatMessage(messages.bodyTitle)}</Medium>
-                <RadioGroup
-                  label={formatMessage(messages.bodyTitle)}
-                  classes={{ container: styles['radio-group'] }}
-                  defaultValue={ShareSketchRadioValue.Private}
-                  value={String(rest.isPublic)}
-                  onChange={(value): void => {
-                    onToggleVisibility(value === ShareSketchRadioValue.Public);
-                  }}
-                >
-                  <Radio
-                    value={ShareSketchRadioValue.Private}
-                    classes={{
-                      container: styles['radio'],
+              <Rbac permissions={[RbacCapability.EditSketch]} rbac={rest.rbac}>
+                <div>
+                  <Medium bold>{formatMessage(messages.bodyTitle)}</Medium>
+                  <RadioGroup
+                    label={formatMessage(messages.bodyTitle)}
+                    classes={{ container: styles['radio-group'] }}
+                    defaultValue={ShareSketchRadioValue.Private}
+                    value={String(rest.isPublic)}
+                    onChange={(value): void => {
+                      onToggleVisibility(
+                        value === ShareSketchRadioValue.Public,
+                      );
                     }}
                   >
-                    <XSmall>{formatMessage(messages.privateLabel)}</XSmall>
-                  </Radio>
-                  <Radio
-                    value={ShareSketchRadioValue.Public}
-                    classes={{
-                      container: styles['radio'],
-                    }}
-                  >
-                    <XSmall>{formatMessage(messages.publicLabel)}</XSmall>
-                  </Radio>
-                </RadioGroup>
-              </div>
+                    <Radio
+                      value={ShareSketchRadioValue.Private}
+                      classes={{
+                        container: styles['radio'],
+                      }}
+                    >
+                      <XSmall>{formatMessage(messages.privateLabel)}</XSmall>
+                    </Radio>
+                    <Radio
+                      value={ShareSketchRadioValue.Public}
+                      classes={{
+                        container: styles['radio'],
+                      }}
+                    >
+                      <XSmall>{formatMessage(messages.publicLabel)}</XSmall>
+                    </Radio>
+                  </RadioGroup>
+                </div>
+              </Rbac>
             ) : null}
             {!rest.isOwned || rest.isPublic ? (
               <>

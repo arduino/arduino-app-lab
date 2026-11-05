@@ -12,6 +12,7 @@ import {
   ButtonVariant,
   SketchLibraryCard,
 } from '../../../components-by-app/app-lab';
+import { InputStyle } from '../../../essential/input';
 import { SearchField } from '../../../essential/search-field';
 import { useI18n } from '../../../i18n/useI18n';
 import { Skeleton } from '../../../skeleton';
@@ -19,6 +20,8 @@ import { XSmall } from '../../../typography';
 import { AppLabDialog } from '../app-lab-dialog/AppLabDialog';
 import { addSketchLibraryDialogMessages as messages } from '../messages';
 import styles from './add-sketch-library-dialog.module.scss';
+
+const LIBRARY_ARCHITECTURE = 'zephyr';
 
 export type AddSketchLibraryDialogLogic = () => {
   board?: Board;
@@ -66,9 +69,16 @@ export const AddSketchLibraryDialog: React.FC<AddSketchDialogProps> = ({
 
   const showError = !librarySearchIsLoading && librarySearchError;
 
+  // The query is cleared on close: clearing it on open would show the old
+  // query for the first render after reopening.
   useEffect(() => {
     if (open) {
-      searchSketchLibraries({});
+      searchSketchLibraries({
+        search: '',
+        architecture: LIBRARY_ARCHITECTURE,
+      });
+    } else {
+      setSearchQuery('');
     }
   }, [open, searchSketchLibraries]);
 
@@ -77,7 +87,7 @@ export const AddSketchLibraryDialog: React.FC<AddSketchDialogProps> = ({
       if (open) {
         searchSketchLibraries({
           search: searchQuery,
-          architecture: 'zephyr',
+          architecture: LIBRARY_ARCHITECTURE,
         });
       }
     },
@@ -101,10 +111,8 @@ export const AddSketchLibraryDialog: React.FC<AddSketchDialogProps> = ({
         label={formatMessage(messages.searchPlaceholder)}
         value={searchQuery}
         onChange={setSearchQuery}
-        classes={{
-          container: styles['search-container'],
-          input: styles['search-input'],
-        }}
+        inputStyle={InputStyle.AppLab}
+        classes={{ container: styles['search-container'] }}
       />
       {!librarySearchIsLoading && !showError && libraries.length > 0 && (
         <div className={styles['library-list']}>

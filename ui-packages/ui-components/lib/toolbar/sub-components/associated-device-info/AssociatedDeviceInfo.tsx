@@ -8,7 +8,7 @@ import {
 import clsx from 'clsx';
 
 import { useI18n } from '../../../i18n/useI18n';
-import { Small, Text, TextSize, XXSmall } from '../../../typography';
+import { Small, XXSmall } from '../../../typography';
 import { messages } from '../../messages';
 import { SetToolbarSelection } from '../../Toolbar.type';
 import BoardBubble from '../board-bubble/BoardBubble';
@@ -73,15 +73,9 @@ const AssociatedDeviceInfo: React.FC<AssociatedDeviceInfoProps> = (
 
   const renderUnknownSelectionInfoNode = (): JSX.Element => {
     const thirdPartyDeviceLabel = (
-      <Text size={TextSize.XXSmall} bold>
-        {formatMessage(messages.thirdPartyDevice)}
-      </Text>
+      <XXSmall bold>{formatMessage(messages.thirdPartyDevice)}</XXSmall>
     );
-    const boardLabel = (
-      <Text size={TextSize.XXSmall} bold>
-        {board}
-      </Text>
-    );
+    const boardLabel = <XXSmall bold>{board}</XXSmall>;
 
     return (
       <div className={styles['unknown-selection-info-container']}>

@@ -1,15 +1,15 @@
 import {
+  LspReferenceRow,
+  LspReferencesPanelActions,
+  LspReferencesResult,
+} from '@cloud-editor-mono/ide-workbench/lib/code-mirror/extensions/lsp/lsp-references/lsp-references-types';
+import {
   AppBrickListItem,
   AppDetailedInfo,
   BrickCreateUpdateRequest,
   BrickListItem,
 } from '@cloud-editor-mono/infrastructure';
 
-import {
-  LspReferenceRow,
-  LspReferencesPanelActions,
-  LspReferencesResult,
-} from '../../../code-mirror/extensions/lsp/lsp-references/lsp-references-types';
 import {
   AddSketchLibraryDialogLogic,
   ConfigureAppBrickDialogLogic,
@@ -117,6 +117,8 @@ export type AppLabEditSectionLogic = () => {
   ) => Promise<{ hasDuplicate: boolean; conflictType: ConflictType }>;
   /** See `FileTreeProps.closeFolder`. */
   closeFolder?: { path: string; seq: number };
+  /** See `FileTreeProps.renamedFolder`. */
+  renamedFolder?: { from: string; to: string; seq: number };
   sendAppLabNotification: SendAppLabNotification;
   lspReferencesResult?: LspReferencesResult | null;
   lspGoToReference?: (row: LspReferenceRow) => void;
@@ -215,6 +217,8 @@ export type FilesManagerSectionLogic = () => {
   ) => Promise<{ hasDuplicate: boolean; conflictType: ConflictType }>;
   /** See `FileTreeProps.closeFolder`. */
   closeFolder?: { path: string; seq: number };
+  /** See `FileTreeProps.renamedFolder`. */
+  renamedFolder?: { from: string; to: string; seq: number };
   sendAppLabNotification: SendAppLabNotification;
   /** See `AppLabEditSectionLogic.hasSketch`. */
   hasSketch?: boolean;

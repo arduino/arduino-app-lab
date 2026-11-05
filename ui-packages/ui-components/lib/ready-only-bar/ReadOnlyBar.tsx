@@ -17,10 +17,11 @@ import { messages } from './messages';
 import styles from './read-only-bar.module.scss';
 
 export interface ReadOnlyActionButtonsProps {
+  // undefined shows a skeleton while loading; null hides the button.
   primary?: {
     onClick: () => void;
     label: MessageDescriptor;
-  };
+  } | null;
   secondary?: {
     onClick: () => void;
     label: MessageDescriptor;
@@ -147,7 +148,7 @@ const ReadOnlyBar: React.FC<ReadOnlyBarProps> = (props: ReadOnlyBarProps) => {
               ? formatMessage(actionButtons?.primary.label).split(' ')[0]
               : formatMessage(actionButtons?.primary.label)}
           </Button>
-        ) : actionButtons ? (
+        ) : actionButtons && actionButtons.primary !== null ? (
           <div className={styles['primary-button-skeleton']}>
             <Skeleton variant="rounded" />
           </div>

@@ -14,6 +14,10 @@ export function AgentAuthenticate(arg1) {
   return window['go']['app']['App']['AgentAuthenticate'](arg1);
 }
 
+export function AgentAwaitTurn(arg1) {
+  return window['go']['app']['App']['AgentAwaitTurn'](arg1);
+}
+
 export function AgentCancel(arg1) {
   return window['go']['app']['App']['AgentCancel'](arg1);
 }
@@ -22,12 +26,28 @@ export function AgentCancelLogin(arg1) {
   return window['go']['app']['App']['AgentCancelLogin'](arg1);
 }
 
+export function AgentCancelProviderSignIn(arg1) {
+  return window['go']['app']['App']['AgentCancelProviderSignIn'](arg1);
+}
+
 export function AgentChoicesReply(arg1, arg2) {
   return window['go']['app']['App']['AgentChoicesReply'](arg1, arg2);
 }
 
 export function AgentCloseSession(arg1) {
   return window['go']['app']['App']['AgentCloseSession'](arg1);
+}
+
+export function AgentConnectWithoutCredential(arg1) {
+  return window['go']['app']['App']['AgentConnectWithoutCredential'](arg1);
+}
+
+export function AgentCurrent() {
+  return window['go']['app']['App']['AgentCurrent']();
+}
+
+export function AgentDeleteProviderKey(arg1, arg2) {
+  return window['go']['app']['App']['AgentDeleteProviderKey'](arg1, arg2);
 }
 
 export function AgentDeleteSession(arg1) {
@@ -50,8 +70,16 @@ export function AgentLoadSession(arg1) {
   return window['go']['app']['App']['AgentLoadSession'](arg1);
 }
 
+export function AgentMarkSessionRead(arg1) {
+  return window['go']['app']['App']['AgentMarkSessionRead'](arg1);
+}
+
 export function AgentNewSession(arg1, arg2) {
   return window['go']['app']['App']['AgentNewSession'](arg1, arg2);
+}
+
+export function AgentNewSessionState() {
+  return window['go']['app']['App']['AgentNewSessionState']();
 }
 
 export function AgentPermissionReply(arg1, arg2) {
@@ -66,6 +94,18 @@ export function AgentPrompt(arg1, arg2, arg3) {
   return window['go']['app']['App']['AgentPrompt'](arg1, arg2, arg3);
 }
 
+export function AgentProviderCredentials(arg1) {
+  return window['go']['app']['App']['AgentProviderCredentials'](arg1);
+}
+
+export function AgentProviderSignIn(arg1, arg2) {
+  return window['go']['app']['App']['AgentProviderSignIn'](arg1, arg2);
+}
+
+export function AgentProviders(arg1) {
+  return window['go']['app']['App']['AgentProviders'](arg1);
+}
+
 export function AgentRenameSession(arg1, arg2) {
   return window['go']['app']['App']['AgentRenameSession'](arg1, arg2);
 }
@@ -76,6 +116,10 @@ export function AgentResolveFile(arg1) {
 
 export function AgentSetDefault(arg1) {
   return window['go']['app']['App']['AgentSetDefault'](arg1);
+}
+
+export function AgentSetProviderKey(arg1, arg2, arg3) {
+  return window['go']['app']['App']['AgentSetProviderKey'](arg1, arg2, arg3);
 }
 
 export function AgentSetSessionMode(arg1, arg2) {
@@ -104,6 +148,10 @@ export function AgentStop() {
 
 export function AgentSubmitLoginToken(arg1, arg2) {
   return window['go']['app']['App']['AgentSubmitLoginToken'](arg1, arg2);
+}
+
+export function AgentSwitch(arg1) {
+  return window['go']['app']['App']['AgentSwitch'](arg1);
 }
 
 export function AgentValidateAuth() {

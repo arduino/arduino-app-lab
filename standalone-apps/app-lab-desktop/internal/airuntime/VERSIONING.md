@@ -6,8 +6,9 @@ ever resolved as `@latest`.
 
 ## Integrity model
 
-- **npm packages**: `runtime-deps/package-lock.json` carries per-package SHA-512
-  integrity hashes; `npm ci` verifies every downloaded tarball against them.
+- **npm packages**: each agent's `runtime-deps/<agent>/package-lock.json` carries
+  per-package SHA-512 integrity hashes; `npm ci` verifies every downloaded tarball
+  against them.
 - **Node binary**: not covered by the lockfile. The installer downloads Node's
   official `SHASUMS256.txt` and verifies the archive's SHA-256 against it before
   extracting.
@@ -17,8 +18,9 @@ ever resolved as `@latest`.
 | Thing | Pinned in | Current value |
 |---|---|---|
 | Node version | `defaultNodeVersion` in [`node.go`](node.go) | `v22.16.0` |
-| Agent npm packages | [`runtime-deps/package.json`](runtime-deps/package.json) | `@anthropic-ai/claude-code` `2.1.287`, `@agentclientprotocol/claude-agent-acp` `0.85.0` |
-| Full transitive tree | [`runtime-deps/package-lock.json`](runtime-deps/package-lock.json) | locked, with integrity hashes |
+| Claude's npm packages | [`runtime-deps/claude/package.json`](runtime-deps/claude/package.json) | `@anthropic-ai/claude-code` `2.1.287`, `@agentclientprotocol/claude-agent-acp` `0.85.0` |
+| OpenCode's npm package | [`runtime-deps/opencode/package.json`](runtime-deps/opencode/package.json) | `opencode-ai` `1.18.33` |
+| Full transitive tree | `runtime-deps/<agent>/package-lock.json` | locked per agent, with integrity hashes |
 | Manifest layout | `manifestSchema` in [`manifest.go`](manifest.go) | `2` |
 
 ## How to bump Node
@@ -36,15 +38,39 @@ ever resolved as `@latest`.
 
 ## How to bump the agent packages
 
-1. Edit the **exact** versions in `runtime-deps/package.json` (never `^`/`~`/`latest`).
-2. Regenerate the lockfile:
+One set per agent, under `runtime-deps/<agent>/`. Bump one without touching the other.
+
+1. Edit the **exact** versions in `runtime-deps/<agent>/package.json` (never `^`/`~`/`latest`).
+2. Regenerate that agent's lockfile:
    ```sh
-   cd internal/airuntime/runtime-deps && npm install --package-lock-only --no-audit --no-fund
+   cd internal/airuntime/runtime-deps/<agent> && npm install --package-lock-only --no-audit --no-fund
    ```
 3. Commit both files. The new lockfile sha changes `Manifest.LockfileSHA256`, so
    existing installs become detectable as stale (a future "update available" cue).
 4. The ACP adapter is `@agentclientprotocol/claude-agent-acp` (formerly
    `@zed-industries/claude-agent-acp`); confirm version bumps with the agent owner.
+
+### OpenCode specifics
+
+- `opencode-ai` ships the engine as a **native per-platform binary**, declared as an
+  optional dependency. `npm ci` downloads only the host's, and the lockfile pins all
+  of them — check after a bump that `linux-arm64` is still among them, since that is
+  the VentunoQ.
+- Node is needed to **install**, not to run: the binary is self-contained. An OpenCode
+  install therefore still costs one Node download (~178 MB), and Node is per agent, so
+  a user with both agents has two copies.
+- The engine reads configuration, plugins and skills from several places outside our
+  control. `openCodeProfile.containment` in
+  [`../agentauth/profile.go`](../agentauth/profile.go) is what confines it, and every
+  line there closes a specific one. **Re-check it at every bump**: a new scan path, or a
+  renamed flag, reopens a hole silently — nothing errors when a variable stops being read.
+- GitHub Copilot's sign-in drives OpenCode's own login: re-check at every bump the method label
+  and the Enter that answers its first question (`openCodeOffered` in
+  [`../agentauth/providers.go`](../agentauth/providers.go)), and the `Go to:` / `Enter code:`
+  lines `deviceLoginURL` and `deviceLoginCode` read in `internal/app/agentapi.go`. A change
+  shows no code, and the panel gives up after 45 seconds.
+- Google Gemini's key is injected as `GOOGLE_GENERATIVE_AI_API_KEY` too, because OpenCode
+  passes a key on only for a provider with one variable (`KeyEnvs` in `openCodeOffered`).
 
 ## Cadence
 

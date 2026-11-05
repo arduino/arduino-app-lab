@@ -75,7 +75,6 @@ const AppLabAppDetail: React.FC<AppLabAppDetailProps> = (
     renderTooltip: renderTooltipDuplicate,
   } = useTooltip({
     content: formatMessage(messages.copyAndEditButton),
-    timeout: 0,
   });
 
   const agentPanel = useWorkspacePanel({

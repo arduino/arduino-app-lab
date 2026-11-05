@@ -1,11 +1,11 @@
 import { UnknownDeviceIdentifiers } from '../../device-association-dialog/context/deviceAssociationContext';
 import {
+  DeleteFileDialogData,
   DeleteLibraryDialogData,
   DeleteSketchDialogData,
   MobileWarningDialogData,
   RenameDialogData,
 } from '../../dialogs';
-import { DeleteFileDialogData } from '../../editor-tabs-bar';
 import { DeleteSecretDialogData } from '../../secrets-editor';
 import { ModalLogic } from '../dialog';
 

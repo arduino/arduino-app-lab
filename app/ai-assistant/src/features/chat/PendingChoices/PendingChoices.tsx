@@ -1,13 +1,14 @@
 import { ChoiceRequest, ChoiceSubmission } from '../../../services';
 import { ChoiceEcho, useChatStore } from '../../../store';
 import { Choices, ChoicesWizard } from '../../../ui';
-import {
-  choiceAnswerText,
-  choiceRequests,
-  visibleParts,
-} from '../Message/Message.logic';
+import { visibleParts } from '../utils/visibleParts';
+import { TextAnswer } from './TextAnswer';
+import { choiceAnswerText, choiceRequests } from './utils/choices';
 
 interface PendingChoicesProps {
+  // The session this panel displays, not the shared pointer: the card must resolve on the same
+  // thread the reply echoes into, or an answer lands in the other panel's session.
+  sessionId: string | null;
   onChoicesReply?: (
     requestId: string,
     submission: ChoiceSubmission,
@@ -20,22 +21,20 @@ interface PendingChoicesProps {
 // Renders the choice elicitation the current turn is waiting on. Lives in the composer
 // (above the input, outside the thread) like the permission prompt, not inline in a message.
 export const PendingChoices: React.FC<PendingChoicesProps> = ({
+  sessionId,
   onChoicesReply,
   className,
 }) => {
-  const currentSessionId = useChatStore((s) => s.currentSessionId);
   const messages = useChatStore((s) =>
-    currentSessionId ? s.threads[currentSessionId]?.messages : undefined,
+    sessionId ? s.threads[sessionId]?.messages : undefined,
   );
   const resolvedChoiceIds = useChatStore((s) =>
-    currentSessionId
-      ? s.threads[currentSessionId]?.resolvedChoiceIds
-      : undefined,
+    sessionId ? s.threads[sessionId]?.resolvedChoiceIds : undefined,
   );
   const resolveChoice = useChatStore((s) => s.resolveChoice);
   const dismissChoice = (id: string): void => {
-    if (currentSessionId) {
-      resolveChoice(currentSessionId, id);
+    if (sessionId) {
+      resolveChoice(sessionId, id);
     }
   };
   // Dismissing without answering must still reply: the agent blocks on the elicitation until it hears back, so a
@@ -68,6 +67,28 @@ export const PendingChoices: React.FC<PendingChoicesProps> = ({
   // a lone question shows as a single card (no "1/1" pager).
   const isWizard = pending.length > 1;
 
+  // A text question is answered with text, alone or as a step of the wizard.
+  if (!isWizard && pending[0].kind === 'text') {
+    const question = pending[0];
+    return (
+      <div className={className}>
+        <TextAnswer
+          question={question}
+          onSubmit={(answer): void => {
+            onChoicesReply?.(
+              question.id,
+              { selectedIds: [], other: answer },
+              { question: question.title, answer },
+            );
+            dismissChoice(question.id);
+          }}
+          // A skip echoes nothing: the "No preference" of a skipped pick reads wrong for a question asked for text.
+          onSkip={(): void => declineChoice(question)}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className={className}>
       {isWizard ? (
@@ -82,15 +103,36 @@ export const PendingChoices: React.FC<PendingChoicesProps> = ({
                 selectedIds: [],
                 cancelled: true,
               };
-              onChoicesReply?.(q.id, submission, {
-                question: `Step ${i + 1}/${total} — ${q.title}`,
-                answer: choiceAnswerText(q, submission),
-                skipped: submission.cancelled,
-              });
+              const skippedText = q.kind === 'text' && submission.cancelled;
+              onChoicesReply?.(
+                q.id,
+                submission,
+                skippedText
+                  ? undefined
+                  : {
+                      question: `Step ${i + 1}/${total} — ${q.title}`,
+                      answer: choiceAnswerText(q, submission),
+                      skipped: submission.cancelled,
+                    },
+              );
               dismissChoice(q.id);
             });
           }}
           onClose={(): void => pending.forEach((q) => declineChoice(q))}
+          renderTextStep={({
+            question,
+            counter,
+            isLast,
+            onAnswer,
+            onSkip,
+          }): React.ReactNode => (
+            <TextAnswer
+              question={question}
+              step={{ counter, isLast }}
+              onSubmit={onAnswer}
+              onSkip={onSkip}
+            />
+          )}
         />
       ) : (
         <Choices

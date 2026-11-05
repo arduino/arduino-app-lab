@@ -5,7 +5,9 @@ import {
   ShareToClassroomDialogLogic,
 } from '../dialogs';
 import { FormatMessage } from '../i18n/useI18n';
+import { RbacValue } from '../rbac';
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- handlers go straight to onClick, and each command takes its own optional argument
 export type SetToolbarSelection = (...args: any) => any;
 
 export type ShareSketchLogic = ShareSketchDialogLogic;
@@ -72,9 +74,10 @@ type GenericHandler<K extends keyof ToolbarClickHandlerDictionary> = (
 ) => React.ReactNode;
 
 export type ToolbarClickHandlerDictionary = {
-  [K in Exclude<ToolbarItemIds, 'creating-button' | 'share-sketch'>]: (
-    ...args: any
-  ) => any;
+  [K in Exclude<
+    ToolbarItemIds,
+    'creating-button' | 'share-sketch'
+  >]: SetToolbarSelection;
 };
 
 export enum ToolbarActionBlockingReasons {
@@ -144,6 +147,8 @@ export type ToolbarLogic = () => {
   isIotSketch: boolean;
   isIotComponent: boolean;
   canUpload: ToolbarLogicCanUpload;
+  // Without sketch edit the device selector is read-only and Download moves to the toolbar; without upload Verify and Upload are hidden.
+  rbac?: RbacValue;
   canVerify: boolean;
   isVerifying: boolean;
   isPending: boolean;

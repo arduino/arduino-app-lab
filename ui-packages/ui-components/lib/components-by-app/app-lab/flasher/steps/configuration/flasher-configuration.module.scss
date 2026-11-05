@@ -1,28 +1,7 @@
 .image-version-container {
   display: flex;
   gap: 4px;
-  align-items: flex-end;
-
-  .image-version {
-    &--disabled {
-      border: none;
-
-      .image-version-input {
-        padding: 0;
-
-        &-label {
-          opacity: 1;
-          color: var(--text-subtle, #c9d2d2);
-        }
-
-        input {
-          color: var(--text-default, #ffffff);
-          font-weight: 700;
-          padding-top: 8px;
-        }
-      }
-    }
-  }
+  align-items: center;
 
   .input-button {
     background: none;
@@ -71,15 +50,6 @@
     .info-icon {
       display: flex;
       align-items: center;
-    }
-
-    .tooltip-content {
-      background-color: #374146;
-      border-radius: 3px;
-      color: var(--text-default, #ffffff);
-      font-size: 12px;
-      font-weight: 400;
-      padding: 16px 24px;
     }
   }
 }

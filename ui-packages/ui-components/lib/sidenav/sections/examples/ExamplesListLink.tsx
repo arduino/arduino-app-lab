@@ -120,7 +120,7 @@ const ExamplesListLink: React.FC<ExamplesListLinkProps> = (
   const menuAction = useCallback(
     (key: Key): void => {
       if (key === ExamplesMenuItemIds.CopyInYourSketches) {
-        examplesMenuHandlers[ExamplesMenuItemIds.CopyInYourSketches](
+        examplesMenuHandlers[ExamplesMenuItemIds.CopyInYourSketches]?.(
           example.path,
           sourceLibraryID,
           customLibraryID,
@@ -141,6 +141,21 @@ const ExamplesListLink: React.FC<ExamplesListLinkProps> = (
     ],
   );
 
+  const canCopyInYourSketches =
+    !!examplesMenuHandlers[ExamplesMenuItemIds.CopyInYourSketches];
+  const menuSections = useMemo(
+    () =>
+      canCopyInYourSketches
+        ? examplesMenuSections
+        : examplesMenuSections.map((section) => ({
+            ...section,
+            items: section.items.filter(
+              (item) => item.id !== ExamplesMenuItemIds.CopyInYourSketches,
+            ),
+          })),
+    [canCopyInYourSketches],
+  );
+
   return (
     <div className={styles['examples-link-wrapper']}>
       <Link
@@ -157,7 +172,7 @@ const ExamplesListLink: React.FC<ExamplesListLinkProps> = (
       </Link>
       <DropdownMenuButton
         buttonChildren={<ThreeDots />}
-        sections={examplesMenuSections}
+        sections={menuSections}
         onAction={menuAction}
         classes={{
           dropdownMenuButtonWrapper: styles['examples-menu-button-wrapper'],

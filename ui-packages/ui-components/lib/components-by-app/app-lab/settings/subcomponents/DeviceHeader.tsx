@@ -99,6 +99,7 @@ export const DeviceHeader = ({
               <>
                 <Input
                   inputStyle={InputStyle.AppLab}
+                  outlined
                   autoFocus
                   type="text"
                   value={name}
@@ -108,7 +109,6 @@ export const DeviceHeader = ({
                   onEnter={saveName}
                   error={hasError ? new Error(hasError) : undefined}
                   classes={{
-                    error: styles['board-name-input-error'],
                     inputError: styles['board-name-input-error-message'],
                   }}
                   onKeyDown={(e): void => {

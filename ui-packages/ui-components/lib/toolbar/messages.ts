@@ -167,6 +167,12 @@ export const messages = defineMessages({
     defaultMessage: 'Detect device',
     description: 'Label to the trigger the web serial detect device flow',
   },
+  noDeviceSelected: {
+    id: 'toolbar.noDeviceSelected',
+    defaultMessage: 'No device selected yet',
+    description:
+      'Shown in place of the device selector when the user cannot select a device',
+  },
   iotSetupTabMessage: {
     id: 'toolbar.iotSetupTabMessage',
     defaultMessage: 'Change the associated device from the device panel',
@@ -210,8 +216,14 @@ export const shareSketchMessages = defineMessages({
   },
   organizationLabel: {
     id: 'shareSketch.organization-label',
-    defaultMessage: `Only users who have access to the shared space SHARED-SPACE-NAME can view and edit this sketch.`,
+    defaultMessage: `Only users who have access to the shared space {spaceName} can view and edit this sketch.`,
     description: 'Label for the organization visibility option',
+  },
+  organizationLabelUnnamed: {
+    id: 'shareSketch.organization-label-unnamed',
+    defaultMessage: `Only users who have access to this shared space can view and edit this sketch.`,
+    description:
+      'Label for the organization visibility option when the space name is not known',
   },
   membersUrlLabel: {
     id: 'shareSketch.members-url-label',

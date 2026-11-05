@@ -62,6 +62,8 @@ export const Button = forwardRef(
         {...buttonProps}
         ref={buttonRef}
         type={buttonProps.type || 'button'}
+        disabled={buttonProps.disabled || loading}
+        aria-busy={loading || undefined}
         tabIndex={0}
         className={clsx(
           styles.button,
@@ -82,7 +84,7 @@ export const Button = forwardRef(
             [styles['small']]: size === ButtonSize.Small,
             [styles['large']]: size === ButtonSize.Large,
 
-            [styles['disabled']]: buttonProps.disabled,
+            [styles['disabled']]: buttonProps.disabled || loading,
             [styles['disable-interactive']]: disableInteractive,
           },
           classes?.button,

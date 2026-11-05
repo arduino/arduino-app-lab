@@ -1,9 +1,11 @@
 import { Config } from '@cloud-editor-mono/common';
 
-import { httpGetRaw, httpJsonDelete, httpPostRaw } from '../fetch';
+import { httpGet, httpGetRaw, httpJsonDelete, httpPostRaw } from '../fetch';
 import { mapShowUserSettingsResponse } from './mapper';
 import {
   CreateSettingsBody_UsersApi,
+  GetPolicies_Params,
+  GetPolicies_UsersApi,
   GetSettings_Response,
   GetSettings_UsersApi,
 } from './usersApi.type';
@@ -81,4 +83,26 @@ export async function updateUserSettingsRequest(
   }
 
   return true;
+}
+
+export async function getUserPoliciesRequest(
+  params: GetPolicies_Params,
+  token: string,
+): Promise<GetPolicies_UsersApi> {
+  const endpoint = '/v1/policies';
+
+  const response = await httpGet<GetPolicies_UsersApi>({
+    url: Config.USERS_API_URL,
+    endpoint,
+    token,
+    headers: params.header,
+  });
+
+  if (!response) {
+    throw new Error(
+      `Call to "${endpoint}" did not respond with the expected result`,
+    );
+  }
+
+  return response;
 }

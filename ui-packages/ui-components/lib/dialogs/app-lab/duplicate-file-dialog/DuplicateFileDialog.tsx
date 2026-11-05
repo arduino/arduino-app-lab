@@ -41,24 +41,32 @@ export const DuplicateFileDialog: React.FC<DuplicateFileDialogProps> = ({
   const handleOverwrite = async (): Promise<void> => {
     setSelectedAction('overwrite');
     setLoading(true);
-    const result = await onOverwrite();
-    setLoading(false);
-
-    if (result) {
-      onOpenChange(false);
-      setSelectedAction(null);
+    try {
+      const result = await onOverwrite();
+      if (result) {
+        onOpenChange(false);
+        setSelectedAction(null);
+      }
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleKeepBoth = async (): Promise<void> => {
     setSelectedAction('keepBoth');
     setLoading(true);
-    const result = await onKeepBoth();
-    setLoading(false);
-
-    if (result) {
-      onOpenChange(false);
-      setSelectedAction(null);
+    try {
+      const result = await onKeepBoth();
+      if (result) {
+        onOpenChange(false);
+        setSelectedAction(null);
+      }
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
     }
   };
 

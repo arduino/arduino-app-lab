@@ -1,5 +1,8 @@
 @use "sass:math";
 
+$side-margin: 32px; // also the .lib-container margin in sketch-library-card
+$scrollbar-width: 16px; // the #al-body ::-webkit-scrollbar width in app-lab-desktop style.css
+
 .dialog-root {
   .dialog-content {
     & > div:nth-child(2) {
@@ -16,18 +19,12 @@
     flex-direction: column;
   }
 
+  // The list's scrollbar is always shown (`overflow-y: scroll`), so the field skips it too
+  // and ends where the rows' top border ends.
   .search-container {
-    margin: 16px 32px 0 32px;
+    margin: 16px ($side-margin + $scrollbar-width) 0 $side-margin;
   }
 
-  .search-input {
-    background: #374146;
-    border-radius: 0;
-    border: none;
-    font-size: 12px;
-    color: inherit;
-    align-items: center;
-  }
 
   .library-list {
     height: 100%;

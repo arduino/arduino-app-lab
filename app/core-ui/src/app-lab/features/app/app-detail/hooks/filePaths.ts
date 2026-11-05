@@ -31,26 +31,39 @@ export const toAppRelativeId = (absPath: string, appPath?: string): string =>
     ? absPath.slice(appPath.length + 1)
     : absPath;
 
-const withoutHostLocal = (ids: string[]): string[] =>
-  ids.filter((id) => !isHostLocalId(id));
+type DropId = (id: string) => boolean;
 
-const dropHostLocalKeys = <T>(
+const dropKeys = <T>(
   byFileId: Record<string, T> | undefined,
+  drop: DropId,
 ): Record<string, T> | undefined =>
   byFileId &&
-  Object.fromEntries(
-    Object.entries(byFileId).filter(([id]) => !isHostLocalId(id)),
-  );
+  Object.fromEntries(Object.entries(byFileId).filter(([id]) => !drop(id)));
 
-const panelWithoutHostLocalIds = (
+const panelWithoutIds = (
   panel: OpenFilesStorePanelState,
+  drop: DropId,
 ): OpenFilesStorePanelState => ({
   ...panel,
-  items: withoutHostLocal(panel.items),
-  selected:
-    panel.selected && isHostLocalId(panel.selected) ? null : panel.selected,
-  markdownByFileId: dropHostLocalKeys(panel.markdownByFileId),
-  brickTabByFileId: dropHostLocalKeys(panel.brickTabByFileId),
+  items: panel.items.filter((id) => !drop(id)),
+  selected: panel.selected && drop(panel.selected) ? null : panel.selected,
+  markdownByFileId: dropKeys(panel.markdownByFileId, drop),
+  brickTabByFileId: dropKeys(panel.brickTabByFileId, drop),
+});
+
+export const withoutIds = (
+  item: OpenFilesStoreItem,
+  drop: DropId,
+): OpenFilesStoreItem => ({
+  ...item,
+  items: item.items.filter((id) => !drop(id)),
+  selected: item.selected && drop(item.selected) ? null : item.selected,
+  previewFileId:
+    item.previewFileId && drop(item.previewFileId) ? null : item.previewFileId,
+  panes: item.panes && {
+    A: panelWithoutIds(item.panes.A, drop),
+    B: item.panes.B && panelWithoutIds(item.panes.B, drop),
+  },
 });
 
 /**
@@ -65,20 +78,7 @@ const panelWithoutHostLocalIds = (
  */
 export const withoutHostLocalIds = (
   item: OpenFilesStoreItem,
-): OpenFilesStoreItem => ({
-  ...item,
-  items: withoutHostLocal(item.items),
-  selected:
-    item.selected && isHostLocalId(item.selected) ? null : item.selected,
-  previewFileId:
-    item.previewFileId && isHostLocalId(item.previewFileId)
-      ? null
-      : item.previewFileId,
-  panes: item.panes && {
-    A: panelWithoutHostLocalIds(item.panes.A),
-    B: item.panes.B && panelWithoutHostLocalIds(item.panes.B),
-  },
-});
+): OpenFilesStoreItem => withoutIds(item, isHostLocalId);
 /**
  * Split a file's display name into base name and extension.
  *

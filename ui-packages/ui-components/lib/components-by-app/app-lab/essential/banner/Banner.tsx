@@ -11,6 +11,7 @@ export type BannerAction = {
   id: string;
   label: string;
   labelPrefix?: ReactNode;
+  truncateLabel?: boolean;
   danger?: boolean;
   onSelect: () => void;
 };
@@ -113,6 +114,20 @@ export const Banner = (props: BannerProps): JSX.Element => {
                       id: action.id,
                       label: action.label,
                       labelPrefix: action.labelPrefix,
+                      ...(action.truncateLabel
+                        ? {
+                            node: (
+                              <>
+                                {action.labelPrefix}
+                                <span
+                                  className={styles['operation-action-label']}
+                                >
+                                  {action.label}
+                                </span>
+                              </>
+                            ),
+                          }
+                        : {}),
                       ...(action.danger
                         ? { itemClassName: styles['danger'] }
                         : {}),

@@ -23,7 +23,6 @@ export const BrickHeader: React.FC<BrickHeaderProps> = ({
 
   const { props: tooltipProps, renderTooltip } = useTooltip({
     content: formatMessage(messages.configureButton),
-    timeout: 0,
   });
 
   const hasAiModels = (brick?.compatible_models ?? []).length !== 0;

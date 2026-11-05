@@ -56,7 +56,7 @@ func (h *LSPHandler) initArduinoCliConfig() error {
 	ensureArduinoCliLocale(arduinoCliPath, arduinoCliConfigPath)
 
 	if created {
-		if err := updateArduinoCliCoreIndex(context.Background(), arduinoCliPath, arduinoCliConfigPath); err != nil {
+		if err := updateArduinoCliIndex(context.Background(), "core", arduinoCliPath, arduinoCliConfigPath); err != nil {
 			return fmt.Errorf("failed to update arduino-cli core index: %w", err)
 		}
 		h.coreIndexRefreshed = true
@@ -131,17 +131,19 @@ func ensureArduinoCliLocale(arduinoCliPath, arduinoCliConfigPath string) {
 	}
 }
 
-func updateArduinoCliCoreIndex(ctx context.Context, arduinoCliPath, arduinoCliConfigPath string) error {
-	slog.Info("updating arduino-cli core index")
-	updateIndexCmd, err := paths.NewProcess(nil, arduinoCliPath, "core", "update-index", "--config-file", arduinoCliConfigPath)
+// updateArduinoCliIndex runs `<kind> update-index`, where kind is "core" or
+// "lib".
+func updateArduinoCliIndex(ctx context.Context, kind, arduinoCliPath, arduinoCliConfigPath string) error {
+	slog.Info("updating arduino-cli index", "kind", kind)
+	updateIndexCmd, err := paths.NewProcess(nil, arduinoCliPath, kind, "update-index", "--config-file", arduinoCliConfigPath)
 	if err != nil {
 		return err
 	}
 	if out, err := updateIndexCmd.RunAndCaptureCombinedOutput(ctx); err != nil {
-		slog.Error("failed to update arduino-cli core index", "error", err, "output", string(out))
+		slog.Error("failed to update arduino-cli index", "kind", kind, "error", err, "output", string(out))
 		return err
 	}
-	slog.Info("arduino-cli core index updated")
+	slog.Info("arduino-cli index updated", "kind", kind)
 	return nil
 }
 
@@ -417,48 +419,144 @@ func (h *LSPHandler) InstallArduinoCliCore() error {
 		if latestVersion != "" {
 			spec = coreID + "@" + latestVersion
 		}
-		args := []string{"core", "install", spec, "--config-file", arduinoCliConfigPath}
-
-		installCmd, err := paths.NewProcess(nil, append([]string{arduinoCliPath}, args...)...)
-		if err != nil {
-			return err
-		}
-		if out, err := installCmd.RunAndCaptureCombinedOutput(context.Background()); err != nil {
-			slog.Error("core install failed", "core", coreID, "version", logVersion, "error", err, "output", string(out))
-			return err
-		}
-		slog.Info("core install successfully", "core", coreID, "version", logVersion)
-	} else {
-		slog.Info("core is up to date", "core", coreID, "version", version)
+		h.refreshArduinoCliLibraryIndex(arduinoCliPath, arduinoCliConfigPath)
+		return installOrKeepArduinoCliCore(arduinoCliPath, arduinoCliConfigPath, spec, version)
 	}
+	slog.Info("core is up to date", "core", coreID, "version", version)
 	return nil
 }
 
-// coreIndexRefreshTimeout bounds the per-launch index refresh. A firewall that
+// coreIndexRefreshTimeout bounds the core index refresh. A firewall that
 // drops packets instead of rejecting them makes `core update-index` run for
 // over two minutes, and nothing starts the language server until it returns.
 // A var so tests can shorten it.
 var coreIndexRefreshTimeout = 30 * time.Second
 
-// refreshArduinoCliCoreIndex runs `core update-index` once per launch. Caller
-// holds initArduinoCliConfigMu.
+// refreshArduinoCliCoreIndex runs `core update-index` on a language server
+// start, until one fetch succeeds or runs out of time. Caller holds
+// initArduinoCliConfigMu.
 //
 // The config file is persistent, so without the refresh the index stays at
 // whatever it was when the config was created and `core list` keeps reporting
 // that as the latest version. The fetch is time-boxed and best effort: a host
 // that cannot reach the index keeps the cached one and the installed core.
 func (h *LSPHandler) refreshArduinoCliCoreIndex(arduinoCliPath, arduinoCliConfigPath string) {
-	if h.coreIndexRefreshed {
-		return
+	// A fetch that ran out of time means the host drops packets, and the
+	// library fetch would wait its full timeout before the install starts.
+	if refreshArduinoCliIndex(&h.coreIndexRefreshed, "core", coreIndexRefreshTimeout, arduinoCliPath, arduinoCliConfigPath) {
+		h.libraryIndexRefreshed = true
 	}
-	// Set before the fetch: a failure must not be retried until the next launch.
-	h.coreIndexRefreshed = true
+}
 
-	ctx, cancel := context.WithTimeout(context.Background(), coreIndexRefreshTimeout)
-	defer cancel()
-	if err := updateArduinoCliCoreIndex(ctx, arduinoCliPath, arduinoCliConfigPath); err != nil {
-		slog.Warn("continuing with the cached arduino-cli core index", "error", err)
+// libraryIndexRefreshTimeout bounds the library index fetch before a core
+// install. The index is about 40 times larger than the core index, and five
+// minutes downloads its 4.6 MB at about 125 kbit/s. Other language server
+// starts wait on initArduinoCliConfigMu meanwhile. A var so tests can shorten
+// it.
+var libraryIndexRefreshTimeout = 5 * time.Minute
+
+// refreshArduinoCliLibraryIndex runs `lib update-index` before a core install,
+// until one fetch succeeds or runs out of time. Caller holds
+// initArduinoCliConfigMu.
+//
+// A platform lists the library versions it depends on, and `core install`
+// fails with "Library ... not found" when the cached library index is older
+// than one of them. No other arduino-cli call App Lab makes reads this index,
+// so a launch that installs nothing does not fetch it. A failed fetch is not
+// fatal: the cached index can already list the versions the core needs.
+//
+// refreshArduinoCliCoreIndex also sets libraryIndexRefreshed, so this fetch is
+// skipped, when the core index fetch ran out of time.
+func (h *LSPHandler) refreshArduinoCliLibraryIndex(arduinoCliPath, arduinoCliConfigPath string) {
+	refreshArduinoCliIndex(&h.libraryIndexRefreshed, "lib", libraryIndexRefreshTimeout, arduinoCliPath, arduinoCliConfigPath)
+}
+
+// refreshArduinoCliIndex runs `<kind> update-index` unless refreshed is set,
+// and sets it once a fetch succeeds or runs out of time. It reports whether the
+// fetch ran out of time. Caller holds initArduinoCliConfigMu.
+//
+// A fetch that fails before the timeout is retried on the next call: a first
+// install has no core in the core index, and no library versions to fall back
+// to, until one fetch succeeds. The host can be offline at the first start
+// because Wi-Fi has not connected yet. A fetch that ran out of time is not
+// retried, because every retry would hold initArduinoCliConfigMu for the full
+// timeout.
+func refreshArduinoCliIndex(refreshed *bool, kind string, timeout time.Duration, arduinoCliPath, arduinoCliConfigPath string) bool {
+	if *refreshed {
+		return false
 	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	err := updateArduinoCliIndex(ctx, kind, arduinoCliPath, arduinoCliConfigPath)
+	timedOut := err != nil && errors.Is(ctx.Err(), context.DeadlineExceeded)
+	if err == nil || timedOut {
+		*refreshed = true
+	}
+	if err != nil {
+		slog.Warn("continuing with the cached arduino-cli index", "kind", kind, "error", err)
+	}
+	return timedOut
+}
+
+// installOrKeepArduinoCliCore installs spec. When a version is already
+// installed, a failed install keeps it and returns nil: the language server
+// works with the older core, and an upgrade fails for reasons the user cannot
+// fix from App Lab, such as an offline host or a stale library index.
+func installOrKeepArduinoCliCore(arduinoCliPath, arduinoCliConfigPath, spec, installedVersion string) error {
+	if err := installArduinoCliCore(arduinoCliPath, arduinoCliConfigPath, spec); err != nil {
+		if installedVersion == "" {
+			return err
+		}
+		slog.Warn("core upgrade failed, continuing with the installed version", "spec", spec, "installed", installedVersion, "error", err)
+		return nil
+	}
+	slog.Info("core install successfully", "spec", spec)
+	return nil
+}
+
+// installArduinoCliCore runs `core install` for spec.
+//
+// The returned error carries arduino-cli's last output line, which is where it
+// prints the reason. The editor shows err.Error() as the language support
+// failure, and the exit status alone ("exit status 1") does not say what to fix.
+func installArduinoCliCore(arduinoCliPath, arduinoCliConfigPath, spec string) error {
+	installCmd, err := paths.NewProcess(nil, arduinoCliPath, "core", "install", spec, "--config-file", arduinoCliConfigPath)
+	if err != nil {
+		return err
+	}
+	out, err := installCmd.RunAndCaptureCombinedOutput(context.Background())
+	if err == nil {
+		return nil
+	}
+	slog.Error("core install failed", "spec", spec, "error", err, "output", string(out))
+	if reason := lastOutputLine(out); reason != "" {
+		return &coreInstallError{msg: fmt.Sprintf("installing %s: %s", spec, reason), err: err}
+	}
+	return fmt.Errorf("installing %s: %w", spec, err)
+}
+
+// coreInstallError keeps the exit status out of the message the editor shows,
+// while errors.As still finds it.
+type coreInstallError struct {
+	msg string
+	err error
+}
+
+func (e *coreInstallError) Error() string { return e.msg }
+
+func (e *coreInstallError) Unwrap() error { return e.err }
+
+// lastOutputLine returns the last non-empty line of a command's output. Progress
+// bars redraw with \r, so those count as line breaks too.
+func lastOutputLine(out []byte) string {
+	lines := strings.FieldsFunc(string(out), func(r rune) bool { return r == '\n' || r == '\r' })
+	for i := len(lines) - 1; i >= 0; i-- {
+		if line := strings.TrimSpace(lines[i]); line != "" {
+			return line
+		}
+	}
+	return ""
 }
 
 // removeStaleArduinoCliAdditionalURLs drops every staleIndexURLs entry from

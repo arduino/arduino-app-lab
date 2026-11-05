@@ -4,8 +4,6 @@ import {
 } from '@cloud-editor-mono/infrastructure';
 import { EventSourceMessage } from '@microsoft/fetch-event-source';
 
-export const INSUFFICIENT_STORAGE_ERROR_CODE = 'insufficient_storage';
-
 export type ModelDownloadEvent =
   | { event: StreamEventType.Message; message: string }
   | { event: StreamEventType.Progress; progress: number; name?: string }

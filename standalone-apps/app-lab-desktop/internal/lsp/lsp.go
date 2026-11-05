@@ -164,9 +164,12 @@ type LSPHandler struct {
 	resourcesMu            sync.Mutex
 	ensurePythonStubsMu    sync.Mutex
 	initArduinoCliConfigMu sync.Mutex
-	// coreIndexRefreshed records that `core update-index` ran this launch.
-	// Guarded by initArduinoCliConfigMu.
-	coreIndexRefreshed bool
+	// coreIndexRefreshed and libraryIndexRefreshed record that `core
+	// update-index` and `lib update-index` must not run again this launch: the
+	// fetch succeeded or ran out of time. A core index fetch that ran out of
+	// time also sets libraryIndexRefreshed. Guarded by initArduinoCliConfigMu.
+	coreIndexRefreshed    bool
+	libraryIndexRefreshed bool
 
 	// sendMus serializes, per LSP, a message's [fold-into-recovery-snapshot +
 	// write] against a restart's [start + state replay]. Without it a message
@@ -986,10 +989,20 @@ func isMethodMessage(message any, method string) bool {
 
 // sendDuringReplay is the replay's send path: identical to sendSerialized but
 // without taking the send mutex, which the restart sequence already holds.
-func (h *LSPHandler) sendDuringReplay(lspId LspId, message any) error {
+// target names the one process to replay to, or is empty for every process of
+// the LSP. The process that kept running already has this state: a second
+// initialize gets an answer the client already had, and a didOpen carries the
+// snapshot's old version, so the client drops that server's diagnostics.
+func (h *LSPHandler) sendDuringReplay(lspId LspId, target ProcessId, message any) error {
 	mainProc, formatterProc, err := h.waitForLSPReady(lspId)
 	if err != nil {
 		return err
+	}
+	switch target {
+	case ProcessId(lspId):
+		return sendToProc(mainProc, message)
+	case getFormatterProcessId(lspId):
+		return h.sendStateSyncToFormatter(lspId, formatterProc, message)
 	}
 	return h.deliver(lspId, mainProc, formatterProc, message)
 }
@@ -1232,7 +1245,7 @@ func (h *LSPHandler) restartLSP(lspId LspId, gen uint64) {
 		sendMu := h.sendMuFor(lspId)
 		sendMu.Lock()
 		if err = h.startIfCurrent(lspId, dir, gen); err == nil {
-			h.replayStateAfterRestart(lspId)
+			h.replayStateAfterRestart(lspId, "")
 			sendMu.Unlock()
 			return
 		}
@@ -1484,10 +1497,12 @@ func (h *LSPHandler) handleProcessExit(proc *lspProcess) {
 	}
 
 	// replay previous state to the new process instance
-	h.replayStateAfterRestart(eventLspId)
+	h.replayStateAfterRestart(eventLspId, processId)
 }
 
-func (h *LSPHandler) replayStateAfterRestart(eventLspId LspId) {
+// replayStateAfterRestart sends the recovery snapshot to target, or to every
+// process of the LSP when target is empty (see sendDuringReplay).
+func (h *LSPHandler) replayStateAfterRestart(eventLspId LspId, target ProcessId) {
 	h.stateMu.RLock()
 	initReq := h.initializeRequests[eventLspId]
 	openFiles := h.openFiles[eventLspId]
@@ -1495,16 +1510,16 @@ func (h *LSPHandler) replayStateAfterRestart(eventLspId LspId) {
 
 	if initReq != nil {
 		slog.Info("replaying initialize request", "lspId", eventLspId)
-		if err := h.sendDuringReplay(eventLspId, initReq); err != nil {
+		if err := h.sendDuringReplay(eventLspId, target, initReq); err != nil {
 			slog.Error("failed to replay initialize request", "lspId", eventLspId, "error", err)
 		}
-		if err := h.sendDuringReplay(eventLspId, map[string]any{"method": methodInitialized, "params": map[string]any{}}); err != nil {
+		if err := h.sendDuringReplay(eventLspId, target, map[string]any{"method": methodInitialized, "params": map[string]any{}}); err != nil {
 			slog.Error("failed to replay initialized notification", "lspId", eventLspId, "error", err)
 		}
 		// h.send()'s initialized post-step, replicated here because the replay
 		// bypasses it: without the config path pyright falls back to defaults
 		// (no stubs extraPaths, no suppressed-import rules) after a restart.
-		if eventLspId == LSP_Python {
+		if eventLspId == LSP_Python && !isFormatter(target) {
 			h.sendPyrightConfigPath()
 		}
 	}
@@ -1512,7 +1527,7 @@ func (h *LSPHandler) replayStateAfterRestart(eventLspId LspId) {
 	if openFiles != nil {
 		slog.Info("replaying didOpen notifications for all open files", "lspId", eventLspId, "count", len(openFiles))
 		for uri, docMsg := range openFiles {
-			if err := h.sendDuringReplay(eventLspId, docMsg); err != nil {
+			if err := h.sendDuringReplay(eventLspId, target, docMsg); err != nil {
 				slog.Error("failed to replay didOpen notification", "lspId", eventLspId, "uri", uri, "error", err)
 			}
 		}
@@ -1828,13 +1843,23 @@ func (h *LSPHandler) queueForFormatter(proc *lspProcess, message any) bool {
 	if h.formatterReady[proc.processId] {
 		return false
 	}
+	// Marshal now: a held didOpen is the recovery snapshot's own map, which later
+	// didChanges edit in place, so the formatter would get those edits twice.
+	// Marshalling here, under stateMu, also keeps the flush from reading the map
+	// while a fold writes it.
+	content, err := json.Marshal(message)
+	if err != nil {
+		slog.Error("failed to marshal held formatter message", "processId", proc.processId, "error", err)
+		return true
+	}
+
 	queued := h.formatterQueue[proc.processId]
 	if len(queued) >= maxFormatterQueue {
 		slog.Warn("formatter pre-initialize queue is full, dropping the oldest message",
 			"processId", proc.processId, "limit", maxFormatterQueue)
 		queued = queued[1:]
 	}
-	h.formatterQueue[proc.processId] = append(queued, message)
+	h.formatterQueue[proc.processId] = append(queued, json.RawMessage(content))
 	return true
 }
 
@@ -1907,13 +1932,8 @@ func (h *LSPHandler) sendToProcesses(lspId LspId, mainProc *lspProcess, formatte
 		}
 
 		// send notifications and initialize request (failing silently if it fails, cause requests are also sent to main process)
-		// The formatter's `initialized` comes from markFormatterReady.
-		if (isNotification || isInitializeRequest) && method != methodInitialized {
-			// `initialize` itself must go straight through — it is what makes the
-			// formatter ready. Everything else waits for its answer.
-			if !isInitializeRequest && formatterProc != nil && h.queueForFormatter(formatterProc, message) {
-				slog.Debug("holding state sync until the formatter initializes", "lsp", lspId, "method", method)
-			} else if err := sendToProc(formatterProc, message); err != nil {
+		if isNotification || isInitializeRequest {
+			if err := h.sendStateSyncToFormatter(lspId, formatterProc, message); err != nil {
 				slog.Warn("failed to send state sync to formatter process", "error", err, "lsp", lspId)
 			}
 		}
@@ -1921,6 +1941,27 @@ func (h *LSPHandler) sendToProcesses(lspId LspId, mainProc *lspProcess, formatte
 
 	return sendToProc(mainProc, message)
 
+}
+
+// sendStateSyncToFormatter sends a notification or the initialize request to
+// the formatter.
+func (h *LSPHandler) sendStateSyncToFormatter(lspId LspId, formatterProc *lspProcess, message any) error {
+	msgMap, _ := message.(map[string]any)
+	method, _ := msgMap["method"].(string)
+	_, hasId := msgMap["id"]
+
+	// The formatter's `initialized` comes from markFormatterReady.
+	if method == methodInitialized {
+		return nil
+	}
+	// `initialize` itself must go straight through — it is what makes the
+	// formatter ready. Everything else waits for its answer.
+	isInitializeRequest := hasId && method == methodInitialize
+	if !isInitializeRequest && formatterProc != nil && h.queueForFormatter(formatterProc, message) {
+		slog.Debug("holding state sync until the formatter initializes", "lsp", lspId, "method", method)
+		return nil
+	}
+	return sendToProc(formatterProc, message)
 }
 
 func sendToProc(proc *lspProcess, message any) error {

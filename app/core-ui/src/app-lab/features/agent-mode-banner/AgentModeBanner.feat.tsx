@@ -4,9 +4,8 @@ import {
   ButtonAppearance,
   ButtonSize,
   ButtonVariant,
-  Text,
-  TextSize,
   useI18n,
+  XXSmall,
 } from '@cloud-editor-mono/ui-components/lib/components-by-app/app-lab';
 
 import { useAgentModeBannerLogic } from './agentModeBanner.logic';
@@ -26,13 +25,13 @@ const AgentModeBanner: React.FC = () => {
       <div className={styles['text']}>
         <div className={styles['header']}>
           <Sparkle className={styles['icon']} aria-hidden="true" />
-          <Text size={TextSize.XXSmall} className={styles['title']}>
+          <XXSmall className={styles['title']}>
             {formatMessage(messages.title)}
-          </Text>
+          </XXSmall>
         </div>
-        <Text size={TextSize.XXXSmall} className={styles['description']}>
+        <XXSmall className={styles['description']}>
           {formatMessage(messages.description)}
-        </Text>
+        </XXSmall>
       </div>
       <Button
         variant={ButtonVariant.Primary}

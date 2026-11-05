@@ -33,7 +33,6 @@ export const Notification: React.FC<NotificationProps> = ({
 
   const { props: tooltipProps, renderTooltip } = useTooltip({
     content: formatMessage(messages.notifications),
-    timeout: 0,
   });
 
   // This effect handles clicks outside of the menu
@@ -71,7 +70,7 @@ export const Notification: React.FC<NotificationProps> = ({
           ref={menuTriggerRef as unknown as React.RefObject<HTMLButtonElement>}
           variant={ButtonVariant.Tertiary}
           appearance={ButtonAppearance.LowContrast}
-          size={ButtonSize.XXSmall}
+          size={ButtonSize.XSmall}
           onClick={clickHandlerNotifications}
           classes={{
             button: clsx(styles['notification-button'], {
@@ -79,11 +78,7 @@ export const Notification: React.FC<NotificationProps> = ({
             }),
           }}
         >
-          <div
-            className={clsx(styles['notification-icon-container'], {
-              [styles['empty']]: newNotifications === 0,
-            })}
-          >
+          <div className={styles['notification-icon-container']}>
             {newNotifications === 0 ? <Bell /> : <BellWithDot />}
             {newNotifications > 0 && (
               <span className={clsx(styles['notification-label'])}>

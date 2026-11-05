@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os/exec"
 	"syscall"
+	"time"
 	"unsafe"
 
 	"golang.org/x/sys/windows"
@@ -67,6 +68,25 @@ func (g *windowsGroup) terminate(cmd *exec.Cmd) error {
 		return nil
 	}
 	return windows.TerminateJobObject(g.job, 1)
+}
+
+// jobAccounting is JOBOBJECT_BASIC_ACCOUNTING_INFORMATION, which x/sys does not define.
+type jobAccounting struct {
+	TotalUserTime, TotalKernelTime, ThisPeriodTotalUserTime, ThisPeriodTotalKernelTime int64
+	TotalPageFaultCount, TotalProcesses, ActiveProcesses, TotalTerminatedProcesses     uint32
+}
+
+// drain waits while the job has a process left: closing the job kills them all.
+func (g *windowsGroup) drain(deadline time.Time) {
+	for g.job != 0 && time.Now().Before(deadline) {
+		var info jobAccounting
+		err := windows.QueryInformationJobObject(g.job, windows.JobObjectBasicAccountingInformation,
+			uintptr(unsafe.Pointer(&info)), uint32(unsafe.Sizeof(info)), nil)
+		if err != nil || info.ActiveProcesses == 0 {
+			return
+		}
+		time.Sleep(drainPoll)
+	}
 }
 
 func (g *windowsGroup) release() error {

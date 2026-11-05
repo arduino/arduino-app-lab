@@ -13,6 +13,8 @@ export type RuntimePhase =
   | 'error';
 
 export interface RuntimeProgress {
+  // Whose install this is; absent from a host that predates it, and then never filtered on.
+  agent?: AgentId;
   phase: RuntimePhase;
   pct?: number;
   message?: string;
@@ -20,6 +22,8 @@ export interface RuntimeProgress {
 
 export interface RuntimeStatus {
   installed: boolean;
+  // The agent's own package version. `version` is Node's, which every agent installs the same.
+  agentVersion?: string;
   version?: string;
   diskUsageBytes?: number;
 }

@@ -2,6 +2,7 @@ import AccountArduinoCloud from '../account-arduino-cloud.svg?react';
 import AccountConnectedBoards from '../account-connected-boards.svg?react';
 import AccountCustomAiModels from '../account-custom-ai-models.svg?react';
 import AccountSettings from '../account-settings.svg?react';
+import IconAccountSettingsNormal from '../account-settings-normal.svg?react';
 import AccountStarEmpty from '../account-star-empty.svg?react';
 import AccountStarFilled from '../account-star-filled.svg?react';
 import AccountView from '../account-view.svg?react';
@@ -100,10 +101,13 @@ import ExitButton from '../exit-button.svg?react';
 import FeedbackThumbsDown from '../feedback-thumbs-down.svg?react';
 import FeedbackThumbsUp from '../feedback-thumbs-up.svg?react';
 import FileAdd from '../file-add.svg?react';
+import IconFileArchiveOutNormal from '../file-archive-out-normal.svg?react';
 import FileCopy from '../file-copy.svg?react';
+import IconFileFolderNormal from '../file-folder-normal.svg?react';
 import FileFolderOpen from '../file-folder-open.svg?react';
 import FileGeneric from '../file-generic.svg?react';
 import FileIno from '../file-ino.svg?react';
+import IconFileLoadDownloadArrow from '../file-load-download-arrow.svg?react';
 import FileTypeHeader from '../file-type-header.svg?react';
 import FileTypeImage from '../file-type-image.svg?react';
 import FileTypeIno from '../file-type-ino.svg?react';
@@ -114,7 +118,9 @@ import Folder from '../folder.svg?react';
 import FolderAdd from '../folder-add.svg?react';
 import FolderOutline from '../FolderOutline.svg?react';
 import FullScreenExpand from '../fullscreen-expand-arrows.svg?react';
+import Gemini from '../gemini.svg?react';
 import GenAISendArrow from '../gen-ai-send-arrow.svg?react';
+import GitHub from '../github.svg?react';
 import GoToError from '../go-to-error.svg?react';
 import GoogleClassroom from '../google-classroom.svg?react';
 import Hardware from '../hardware.svg?react';
@@ -146,9 +152,18 @@ import Models from '../models.svg?react';
 import Monitor from '../monitor.svg?react';
 import MyApps from '../my-apps.svg?react';
 import NavigationArrow from '../navigation-arrow.svg?react';
+import IconNavigationArrowCaretNormalDown from '../navigation-arrow-caret-normal-down.svg?react';
+import IconNavigationArrowCaretNormalRight from '../navigation-arrow-caret-normal-right.svg?react';
+import IconNavigationArrowChevronNormalRight from '../navigation-arrow-chevron-normal-right.svg?react';
+import IconNavigationArrowChevronNormalUp from '../navigation-arrow-chevron-normal-up.svg?react';
+import IconNavigationArrowLeft from '../navigation-arrow-left.svg?react';
+import IconNavigationArrowRight from '../navigation-arrow-right.svg?react';
+import IconNavigationCheckmarkOutlineFilled from '../navigation-checkmark-outline-filled.svg?react';
 import NavigationChevron from '../navigation-chevron.svg?react';
+import IconNavigationCloseNormal from '../navigation-close-normal.svg?react';
 import NavigationGroup from '../navigation-group.svg?react';
 import NavigationGroupOutline from '../navigation-group-outline.svg?react';
+import IconNavigationMenuMoreHorizontal from '../navigation-menu-more-horizontal.svg?react';
 import NavigationTable from '../navigation-table.svg?react';
 import NoResults from '../no-results.svg?react';
 import NoResultsDark from '../no-results-dark.svg?react';
@@ -160,7 +175,10 @@ import OnboardingBack from '../onboarding-back.svg?react';
 import OnboardingNext from '../onboarding-next.svg?react';
 import OpenCode from '../open-code.svg?react';
 import OpenInNewTab from '../open-in-new-tab.svg?react';
+import IconOperationDeleteNormal from '../operation-delete-normal.svg?react';
+import IconOperationEditPenNormal from '../operation-edit-pen-normal.svg?react';
 import OperationListOutline from '../operation-list-outline.svg?react';
+import IconOperationPinNormal from '../operation-pin-normal.svg?react';
 import OperationSort from '../operation-sort.svg?react';
 import Padlock from '../padlock.svg?react';
 import Pause from '../pause.svg?react';
@@ -198,7 +216,10 @@ import Sparkle from '../sparkle.svg?react';
 import Spinner from '../spinner.svg?react';
 import SplitView from '../split-view.svg?react';
 import Stats from '../stats.svg?react';
+import IconStatusAttentionErrorOutlineFilled from '../status-attention-error-outline-filled.svg?react';
+import IconStatusAttentionWarningOutlineFilled from '../status-attention-warning-outline-filled.svg?react';
 import StatusError from '../status-error.svg?react';
+import IconStatusInformationItalicOutlineFilled from '../status-information-italic-outline-filled.svg?react';
 import StatusSuccess from '../status-success.svg?react';
 import Stop from '../stop.svg?react';
 import StopWatch from '../stopwatch.svg?react';
@@ -207,10 +228,13 @@ import SubtractMinus from '../subtract-minus.svg?react';
 import Success from '../success.svg?react';
 import Switch from '../switch.svg?react';
 import TechReference from '../tech-reference.svg?react';
+import IconTechnologyCablePlugNormal from '../technology-cable-plug-normal.svg?react';
+import IconTechnologyLinearAccelerationArrowNormal from '../technology-linear-acceleration-arrow-normal.svg?react';
 import Terminal from '../terminal.svg?react';
 import Text from '../text.svg?react';
 import TextLink from '../text-link.svg?react';
 import ThreeDots from '../three-dots.svg?react';
+import IconTimeClockNormal from '../time-clock-normal.svg?react';
 import ToggleOff from '../toggle-off.svg?react';
 import ToggleOn from '../toggle-on.svg?react';
 import ToolbarCancelX from '../toolbar-cancel-x.svg?react';
@@ -363,7 +387,9 @@ export {
   FolderAdd,
   FolderOutline,
   FullScreenExpand,
+  Gemini,
   GenAISendArrow,
+  GitHub,
   GoogleClassroom,
   GoToError,
   Hardware,
@@ -371,6 +397,28 @@ export {
   HardwareNpu,
   HardwareRam,
   HardwareStorage,
+  IconAccountSettingsNormal,
+  IconFileArchiveOutNormal,
+  IconFileFolderNormal,
+  IconFileLoadDownloadArrow,
+  IconNavigationArrowCaretNormalDown,
+  IconNavigationArrowCaretNormalRight,
+  IconNavigationArrowChevronNormalRight,
+  IconNavigationArrowChevronNormalUp,
+  IconNavigationArrowLeft,
+  IconNavigationArrowRight,
+  IconNavigationCheckmarkOutlineFilled,
+  IconNavigationCloseNormal,
+  IconNavigationMenuMoreHorizontal,
+  IconOperationDeleteNormal,
+  IconOperationEditPenNormal,
+  IconOperationPinNormal,
+  IconStatusAttentionErrorOutlineFilled,
+  IconStatusAttentionWarningOutlineFilled,
+  IconStatusInformationItalicOutlineFilled,
+  IconTechnologyCablePlugNormal,
+  IconTechnologyLinearAccelerationArrowNormal,
+  IconTimeClockNormal,
   Increment,
   IndentCode,
   InfoIconI,

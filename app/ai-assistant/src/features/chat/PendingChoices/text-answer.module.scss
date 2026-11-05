@@ -1,0 +1,45 @@
+@use "@cloud-editor-mono/arduino-sass/src/typography" as typography;
+@use "@cloud-editor-mono/arduino-sass/src/_fonts" as fonts;
+
+.text-answer {
+  width: 100%;
+  max-width: var(--chat-content-max-width);
+  margin-inline: auto;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  border-radius: 8px;
+  background: var(--surface-bg-above, #374146);
+}
+
+.question {
+  color: var(--text-default, #ffffff);
+  font-weight: fonts.$font-weight-semibold;
+}
+
+.row {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.input {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.skip {
+  align-self: flex-start;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--text-subtle, #c9d2d2);
+  font-size: typography.$font-size-xxx-small;
+  cursor: pointer;
+
+  &:hover {
+    color: var(--text-default, #ffffff);
+  }
+}

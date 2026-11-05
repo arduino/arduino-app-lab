@@ -13,7 +13,7 @@ import { getBoardCacheId } from '../../../../utils/board';
 import { parentDir, resolveAbsPath, toAppRelativeId } from './filePaths';
 import { APP_YAML_PATH, SKETCH_YAML_PATH } from './useAppFiles';
 import { appDirKey } from './useAppFileTree';
-import { UseFileOperationsReturn } from './useFileOperations';
+import { keepMovedBuffer, UseFileOperationsReturn } from './useFileOperations';
 
 // Fire-and-forget a watch/refresh operation, reporting rejections instead of
 // leaving them as unhandled promise rejections.
@@ -145,7 +145,7 @@ export function useFileWatch({
           // instanceId change, and that reload re-syncs the LS as a side
           // effect.
           const fileId = openAbsPathsRef.current.get(event.path);
-          if (fileId) {
+          if (fileId && !keepMovedBuffer(fileId)) {
             track(
               'refresh content',
               refreshFileContents([fileId], 'external-change'),
@@ -221,7 +221,8 @@ export function useFileWatch({
             // directory, which a plain file create never is.
             relistDir(relPath);
             const fileId = openAbsPathsRef.current.get(event.path);
-            if (fileId) {
+            // A polling watcher reports each file of a folder the agent moved as created.
+            if (fileId && !keepMovedBuffer(fileId)) {
               track(
                 'refresh content',
                 refreshFileContents([fileId], 'external-change'),

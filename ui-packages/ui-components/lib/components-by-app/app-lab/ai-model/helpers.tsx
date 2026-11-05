@@ -1,9 +1,9 @@
 import {
   IconFileArchiveOutNormal,
-  IconMediaLibraryBooksNormal,
   IconTechnologyLinearAccelerationArrowNormal,
-} from '@arduino/react-icons';
-import { MicroSD } from '@cloud-editor-mono/images/assets/icons';
+  MediaLibraryBooksNormal,
+  MicroSD,
+} from '@cloud-editor-mono/images/assets/icons';
 
 import { formatBytes } from '../../../utils';
 import {
@@ -79,7 +79,7 @@ export const allowedMetadataTags: Record<string, AiModelMetadataTag> = {
     path: 'metadata.publisher',
     className: 'publisher',
     formatFn: (value: string): string => value,
-    icon: <IconMediaLibraryBooksNormal />,
+    icon: <MediaLibraryBooksNormal />,
   },
   'image-resolution': {
     order: 4,
@@ -305,8 +305,11 @@ interface AiModelCardStateParams {
   inUseModelId?: string;
   /** The model pre-selected by the user (add-brick flow). */
   selectedModelId?: string;
-  /** The brick belongs to an example app: its model cannot be changed. */
-  isExample?: boolean;
+  /**
+   * The brick belongs to an example or an installed release: its model cannot
+   * be changed.
+   */
+  isReadOnlyApp?: boolean;
   /** Brick list view: no app context, selection is hidden. */
   readOnly?: boolean;
   impulses: AiModelImpulse[];
@@ -331,8 +334,8 @@ interface AiModelCardState {
   isDisabled: boolean;
   /**
    * Install/uninstall actions are allowed on this card. Built-in models can
-   * never be (un)installed; in examples only the in-use model can, so the
-   * user can download what is needed to run the example.
+   * never be (un)installed; in read-only apps only the in-use model can, so
+   * the user can download what is needed to run the app.
    */
   allowsInstallActions: boolean;
 }
@@ -340,17 +343,17 @@ interface AiModelCardState {
 /**
  * Derives the interaction state of a model card.
  *
- * In example apps the model is fixed to `brickInstance.model`: that model is
- * shown as selected and is the only one that can be installed/uninstalled
- * (when not built-in); every other model is disabled. In regular apps and in
- * the brick list, built-in models cannot be uninstalled while all other
- * models can be installed/uninstalled freely.
+ * In read-only apps (examples and installed releases) the model is fixed to
+ * `brickInstance.model`: that model is shown as selected and is the only one
+ * that can be installed/uninstalled (when not built-in); every other model is
+ * disabled. In regular apps and in the brick list, built-in models cannot be
+ * uninstalled while all other models can be installed/uninstalled freely.
  */
 export const getAiModelCardState = ({
   model,
   inUseModelId,
   selectedModelId,
-  isExample,
+  isReadOnlyApp,
   readOnly,
   impulses,
   selectedImpulse,
@@ -367,43 +370,45 @@ export const getAiModelCardState = ({
   // reference server-side (the API has no way to clear it), so this is derived
   // from install state rather than the reference, and it survives reload.
   // Edge Impulse models get this for free because `impulseInUse` is keyed on
-  // the impulse's `installedModelId`, which is unset once uninstalled. Examples
-  // are exempt: their fixed model is shown selected so it can be downloaded.
+  // the impulse's `installedModelId`, which is unset once uninstalled.
+  // Read-only apps are exempt: their fixed model is shown selected so it can
+  // be downloaded.
   const isModelInUse =
     !!inUseModelId &&
     ((!isEdgeImpulse &&
       model.id === inUseModelId &&
-      (isExample || model.isInstalled)) ||
+      (isReadOnlyApp || model.isInstalled)) ||
       !!impulseInUse ||
-      // In an example the fixed model may be an unlinked Edge Impulse model the
-      // board can download but that isn't installed yet — so it has no
-      // `installedModelId`, hence no `impulseInUse`. Match it by its
+      // In a read-only app the fixed model may be an unlinked Edge Impulse
+      // model the board can download but that isn't installed yet — so it has
+      // no `installedModelId`, hence no `impulseInUse`. Match it by its
       // downloadable board model id so the card auto-selects and shows its
-      // download CTA (the brick instance's `model` is the example default).
-      (!!isExample &&
+      // download CTA (the brick instance's `model` is the app default).
+      (!!isReadOnlyApp &&
         isEdgeImpulse &&
         impulses.some((i) => i.downloadModelId === inUseModelId)));
 
-  // In examples the selected model is always the brick instance one;
+  // In read-only apps the selected model is always the brick instance one;
   // elsewhere it follows the model id (pre)selected by the user.
-  const isModelSelected = isExample
+  const isModelSelected = isReadOnlyApp
     ? isModelInUse
     : !!selectedModelId &&
       (model.id === selectedModelId ||
         impulses.some((i) => i.installedModelId === selectedModelId));
 
   const isSelectable =
-    !isExample &&
+    !isReadOnlyApp &&
     !readOnly &&
     !isModelInUse &&
     !isModelSelected &&
     isModelInstalled;
 
-  // Examples disable every model but the in-use one; elsewhere a model is
-  // disabled until installed.
-  const isDisabled = isExample ? !isModelInUse : !isModelInstalled;
+  // Read-only apps disable every model but the in-use one; elsewhere a model
+  // is disabled until installed.
+  const isDisabled = isReadOnlyApp ? !isModelInUse : !isModelInstalled;
 
-  const allowsInstallActions = !model.isBuiltIn && (!isExample || isModelInUse);
+  const allowsInstallActions =
+    !model.isBuiltIn && (!isReadOnlyApp || isModelInUse);
 
   return {
     isEdgeImpulse,

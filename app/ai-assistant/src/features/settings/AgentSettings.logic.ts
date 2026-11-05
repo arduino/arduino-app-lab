@@ -1,21 +1,27 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useI18n } from '@cloud-editor-mono/ui-components/lib/components-by-app/app-lab';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import { messages } from '../../messages';
 import {
   AgentDescriptor,
   AgentId,
   AuthStatus,
+  connectWithoutKey,
   disconnect,
   getAgent,
-  getAuthStatus,
   listAgents,
-  setDefaultAgent,
 } from '../../services';
 import { useAiAssistantStore, useChatStore } from '../../store';
-import { restartForNewCredential } from '../connect/restartForNewCredential';
+import { errorText } from '../connect/utils/errorText';
+import { probeAgentAuth } from '../connect/utils/resolveAgentAuth';
+import {
+  restartAfterTurns,
+  restartForNewCredential,
+} from '../connect/utils/restartForNewCredential';
 import {
   type AgentAuthFlowState,
   useAgentAuthFlow,
-} from '../connect/useAgentAuthFlow';
+} from '../connect/utils/useAgentAuthFlow';
 import { type RuntimePanelLogic, useRuntimePanel } from './RuntimePanel.logic';
 
 // How long a failure toast stays up before clearing itself.
@@ -52,77 +58,120 @@ export interface AgentSettingsLogic {
   runtime: RuntimePanelLogic;
   // Latest auth-flow error, shown in the section toast.
   error?: string;
+  // A turn is in flight somewhere: the actions that respawn the agent are refused until it ends.
+  turnRunning: boolean;
   // Pending confirmation dialog (disconnect/switch), if any.
   showConfirm?: { kind: ConfirmKind; agentId: AgentId };
   // The agent targeted by the pending confirmation.
   confirmTarget?: AgentDescriptor;
-  // The agent currently set as default, for the switch dialog copy.
-  currentDefaultAgent?: AgentDescriptor;
+  // The agent the chat is talking to. Several can hold a credential; one runs.
+  selectedAgentId?: AgentId;
+  // The agent whose install just finished: its card offers Start building instead of Set as default.
+  justInstalledId?: AgentId;
+  // Used by Connect and by the switch dialog, so both take the same route.
+  activate: (agentId: AgentId, openAfter?: boolean) => void;
+  // Restarts the running agent so a provider key added or removed actually reaches it.
+  reloadCredentials: (agentId: AgentId) => Promise<void>;
+  // A success line for the toast, and the way to clear it.
+  notice?: string;
+  notify: (message: string, kind: 'error' | 'success') => void;
+  dismissNotice: VoidFunction;
+  // That agent's descriptor, when it has a credential: what copy means by "the one in use".
+  inUseAgent?: AgentDescriptor;
   // Only worth offering with more than one usable agent.
-  showSetAsDefault: boolean;
   openConfirm: (kind: ConfirmKind, agentId: AgentId) => void;
   closeConfirm: VoidFunction;
   toggleManage: (agentId: AgentId) => void;
   // Reveal the login flow for an agent (Connect on a disconnected card).
   connect: (agentId: AgentId) => void;
+  // Makes the agent the one in use without asking, then opens Agent mode.
+  startBuilding: (agentId: AgentId) => void;
   // Hide the login flow (Cancel).
   cancelFlow: VoidFunction;
   // Install the runtime, then drop straight into the login flow.
   install: (agentId: AgentId) => Promise<void>;
   // Sign out, then reveal the login flow so the user can reconnect.
   disconnectAgent: (agentId: AgentId) => Promise<void>;
-  makeDefault: (agentId: AgentId) => Promise<void>;
+  // False when the switch failed; the toast already says why.
+  makeDefault: (agentId: AgentId) => Promise<boolean>;
   dismissError: VoidFunction;
   connectedAgent?: AgentDescriptor;
   dismissConnected: VoidFunction;
 }
 
-export const useAgentSettingsLogic = (): AgentSettingsLogic => {
+// Narrows one agent's status to the authenticated shape a card renders.
+const connectedAuthOf = (
+  auth: Partial<Record<AgentId, AuthStatus>>,
+  agentId: AgentId,
+): Extract<AuthStatus, { authenticated: true }> | undefined => {
+  const status = auth[agentId];
+  return status?.authenticated ? status : undefined;
+};
+
+export const useAgentSettingsLogic = (
+  // Opens Agent mode.
+  onStartBuilding?: VoidFunction,
+): AgentSettingsLogic => {
+  const { formatMessage } = useI18n();
   const agents = useMemo(() => listAgents(), []);
   const auth = useAiAssistantStore((s) => s.auth);
-  const setAuth = useAiAssistantStore((s) => s.setAuth);
   const setLastValidatedAt = useAiAssistantStore((s) => s.setLastValidatedAt);
   const setSessionExpired = useAiAssistantStore((s) => s.setSessionExpired);
   const resetChat = useChatStore((s) => s.reset);
+  // The restarts below kill the process mid-answer, so those actions are refused while a turn runs.
+  const turnRunning = useChatStore((s) =>
+    Object.values(s.streamingSessions).some(Boolean),
+  );
+  const restartingId = useAiAssistantStore((s) =>
+    s.credentialRestart?.phase === 'restarting'
+      ? s.credentialRestart.agentId
+      : undefined,
+  );
 
   const [expandedId, setExpandedId] = useState<AgentId>();
   const [authFlowId, setAuthFlowId] = useState<AgentId>();
   const [busyId, setBusyId] = useState<AgentId>();
+  const [justInstalledId, setJustInstalledIdState] = useState<AgentId>();
+  // Read by onAuthenticated, which closes every card and was created before the install ended.
+  const justInstalledRef = useRef<AgentId>();
+  const setJustInstalledId = useCallback((agentId?: AgentId): void => {
+    justInstalledRef.current = agentId;
+    setJustInstalledIdState(agentId);
+  }, []);
   const [error, setError] = useState<string>();
+  const [notice, setNotice] = useState<string>();
   const [connectedAgentId, setConnectedAgentId] = useState<AgentId>();
-  const [showConfirm, setShowConfirm] = useState<{
-    kind: ConfirmKind;
-    agentId: AgentId;
-  }>();
+  const [showConfirm, setShowConfirm] =
+    useState<AgentSettingsLogic['showConfirm']>();
 
   const confirmTarget = getAgent(showConfirm?.agentId);
-  const currentDefaultAgent =
-    auth.authenticated && auth.isDefault ? getAgent(auth.agentId) : undefined;
+  // The default is whichever signed-in agent says it is — asked of each, because two can be signed in.
   const connectedAgent = getAgent(connectedAgentId);
-  const showSetAsDefault =
-    agents.filter((agent) => !agent.comingSoon).length > 1;
+  const selectedAgentId = useAiAssistantStore((s) => s.selectedAgentId);
+  const inUseAgent =
+    selectedAgentId && auth[selectedAgentId]?.authenticated
+      ? getAgent(selectedAgentId)
+      : undefined;
 
-  // Pull the latest auth details on mount so the section reflects the real
-  // account/date, not just the store's connected flag.
+  // Probe, not resolve: re-deciding which agent is in use would overwrite it with the default.
   useEffect(() => {
-    let active = true;
-    void getAuthStatus().then((status) => {
-      if (active) {
-        setAuth(status);
-      }
-    });
-    return () => {
-      active = false;
-    };
-  }, [setAuth]);
+    void probeAgentAuth();
+  }, []);
 
   const refresh = useCallback(async (): Promise<void> => {
-    setAuth(await getAuthStatus());
-  }, [setAuth]);
-
-  const toggleManage = useCallback((agentId: AgentId): void => {
-    setExpandedId((prev) => (prev === agentId ? undefined : agentId));
+    await probeAgentAuth();
   }, []);
+
+  const toggleManage = useCallback(
+    (agentId: AgentId): void => {
+      setExpandedId((prev) => (prev === agentId ? undefined : agentId));
+      // Only another card ends the install's step: reopening this one still offers Start building.
+      if (justInstalledRef.current !== agentId) {
+        setJustInstalledId(undefined);
+      }
+    },
+    [setJustInstalledId],
+  );
 
   const openAuthFlow = useCallback((agentId: AgentId): void => {
     setError(undefined);
@@ -145,7 +194,8 @@ export const useAgentSettingsLogic = (): AgentSettingsLogic => {
       setLastValidatedAt(Date.now());
       await refresh();
       setAuthFlowId(undefined);
-      setExpandedId(undefined);
+      // A fresh install stays open: its provider list is the next step.
+      setExpandedId(justInstalledRef.current === agentId ? agentId : undefined);
       setConnectedAgentId(agentId);
     },
     [refresh, setLastValidatedAt, setSessionExpired],
@@ -163,8 +213,10 @@ export const useAgentSettingsLogic = (): AgentSettingsLogic => {
         resetChat(); // the restarted agent knows none of the cached sessions (persisted history is untouched)
         await refresh();
         setExpandedId(undefined);
-        // Drop straight into the login flow so the user can reconnect.
-        setAuthFlowId(agentId);
+        // Into the login flow, unless there is nothing to ask: a free agent reconnects from Connect.
+        if (!getAgent(agentId)?.usableWithoutKey) {
+          setAuthFlowId(agentId);
+        }
       } finally {
         setBusyId(undefined);
       }
@@ -183,20 +235,33 @@ export const useAgentSettingsLogic = (): AgentSettingsLogic => {
     [refresh, setLastValidatedAt, resetChat],
   );
 
+  // Also a move: switchAgent goes first and refuses while the workspace holds edits the board lacks.
   const makeDefault = useCallback(
-    async (agentId: AgentId): Promise<void> => {
+    async (agentId: AgentId): Promise<boolean> => {
       setBusyId(agentId);
       try {
-        await setDefaultAgent(agentId);
+        // Switch, stop, start, name it, default it, and empty the chat: one reset, done in there.
+        await restartForNewCredential(agentId);
+        setLastValidatedAt(Date.now()); // it is running now; undefined would force another re-init
         await refresh();
+        return true;
+      } catch (e) {
+        setError(errorText(e));
+        return false;
       } finally {
         setBusyId(undefined);
       }
     },
-    [refresh],
+    [refresh, setLastValidatedAt],
   );
 
   const dismissError = useCallback((): void => setError(undefined), []);
+  const dismissNotice = useCallback((): void => setNotice(undefined), []);
+  const notify = useCallback(
+    (message: string, kind: 'error' | 'success'): void =>
+      kind === 'error' ? setError(message) : setNotice(message),
+    [],
+  );
 
   // The failure toast is informational and has no action, so it shouldn't sit over the panel forever: give the user
   // time to read it, then clear it. Dismissing by hand still works, and a new failure restarts the timer.
@@ -225,35 +290,135 @@ export const useAgentSettingsLogic = (): AgentSettingsLogic => {
     agent: getAgent(authFlowId),
     onAuthenticated,
     onError: setError,
+    place: formatMessage(messages.placeSettings),
   });
 
-  const runtime = useRuntimePanel(agents, setError, signOut);
+  const onUninstalled = useCallback(
+    async (agentId: AgentId): Promise<void> => {
+      await signOut(agentId);
+      if (authFlowId === agentId) {
+        flow.reset();
+        closeAuthFlow();
+      }
+    },
+    [signOut, authFlowId, flow, closeAuthFlow],
+  );
 
-  // Connect/Cancel reset the shared auth flow so the tabs start fresh and any
-  // in-flight sign-in is dropped.
+  const runtime = useRuntimePanel(agents, setError, onUninstalled);
+
+  // Keys reach the engine at spawn: without a restart that provider's models never appear.
+  const reloadCredentials = useCallback(
+    async (agentId: AgentId): Promise<void> => {
+      if (agentId !== useAiAssistantStore.getState().selectedAgentId) {
+        return; // not the running one: its next start reads the keys anyway
+      }
+      try {
+        if (await restartAfterTurns(agentId)) {
+          setLastValidatedAt(Date.now());
+        }
+      } catch (e) {
+        setError(errorText(e));
+      }
+    },
+    [setLastValidatedAt],
+  );
+
+  // Makes an agent the one in use, with nothing left to ask the user.
+  const activate = useCallback(
+    (agentId: AgentId, openAfter?: boolean): void => {
+      const open = (ok: boolean): void => {
+        if (ok && openAfter) {
+          onStartBuilding?.();
+        }
+      };
+      if (auth[agentId]?.authenticated) {
+        void makeDefault(agentId).then(open);
+        return;
+      }
+      // Free models: the connection is the choice, so record it and start.
+      setBusyId(agentId);
+      void connectWithoutKey(agentId)
+        .then(() => onAuthenticated(agentId))
+        .then(() => open(true))
+        .catch((e: unknown) => setError(errorText(e)))
+        .finally(() => setBusyId(undefined));
+    },
+    [auth, makeDefault, onAuthenticated, onStartBuilding],
+  );
+
   const connect = useCallback(
     (agentId: AgentId): void => {
       flow.reset();
+      const ready =
+        auth[agentId]?.authenticated || getAgent(agentId)?.usableWithoutKey;
+      // Confirm the switch, not the credential: a free agent disabled the other one with no warning.
+      if (ready && inUseAgent && inUseAgent.id !== agentId) {
+        openConfirm('switch', agentId);
+        return;
+      }
+      if (ready) {
+        activate(agentId);
+        return;
+      }
+      // No credential and none offered for free: the sign-in comes first, and it switches at the end.
       openAuthFlow(agentId);
     },
-    [flow, openAuthFlow],
+    [activate, auth, flow, inUseAgent, openAuthFlow, openConfirm],
+  );
+
+  // Pressing it is the choice, so the switch is not confirmed.
+  const startBuilding = useCallback(
+    (agentId: AgentId): void => {
+      if (inUseAgent?.id === agentId) {
+        onStartBuilding?.();
+        return;
+      }
+      activate(agentId, true);
+    },
+    [activate, inUseAgent, onStartBuilding],
   );
 
   const cancelFlow = useCallback((): void => {
     flow.reset();
     closeAuthFlow();
-  }, [flow, closeAuthFlow]);
+    setJustInstalledId(undefined);
+  }, [flow, closeAuthFlow, setJustInstalledId]);
 
   // A finished install leads straight into the auth options — signing in is the only thing left to
   // do, so the intermediate Connect button would just be an extra click. Cancelling the auth flow
   // falls back to the Connect CTA, since by then the runtime really is installed.
+  // A free agent has nothing to sign in to: installed, it is connected, and offers Manage without taking over from the one in use.
   const install = useCallback(
     async (agentId: AgentId): Promise<void> => {
-      if (await runtime.installRuntime(agentId)) {
-        connect(agentId);
+      if (!(await runtime.installRuntime(agentId))) {
+        return;
       }
+      // Only an agent with a provider list has a next step to open on.
+      if (getAgent(agentId)?.perProviderKeys) {
+        setJustInstalledId(agentId);
+      }
+      if (
+        getAgent(agentId)?.usableWithoutKey &&
+        inUseAgent &&
+        inUseAgent.id !== agentId
+      ) {
+        setBusyId(agentId);
+        try {
+          await connectWithoutKey(agentId);
+          await refresh();
+          if (justInstalledRef.current === agentId) {
+            setExpandedId(agentId);
+          }
+        } catch (e) {
+          setError(errorText(e));
+        } finally {
+          setBusyId(undefined);
+        }
+        return;
+      }
+      connect(agentId);
     },
-    [runtime, connect],
+    [runtime, connect, inUseAgent, refresh, setJustInstalledId],
   );
 
   const disconnectAgent = useCallback(
@@ -269,19 +434,19 @@ export const useAgentSettingsLogic = (): AgentSettingsLogic => {
       const showAuthFlow = authFlowId === agent.id;
       return {
         showAuthFlow,
-        connectedAuth:
-          !showAuthFlow && auth.authenticated && auth.agentId === agent.id
-            ? auth
-            : undefined,
+        connectedAuth: showAuthFlow
+          ? undefined
+          : connectedAuthOf(auth, agent.id),
         expanded: expandedId === agent.id,
-        busy: busyId === agent.id,
+        // A restart for a key change counts too, from the store: it outlives this page.
+        busy: busyId === agent.id || restartingId === agent.id,
         runtimeMissing: runtime.statusById[agent.id]?.installed === false,
         installingRuntime:
           runtime.operation?.agentId === agent.id &&
           runtime.operation.kind === 'install',
       };
     },
-    [auth, authFlowId, expandedId, busyId, runtime],
+    [auth, authFlowId, expandedId, busyId, restartingId, runtime],
   );
 
   return {
@@ -290,14 +455,22 @@ export const useAgentSettingsLogic = (): AgentSettingsLogic => {
     flow,
     runtime,
     error,
+    turnRunning,
     showConfirm,
     confirmTarget,
-    currentDefaultAgent,
-    showSetAsDefault,
+    selectedAgentId,
+    justInstalledId,
+    inUseAgent,
+    activate,
+    reloadCredentials,
+    notice,
+    notify,
+    dismissNotice,
     openConfirm,
     closeConfirm,
     toggleManage,
     connect,
+    startBuilding,
     cancelFlow,
     install,
     disconnectAgent,

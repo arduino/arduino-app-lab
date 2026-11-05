@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import { IntlProvider } from 'react-intl';
 import { describe, expect, it, vi } from 'vitest';
 
@@ -28,21 +28,23 @@ import {
 
 type Logic = ReturnType<AddSketchLibraryDialogLogic>;
 
+const createLogic = (overrides: Partial<Logic> = {}): Logic => ({
+  open: true,
+  onOpenChange: vi.fn(),
+  libraries: [],
+  librarySearchIsLoading: false,
+  librarySearchError: false,
+  retryLibrarySearch: vi.fn(),
+  searchSketchLibraries: vi.fn(),
+  appLibrariesById: {},
+  addSketchLibrary: vi.fn(),
+  deleteSketchLibrary: vi.fn(),
+  openExternalLink: vi.fn(),
+  ...overrides,
+});
+
 const renderDialog = (overrides: Partial<Logic> = {}): Logic => {
-  const logic: Logic = {
-    open: true,
-    onOpenChange: vi.fn(),
-    libraries: [],
-    librarySearchIsLoading: false,
-    librarySearchError: false,
-    retryLibrarySearch: vi.fn(),
-    searchSketchLibraries: vi.fn(),
-    appLibrariesById: {},
-    addSketchLibrary: vi.fn(),
-    deleteSketchLibrary: vi.fn(),
-    openExternalLink: vi.fn(),
-    ...overrides,
-  };
+  const logic = createLogic(overrides);
   render(
     <IntlProvider locale="en">
       <AddSketchLibraryDialog logic={(): Logic => logic} />
@@ -68,6 +70,54 @@ describe('AddSketchLibraryDialog', () => {
     renderDialog({ librarySearchError: true, librarySearchIsLoading: true });
 
     expect(screen.queryByRole('alert')).toBeNull();
+  });
+
+  it('clears the query and searches zephyr libraries on reopen', () => {
+    vi.useFakeTimers();
+    try {
+      const searchSketchLibraries = vi.fn();
+      const baseLogic = createLogic({ searchSketchLibraries });
+      const renderWith = (open: boolean): JSX.Element => (
+        <IntlProvider locale="en">
+          <AddSketchLibraryDialog
+            logic={(): Logic => ({ ...baseLogic, open })}
+          />
+        </IntlProvider>
+      );
+
+      const { rerender } = render(renderWith(true));
+      fireEvent.change(screen.getByRole('searchbox'), {
+        target: { value: 'servo' },
+      });
+      act(() => {
+        vi.advanceTimersByTime(300);
+      });
+      expect(searchSketchLibraries).toHaveBeenLastCalledWith({
+        search: 'servo',
+        architecture: 'zephyr',
+      });
+
+      rerender(renderWith(false));
+      act(() => {
+        vi.advanceTimersByTime(300);
+      });
+      searchSketchLibraries.mockClear();
+      rerender(renderWith(true));
+      act(() => {
+        vi.advanceTimersByTime(300);
+      });
+
+      expect((screen.getByRole('searchbox') as HTMLInputElement).value).toBe(
+        '',
+      );
+      expect(searchSketchLibraries).toHaveBeenCalledTimes(1);
+      expect(searchSketchLibraries).toHaveBeenCalledWith({
+        search: '',
+        architecture: 'zephyr',
+      });
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('shows "No libraries found" for an empty result', () => {

@@ -1,4 +1,5 @@
 import { ModalLogic } from '../../../essential/dialog';
+import { RbacValue } from '../../../rbac';
 
 export enum ShareSketchRadioValue {
   Public = 'true',
@@ -12,6 +13,9 @@ export type BaseShareSketchDialogLogicReturn = ReturnType<ModalLogic> & {
   targetUrl: string;
   embedMarkup: string;
   organizationId?: string;
+  organizationName?: string;
+  // Without sketch edit the role can see the sharing state but not change it.
+  rbac?: RbacValue;
 };
 
 interface OwnedSketchVisibilityProps {

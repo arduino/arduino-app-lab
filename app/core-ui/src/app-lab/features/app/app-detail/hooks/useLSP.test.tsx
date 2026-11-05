@@ -5,6 +5,10 @@
  * sends to the server is covered in lsp-client-workspace.test.ts.
  */
 
+import {
+  getAppDetail,
+  initLspWorkspace,
+} from '@cloud-editor-mono/domain/src/services/services-by-app/app-lab';
 import type {
   LspClientRef,
   LspClientWorkspace,
@@ -92,6 +96,7 @@ type FakeWorkspace = ReturnType<typeof makeWorkspace>;
 const renderUseLSP = async (): Promise<{
   result: { current: ReturnType<typeof useLSP> };
   workspaces: Record<'python' | 'arduino', FakeWorkspace>;
+  queryClient: QueryClient;
 }> => {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
@@ -130,13 +135,34 @@ const renderUseLSP = async (): Promise<{
       } as unknown as LspClientRef,
     ),
   );
-  return { result, workspaces };
+  return { result, workspaces, queryClient };
 };
 
 beforeEach(() => {
   h.listLspFiles.mockReset();
   h.listLspFiles.mockResolvedValue([]);
   useLspReferencesStore.getState().close();
+});
+
+describe('LSP workspace init', () => {
+  // The init deletes and recopies the workspace under the running servers.
+  it('runs once when the app detail refetches with the same path', async () => {
+    vi.mocked(initLspWorkspace).mockClear();
+    const { queryClient } = await renderUseLSP();
+    await waitFor(() => expect(initLspWorkspace).toHaveBeenCalledTimes(1));
+
+    vi.mocked(getAppDetail).mockResolvedValueOnce({
+      path: '/home/arduino/ArduinoApps/app',
+      name: 'renamed in app.yaml',
+    } as Awaited<ReturnType<typeof getAppDetail>>);
+    await act(() =>
+      queryClient.refetchQueries({ queryKey: ['list-my-apps', 'app-1'] }),
+    );
+    // Lets the effect run and the mutation call through.
+    await act(() => new Promise((resolve) => setTimeout(resolve, 50)));
+
+    expect(initLspWorkspace).toHaveBeenCalledTimes(1);
+  });
 });
 
 describe('renameLspNode', () => {

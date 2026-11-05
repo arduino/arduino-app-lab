@@ -218,14 +218,31 @@ $consolePanelWithActionsHeight: 100%;
         }
     }
 
+    // Systemino small outlined field (28px). The !important rules override the shared pill style.
     &-input {
-        border-radius: 8px !important;
-        border: 1px solid var(--border-inverted, #232b2e) !important;
-        background: var(--surface-bg-below-2, #090f11) !important;
+        border-radius: 4px !important;
+        border: 1px solid var(--border-default) !important;
+        background: var(--component-bg-baseline) !important;
         font-size: 12px !important;
-        color: var(--text-default, #fff);
+        letter-spacing: 0.12px !important;
+        color: var(--text-default);
+        caret-color: var(--text-subtle);
         height: 28px !important;
-        padding: 6px 12px !important;
+        padding: 0 11px 0 7px !important;
+
+        &::placeholder {
+            color: var(--text-subtle);
+            opacity: 1;
+        }
+
+        &:hover:not(:focus) {
+            border-color: var(--border-strong) !important;
+        }
+
+        &:focus,
+        &:focus-visible {
+            border-color: var(--border-selected) !important;
+        }
 
         &-button {
             display: none;

@@ -89,11 +89,11 @@ export const setBoardName: BoardService['setBoardName'] = async function (
   boardName: string,
 ) {
   try {
-    return SetBoardName(boardName);
-  } catch {
-    console.error('Error setting board name:', boardName);
+    await SetBoardName(boardName);
+  } catch (e) {
+    console.error('Error setting board name:', boardName, e);
+    throw e;
   }
-  return;
 };
 
 export const getKeyboardLayout: BoardService['getKeyboardLayout'] =
@@ -121,19 +121,19 @@ export const listKeyboardLayouts: BoardService['listKeyboardLayouts'] =
 export const setKeyboardLayout: BoardService['setKeyboardLayout'] =
   async function (layoutId: string) {
     try {
-      return SetKeyboardLayout(layoutId);
-    } catch {
-      console.error('Error setting keyboard layout:', layoutId);
+      await SetKeyboardLayout(layoutId);
+    } catch (e) {
+      console.error('Error setting keyboard layout:', layoutId, e);
+      throw e;
     }
-    return;
   };
 
 export const isUserPasswordSet: BoardService['isUserPasswordSet'] =
   async function () {
     try {
-      return IsUserPasswordSet();
-    } catch {
-      console.error('Error getting user password set status');
+      return await IsUserPasswordSet();
+    } catch (e) {
+      console.error('Error getting user password set status:', e);
     }
     return false;
   };
@@ -142,11 +142,11 @@ export const setUserPassword: BoardService['setUserPassword'] = async function (
   password: string,
 ) {
   try {
-    return SetUserPassword(password);
-  } catch {
-    console.error('Error setting user password:', password);
+    await SetUserPassword(password);
+  } catch (e) {
+    console.error('Error setting user password:', e);
+    throw e;
   }
-  return;
 };
 
 export const getOSImageVersion: BoardService['getOSImageVersion'] =
@@ -171,9 +171,9 @@ export const openBoardTerminal: BoardService['openBoardTerminal'] =
 export const isNetworkModeEnabled: BoardService['isNetworkModeEnabled'] =
   async function () {
     try {
-      return GetNetworkModeStatus();
-    } catch {
-      console.error('Error getting network mode status');
+      return await GetNetworkModeStatus();
+    } catch (e) {
+      console.error('Error getting network mode status:', e);
     }
     return false;
   };

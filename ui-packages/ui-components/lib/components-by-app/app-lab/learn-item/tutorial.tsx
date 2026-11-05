@@ -78,6 +78,7 @@ export const TutorialFooter: React.FC<TutorialFooterProps> = (
             <span
               key={index}
               className={styles['category']}
+              title={item.label}
               style={{
                 color: 'white', // item.color,
                 border: `1px solid ${item.color}`,

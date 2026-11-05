@@ -10,7 +10,6 @@
     "dev-utils/*"
   ],
   "dependencies": {
-    "@arduino/react-icons": "0.1.1",
     "@assistant-ui/react": "^0.8.20",
     "@assistant-ui/react-markdown": "^0.8.1",
     "@assistant-ui/react-ui": "^0.1.8",
@@ -25,6 +24,7 @@
     "@cloud-editor-mono/core-ui": "workspace:app/core-ui",
     "@cloud-editor-mono/create-agent-client-ts": "workspace:app/create-agent-client-ts",
     "@cloud-editor-mono/domain": "workspace:app/domain",
+    "@cloud-editor-mono/ide-workbench": "workspace:ui-packages/ide-workbench",
     "@cloud-editor-mono/images": "workspace:ui-packages/images",
     "@cloud-editor-mono/infrastructure": "workspace:app/infrastructure",
     "@cloud-editor-mono/ui-components": "workspace:ui-packages/ui-components",

@@ -15,7 +15,7 @@ const messages = defineMessages({
 interface TypingProps {
   label?: string; // current phase (e.g. "Reading files"); defaults to "Thinking"
   elapsedSeconds?: number; // time since the turn started, counts up
-  tokens?: number; // live token count for the turn
+  tokens?: number; // the turn's output, estimated from what the agent has written
 }
 
 // "5s" under a minute, "12m 55s" beyond.
@@ -46,8 +46,9 @@ export const Typing: React.FC<TypingProps> = ({
   if (elapsedSeconds !== undefined) {
     bits.push(formatElapsed(elapsedSeconds));
   }
-  if (tokens !== undefined) {
-    bits.push(`${formatTokens(tokens)} tokens`);
+  // Nothing written yet is nothing to show: a counter sitting at zero reads as broken.
+  if (tokens) {
+    bits.push(`${formatTokens(tokens)} ${tokens === 1 ? 'token' : 'tokens'}`);
   }
   bits.push(label ?? formatMessage(messages.typing));
 

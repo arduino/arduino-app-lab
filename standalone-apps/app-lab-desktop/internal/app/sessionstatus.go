@@ -20,7 +20,7 @@ func readSessionStatus(dir string) (map[string]string, error) {
 		return nil, err
 	}
 	statuses := map[string]string{}
-	if err := json.Unmarshal(data, &statuses); err != nil {
+	if err := json.Unmarshal(data, &statuses); err != nil || statuses == nil { // null decodes to a nil map
 		return map[string]string{}, nil
 	}
 	return statuses, nil

@@ -221,6 +221,8 @@ interface FileTreeProps {
    * twice a new value, so a repeat still arrives.
    */
   closeFolder?: { path: string; seq: number };
+  /** A folder renamed on the board, from outside or through `onFileRename`, sent once the rename is done: its row and those under it are new ids, so only this reopens them. */
+  renamedFolder?: { from: string; to: string; seq: number };
 }
 
 const FileTree = forwardRef<FileTreeApi, FileTreeProps>((props, ref) => {
@@ -254,6 +256,7 @@ const FileTree = forwardRef<FileTreeApi, FileTreeProps>((props, ref) => {
     onFolderExpand,
     checkPathConflict,
     closeFolder,
+    renamedFolder,
   } = props;
 
   const treeApiRef = useRef<TreeApi<TreeNode>>(null);
@@ -430,6 +433,22 @@ const FileTree = forwardRef<FileTreeApi, FileTreeProps>((props, ref) => {
   useEffect(() => {
     if (closeFolder) treeApiRef.current?.close(closeFolder.path);
   }, [closeFolder]);
+
+  const carryOpenState = useCallback((from: string, to: string): void => {
+    const treeApi = treeApiRef.current;
+    if (!treeApi) return;
+    // Subfolders are opened now: their rows show only once the renamed folder opens, and opening it reports them to the consumer.
+    for (const [path, open] of Object.entries(treeApi.openState)) {
+      if (open && path.startsWith(`${from}/`)) {
+        treeApi.open(`${to}${path.slice(from.length)}`);
+      }
+    }
+    if (treeApi.openState[from]) setFolderToReopen(to);
+  }, []);
+
+  useEffect(() => {
+    if (renamedFolder) carryOpenState(renamedFolder.from, renamedFolder.to);
+  }, [renamedFolder, carryOpenState]);
 
   // The renamed folder only exists once the consumer's data reaches us.
   useEffect(() => {
@@ -778,10 +797,6 @@ const FileTree = forwardRef<FileTreeApi, FileTreeProps>((props, ref) => {
         // Use treeApi to find the node in the complete tree (need this to nested folders)
         const foundNode = treeApiRef.current?.get(isEditingAt);
         const nodeType = foundNode?.data?.type ?? 'file';
-        if (nodeType === 'folder' && foundNode?.isOpen) {
-          const parent = isEditingAt.slice(0, isEditingAt.lastIndexOf('/') + 1);
-          setFolderToReopen(`${parent}${newName}`);
-        }
         await onFileRename(isEditingAt, newName, nodeType);
         setIsEditingAt(null);
       }

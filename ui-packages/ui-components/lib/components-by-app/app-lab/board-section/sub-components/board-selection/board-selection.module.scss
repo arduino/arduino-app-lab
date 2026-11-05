@@ -48,21 +48,6 @@
     position: relative;
 }
 
-%tooltip-content {
-    background-color: #aeb8b8;
-    border-radius: 3px;
-    color: #171e21;
-    font-size: 12px;
-    font-weight: 400;
-    padding: 2px 8px;
-}
-
-.tooltip-content--label {
-    @extend %tooltip-content;
-    left: 0px;
-    bottom: 26px;
-}
-
 .inactive {
     opacity: 0.6;
 }
@@ -178,10 +163,6 @@
 }
 
 .tooltip-content--dropdown {
-    @extend %tooltip-content;
-    left: 24px;
-    bottom: 32px;
-
     &.dropdown-open {
         display: none;
     }

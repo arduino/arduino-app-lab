@@ -6,12 +6,11 @@ import {
   ButtonSize,
   ButtonVariant,
   useI18n,
+  useTooltip,
 } from '@cloud-editor-mono/ui-components/lib/components-by-app/app-lab';
-import { clsx } from 'clsx';
 import React, { useCallback, useState } from 'react';
 
-import { useTooltip } from '../../../tooltip';
-import { XSmall, XXXSmall } from '../../../typography';
+import { XSmall, XXSmall, XXXSmall } from '../../../typography';
 import { sketchLibraryCardMessages } from './messages';
 import styles from './sketch-library-card.module.scss';
 
@@ -48,23 +47,20 @@ const SketchLibraryCard = (
 
   const { formatMessage } = useI18n();
 
-  const {
-    props: tooltipProps,
-    renderTooltip,
-    isTooltipVisible,
-  } = useTooltip({
+  const { props: tooltipProps, renderTooltip } = useTooltip({
     content: (
-      <XXXSmall>
+      <XXSmall>
         {formatMessage(sketchLibraryCardMessages.coreLibraryTooltip, {
           coreLibraryLabel: (
-            <XXXSmall bold>
+            <XXSmall bold>
               {formatMessage(sketchLibraryCardMessages.coreLibraryLabel)}
-            </XXXSmall>
+            </XXSmall>
           ),
           boardModel: board?.type.toUpperCase(),
         })}
-      </XXXSmall>
+      </XXSmall>
     ),
+    variant: 'card',
   });
 
   const onClick = useCallback((): void => {
@@ -106,14 +102,7 @@ const SketchLibraryCard = (
                   sketchLibraryCardMessages.libraryInstalledLabel,
                 )}`}
               </XXXSmall>
-              {isCoreLibrary
-                ? renderTooltip(
-                    clsx(
-                      styles['tooltip-content'],
-                      isTooltipVisible && styles['tooltip-show'],
-                    ),
-                  )
-                : null}
+              {isCoreLibrary ? renderTooltip() : null}
             </div>
           ) : null}
         </div>

@@ -22,6 +22,11 @@ import (
 
 var workspaceMu sync.Mutex
 
+// workspaceAppPath is the board app the temp workspace copies. Guarded by
+// workspaceMu. Every app maps to the same temp folder, so a change to another
+// app's file must not reach it.
+var workspaceAppPath string
+
 const boardAppsRootDir = "/home/arduino/ArduinoApps"
 const workspaceBaseDirName = "arduino_applab_workspace"
 const arduinoDirName = "arduino15"
@@ -75,7 +80,7 @@ func arduinoDirBaseName() string {
 const FileScheme = "file://"
 
 // Must match LSP_LANGS in
-// ui-packages/ui-components/lib/code-mirror/extensions/lsp/lsp-consts.ts,
+// ui-packages/ide-workbench/lib/code-mirror/extensions/lsp/lsp-consts.ts,
 // plus SYNC_ONLY_EXTENSIONS in
 // standalone-apps/app-lab-desktop/frontend/src/services/lspFileExtensions.test.ts,
 // which fails when the two lists differ.
@@ -86,8 +91,8 @@ var LspFileExtensions = []string{
 
 // tempWorkspaceBase resolves the workspace root once. On Windows os.TempDir()
 // reads %TMP%, which Windows hands back in 8.3 short form whenever the user
-// name is not 8.3-clean — a dot is enough, so "f.spissu" yields
-// "C:\Users\FEFB0~1.SPI\AppData\Local\Temp".
+// name is not 8.3-clean — a dot is enough, so "first.last" yields
+// "C:\Users\A1B2C~1.LAS\AppData\Local\Temp".
 //
 // That spelling is only ours. Language servers canonicalise to the long form
 // (clangd reports build.source.path that way), so every URI a server
@@ -283,6 +288,12 @@ func appSubPathIn(appDir, filePath string) (string, bool) {
 	return workspacePath, true
 }
 
+// inWorkspaceApp reports whether the board path filePath belongs to the app the
+// temp workspace copies. Must hold workspaceMu.
+func inWorkspaceApp(filePath string) bool {
+	return workspaceAppPath != "" && strings.HasPrefix(path.Clean(filePath), workspaceAppPath+"/")
+}
+
 // isWithinDir reports whether target resolves to a location inside dir.
 func isWithinDir(target, dir string) bool {
 	cleanDir := filepath.Clean(dir)
@@ -332,6 +343,10 @@ func SyncRemoteFileToLspWorkspace(filePath string, reader io.Reader) {
 
 	workspaceMu.Lock()
 	defer workspaceMu.Unlock()
+
+	if !inWorkspaceApp(filePath) {
+		return
+	}
 
 	fullPath, err := getWorkspaceFilePathFromRemoteFilePath(filePath)
 	if err != nil {
@@ -546,6 +561,9 @@ func RemoveWorkspacePath(filePath string) {
 	workspaceMu.Lock()
 	defer workspaceMu.Unlock()
 
+	if !inWorkspaceApp(filePath) {
+		return
+	}
 	removeWorkspacePathIn(GetLspTempWorkspaceAppDir(), filePath)
 }
 
@@ -562,8 +580,9 @@ func removeWorkspacePathIn(appDir, filePath string) {
 	}
 }
 
-// RenameWorkspacePath moves a file or a folder in the temp workspace copy. A
-// source that was never copied (a folder with no LSP files) is not an error.
+// RenameWorkspacePath moves a file or a folder in the temp workspace copy, or
+// removes it when it moves out of the copied app. A source that was never
+// copied (a folder with no LSP files) is not an error.
 func RenameWorkspacePath(prevPath, newPath string) {
 
 	slog.Info("Renaming workspace path", "prevPath", prevPath, "newPath", newPath)
@@ -571,7 +590,13 @@ func RenameWorkspacePath(prevPath, newPath string) {
 	workspaceMu.Lock()
 	defer workspaceMu.Unlock()
 
-	renameWorkspacePathIn(GetLspTempWorkspaceAppDir(), prevPath, newPath)
+	switch prevIn, newIn := inWorkspaceApp(prevPath), inWorkspaceApp(newPath); {
+	case prevIn && newIn:
+		renameWorkspacePathIn(GetLspTempWorkspaceAppDir(), prevPath, newPath)
+	case prevIn:
+		// Moved out of the open app: its copy must go.
+		removeWorkspacePathIn(GetLspTempWorkspaceAppDir(), prevPath)
+	}
 }
 
 // renameWorkspacePathIn is RenameWorkspacePath for the copy under appDir. Must
@@ -586,8 +611,16 @@ func renameWorkspacePathIn(appDir, prevPath, newPath string) {
 		return
 	}
 
-	if _, err := os.Stat(prevName); errors.Is(err, iofs.ErrNotExist) {
+	prevInfo, err := os.Lstat(prevName)
+	if err != nil {
 		return
+	}
+	// The board had nothing at newPath, so anything here is left over, such as the empty folders a delete leaves; on a case-insensitive disk a case-only rename finds the source itself.
+	if newInfo, err := os.Lstat(newName); err == nil && !os.SameFile(prevInfo, newInfo) {
+		if err := os.RemoveAll(newName); err != nil {
+			slog.Error("failed to clear lsp workspace path", "path", newName, "err", err)
+			return
+		}
 	}
 	// Only folders holding LSP files are copied, so the destination's parent
 	// may not exist yet.
@@ -606,6 +639,9 @@ func SyncRemoteDirToLspWorkspace(conn remote.RemoteConn, remoteDir string) {
 	workspaceMu.Lock()
 	defer workspaceMu.Unlock()
 
+	if !inWorkspaceApp(remoteDir) {
+		return
+	}
 	dst, ok := appSubPathIn(GetLspTempWorkspaceAppDir(), remoteDir)
 	if !ok {
 		return
@@ -629,6 +665,9 @@ func SyncLocalPathToLspWorkspace(localPath, remotePath string) {
 	workspaceMu.Lock()
 	defer workspaceMu.Unlock()
 
+	if !inWorkspaceApp(remotePath) {
+		return
+	}
 	dst, ok := appSubPathIn(GetLspTempWorkspaceAppDir(), remotePath)
 	if !ok {
 		return
@@ -690,6 +729,9 @@ func InitLspWorkspace(conn remote.RemoteConn, appPath string) error {
 	slog.Info("InitLspWorkspace", "appPath", appPath)
 
 	dstPath := GetLspTempWorkspaceAppDir()
+
+	// Set before the copy so a failed init mirrors nothing from the previous app.
+	workspaceAppPath = path.Clean(appPath)
 
 	if err := os.RemoveAll(dstPath); err != nil {
 		slog.Error("remove workspace failed", "path", dstPath, "err", err)

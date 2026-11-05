@@ -1,0 +1,26 @@
+// `button.` raises specificity above the primitive's own `.icon-button`
+// (round, borderless), which this button overrides.
+button.default-icon-button {
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 2px solid transparent;
+  border-radius: 8px;
+  background-color: unset;
+  color: var(--text-default);
+  transition: all 0.1s;
+
+  > svg {
+    width: 16px;
+    height: 16px;
+
+    path {
+      fill: var(--text-default);
+    }
+  }
+
+  &:hover {
+    background-color: var(--component-bg-flexible);
+  }
+}

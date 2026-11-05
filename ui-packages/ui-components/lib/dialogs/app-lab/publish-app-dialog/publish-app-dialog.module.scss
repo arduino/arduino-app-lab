@@ -28,14 +28,14 @@
     font-weight: 700;
     line-height: 28px;
     margin: 0;
-    color: var(--text-primary, #ffffff);
+    color: var(--text-default);
   }
 
   &-description {
     font-size: 14px;
     line-height: 20px;
     margin: 0;
-    color: var(--text-primary, #ffffff);
+    color: var(--text-default);
 
     strong {
       font-weight: 600;
@@ -74,7 +74,7 @@
 .checkbox-label {
   font-size: 14px;
   line-height: 20px;
-  color: var(--text-primary, #ffffff);
+  color: var(--text-default);
   cursor: pointer;
   user-select: none;
 }
@@ -101,13 +101,4 @@
   &:hover {
     opacity: 0.8;
   }
-}
-
-.tooltip-content {
-  background: var(--component-bg-above, #374146);
-  border-radius: 3px;
-  color: var(--text-default, #ffffff);
-  font-size: 12px;
-  font-weight: 400;
-  padding: 16px 24px;
 }

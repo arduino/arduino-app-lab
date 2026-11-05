@@ -1,14 +1,29 @@
 import { useCallback, useEffect, useState } from 'react';
 
 import type { SessionId, SessionSummary } from '../../services';
-import { getAuthStatus, listSessions, start } from '../../services';
-import { useAiAssistantStore, useChatStore } from '../../store';
+import { listSessions, start } from '../../services';
+import type { AgentDownReason } from '../../store';
+import {
+  currentAuth,
+  lastTurnFailed,
+  useAiAssistantStore,
+  useChatStore,
+} from '../../store';
 import { SessionDotState, sessionDotState } from '../../utils';
+import { resolveAgentAuth } from '../connect/utils/resolveAgentAuth';
+import { reviveAgent, useAgentRevive } from '../panel/agentRestart';
 
 export interface AgentPanelContainerLogic {
   authenticated: boolean;
   // The agent process is still being launched: hold ChatPanel back, or its first newSession finds no manager.
   starting: boolean;
+  // The agent gave up restarting: the panel offers Reconnect, as Agent Mode does.
+  agentDown: boolean;
+  agentDownReason?: AgentDownReason;
+  reconnecting: boolean;
+  reconnect: VoidFunction;
+  // Reviving on its own after a board switch the user confirmed: the loader, no prompt.
+  reviving: boolean;
   onNewSession: VoidFunction;
   historyOpen: boolean;
   toggleHistory: VoidFunction;
@@ -27,9 +42,13 @@ export interface AgentPanelContainerLogic {
 export const useAgentPanelContainerLogic = (
   appId: string,
 ): AgentPanelContainerLogic => {
-  const authenticated = useAiAssistantStore((s) => s.auth.authenticated);
+  const authenticated = useAiAssistantStore(
+    (s) => currentAuth(s).authenticated,
+  );
   const setAuth = useAiAssistantStore((s) => s.setAuth);
   const setAgentDown = useAiAssistantStore((s) => s.setAgentDown);
+  const agentDown = useAiAssistantStore((s) => s.agentDown);
+  const revive = useAgentRevive((s) => s.reviving);
   const requestNewSession = useChatStore((s) => s.requestNewSession);
   const requestOpenSession = useChatStore((s) => s.requestOpenSession);
   const currentSessionId = useChatStore((s) => s.currentSessionId);
@@ -38,9 +57,7 @@ export const useAgentPanelContainerLogic = (
   const replyReadySessions = useChatStore((s) => s.replyReadySessions);
   const currentSessionHasError = useChatStore((s) =>
     currentSessionId
-      ? !!s.threads[currentSessionId]?.messages.some(
-          (m) => m.status === 'error',
-        )
+      ? lastTurnFailed(s.threads[currentSessionId]?.messages)
       : false,
   );
   const [starting, setStarting] = useState(true);
@@ -54,33 +71,32 @@ export const useAgentPanelContainerLogic = (
   // or ChatPanel opens onto a process that was never launched ("agent not started").
   useEffect(() => {
     let active = true;
-    getAuthStatus()
+    resolveAgentAuth()
       .then(async (status) => {
         if (!active) return;
-        if (!status.authenticated) {
-          setAuth({ authenticated: false });
+        if (!status?.authenticated) {
           setStarting(false);
           return;
         }
         try {
           await start(status.agentId);
           if (active) {
-            setAuth(status);
-            setAgentDown(false); // the process answered: drop a crash flag left by the full-screen panel
+            setAuth(status.agentId, status);
+            setAgentDown(undefined); // the process answered: drop a crash flag left by the full-screen panel
             setStarting(false);
           }
         } catch {
           // Couldn't launch the agent process — fall back to the connect CTA
           // rather than opening a chat with nothing behind it.
           if (active) {
-            setAuth({ authenticated: false });
+            setAuth(status.agentId, { authenticated: false });
             setStarting(false);
           }
         }
       })
       .catch(() => {
+        // The probe itself failed, so no agent is named and nothing can be recorded about one.
         if (active) {
-          setAuth({ authenticated: false });
           setStarting(false);
         }
       });
@@ -146,9 +162,16 @@ export const useAgentPanelContainerLogic = (
     (s) => s.id !== currentSessionId && replyReadySessions[s.id],
   );
 
+  const reconnect = useCallback((): void => reviveAgent('manual'), []);
+
   return {
     authenticated,
     starting,
+    agentDown: authenticated && !!agentDown,
+    agentDownReason: agentDown?.reason,
+    reconnecting: revive !== undefined,
+    reconnect,
+    reviving: revive === 'auto',
     onNewSession,
     historyOpen,
     toggleHistory,

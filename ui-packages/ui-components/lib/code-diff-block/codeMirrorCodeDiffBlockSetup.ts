@@ -1,3 +1,5 @@
+import { codeBlockTags } from '@cloud-editor-mono/ide-workbench/lib/code-mirror/extensions/language/codeBlockHighLightStyle';
+import { highlightStyle } from '@cloud-editor-mono/ide-workbench/lib/code-mirror/extensions/language/highlightStyle';
 import { defaultKeymap, history, historyKeymap } from '@codemirror/commands';
 import { cpp } from '@codemirror/lang-cpp';
 import {
@@ -18,9 +20,6 @@ import {
   lineNumbers,
   rectangularSelection,
 } from '@codemirror/view';
-
-import { codeBlockTags } from '../code-mirror/extensions/language/codeBlockHighLightStyle';
-import { highlightStyle } from '../code-mirror/extensions/language/highlightStyle';
 
 export const codeDiffBlockSetup: Extension = [
   EditorView.theme({

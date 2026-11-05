@@ -23,6 +23,7 @@ export const FlasherPreparation: React.FC<FlashPreparationProps> = ({
   const { props: tooltipProps, renderTooltip } = useTooltip({
     title: formatMessage(messages.preparationStepInstruction2TooltipTitle),
     content: formatMessage(messages.preparationStepInstruction2TooltipContent),
+    variant: 'card',
   });
 
   return (
@@ -50,7 +51,7 @@ export const FlasherPreparation: React.FC<FlashPreparationProps> = ({
                   <div className={stepStyles['info-icon']}>
                     <AppLabInfo />
                   </div>
-                  {renderTooltip(stepStyles['tooltip-content'])}
+                  {renderTooltip()}
                 </div>
               </div>
             </li>

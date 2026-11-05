@@ -44,7 +44,6 @@ export const Flasher: React.FC<FlasherProps> = ({
       ? FlashBoardStep.Flashing
       : FlashBoardStep.Preparation;
   }, [flashEvent]);
-  const disabled = useMemo(() => step === FlashBoardStep.Flashing, [step]);
 
   const {
     loading,
@@ -63,6 +62,8 @@ export const Flasher: React.FC<FlasherProps> = ({
     preserveDataSupported,
     preparationImage,
   } = flasherLogic();
+
+  const disabled = step === FlashBoardStep.Flashing && succeeded !== false;
 
   const handleFlash = useCallback(
     async (image: OSImageRelease, preserveData: boolean): Promise<void> => {

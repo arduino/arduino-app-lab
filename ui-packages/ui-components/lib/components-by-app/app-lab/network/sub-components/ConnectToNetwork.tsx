@@ -73,9 +73,10 @@ const ConnectToNetwork: React.FC<ConnectToNetworkProps> = (
       <div className={setupStyles['input-container']}>
         <Input
           inputStyle={InputStyle.AppLab}
+          outlined={isSetupFlow}
           id="network-name"
           type="text"
-          name={formatMessage(networkMessages.networkName)}
+          name="network-name"
           value={networkCredentials.name}
           disabled={!manualNetworkSetup || isConnecting}
           onChange={(value): void =>
@@ -92,9 +93,9 @@ const ConnectToNetwork: React.FC<ConnectToNetworkProps> = (
         <div className={clsx(setupStyles['input-container'])}>
           <Select
             id="network-security"
-            name={formatMessage(networkMessages.networkSecurity)}
+            name="network-security"
             label={formatMessage(networkMessages.networkSecurity)}
-            value={networkCredentials.security}
+            selectedId={networkCredentials.security}
             disabled={isConnecting}
             sections={securityProtocols}
             onChange={(key: Key): void =>
@@ -103,10 +104,7 @@ const ConnectToNetwork: React.FC<ConnectToNetworkProps> = (
                 security: key as SecurityProtocols,
               })
             }
-            classes={{
-              container: styles['select-container'],
-              open: styles['select-container--open'],
-            }}
+            outlined={isSetupFlow}
           />
         </div>
       ) : null}
@@ -116,6 +114,7 @@ const ConnectToNetwork: React.FC<ConnectToNetworkProps> = (
           ref={passwordInputRef}
           value={networkCredentials.password}
           inputStyle={InputStyle.AppLab}
+          outlined={isSetupFlow}
           disabled={isConnecting}
           onChange={(value): void =>
             onChangeCredentials({
@@ -123,14 +122,12 @@ const ConnectToNetwork: React.FC<ConnectToNetworkProps> = (
               password: value,
             })
           }
-          onKeyDown={(e): void => {
-            if (e.key === 'Enter') {
-              e.preventDefault();
-              if (isSetupFlow && unlockAutoFlow) {
-                unlockAutoFlow();
-              }
-              connectToWifiNetwork(networkCredentials);
+          blurOnEnter={false}
+          onEnter={(): void => {
+            if (isSetupFlow && unlockAutoFlow) {
+              unlockAutoFlow();
             }
+            connectToWifiNetwork(networkCredentials);
           }}
           label={formatMessage(networkMessages.networkPassword)}
           sensitive

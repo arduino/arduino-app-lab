@@ -128,18 +128,9 @@ export const AddHuggingFaceModelDialog: React.FC<
                 placeholder={formatMessage(messages.sourcePlaceholder)}
                 disabled={isDownloading}
                 autoFocus
-                classes={{
-                  input: clsx(styles['input'], {
-                    [styles['input-error']]: !!error,
-                  }),
-                  inputContainer: styles['input-container'],
-                }}
+                error={error ? new Error(error) : undefined}
+                errorBelow
               />
-              {error && (
-                <XXXSmall semibold className={styles['error']}>
-                  {error}
-                </XXXSmall>
-              )}
             </div>
 
             <div className={styles['action']}>

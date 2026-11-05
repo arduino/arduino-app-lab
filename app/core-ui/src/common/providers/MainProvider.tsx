@@ -1,5 +1,4 @@
 import { ArduinoUser } from '@bcmi-labs/art-auth';
-import { AccountActivity } from '@bcmi-labs/art-ui';
 import React from 'react';
 import { HelmetProvider } from 'react-helmet-async';
 
@@ -9,6 +8,7 @@ import QueryProvider from './data-fetching/QueryProvider';
 import DialogProvider from './dialog/dialogProvider';
 import { I18nProvider } from './i18n/I18nContextProvider';
 import NotificationsProvider from './notifications/notificationsProvider';
+import RbacContextProvider from './rbac/RbacContextProvider';
 import SerialCommunicationContextProvider from './serial-communication/SerialCommunicationContextProvider';
 import ThemeProvider from './theme/ThemeProvider';
 
@@ -30,15 +30,17 @@ const MainProvider: React.FC<MainProviderProps> = ({
           profile={profile}
           profileIsLoading={profileIsLoading}
         >
-          <CloudContextProviderRenderer>
-            <ThemeProvider>
-              <NotificationsProvider>
-                <DialogProvider>
-                  <HelmetProvider>{children}</HelmetProvider>
-                </DialogProvider>
-              </NotificationsProvider>
-            </ThemeProvider>
-          </CloudContextProviderRenderer>
+          <RbacContextProvider>
+            <CloudContextProviderRenderer>
+              <ThemeProvider>
+                <NotificationsProvider>
+                  <DialogProvider>
+                    <HelmetProvider>{children}</HelmetProvider>
+                  </DialogProvider>
+                </NotificationsProvider>
+              </ThemeProvider>
+            </CloudContextProviderRenderer>
+          </RbacContextProvider>
         </AuthContextProvider>
       </SerialCommunicationContextProvider>
     </I18nProvider>

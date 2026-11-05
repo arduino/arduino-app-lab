@@ -1,3 +1,9 @@
+@use "@cloud-editor-mono/arduino-sass/src/fonts";
+
+// The application loads the webfonts, not the editor package: it names the
+// families it wants and an outside host supplies its own faces (ADR-0002).
+@include fonts.import-fonts;
+
 :root {
   color: var(--editor-syntax-highlight-neutral);
   background-color: var(--editor-background);

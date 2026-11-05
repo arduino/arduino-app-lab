@@ -3,6 +3,7 @@ package agent
 import (
 	"context"
 	"io"
+	"time"
 )
 
 // AgentConn is our thin interface over the pre-1.0 coder/acp-go-sdk (only sdkConn imports it).
@@ -12,13 +13,14 @@ type AgentConn interface {
 	NewSession(ctx context.Context, cwd string, ws SessionWorkspace) (NewSessionResult, error)                 // also returns the advertised models
 	ListSessions(ctx context.Context, cwd string) ([]SessionSummary, error)                                    // persisted sessions for a workspace
 	LoadSession(ctx context.Context, sid SessionID, cwd string, ws SessionWorkspace) (NewSessionResult, error) // re-establish a session (replays history); returns its models/modes
-	Prompt(ctx context.Context, sid SessionID, text string, before []string) error                             // blocks until the turn ends; before goes ahead of the text, a block each
+	Prompt(ctx context.Context, sid SessionID, text string, before []string) (cancelled bool, err error)       // blocks until the turn ends; before goes ahead of the text; cancelled is the engine's stop reason
 	Cancel(ctx context.Context, sid SessionID) error
 	CloseSession(ctx context.Context, sid SessionID) error             // best-effort; frees the session on the agent
 	DeleteSession(ctx context.Context, sid SessionID) error            // permanently removes a persisted session (UNSTABLE)
 	SetModel(ctx context.Context, sid SessionID, modelID string) error // optional capability
 	SetMode(ctx context.Context, sid SessionID, modeID string) error   // optional capability
 	SetMCPServers(servers []MCPServer)                                 // MCP servers to advertise on every session (set before Start)
+	SetDialect(d Dialect)                                              // engine-specific session envelope and tool naming (set before Start)
 	SetBoardName(name string)                                          // connected board's display name, stated in every session's system prompt (set before Start)
 	Close() error
 }
@@ -28,6 +30,8 @@ type MCPServer struct {
 	URL           string
 	Token         string
 	ReadOnlyTools []string // bare tool names auto-approved (no permission prompt) via the session allowedTools
+	// How long the engine lets one tool call run; zero keeps the engine's own limit.
+	CallTimeout time.Duration
 }
 
 // ClientHandler receives the agent's callbacks; the Manager implements it.

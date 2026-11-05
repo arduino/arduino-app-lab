@@ -181,7 +181,7 @@
         min-width: 0;
         display: flex;
         flex-direction: column;
-        gap: 10px;
+        gap: 8px;
 
         .choices-other-head {
           display: flex;
@@ -196,25 +196,6 @@
           color: inherit;
           font: inherit;
           text-align: left;
-        }
-
-        .choices-other-input {
-          box-sizing: border-box;
-          padding: 8px 10px;
-          border: 1px solid var(--border-inverted, #232b2e);
-          border-radius: 6px;
-          background: var(--component-bg-below-1, #171e21);
-          color: var(--text-default, #fff);
-          font-family: variables.$font-sans;
-          font-size: typography.$font-size-x-small;
-
-          &::placeholder {
-            color: var(--text-subtle, #c9d2d2);
-          }
-
-          &:focus {
-            outline: none;
-          }
         }
       }
     }

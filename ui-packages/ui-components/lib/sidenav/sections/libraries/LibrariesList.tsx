@@ -27,7 +27,7 @@ export interface LibrariesListProps {
   standardLibraries?: SidenavStandardLibrary[];
   customLibraries?: GetLibrariesList_Response;
   isLoading?: boolean;
-  onClickInclude: OnClickInclude;
+  onClickInclude?: OnClickInclude;
   pinnedLibraries?: SketchData['libraries'];
   setFavorite: SetFavoriteLibrary;
   canModifyLibraryMetadata?: boolean;

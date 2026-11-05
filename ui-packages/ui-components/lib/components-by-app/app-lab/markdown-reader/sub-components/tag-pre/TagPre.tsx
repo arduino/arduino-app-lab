@@ -71,7 +71,7 @@ export const MarkdownReaderTagPre = (
             >
               {copied ? <Checkmark /> : <FileCopy />}
             </button>
-            {renderTooltip(styles['copy-tooltip'])}
+            {renderTooltip()}
           </div>
         </div>
         <div>{children}</div>

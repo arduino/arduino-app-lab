@@ -22,24 +22,29 @@
 .editor {
   box-sizing: border-box;
   width: 100%;
-  // Four lines tall, so it reads as a field for long text; it stays resizable past that.
   height: 88px;
   min-height: 88px;
   max-height: 200px;
   overflow-y: auto;
-  padding: 4px 12px;
+  padding: 7px 11px;
   border: 1px solid transparent;
   border-radius: 4px;
-  background: var(--component-bg-below-1);
+  // The filled style of the App Lab Input.
+  background: var(--surface-bg-below-1);
   color: var(--text-default);
   font-family: inherit;
   font-size: 12px;
   line-height: 1.6;
   letter-spacing: 0.12px;
+  caret-color: var(--text-subtle);
   resize: vertical;
 
-  &:focus-visible {
+  &:hover:not(:focus) {
+    background-image: linear-gradient(var(--component-bg-hover), var(--component-bg-hover));
+  }
+
+  &:focus {
     outline: none;
-    border-color: var(--accent-default);
+    border-color: var(--border-selected);
   }
 }

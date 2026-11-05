@@ -5,7 +5,7 @@ import {
   TreeNode,
 } from '@cloud-editor-mono/ui-components/lib/components-by-app/app-lab';
 import { Subject } from 'rxjs';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, Mock, vi } from 'vitest';
 
 import {
   codeSubjectNext,
@@ -16,6 +16,7 @@ import {
   getCodeSubjects,
   getUnsavedFilesSubject,
   getUnsavedFilesSubjectNext,
+  isUnsavedFile,
   listAppDirectory,
   reloadCodeSubject,
   removeAppFile,
@@ -28,7 +29,7 @@ import {
   statAppPath,
 } from './arduinoAppFilesService.impl';
 import { MockArduinoAppFilesService } from './arduinoAppFilesService.mock';
-import { FileId } from './arduinoAppFilesService.type';
+import { FileId, SaveCode } from './arduinoAppFilesService.type';
 
 const APP_ROOT = '/myapp';
 
@@ -858,6 +859,80 @@ describe('arduinoAppFilesService.impl - code subject rename + save', () => {
       'second edit',
       undefined,
     );
+  });
+});
+
+// The agent moves files on the board: a save already on its way went to the old path, which the move took away or left as a stray copy.
+describe('arduinoAppFilesService.impl - code subject rename during a save', () => {
+  const flush = (): Promise<void> =>
+    new Promise((resolve) => setTimeout(resolve, 20));
+
+  // The first save waits until the test settles it, the later ones succeed.
+  const heldSave = (): {
+    saveCode: Mock<SaveCode>;
+    settle: (fail: boolean) => void;
+  } => {
+    let settle: (fail: boolean) => void = () => undefined;
+    const saveCode = vi
+      .fn<SaveCode>()
+      .mockImplementationOnce(
+        () =>
+          new Promise<void>((resolve, reject) => {
+            settle = (fail): void =>
+              fail ? reject(new Error('no such folder')) : resolve();
+          }),
+      )
+      .mockResolvedValue(undefined);
+    return { saveCode, settle: (fail): void => settle(fail) };
+  };
+
+  beforeEach(() => {
+    resetAppFilesState();
+  });
+
+  it.each([
+    ['fails', true],
+    ['lands at the old path', false],
+  ])(
+    'saves the text again at the new path when the save on its way %s',
+    async (_, fail) => {
+      const { saveCode, settle } = heldSave();
+      setCodeSubjects({ path: 'pkg/m.py', content: 'initial' }, 0);
+      codeSubjectNext('pkg/m.py', 'typed', saveCode);
+      await flush();
+
+      renameCodeSubject('pkg/m.py', 'pkg2/m.py');
+      await flush();
+      expect(isUnsavedFile('pkg2/m.py')).toBe(true);
+
+      settle(fail);
+      await flush();
+
+      expect(saveCode.mock.calls).toEqual([
+        ['pkg/m.py', 'typed', undefined],
+        ['pkg2/m.py', 'typed', undefined],
+      ]);
+      expect(isUnsavedFile('pkg2/m.py')).toBe(false);
+      expect(isUnsavedFile('pkg/m.py')).toBe(false);
+    },
+  );
+
+  it('leaves newer typing after the rename to the next save', async () => {
+    const { saveCode, settle } = heldSave();
+    setCodeSubjects({ path: 'pkg/m.py', content: 'initial' }, 0);
+    codeSubjectNext('pkg/m.py', 'typed', saveCode);
+    await flush();
+
+    renameCodeSubject('pkg/m.py', 'pkg2/m.py');
+    codeSubjectNext('pkg2/m.py', 'typed more', saveCode);
+    await flush();
+    settle(true);
+    await flush();
+
+    expect(saveCode.mock.calls).toEqual([
+      ['pkg/m.py', 'typed', undefined],
+      ['pkg2/m.py', 'typed more', undefined],
+    ]);
   });
 });
 

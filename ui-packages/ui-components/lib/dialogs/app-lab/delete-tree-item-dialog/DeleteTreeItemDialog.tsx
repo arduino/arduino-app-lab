@@ -35,11 +35,15 @@ export const DeleteTreeItemDialog: React.FC<DeleteTreeItemDialogProps> = ({
 
   const handleDelete = async (): Promise<void> => {
     setLoading(true);
-    const result = await confirmAction();
-    setLoading(false);
-
-    if (result) {
-      onOpenChange(false);
+    try {
+      const result = await confirmAction();
+      if (result) {
+        onOpenChange(false);
+      }
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
     }
   };
 

@@ -276,16 +276,24 @@ export const useCreateAppTitleLogic: UseCreateAppTitleLogic = function (
   }, [app?.name]);
 
   const onRenameApp = useCallback(async (): Promise<void> => {
-    if (!updateApp) return;
+    if (!updateApp) {
+      return;
+    }
+    const trimmedName = name.trim();
+    if (!trimmedName) {
+      onResetAppName();
+      return;
+    }
     const result = await updateApp({
-      name,
+      name: trimmedName,
     });
     if (result) {
+      setName(trimmedName);
       setEditing(false);
     } else {
       setHasError(true);
     }
-  }, [updateApp, name]);
+  }, [updateApp, name, onResetAppName]);
 
   const onUpdateAppIcon = useCallback(
     async (emoji: string): Promise<boolean> => {

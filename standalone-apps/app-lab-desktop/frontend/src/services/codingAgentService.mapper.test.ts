@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  mapForgottenChats,
   mapPermissionRequest,
   mapRestart,
   mapSessionState,
+  mapSessionSummary,
   mapUpdate,
   WirePermissionRequest,
   WireUpdate,
@@ -71,7 +73,11 @@ describe('mapUpdate', () => {
       },
     });
     expect(
-      mapUpdate({ type: 'tool_call_update', id: 't1', input: { command: 'ls -la' } }),
+      mapUpdate({
+        type: 'tool_call_update',
+        id: 't1',
+        input: { command: 'ls -la' },
+      }),
     ).toEqual({
       type: 'tool_call_update',
       id: 't1',
@@ -114,6 +120,117 @@ describe('mapUpdate', () => {
 
   it('returns null for unmodelled update kinds', () => {
     expect(mapUpdate({ type: 'plan' })).toBeNull();
+  });
+
+  // The host replays a live session from its own log: the marker, then a failed turn's error as text.
+  it('maps the replay marker and a logged turn error', () => {
+    expect(mapUpdate({ type: 'replay_start' })).toEqual({
+      type: 'replay_start',
+    });
+    expect(
+      mapUpdate({
+        type: 'message_error',
+        delta: 'peer disconnected before response',
+      }),
+    ).toEqual({
+      type: 'message_error',
+      message: 'peer disconnected before response',
+    });
+    expect(mapUpdate({ type: 'turn_stopped' })).toEqual({
+      type: 'turn_stopped',
+    });
+  });
+
+  it('keeps the mode list a mode change carries, and omits an absent one', () => {
+    expect(
+      mapUpdate({
+        type: 'mode_change',
+        modeId: 'plan',
+        modes: [
+          { id: 'default', name: 'Default', description: 'Asks first' },
+          { id: 'plan', name: 'Plan' },
+        ],
+      }),
+    ).toEqual({
+      type: 'mode_change',
+      modeId: 'plan',
+      modes: [
+        { id: 'default', name: 'Default', description: 'Asks first' },
+        { id: 'plan', name: 'Plan' },
+      ],
+    });
+    expect(mapUpdate({ type: 'mode_change', modeId: 'plan' })).toEqual({
+      type: 'mode_change',
+      modeId: 'plan',
+    });
+  });
+
+  it('keeps the other app a call lands in, on the call and on its update', () => {
+    expect(
+      mapUpdate({
+        type: 'tool_call',
+        toolCall: {
+          id: 't1',
+          title: 'edit',
+          status: 'pending',
+          outsideWorkspace: true,
+          outsideApp: 'Weather Station',
+        },
+      }),
+    ).toMatchObject({
+      toolCall: { outsideWorkspace: true, outsideApp: 'Weather Station' },
+    });
+    expect(
+      mapUpdate({
+        type: 'tool_call_update',
+        id: 't1',
+        status: 'completed',
+        outsideWorkspace: true,
+        outsideApp: 'Weather Station',
+      }),
+    ).toMatchObject({ outsideWorkspace: true, outsideApp: 'Weather Station' });
+  });
+
+  it('keeps the free flag of an advertised model', () => {
+    expect(
+      mapUpdate({
+        type: 'model_change',
+        models: [
+          { id: 'opencode/big-pickle', name: 'Big Pickle', free: true },
+          { id: 'opencode/claude-opus-5', name: 'Claude Opus 5' },
+        ],
+      }),
+    ).toEqual({
+      type: 'model_change',
+      models: [
+        { id: 'opencode/big-pickle', name: 'Big Pickle', free: true },
+        { id: 'opencode/claude-opus-5', name: 'Claude Opus 5' },
+      ],
+    });
+  });
+});
+
+describe('mapForgottenChats', () => {
+  it('keeps the chat ids the host names, and none from a host that sends no list', () => {
+    expect(mapForgottenChats(['ses_1', 'ses_2'])).toEqual(['ses_1', 'ses_2']);
+    expect(mapForgottenChats(['ses_1', 7, null])).toEqual(['ses_1']);
+    expect(mapForgottenChats([])).toEqual([]);
+    expect(mapForgottenChats(undefined)).toBeUndefined();
+    expect(mapForgottenChats('ses_1')).toBeUndefined();
+  });
+});
+
+describe('mapSessionSummary', () => {
+  it('keeps a stopped last turn next to a failed one', () => {
+    expect(mapSessionSummary({ id: 's1', status: 'cancelled' }).status).toBe(
+      'cancelled',
+    );
+    expect(mapSessionSummary({ id: 's1', status: 'error' }).status).toBe(
+      'error',
+    );
+    expect(
+      mapSessionSummary({ id: 's1', status: 'odd' }).status,
+    ).toBeUndefined();
   });
 });
 
@@ -204,5 +321,14 @@ describe('mapRestart', () => {
   // in-memory thread on an agent that is actually fine.
   it('defaults absent fields without inventing a give-up', () => {
     expect(mapRestart({})).toEqual({ attempt: 0, max: 0, gaveUp: false });
+  });
+
+  it('keeps the event sent once the restart has resumed the sessions', () => {
+    expect(mapRestart({ attempt: 1, max: 3, resumed: true })).toEqual({
+      attempt: 1,
+      max: 3,
+      gaveUp: false,
+      resumed: true,
+    });
   });
 });

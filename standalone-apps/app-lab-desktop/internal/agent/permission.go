@@ -20,6 +20,7 @@ var ErrOptionNotOffered = errors.New("that permission option was not offered for
 
 // pendingPermission is one request waiting for a decision, with the exact post-filter option set it offered.
 type pendingPermission struct {
+	session SessionID
 	ch      chan PermissionOutcome
 	offered map[string]bool // reject a decision naming anything else: the id arrives from the webview and originates with the agent
 }
@@ -35,16 +36,32 @@ func newPermissionRegistry() *permissionRegistry {
 }
 
 // register arms a request for its decision, remembering the options it actually offered.
-func (r *permissionRegistry) register(id string, options []PermissionOption) chan PermissionOutcome {
+func (r *permissionRegistry) register(id string, sid SessionID, options []PermissionOption) chan PermissionOutcome {
 	ch := make(chan PermissionOutcome, 1) // buffered so reply never blocks on the waiter
 	offered := make(map[string]bool, len(options))
 	for _, o := range options {
 		offered[o.ID] = true
 	}
 	r.mu.Lock()
-	r.pending[id] = &pendingPermission{ch: ch, offered: offered}
+	r.pending[id] = &pendingPermission{session: sid, ch: ch, offered: offered}
 	r.mu.Unlock()
 	return ch
+}
+
+// cancelSession denies every request a session still has open: the engine queues them per session with no timer, so one left unanswered blocks all the next ones.
+func (r *permissionRegistry) cancelSession(sid SessionID) {
+	r.mu.Lock()
+	var chans []chan PermissionOutcome
+	for id, p := range r.pending {
+		if p.session == sid {
+			chans = append(chans, p.ch)
+			delete(r.pending, id)
+		}
+	}
+	r.mu.Unlock()
+	for _, ch := range chans {
+		ch <- PermissionOutcome{Cancelled: true}
+	}
 }
 
 // reply delivers a decision; one naming an option the request never offered is denied rather than forwarded (a cancel is always accepted). It still resolves the request: production sets no timeout, so leaving it pending would hang the turn forever. An unknown id is not an error: the request may have timed out or been cancelled.

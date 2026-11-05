@@ -134,4 +134,16 @@ describe('useBoardScopedQueryReset', () => {
       expect(queryClient.getQueryData(['list-my-apps'])).toBeUndefined();
     });
   });
+
+  it('resets on the next board after a first board with no cache id', async () => {
+    renderHook(() => useBoardScopedQueryReset(), { wrapper });
+    connect(makeBoard({ serial: '' }));
+    seedCaches();
+
+    connect(usbB);
+
+    await waitFor(() => {
+      expect(queryClient.getQueryData(['list-my-apps'])).toBeUndefined();
+    });
+  });
 });

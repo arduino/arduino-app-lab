@@ -14,8 +14,29 @@ let pending: { appId: string; file: string } | null = null;
 // The app opened via a chip is a transient "peek": App Lab must not record it as the board's resume app (a normally-opened app still is). Cleared by useReloadApp once the user leaves it.
 let peekedApp: string | null = null;
 
-// Mark an app-relative file to auto-open once that app's editor mounts, as a peek.
+// The editor already showing an app: a chip for it navigates to the route it is on, which remounts nothing.
+const fileListeners = new Map<string, (file: string) => void>();
+
+// Called by the app-detail screen while it is mounted, so a file for its app reaches it directly.
+export const listenForAppFile = (
+  appId: string,
+  listener: (file: string) => void,
+): (() => void) => {
+  fileListeners.set(appId, listener);
+  return () => {
+    if (fileListeners.get(appId) === listener) {
+      fileListeners.delete(appId);
+    }
+  };
+};
+
+// Open an app-relative file in that app's editor: at once when it is on screen, otherwise once it mounts, as a peek.
 export const stashAppFileToOpen = (appId: string, file: string): void => {
+  const listener = fileListeners.get(appId);
+  if (listener) {
+    listener(file);
+    return;
+  }
   pending = { appId, file };
   peekedApp = appId;
 };
@@ -61,6 +82,89 @@ export const setModelImportSubscribed = (appId: string, on: boolean): void => {
   } else {
     modelImportSubscribers.delete(appId);
   }
+};
+
+// App folders whose editor is mounted and moves its own tabs when the agent renames one of their files.
+const agentFileRenameHandlers = new Set<string>();
+
+// True while that app's editor follows the rename itself, so its stored tabs need nobody else.
+export const isAgentFileRenameHandled = (appPath: string): boolean =>
+  agentFileRenameHandlers.has(appPath);
+
+// Called by the app-detail screen as it subscribes and unsubscribes.
+export const setAgentFileRenameHandled = (
+  appPath: string,
+  on: boolean,
+): void => {
+  if (on) {
+    agentFileRenameHandlers.add(appPath);
+  } else {
+    agentFileRenameHandlers.delete(appPath);
+  }
+};
+
+// The app whose screen opens with the agent side panel showing: a new app id remounts the screen, an agent rename too when the screen cannot follow it in place.
+let agentPanelApp: string | null = null;
+
+export const stashOpenAgentPanel = (appId: string): void => {
+  agentPanelApp = appId;
+};
+
+// Read without consuming it (safe in a useState initializer, as below).
+export const peekOpenAgentPanel = (appId: string): boolean =>
+  agentPanelApp === appId;
+
+export const clearOpenAgentPanel = (appId: string): void => {
+  if (agentPanelApp === appId) {
+    agentPanelApp = null;
+  }
+};
+
+// Agent renames made in Agent Mode, old id -> new id: its exit is a history.back() onto the old id, which the my-apps route redirects.
+const agentRenames = new Map<string, string>();
+let leavingAgentMode = false;
+
+export const recordAgentRename = (oldId: string, newId: string): void => {
+  agentRenames.forEach((to, from) => {
+    if (to === oldId) {
+      agentRenames.set(from, newId);
+    }
+  });
+  agentRenames.set(oldId, newId);
+};
+
+// Only the exit follows a rename: the next app given the old name gets the same id, and any other navigation to it means that app.
+export const markAgentModeExit = (): void => {
+  leavingAgentMode = true;
+};
+
+export const takeAgentRename = (appId: string): string | undefined => {
+  if (!leavingAgentMode) {
+    return undefined;
+  }
+  const renamedTo = agentRenames.get(appId);
+  agentRenames.delete(appId);
+  return renamedTo;
+};
+
+export const clearAgentRenames = (): void => {
+  agentRenames.clear();
+  leavingAgentMode = false;
+};
+
+// The id change an open app screen follows in place: for this one transition the route keeps the screen's key instead of remounting it.
+let renamedInPlace: { from: string; to: string } | null = null;
+
+export const markRenamedInPlace = (from: string, to: string): void => {
+  renamedInPlace = { from, to };
+};
+
+// Read without consuming it: the route asks during render, which StrictMode runs twice.
+export const isRenamedInPlace = (from: string, to: string): boolean =>
+  renamedInPlace?.from === from && renamedInPlace.to === to;
+
+export const clearRenamedInPlace = (): void => {
+  renamedInPlace = null;
 };
 
 // Read the pending file without consuming it — pure, so it's safe in a useState initializer (StrictMode double-invokes those, and a consuming read would lose the value on the second call).

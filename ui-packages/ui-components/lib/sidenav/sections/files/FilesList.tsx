@@ -1,6 +1,6 @@
+import { SelectableFileData } from '@cloud-editor-mono/ide-workbench/lib/editor-tabs-bar/index';
 import { Key } from 'react';
 
-import { SelectableFileData } from '../../../editor-tabs-bar';
 import NoResults from '../common/NoResults';
 import styles from './files.module.scss';
 import FilesListItem from './FilesListItem';

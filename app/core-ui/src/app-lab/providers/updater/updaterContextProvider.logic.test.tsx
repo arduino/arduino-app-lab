@@ -3,8 +3,10 @@ import { UpdaterStatus } from '@cloud-editor-mono/ui-components/lib/components-b
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { PropsWithChildren } from 'react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { IntlProvider } from 'react-intl';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { updaterMessages } from './messages';
 import { useUpdater } from './updaterContextProvider.logic';
 
 vi.mock('../../store/boardLifecycle', async () => {
@@ -53,14 +55,18 @@ const domainServices = vi.mocked(
   ),
 );
 
-const createWrapper = () =>
+const createWrapper = (messages?: Record<string, string>) =>
   function UpdaterTestWrapper({ children }: PropsWithChildren): JSX.Element {
     const client = new QueryClient({
       defaultOptions: { queries: { retry: false } },
     });
 
     return (
-      <QueryClientProvider client={client}>{children}</QueryClientProvider>
+      <QueryClientProvider client={client}>
+        <IntlProvider locale="en" messages={messages}>
+          {children}
+        </IntlProvider>
+      </QueryClientProvider>
     );
   };
 
@@ -68,7 +74,9 @@ const createWrapper = () =>
  * Starts a board update and hands back the stream handlers the updater
  * registered, so a test can push events at it the way the board would.
  */
-const startUpdateAndCaptureStream = async (): Promise<{
+const startUpdateAndCaptureStream = async (
+  messages?: Record<string, string>,
+): Promise<{
   result: { current: ReturnType<typeof useUpdater> };
   handlers: EventSourceHandlers;
   /** The handlers of the stream opened most recently: a retry opens a new one. */
@@ -80,7 +88,7 @@ const startUpdateAndCaptureStream = async (): Promise<{
   });
 
   const { result } = renderHook(() => useUpdater(), {
-    wrapper: createWrapper(),
+    wrapper: createWrapper(messages),
   });
 
   await act(async () => {
@@ -327,5 +335,495 @@ describe('useUpdater - malformed progress payloads', () => {
 
     push('{"step":"apt upgrade","progress":-1e999}');
     expect(result.current.boardUpdateProgress).toBe(0);
+  });
+});
+
+describe('useUpdater - one App Lab update per board update flow', () => {
+  const countLog = (logs: string[], line: string): number =>
+    logs.filter((log) => log === line).length;
+
+  const expectOneAppUpdate = (logs: string[]): void => {
+    expect(domainServices.checkAndApplyUpdate).toHaveBeenCalledTimes(1);
+    expect(countLog(logs, 'Board update completed successfully.')).toBe(1);
+    expect(countLog(logs, 'Starting App Lab update...')).toBe(1);
+  };
+
+  const push = (
+    handlers: EventSourceHandlers,
+    event: 'done' | 'restarting',
+  ): void => {
+    handlers.onmessage?.({ id: '', event, data: `"${event}"` });
+  };
+
+  beforeEach(() => {
+    // Off the board, an App Lab update follows the board one.
+    domainServices.isBoard.mockResolvedValue(false);
+    domainServices.newVersion.mockResolvedValue('2.0.0');
+    domainServices.getVersion.mockResolvedValue('1.0.0');
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('runs once when `restarting` reaches the board before `done` arrives', async () => {
+    const { result, handlers } = await startUpdateAndCaptureStream();
+    vi.useFakeTimers();
+
+    act(() => push(handlers, 'restarting'));
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(5000);
+    });
+    await act(async () => push(handlers, 'done'));
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(20000);
+    });
+
+    expectOneAppUpdate(result.current.boardLogs);
+  });
+
+  it('runs once when `done` arrives before the `restarting` loop', async () => {
+    const { result, handlers } = await startUpdateAndCaptureStream();
+    vi.useFakeTimers();
+
+    await act(async () => push(handlers, 'done'));
+    act(() => push(handlers, 'restarting'));
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(20000);
+    });
+
+    expectOneAppUpdate(result.current.boardLogs);
+    // The loop must not overwrite the App Lab update's status.
+    expect(result.current.status).toBe(UpdaterStatus.Restarting);
+  });
+
+  it('runs once when `restarting` starts its loop and `done` arrives during the wait', async () => {
+    const { result, handlers } = await startUpdateAndCaptureStream();
+    vi.useFakeTimers();
+
+    act(() => push(handlers, 'restarting'));
+    await act(async () => push(handlers, 'done'));
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(20000);
+    });
+
+    expectOneAppUpdate(result.current.boardLogs);
+    expect(countLog(result.current.boardLogs, 'Connection established')).toBe(
+      0,
+    );
+  });
+
+  it('runs once when `done` arrives while `getVersion` is still waiting for the board', async () => {
+    let answer: (version: string) => void = () => undefined;
+    domainServices.getVersion.mockImplementation(
+      () =>
+        new Promise<string>((resolve) => {
+          answer = resolve;
+        }),
+    );
+    const { result, handlers } = await startUpdateAndCaptureStream();
+    vi.useFakeTimers();
+
+    act(() => push(handlers, 'restarting'));
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(5000);
+    });
+    expect(domainServices.getVersion).toHaveBeenCalledTimes(1);
+    await act(async () => push(handlers, 'done'));
+    await act(async () => answer('1.0.0'));
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(20000);
+    });
+
+    expectOneAppUpdate(result.current.boardLogs);
+    expect(countLog(result.current.boardLogs, 'Connection established')).toBe(
+      0,
+    );
+  });
+
+  it('does not let the reconnect loop of a failed flow start the App Lab update of its retry', async () => {
+    domainServices.checkAndApplyUpdate.mockRejectedValueOnce(
+      new Error('network down'),
+    );
+    const { result, handlers, latestHandlers } =
+      await startUpdateAndCaptureStream();
+    vi.useFakeTimers();
+
+    act(() => push(handlers, 'restarting'));
+    await act(async () => push(handlers, 'done'));
+    expect(result.current.status).toBe(UpdaterStatus.UpdateFailed);
+
+    // Retry inside the 5 s wait of the first flow's reconnect loop.
+    act(() => {
+      result.current.startUpdate();
+    });
+    expect(latestHandlers()).not.toBe(handlers);
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(20000);
+    });
+
+    expect(domainServices.checkAndApplyUpdate).toHaveBeenCalledTimes(1);
+    expect(result.current.status).toBe(UpdaterStatus.UpdatingBoard);
+
+    await act(async () => push(latestHandlers(), 'done'));
+
+    expect(domainServices.checkAndApplyUpdate).toHaveBeenCalledTimes(2);
+  });
+
+  it('runs once when the stream delivers `done` twice', async () => {
+    const { result, handlers } = await startUpdateAndCaptureStream();
+
+    await act(async () => push(handlers, 'done'));
+    await act(async () => push(handlers, 'done'));
+
+    expectOneAppUpdate(result.current.boardLogs);
+  });
+
+  it('puts the reason of a failed App Lab update in the log', async () => {
+    domainServices.checkAndApplyUpdate.mockRejectedValue(
+      new Error(
+        'error checking for updates: temp app already exists: /tmp/Arduino App Lab.app, cannot update',
+      ),
+    );
+    const { result, handlers } = await startUpdateAndCaptureStream();
+
+    await act(async () => push(handlers, 'done'));
+
+    expect(result.current.boardLogs).toContain(
+      'App Lab update failed: error checking for updates: temp app already exists: /tmp/Arduino App Lab.app, cannot update',
+    );
+    expect(result.current.status).toBe(UpdaterStatus.UpdateFailed);
+  });
+
+  it('writes the failure in the active locale, with the backend reason as a value', async () => {
+    domainServices.checkAndApplyUpdate.mockRejectedValue(
+      new Error('network down'),
+    );
+    const { result, handlers } = await startUpdateAndCaptureStream({
+      [updaterMessages.appUpdateFailedWithReason.id as string]:
+        'Aggiornamento di App Lab non riuscito: {reason}',
+    });
+
+    await act(async () => push(handlers, 'done'));
+
+    expect(result.current.boardLogs).toContain(
+      'Aggiornamento di App Lab non riuscito: network down',
+    );
+  });
+
+  it('says that an App Lab update is already running when the backend refuses a second one', async () => {
+    // The text of `ErrUpdateInProgress` in internal/update/update.go.
+    domainServices.checkAndApplyUpdate.mockRejectedValue(
+      new Error('an App Lab update is already in progress'),
+    );
+    const { result, handlers } = await startUpdateAndCaptureStream();
+
+    await act(async () => push(handlers, 'done'));
+
+    expect(result.current.boardLogs).toContain(
+      updaterMessages.appUpdateAlreadyRunning.defaultMessage,
+    );
+    expect(
+      result.current.boardLogs.some((log) =>
+        log.startsWith('App Lab update failed'),
+      ),
+    ).toBe(false);
+  });
+
+  it('writes the failure without a reason when the backend gives none', async () => {
+    domainServices.checkAndApplyUpdate.mockRejectedValue(new Error(''));
+    const { result, handlers } = await startUpdateAndCaptureStream();
+
+    await act(async () => push(handlers, 'done'));
+
+    expect(result.current.boardLogs).toContain('App Lab update failed');
+    expect(result.current.status).toBe(UpdaterStatus.UpdateFailed);
+  });
+
+  it('runs the App Lab update again on a retry after a failure', async () => {
+    domainServices.checkAndApplyUpdate.mockRejectedValueOnce(
+      new Error('network down'),
+    );
+    const { result, handlers, latestHandlers } =
+      await startUpdateAndCaptureStream();
+
+    await act(async () => push(handlers, 'done'));
+    expect(result.current.status).toBe(UpdaterStatus.UpdateFailed);
+
+    act(() => {
+      result.current.setStatus(UpdaterStatus.UpdateAvailable);
+    });
+    act(() => {
+      result.current.startUpdate();
+    });
+    await waitFor(() => expect(latestHandlers()).not.toBe(handlers));
+    await act(async () => push(latestHandlers(), 'done'));
+
+    expect(domainServices.checkAndApplyUpdate).toHaveBeenCalledTimes(2);
+    expect(result.current.status).toBe(UpdaterStatus.Restarting);
+  });
+
+  it('starts one App Lab update when there is no board update and the button is pressed twice', async () => {
+    domainServices.checkBoardUpdate.mockResolvedValue({ updates: [] });
+    let finish: () => void = () => undefined;
+    domainServices.checkAndApplyUpdate.mockImplementation(
+      () =>
+        new Promise<void>((resolve) => {
+          finish = resolve;
+        }),
+    );
+
+    const { result } = renderHook(() => useUpdater(), {
+      wrapper: createWrapper(),
+    });
+    await act(async () => {
+      await result.current.checkForUpdates();
+    });
+    await waitFor(() => expect(result.current.newAppVersion).toBe('2.0.0'));
+
+    act(() => {
+      result.current.startUpdate();
+      result.current.startUpdate();
+    });
+    await act(async () => finish());
+
+    expect(domainServices.checkAndApplyUpdate).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('useUpdater - a board update started elsewhere', () => {
+  const completedLine = 'Board update completed successfully.';
+  const countLog = (logs: string[], line: string): number =>
+    logs.filter((log) => log === line).length;
+
+  const push = (handlers: EventSourceHandlers, event: 'done'): void => {
+    handlers.onmessage?.({ id: '', event, data: `"${event}"` });
+  };
+
+  /** The board reports that an update is already running, so the check joins its stream. */
+  const joinRunningUpdate = async (result: {
+    current: ReturnType<typeof useUpdater>;
+  }): Promise<void> => {
+    domainServices.checkBoardUpdate.mockRejectedValueOnce(
+      new Error('OPERATION_IN_PROGRESS'),
+    );
+    await act(async () => {
+      await result.current.checkForUpdates(true);
+    });
+  };
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  /** The first flow has completed and the status is back at its idle value. */
+  const completeFirstFlow = async (
+    result: { current: ReturnType<typeof useUpdater> },
+    handlers: EventSourceHandlers,
+  ): Promise<void> => {
+    await act(async () => push(handlers, 'done'));
+    expect(result.current.status).toBe(UpdaterStatus.UpdateComplete);
+    act(() => result.current.setStatus(UpdaterStatus.None));
+  };
+
+  it('completes a second flow joined through the check after a first one completed', async () => {
+    const { result, handlers, latestHandlers } =
+      await startUpdateAndCaptureStream();
+
+    await completeFirstFlow(result, handlers);
+
+    await joinRunningUpdate(result);
+    expect(result.current.status).toBe(UpdaterStatus.UpdatingBoard);
+    expect(latestHandlers()).not.toBe(handlers);
+
+    await act(async () => push(latestHandlers(), 'done'));
+
+    expect(countLog(result.current.boardLogs, completedLine)).toBe(2);
+    expect(result.current.status).toBe(UpdaterStatus.UpdateComplete);
+  });
+
+  it('reports a failure when the joined stream closes without `done`', async () => {
+    const { result, handlers, latestHandlers } =
+      await startUpdateAndCaptureStream();
+
+    await completeFirstFlow(result, handlers);
+    await joinRunningUpdate(result);
+
+    vi.useFakeTimers();
+    act(() => latestHandlers().onclose?.());
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1500);
+    });
+
+    expect(result.current.status).toBe(UpdaterStatus.UpdateFailed);
+  });
+
+  it('completes once when a second stream of the running flow also sends `done`', async () => {
+    // Off the board, an App Lab update follows the board one and keeps the flow running.
+    domainServices.isBoard.mockResolvedValue(false);
+    domainServices.newVersion.mockResolvedValue('2.0.0');
+    domainServices.checkAndApplyUpdate.mockImplementation(
+      () => new Promise<void>(() => undefined),
+    );
+    const { result, handlers, latestHandlers } =
+      await startUpdateAndCaptureStream();
+
+    await act(async () => push(handlers, 'done'));
+    expect(result.current.status).toBe(UpdaterStatus.UpdatingApp);
+
+    await joinRunningUpdate(result);
+    const second = latestHandlers();
+    expect(second).not.toBe(handlers);
+    await act(async () => push(second, 'done'));
+
+    expect(countLog(result.current.boardLogs, completedLine)).toBe(1);
+    expect(domainServices.checkAndApplyUpdate).toHaveBeenCalledTimes(1);
+  });
+
+  describe('an in-progress answer while the completed result is showing', () => {
+    it('keeps the result when the first stream closes after the answer', async () => {
+      const { result, handlers } = await startUpdateAndCaptureStream();
+
+      await act(async () => push(handlers, 'done'));
+      await joinRunningUpdate(result);
+
+      expect(result.current.status).toBe(UpdaterStatus.UpdateComplete);
+      expect(domainServices.getBoardUpdateLogs).toHaveBeenCalledTimes(1);
+
+      vi.useFakeTimers();
+      act(() => handlers.onclose?.());
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(1500);
+      });
+
+      expect(result.current.status).toBe(UpdaterStatus.UpdateComplete);
+      expect(countLog(result.current.boardLogs, completedLine)).toBe(1);
+    });
+
+    it('keeps the result when the answer arrives inside the close timer of the first stream', async () => {
+      const { result, handlers } = await startUpdateAndCaptureStream();
+
+      await act(async () => push(handlers, 'done'));
+
+      vi.useFakeTimers();
+      act(() => handlers.onclose?.());
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(500);
+      });
+      await joinRunningUpdate(result);
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(1000);
+      });
+
+      expect(result.current.status).toBe(UpdaterStatus.UpdateComplete);
+      expect(domainServices.getBoardUpdateLogs).toHaveBeenCalledTimes(1);
+    });
+
+    it('keeps the result when the answer arrives in the same task as `done`', async () => {
+      const { result, handlers } = await startUpdateAndCaptureStream();
+      domainServices.checkBoardUpdate.mockRejectedValueOnce(
+        new Error('OPERATION_IN_PROGRESS'),
+      );
+
+      await act(async () => {
+        push(handlers, 'done');
+        await result.current.checkForUpdates(true);
+      });
+
+      expect(result.current.status).toBe(UpdaterStatus.UpdateComplete);
+      expect(domainServices.getBoardUpdateLogs).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('an in-progress answer after the reconnect loop gave up', () => {
+    beforeEach(() => {
+      // Off the board, an App Lab update follows the board one.
+      domainServices.isBoard.mockResolvedValue(false);
+      domainServices.newVersion.mockResolvedValue('2.0.0');
+      domainServices.getVersion.mockRejectedValue(
+        new Error('board unreachable'),
+      );
+    });
+
+    const giveUpReconnecting = async (
+      result: { current: ReturnType<typeof useUpdater> },
+      handlers: EventSourceHandlers,
+    ): Promise<void> => {
+      vi.useFakeTimers();
+      act(() => {
+        handlers.onmessage?.({
+          id: '',
+          event: 'restarting',
+          data: '"restarting"',
+        });
+      });
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(5000 + 10 * 1500);
+      });
+      expect(result.current.status).toBe(UpdaterStatus.UpdateComplete);
+      expect(domainServices.checkAndApplyUpdate).not.toHaveBeenCalled();
+    };
+
+    it('joins the stream and starts the App Lab update on its `done`', async () => {
+      const { result, handlers, latestHandlers } =
+        await startUpdateAndCaptureStream();
+      await giveUpReconnecting(result, handlers);
+
+      await joinRunningUpdate(result);
+      expect(latestHandlers()).not.toBe(handlers);
+      await act(async () => push(latestHandlers(), 'done'));
+
+      expect(domainServices.checkAndApplyUpdate).toHaveBeenCalledTimes(1);
+      expect(result.current.status).toBe(UpdaterStatus.Restarting);
+    });
+
+    it('keeps the result when the joined stream closes without `done`', async () => {
+      const { result, handlers, latestHandlers } =
+        await startUpdateAndCaptureStream();
+      await giveUpReconnecting(result, handlers);
+
+      await joinRunningUpdate(result);
+      act(() => latestHandlers().onclose?.());
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(1500);
+      });
+
+      expect(result.current.status).toBe(UpdaterStatus.UpdateComplete);
+    });
+  });
+});
+
+describe('useUpdater - a board update request that fails after `done`', () => {
+  const push = (handlers: EventSourceHandlers, event: 'done'): void => {
+    handlers.onmessage?.({ id: '', event, data: `"${event}"` });
+  };
+
+  let failRequest: (error: Error) => void = () => undefined;
+
+  beforeEach(() => {
+    domainServices.applyBoardUpdate.mockImplementation(
+      () =>
+        new Promise<boolean | null>((_, reject) => {
+          failRequest = reject;
+        }),
+    );
+  });
+
+  it('keeps the completed result', async () => {
+    const { result, handlers } = await startUpdateAndCaptureStream();
+
+    await act(async () => push(handlers, 'done'));
+    expect(result.current.status).toBe(UpdaterStatus.UpdateComplete);
+    await act(async () => failRequest(new Error('connection reset')));
+
+    expect(result.current.status).toBe(UpdaterStatus.UpdateComplete);
+  });
+
+  it('reports a failure when the request fails before `done`', async () => {
+    const { result } = await startUpdateAndCaptureStream();
+
+    await act(async () => failRequest(new Error('connection reset')));
+
+    expect(result.current.status).toBe(UpdaterStatus.UpdateFailed);
   });
 });

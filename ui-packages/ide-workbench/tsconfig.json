@@ -1,0 +1,8 @@
+{
+  "extends": "../../tsconfig.json",
+  "exclude": ["dist"],
+  "include": ["**/*.ts", "**/*.tsx", "../../types/*.ts"],
+  "compilerOptions": {
+    "moduleResolution": "bundler"
+  }
+}

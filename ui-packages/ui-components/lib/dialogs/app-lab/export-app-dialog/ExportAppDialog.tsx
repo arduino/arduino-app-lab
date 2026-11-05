@@ -5,11 +5,14 @@ import {
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { FormattedMessage } from 'react-intl';
 
-import { Button, ButtonVariant } from '../../../components-by-app/app-lab';
+import {
+  Button,
+  ButtonVariant,
+  useTooltip,
+} from '../../../components-by-app/app-lab';
 import { ErrorBanner } from '../../../error-banner/ErrorBanner';
 import { Checkbox } from '../../../essential/checkbox';
 import { useI18n } from '../../../i18n/useI18n';
-import { useTooltip } from '../../../tooltip';
 import { AppLabDialog } from '../app-lab-dialog/AppLabDialog';
 import { exportAppDialogMessages as messages } from '../messages';
 import styles from './export-app-dialog.module.scss';
@@ -61,6 +64,7 @@ export const ExportAppDialog: React.FC<ExportAppDialogProps> = ({
     content: formatMessage(messages.includeDataTooltipContent),
     title: formatMessage(messages.includeDataTooltipTitle),
     direction: 'up-right',
+    variant: 'card',
   });
 
   const handleClose = useCallback((): void => {
@@ -155,7 +159,7 @@ export const ExportAppDialog: React.FC<ExportAppDialogProps> = ({
                 <InfoIconOutline />
               </div>
             </div>
-            {renderTooltip(styles['tooltip-content'])}
+            {renderTooltip()}
           </div>
         </>
       )}

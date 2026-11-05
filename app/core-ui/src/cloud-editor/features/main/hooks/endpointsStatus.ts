@@ -10,10 +10,13 @@ import {
   sendNotification,
 } from '@cloud-editor-mono/domain';
 import { ToastType } from '@cloud-editor-mono/ui-components';
+import { RbacCapability } from '@cloud-editor-mono/ui-components/lib/rbac/rbac.type';
 import { useQuery } from '@tanstack/react-query';
 import { uniqueId } from 'lodash-es';
 import { useContext, useEffect, useState } from 'react';
 import { defineMessages, IntlContext } from 'react-intl';
+
+import { useRbac } from '../../../../common/providers/rbac/rbacContextProvider.logic';
 
 export type UseCoreEndpointsStatus = (enabled: boolean) => {
   builder?: EndpointStatus;
@@ -34,13 +37,16 @@ export function useCoreEndpointsStatus(
   });
 
   const { formatMessage } = useContext(IntlContext);
+  const canUploadSketch = useRbac()[RbacCapability.UploadSketch];
 
   const [agentDownToastId, setAgentDownToastId] = useState<string>();
   const [builderDownToastId, setBuilderDownToastId] = useState<string>();
   const [createDownToastId, setCreateDownToastId] = useState<string>();
 
   useEffect(() => {
-    const agentIsDown = Boolean(data?.agent === EndpointStatus.Down);
+    // The Cloud Agent is only needed to upload, so a role without upload never sees this toast.
+    const agentIsDown =
+      canUploadSketch && Boolean(data?.agent === EndpointStatus.Down);
     const sideEffectRequired = agentIsDown !== Boolean(agentDownToastId);
 
     if (!sideEffectRequired) return;
@@ -76,7 +82,7 @@ export function useCoreEndpointsStatus(
       dismissToastNotification(agentDownToastId);
       setAgentDownToastId(undefined);
     }
-  }, [agentDownToastId, data?.agent, formatMessage]);
+  }, [agentDownToastId, canUploadSketch, data?.agent, formatMessage]);
 
   useEffect(() => {
     const builderIsDown = Boolean(data?.builder === EndpointStatus.Down);

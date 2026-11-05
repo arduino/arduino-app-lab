@@ -1,6 +1,7 @@
 // Eager entry: service contracts, their DI slots, and the bits of agent state the host reads without
 // mounting the UI. The UI panel is a separate lazy entry (`@cloud-editor-mono/ai-assistant/panel`) to
 // keep it out of this bundle.
+export { subscribeAgentGiveUp } from './features/panel/agentRestart';
 export type {
   AgentDescriptor,
   AgentId,
@@ -24,6 +25,7 @@ export type {
   PermissionOptionKind,
   PermissionOutcome,
   PermissionRequest,
+  ProviderSignInPrompt,
   RuntimePhase,
   RuntimeProgress,
   RuntimeStatus,
@@ -70,4 +72,11 @@ export {
   stop,
   uninstall,
 } from './services';
-export { requestBoardSwitch, subscribeWorkspaceAppForgotten } from './store';
+export {
+  onTurnEnded,
+  requestBoardSwitch,
+  subscribeAgentStream,
+  subscribeSessionReads,
+  subscribeWorkspaceAppForgotten,
+  subscribeWorkspaceAppRenamed,
+} from './store';

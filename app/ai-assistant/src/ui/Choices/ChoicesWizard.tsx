@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { Fragment, useRef, useState } from 'react';
 
 import { ChoiceRequest, ChoiceSubmission } from '../../services';
 import { Choices, ChoicesSubmission } from './Choices';
@@ -10,6 +10,14 @@ interface ChoicesWizardProps {
   onComplete: (answers: ChoiceSubmission[]) => void;
   // Dismiss the whole batch without finishing (skips every question).
   onClose: VoidFunction;
+  // A question that asks for text gets the caller's field instead of a list with one "Other" row.
+  renderTextStep?: (step: {
+    question: ChoiceRequest;
+    counter: string;
+    isLast: boolean;
+    onAnswer: (text: string) => void;
+    onSkip: VoidFunction;
+  }) => React.ReactNode;
 }
 
 // Pages through a multi-question elicitation: reuses Choices per step, collecting answers, and hands the
@@ -18,6 +26,7 @@ export const ChoicesWizard: React.FC<ChoicesWizardProps> = ({
   questions,
   onComplete,
   onClose,
+  renderTextStep,
 }) => {
   const [step, setStep] = useState(0);
   const answers = useRef<ChoiceSubmission[]>([]);
@@ -43,6 +52,20 @@ export const ChoicesWizard: React.FC<ChoicesWizardProps> = ({
 
   if (!question) {
     return null;
+  }
+
+  if (question.kind === 'text' && renderTextStep) {
+    return (
+      <Fragment key={question.id}>
+        {renderTextStep({
+          question,
+          counter: `${step + 1}/${total}`,
+          isLast,
+          onAnswer: (text) => advance({ selectedIds: [], other: text }),
+          onSkip: () => advance({ selectedIds: [], cancelled: true }),
+        })}
+      </Fragment>
+    );
   }
 
   return (

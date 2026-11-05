@@ -29,6 +29,8 @@ export const MockAppUIService: AppUIService = {
   },
 
   onAgentStartedApp: () => () => undefined,
+  onAgentRenamedApp: () => () => undefined,
+  onAgentRenamedAppFile: () => () => undefined,
 
   onAgentWifiRequest: () => () => undefined,
   onAgentModelImport: () => () => undefined,

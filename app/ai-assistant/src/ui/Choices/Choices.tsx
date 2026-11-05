@@ -7,6 +7,8 @@ import {
 import {
   ButtonAppearance,
   ButtonVariant,
+  Input,
+  InputStyle,
   TextSize,
 } from '@cloud-editor-mono/ui-components/lib/components-by-app/app-lab';
 import clsx from 'clsx';
@@ -62,7 +64,7 @@ export const Choices: React.FC<ChoicesProps> = ({
   choices,
   multiple = false,
   allowOther = false,
-  otherPlaceholder = 'Type your own answer here',
+  otherPlaceholder = 'Type your answer here',
   submitLabel = 'Submit',
   skipLabel = 'Skip',
   onSubmit,
@@ -276,13 +278,14 @@ export const Choices: React.FC<ChoicesProps> = ({
                     </Text>
                     {renderIndicator(otherChecked, choices.length)}
                   </button>
-                  <input
-                    type="text"
-                    className={styles['choices-other-input']}
+                  <Input
+                    inputStyle={InputStyle.AppLab}
+                    outlined
                     placeholder={otherPlaceholder}
                     value={otherText}
-                    onChange={(e): void => onOtherChange(e.target.value)}
+                    onChange={onOtherChange}
                     onKeyDown={onKeyDown}
+                    blurOnEnter={false}
                   />
                 </div>
               </div>

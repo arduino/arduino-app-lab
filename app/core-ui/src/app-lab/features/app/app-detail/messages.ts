@@ -102,7 +102,7 @@ export const messages = defineMessages({
   fileAlreadyExistsFolder: {
     id: 'app-detail.file-already-exists-folder',
     defaultMessage:
-      "Can't create this file. A folder with the same name already exists.",
+      "Can't create this file. A folder with this name already exists.",
     description:
       'Notification message shown when trying to create a file with a folder of the same name',
   },
@@ -124,14 +124,15 @@ export const messages = defineMessages({
   },
   folderAlreadyExists: {
     id: 'app-detail.folder-already-exists',
-    defaultMessage: 'A folder with this name already exists',
+    defaultMessage:
+      "Can't create this folder. A folder with this name already exists.",
     description:
       'Notification message shown when trying to create a folder with duplicate name',
   },
   folderAlreadyExistsFile: {
     id: 'app-detail.folder-already-exists-file',
     defaultMessage:
-      "Can't create this folder. A file with the same name already exists.",
+      "Can't create this folder. A file with this name already exists.",
     description:
       'Notification message shown when trying to create a folder with a file of the same name',
   },
@@ -224,6 +225,12 @@ export const messages = defineMessages({
     defaultMessage: "Couldn't open the file.",
     description:
       'Notification message shown when a file cannot be opened in the editor',
+  },
+  couldNotOpenFolder: {
+    id: 'app-detail.could-not-open-folder',
+    defaultMessage: "Couldn't open the file: it is a folder.",
+    description:
+      'Notification message shown when a file in the tree, such as a link to a folder, turns out to be a folder',
   },
   lspError: {
     id: 'app-detail.lsp-error',
